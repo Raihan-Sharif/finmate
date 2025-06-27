@@ -195,35 +195,6 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {/* Critical CSS for loading states */}
-        <style jsx global>{`
-          .loading-skeleton {
-            background: linear-gradient(
-              90deg,
-              #f0f0f0 25%,
-              #e0e0e0 50%,
-              #f0f0f0 75%
-            );
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-          }
-
-          @keyframes loading {
-            0% {
-              background-position: 200% 0;
-            }
-            100% {
-              background-position: -200% 0;
-            }
-          }
-
-          /* PWA display mode styles */
-          @media (display-mode: standalone) {
-            body {
-              padding-top: env(safe-area-inset-top);
-              padding-bottom: env(safe-area-inset-bottom);
-            }
-          }
-        `}</style>
 
         {/* App Providers */}
         <ThemeProvider

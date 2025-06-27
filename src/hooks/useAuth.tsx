@@ -1,16 +1,16 @@
 "use client";
 
+import { auth, db, supabase, TABLES } from "@/lib/supabase/client";
+import { Profile } from "@/types";
+import { Session, User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 import {
-  useState,
-  useEffect,
-  useContext,
   createContext,
   useCallback,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
-import { useRouter } from "next/navigation";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase, auth, db, TABLES } from "@/lib/supabase/client";
-import { Profile } from "@/types";
 import toast from "react-hot-toast";
 
 interface AuthContextType {
