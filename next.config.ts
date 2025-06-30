@@ -1,5 +1,6 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
   experimental: {
     typedRoutes: true,
     optimizePackageImports: ["lucide-react", "recharts"],
@@ -35,7 +36,20 @@ const nextConfig = {
 
   // Image optimization
   images: {
-    domains: ["supabase.co", "github.com", "avatars.githubusercontent.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "github.com",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
+    ],
     formats: ["image/webp", "image/avif"],
   },
 
@@ -48,23 +62,29 @@ const nextConfig = {
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Performance optimizations
     if (!dev && !isServer) {
-      config.optimization.splitChunks.cacheGroups = {
-        ...config.optimization.splitChunks.cacheGroups,
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: "vendors",
-          chunks: "all",
-          priority: 10,
-          reuseExistingChunk: true,
-          enforce: true,
-        },
-        common: {
-          minChunks: 2,
-          chunks: "all",
-          name: "common",
-          priority: 5,
-          reuseExistingChunk: true,
-          enforce: true,
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks.cacheGroups,
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: "vendors",
+              chunks: "all",
+              priority: 10,
+              reuseExistingChunk: true,
+              enforce: true,
+            },
+            common: {
+              minChunks: 2,
+              chunks: "all",
+              name: "common",
+              priority: 5,
+              reuseExistingChunk: true,
+              enforce: true,
+            },
+          },
         },
       };
     }
@@ -74,7 +94,6 @@ const nextConfig = {
 
   // SEO and performance
   poweredByHeader: false,
-  generateEtags: false,
   compress: true,
 
   // Security headers
@@ -94,4 +113,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
