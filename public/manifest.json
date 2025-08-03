@@ -1,72 +1,46 @@
 {
-  "name": "FinMate - Ultimate Personal Finance Companion",
+  "name": "FinMate - Personal Finance Manager",
   "short_name": "FinMate",
-  "description": "Take control of your finances with comprehensive expense tracking, budgeting, investment management, and financial insights.",
-  "start_url": "/dashboard?utm_source=pwa",
+  "description": "Ultimate personal finance companion for managing expenses, investments, budgets, and achieving financial goals",
+  "version": "1.0.0",
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#3B82F6",
-  "background_color": "#FFFFFF",
-  "scope": "/",
-  "lang": "en",
-  "dir": "ltr",
-  "categories": ["finance", "productivity", "business"],
-  "shortcuts": [
+  "background_color": "#ffffff",
+  "prefer_related_applications": false,
+  "categories": ["finance", "business", "productivity"],
+  "screenshots": [
     {
-      "name": "Add Expense",
-      "short_name": "Expense",
-      "description": "Quickly add a new expense",
-      "url": "/transactions/new?type=expense&utm_source=pwa_shortcut",
-      "icons": [
-        {
-          "src": "/icons/shortcut-expense.png",
-          "sizes": "96x96",
-          "type": "image/png",
-          "purpose": "any"
-        }
-      ]
+      "src": "/screenshots/dashboard-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard overview with financial summary"
     },
     {
-      "name": "Add Income",
-      "short_name": "Income",
-      "description": "Quickly add new income",
-      "url": "/transactions/new?type=income&utm_source=pwa_shortcut",
-      "icons": [
-        {
-          "src": "/icons/shortcut-income.png",
-          "sizes": "96x96",
-          "type": "image/png",
-          "purpose": "any"
-        }
-      ]
+      "src": "/screenshots/dashboard-narrow.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile dashboard view"
     },
     {
-      "name": "View Budget",
-      "short_name": "Budget",
-      "description": "Check your budget status",
-      "url": "/budget?utm_source=pwa_shortcut",
-      "icons": [
-        {
-          "src": "/icons/shortcut-budget.png",
-          "sizes": "96x96",
-          "type": "image/png",
-          "purpose": "any"
-        }
-      ]
+      "src": "/screenshots/transactions-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Transaction management interface"
     },
     {
-      "name": "Reports",
-      "short_name": "Reports",
-      "description": "View financial reports",
-      "url": "/reports?utm_source=pwa_shortcut",
-      "icons": [
-        {
-          "src": "/icons/shortcut-reports.png",
-          "sizes": "96x96",
-          "type": "image/png",
-          "purpose": "any"
-        }
-      ]
+      "src": "/screenshots/budget-narrow.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Budget tracking on mobile"
     }
   ],
   "icons": [
@@ -104,7 +78,7 @@
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-384.png",
@@ -116,90 +90,112 @@
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/icon-maskable-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ],
-  "screenshots": [
+  "shortcuts": [
     {
-      "src": "/screenshots/mobile-dashboard.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Dashboard view on mobile"
+      "name": "Add Transaction",
+      "short_name": "Add Transaction",
+      "description": "Quickly add a new income or expense transaction",
+      "url": "/dashboard/transactions/new",
+      "icons": [
+        {
+          "src": "/shortcuts/add-transaction.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "src": "/screenshots/mobile-transactions.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Transaction management"
+      "name": "View Budget",
+      "short_name": "Budget",
+      "description": "Check your budget progress and spending",
+      "url": "/dashboard/budget",
+      "icons": [
+        {
+          "src": "/shortcuts/budget.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "src": "/screenshots/desktop-dashboard.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Dashboard view on desktop"
+      "name": "Investments",
+      "short_name": "Investments",
+      "description": "Track your investment portfolio",
+      "url": "/dashboard/investments",
+      "icons": [
+        {
+          "src": "/shortcuts/investments.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "src": "/screenshots/desktop-reports.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Financial reports and analytics"
-    }
-  ],
-  "related_applications": [
-    {
-      "platform": "webapp",
-      "url": "https://finmate.app/manifest.json"
-    }
-  ],
-  "prefer_related_applications": false,
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
-  "handle_links": "preferred",
-  "protocol_handlers": [
-    {
-      "protocol": "web+finmate",
-      "url": "/?action=%s"
-    }
-  ],
-  "file_handlers": [
-    {
-      "action": "/import",
-      "accept": {
-        "text/csv": [".csv"],
-        "application/vnd.ms-excel": [".xls"],
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-          ".xlsx"
-        ]
-      }
+      "name": "Reports",
+      "short_name": "Reports",
+      "description": "View financial reports and analytics",
+      "url": "/dashboard/reports",
+      "icons": [
+        {
+          "src": "/shortcuts/reports.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "share_target": {
-    "action": "/transactions/new",
+    "action": "/dashboard/transactions/new",
     "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
     "params": {
       "title": "description",
       "text": "notes",
       "url": "receipt_url"
     }
-  }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+finmate",
+      "url": "/dashboard?action=%s"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.finmate.app",
+      "id": "com.finmate.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/finmate/id123456789",
+      "id": "123456789"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "file_handlers": [
+    {
+      "action": "/dashboard/import",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
+      }
+    }
+  ],
+  "handle_links": "preferred"
 }

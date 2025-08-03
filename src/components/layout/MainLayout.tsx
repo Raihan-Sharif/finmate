@@ -1,10 +1,8 @@
-"use client";
+'use client';
 
-import { QuickActionModal } from "@/components/modals/QuickActionModal";
-import { NotificationCenter } from "@/components/notifications/NotificationCenter";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useAuth } from '@/components/providers/AuthProvider';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,13 +10,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { useAuth } from "@/hooks/useAuth";
-import { useNotifications } from "@/hooks/useNotifications";
-import { useTheme } from "@/hooks/useTheme";
-import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart3,
   Bell,
@@ -42,10 +37,12 @@ import {
   Users,
   Wallet,
   X,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -53,101 +50,98 @@ interface MainLayoutProps {
 
 const navigation = [
   {
-    name: "Dashboard",
-    href: "/dashboard",
+    name: 'Dashboard',
+    href: '/dashboard/overview',
     icon: LayoutDashboard,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
   },
   {
-    name: "Transactions",
-    href: "/transactions",
+    name: 'Transactions',
+    href: '/dashboard/transactions',
     icon: Receipt,
-    color: "text-green-600",
-    bgColor: "bg-green-50",
+    color: 'text-green-600',
+    bgColor: 'bg-green-50',
   },
   {
-    name: "Investments",
-    href: "/investments",
+    name: 'Investments',
+    href: '/dashboard/investments',
     icon: TrendingUp,
-    color: "text-purple-600",
-    bgColor: "bg-purple-50",
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
   },
   {
-    name: "Budget",
-    href: "/budget",
+    name: 'Budget',
+    href: '/dashboard/budget',
     icon: Target,
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
   },
   {
-    name: "Loans & EMI",
-    href: "/loans",
+    name: 'Loans & EMI',
+    href: '/dashboard/loans',
     icon: Calculator,
-    color: "text-red-600",
-    bgColor: "bg-red-50",
+    color: 'text-red-600',
+    bgColor: 'bg-red-50',
   },
   {
-    name: "Lending",
-    href: "/lending",
+    name: 'Lending',
+    href: '/dashboard/lending',
     icon: Users,
-    color: "text-indigo-600",
-    bgColor: "bg-indigo-50",
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50',
   },
   {
-    name: "Reports",
-    href: "/reports",
+    name: 'Reports',
+    href: '/dashboard/reports',
     icon: BarChart3,
-    color: "text-cyan-600",
-    bgColor: "bg-cyan-50",
+    color: 'text-cyan-600',
+    bgColor: 'bg-cyan-50',
   },
   {
-    name: "Cards & Banks",
-    href: "/accounts",
+    name: 'Cards & Banks',
+    href: '/dashboard/accounts',
     icon: CreditCard,
-    color: "text-pink-600",
-    bgColor: "bg-pink-50",
+    color: 'text-pink-600',
+    bgColor: 'bg-pink-50',
   },
 ];
 
 const bottomNavigation = [
   {
-    name: "Import Data",
-    href: "/import",
+    name: 'Import Data',
+    href: '/dashboard/import',
     icon: Upload,
-    color: "text-gray-600",
+    color: 'text-gray-600',
   },
   {
-    name: "Export Data",
-    href: "/export",
+    name: 'Export Data',
+    href: '/dashboard/export',
     icon: Download,
-    color: "text-gray-600",
+    color: 'text-gray-600',
   },
   {
-    name: "Settings",
-    href: "/settings",
+    name: 'Settings',
+    href: '/dashboard/settings',
     icon: Settings,
-    color: "text-gray-600",
+    color: 'text-gray-600',
   },
   {
-    name: "Help",
-    href: "/help",
+    name: 'Help',
+    href: '/dashboard/help',
     icon: HelpCircle,
-    color: "text-gray-600",
+    color: 'text-gray-600',
   },
 ];
 
+// Default export function
 export default function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showQuickAction, setShowQuickAction] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, profile } = useAuth();
-  const { notifications, unreadCount } = useNotifications();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   // Close sidebar on route change
   useEffect(() => {
@@ -157,32 +151,27 @@ export default function MainLayout({ children }: MainLayoutProps) {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K for search
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        // Open search modal
-      }
-
-      // Cmd/Ctrl + N for new transaction
-      if ((e.metaKey || e.ctrlKey) && e.key === "n") {
-        e.preventDefault();
-        setShowQuickAction(true);
-      }
-
-      // Escape to close modals
-      if (e.key === "Escape") {
-        setShowNotifications(false);
-        setShowQuickAction(false);
+      if (e.metaKey || e.ctrlKey) {
+        switch (e.key) {
+          case 'k':
+            e.preventDefault();
+            document.getElementById('search-input')?.focus();
+            break;
+          case '\\':
+            e.preventDefault();
+            setSidebarOpen(prev => !prev);
+            break;
+        }
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const isActiveRoute = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard" || pathname === "/dashboard/overview";
+    if (href === '/dashboard/overview') {
+      return pathname === '/dashboard' || pathname === '/dashboard/overview';
     }
     return pathname.startsWith(href);
   };
@@ -190,14 +179,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push("/auth/signin");
     } catch (error) {
-      console.error("Sign out error:", error);
+      toast.error('Failed to sign out');
     }
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Mobile sidebar overlay */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -205,11 +197,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
-          >
-            <div className="absolute inset-0 bg-gray-600 opacity-75" />
-          </motion.div>
+          />
         )}
       </AnimatePresence>
 
@@ -217,20 +207,25 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <motion.div
         initial={false}
         animate={{
-          x: sidebarOpen ? 0 : "-100%",
+          x: sidebarOpen ? 0 : '-100%',
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 300,
+          damping: 30,
         }}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl lg:translate-x-0 lg:static lg:inset-0",
-          "lg:flex lg:flex-col lg:w-64"
+          'fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 shadow-xl lg:translate-x-0 lg:static lg:inset-0',
+          'lg:flex lg:flex-col lg:w-64 border-r border-border'
         )}
       >
         {/* Sidebar header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-border">
           <Link href="/dashboard" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <Wallet className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
+            <span className="text-xl font-bold text-foreground">
               FinMate
             </span>
           </Link>
@@ -253,22 +248,22 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
                   isActive
-                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
+                    ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
                 <div
                   className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-lg mr-3",
-                    isActive ? item.bgColor : "bg-transparent"
+                    'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
+                    isActive ? item.bgColor : 'bg-transparent'
                   )}
                 >
                   <item.icon
                     className={cn(
-                      "w-5 h-5",
-                      isActive ? item.color : "text-gray-500 dark:text-gray-400"
+                      'w-5 h-5',
+                      isActive ? item.color : 'text-muted-foreground'
                     )}
                   />
                 </div>
@@ -279,7 +274,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </nav>
 
         {/* Bottom navigation */}
-        <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-4 border-t border-border">
           <div className="space-y-1">
             {bottomNavigation.map((item) => {
               const isActive = isActiveRoute(item.href);
@@ -288,13 +283,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                    'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
                     isActive
-                      ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
-                  <item.icon className="w-4 h-4 mr-3" />
+                  <item.icon className="w-5 h-5 mr-3" />
                   {item.name}
                 </Link>
               );
@@ -305,9 +300,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        {/* Top header */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between h-16 px-4">
+        {/* Top navigation */}
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             {/* Left side */}
             <div className="flex items-center space-x-4">
               <Button
@@ -320,84 +315,58 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </Button>
 
               {/* Search */}
-              <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  id="search-input"
                   type="text"
-                  placeholder="Search transactions... (⌘K)"
+                  placeholder="Search transactions, categories..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-64 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                  className="pl-10 pr-4 w-64"
                 />
+                <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  ⌘K
+                </kbd>
               </div>
             </div>
 
             {/* Right side */}
             <div className="flex items-center space-x-4">
-              {/* Quick action button */}
-              <Button
-                onClick={() => setShowQuickAction(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
-              >
+              {/* Quick actions */}
+              <Button size="sm" className="hidden sm:flex">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Transaction
               </Button>
 
-              {/* Theme toggle */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleTheme}
-                className="w-9 h-9"
-              >
-                {theme === "dark" ? (
-                  <Sun className="w-4 h-4" />
-                ) : (
-                  <Moon className="w-4 h-4" />
-                )}
+              {/* Notifications */}
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </Button>
 
-              {/* Notifications */}
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="w-9 h-9 relative"
-                >
-                  <Bell className="w-4 h-4" />
-                  {unreadCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </Badge>
-                  )}
-                </Button>
-
-                <AnimatePresence>
-                  {showNotifications && (
-                    <NotificationCenter
-                      onClose={() => setShowNotifications(false)}
-                    />
-                  )}
-                </AnimatePresence>
-              </div>
+              {/* Theme toggle */}
+              <Button variant="ghost" size="sm" onClick={toggleTheme}>
+                {theme === 'dark' ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+              </Button>
 
               {/* User menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-9 w-9 rounded-full"
-                  >
-                    <Avatar className="h-9 w-9">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={profile?.avatar_url}
-                        alt={profile?.full_name || "User"}
+                        src={profile?.avatar_url || user?.avatar_url}
+                        alt={profile?.full_name || user?.name || user?.email || ''}
                       />
                       <AvatarFallback>
-                        {profile?.full_name?.charAt(0) ||
-                          user?.email?.charAt(0) ||
-                          "U"}
+                        {(profile?.full_name || user?.name || user?.email || '')
+                          .charAt(0)
+                          .toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -406,7 +375,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {profile?.full_name || "User"}
+                        {profile?.full_name || user?.name || 'User'}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
@@ -415,22 +384,19 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
+                    <Link href="/dashboard/settings">
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
+                    <Link href="/dashboard/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleSignOut}
-                    className="cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
@@ -438,17 +404,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </DropdownMenu>
             </div>
           </div>
-        </header>
+        </div>
 
         {/* Page content */}
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1">
+          {children}
+        </main>
       </div>
-
-      {/* Quick action modal */}
-      <QuickActionModal
-        isOpen={showQuickAction}
-        onClose={() => setShowQuickAction(false)}
-      />
     </div>
   );
 }
+
+// Also export as named export for compatibility
+export { MainLayout };
+

@@ -1,70 +1,32 @@
-"use client";
+'use client';
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/hooks/useAuth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  CheckCircle,
-  Chrome,
-  Eye,
-  EyeOff,
-  Github,
-  Lock,
-  Mail,
-  Shield,
-  User,
-  Wallet,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useAuth } from '@/components/providers/AuthProvider';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, Github, Loader2, Mail, User, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
-const signUpSchema = z
-  .object({
-    fullName: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Please enter a valid email address"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
-    confirmPassword: z.string(),
-    acceptTerms: z.boolean().refine((val) => val === true, {
-      message: "You must accept the terms and conditions",
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-type SignUpFormData = z.infer<typeof signUpSchema>;
+interface SignUpForm {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  agreeToTerms: boolean;
+}
 
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [step, setStep] = useState(1);
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
   const router = useRouter();
   const { signUp, signInWithOAuth, user } = useAuth();
@@ -73,444 +35,334 @@ export default function SignUpPage() {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting },
-  } = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
-  });
+    formState: { errors },
+  } = useForm<SignUpForm>();
 
-  const password = watch("password");
+  const password = watch('password');
 
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      router.push('/dashboard');
     }
   }, [user, router]);
 
-  // Password strength calculation
-  const getPasswordStrength = (password: string) => {
-    if (!password) return 0;
+  const onSubmit = async (data: SignUpForm) => {
+    if (!data.agreeToTerms) {
+      return;
+    }
 
-    let strength = 0;
-    if (password.length >= 8) strength += 25;
-    if (/[A-Z]/.test(password)) strength += 25;
-    if (/[a-z]/.test(password)) strength += 25;
-    if (/[0-9]/.test(password)) strength += 25;
-
-    return strength;
-  };
-
-  const passwordStrength = getPasswordStrength(password || "");
-
-  const getPasswordStrengthLabel = (strength: number) => {
-    if (strength === 0) return "";
-    if (strength <= 25) return "Weak";
-    if (strength <= 50) return "Fair";
-    if (strength <= 75) return "Good";
-    return "Strong";
-  };
-
-  const getPasswordStrengthColor = (strength: number) => {
-    if (strength <= 25) return "bg-red-500";
-    if (strength <= 50) return "bg-orange-500";
-    if (strength <= 75) return "bg-yellow-500";
-    return "bg-green-500";
-  };
-
-  const onSubmit = async (data: SignUpFormData) => {
+    setIsLoading(true);
     try {
-      setError("");
-      setIsLoading(true);
-
       await signUp(data.email, data.password, {
         full_name: data.fullName,
       });
-
-      setStep(2);
-    } catch (err: any) {
-      setError(err.message || "Failed to create account");
+      // Success message is handled in the auth provider
+    } catch (error) {
+      // Error is handled in the auth provider
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOAuthSignUp = async (provider: "google" | "github") => {
+  const handleOAuthSignUp = async (provider: 'google' | 'github') => {
+    setOauthLoading(provider);
     try {
-      setError("");
-      setIsLoading(true);
       await signInWithOAuth(provider);
-    } catch (err: any) {
-      setError(err.message || `Failed to sign up with ${provider}`);
-      setIsLoading(false);
+    } catch (error) {
+      // Error is handled in the auth provider
+    } finally {
+      setOauthLoading(null);
     }
   };
 
-  if (step === 2) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-            <CardHeader className="text-center space-y-4">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-              </div>
-              <CardTitle className="text-2xl font-bold">
-                Check Your Email!
-              </CardTitle>
-              <CardDescription>
-                We've sent a verification link to your email address. Please
-                click the link to verify your account and complete the setup.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <Alert>
-                <Mail className="h-4 w-4" />
-                <AlertDescription>
-                  Didn't receive the email? Check your spam folder or{" "}
-                  <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
-                    resend verification email
-                  </button>
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-
-            <CardFooter className="flex flex-col space-y-4">
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/auth/signin">Back to Sign In</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-8 items-center min-h-screen">
-          {/* Left side - Branding */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        {/* Logo */}
+        <div className="text-center mb-8">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-8"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+            className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4"
           >
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Wallet className="w-7 h-7 text-white" />
+            <Wallet className="w-8 h-8 text-white" />
+          </motion.div>
+          <h1 className="text-3xl font-bold text-foreground">Join FinMate</h1>
+          <p className="text-muted-foreground mt-2">
+            Create your account and start managing your finances
+          </p>
+        </div>
+
+        <Card className="border-0 shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Sign up</CardTitle>
+            <CardDescription className="text-center">
+              Enter your information to create your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* OAuth Buttons */}
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                variant="outline"
+                onClick={() => handleOAuthSignUp('google')}
+                disabled={isLoading || oauthLoading !== null}
+                className="relative"
+              >
+                {oauthLoading === 'google' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Google
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => handleOAuthSignUp('github')}
+                disabled={isLoading || oauthLoading !== null}
+              >
+                {oauthLoading === 'github' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Github className="w-4 h-4 mr-2" />
+                    GitHub
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            {/* Email/Password Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    className="pl-9"
+                    {...register('fullName', {
+                      required: 'Full name is required',
+                      minLength: {
+                        value: 2,
+                        message: 'Name must be at least 2 characters',
+                      },
+                    })}
+                  />
                 </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    FinMate
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Your Ultimate Finance Companion
-                  </p>
-                </div>
+                {errors.fullName && (
+                  <p className="text-sm text-destructive">{errors.fullName.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
-                  Start Your
-                  <span className="text-gradient"> Financial Journey</span>
-                </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                  Join thousands of users who are already taking control of
-                  their finances with our comprehensive platform.
-                </p>
-              </div>
-            </div>
-
-            {/* Benefits */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                What you'll get:
-              </h3>
-              <div className="space-y-3">
-                {[
-                  "Complete expense and income tracking",
-                  "Smart budgeting and goal setting",
-                  "Investment portfolio management",
-                  "AI-powered financial insights",
-                  "Bank-level security and encryption",
-                  "Free forever with no hidden fees",
-                ].map((benefit, index) => (
-                  <motion.div
-                    key={benefit}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="flex items-center space-x-3"
-                  >
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      {benefit}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right side - Sign up form */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="w-full max-w-md mx-auto"
-          >
-            <Card className="shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <CardHeader className="space-y-1 pb-6">
-                <CardTitle className="text-2xl font-bold text-center">
-                  Create Account
-                </CardTitle>
-                <CardDescription className="text-center">
-                  Get started with FinMate and take control of your finances
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                {/* Error message */}
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                {/* OAuth buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOAuthSignUp("google")}
-                    disabled={isLoading}
-                    className="w-full"
-                  >
-                    <Chrome className="w-4 h-4 mr-2" />
-                    Google
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOAuthSignUp("github")}
-                    disabled={isLoading}
-                    className="w-full"
-                  >
-                    <Github className="w-4 h-4 mr-2" />
-                    GitHub
-                  </Button>
-                </div>
-
+                <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <Separator />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with email
-                    </span>
-                  </div>
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    className="pl-9"
+                    {...register('email', {
+                      required: 'Email is required',
+                      pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: 'Invalid email address',
+                      },
+                    })}
+                  />
                 </div>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email.message}</p>
+                )}
+              </div>
 
-                {/* Sign up form */}
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="fullName"
-                        type="text"
-                        placeholder="Enter your full name"
-                        className="pl-10"
-                        disabled={isLoading}
-                        {...register("fullName")}
-                        error={errors.fullName?.message}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        className="pl-10"
-                        disabled={isLoading}
-                        {...register("email")}
-                        error={errors.email?.message}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Create a strong password"
-                        className="pl-10 pr-10"
-                        disabled={isLoading}
-                        {...register("password")}
-                        error={errors.password?.message}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                        disabled={isLoading}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-
-                    {/* Password strength indicator */}
-                    {password && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">
-                            Password strength
-                          </span>
-                          <span
-                            className={`font-medium ${
-                              passwordStrength <= 25
-                                ? "text-red-500"
-                                : passwordStrength <= 50
-                                ? "text-orange-500"
-                                : passwordStrength <= 75
-                                ? "text-yellow-500"
-                                : "text-green-500"
-                            }`}
-                          >
-                            {getPasswordStrengthLabel(passwordStrength)}
-                          </span>
-                        </div>
-                        <Progress
-                          value={passwordStrength}
-                          className="h-2"
-                          indicatorClassName={getPasswordStrengthColor(
-                            passwordStrength
-                          )}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your password"
-                        className="pl-10 pr-10"
-                        disabled={isLoading}
-                        {...register("confirmPassword")}
-                        error={errors.confirmPassword?.message}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        disabled={isLoading}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-2">
-                    <Checkbox
-                      id="acceptTerms"
-                      {...register("acceptTerms")}
-                      disabled={isLoading}
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <Label
-                        htmlFor="acceptTerms"
-                        className="text-sm font-normal leading-snug peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        I agree to the{" "}
-                        <Link
-                          href="/terms"
-                          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                        >
-                          Terms of Service
-                        </Link>{" "}
-                        and{" "}
-                        <Link
-                          href="/privacy"
-                          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                        >
-                          Privacy Policy
-                        </Link>
-                      </Label>
-                      {errors.acceptTerms && (
-                        <p className="text-sm text-red-500">
-                          {errors.acceptTerms.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Create a strong password"
+                    className="pr-9"
+                    {...register('password', {
+                      required: 'Password is required',
+                      minLength: {
+                        value: 8,
+                        message: 'Password must be at least 8 characters',
+                      },
+                      pattern: {
+                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                        message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+                      },
+                    })}
+                  />
                   <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    disabled={isLoading || isSubmitting}
-                    loading={isLoading || isSubmitting}
-                    loadingText="Creating account..."
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
                   >
-                    Create Account
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </Button>
-                </form>
-              </CardContent>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password.message}</p>
+                )}
+              </div>
 
-              <CardFooter className="flex flex-col space-y-4">
-                <div className="text-center text-sm text-muted-foreground">
-                  Already have an account?{" "}
-                  <Link
-                    href="/auth/signin"
-                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirm your password"
+                    className="pr-9"
+                    {...register('confirmPassword', {
+                      required: 'Please confirm your password',
+                      validate: (value) =>
+                        value === password || 'Passwords do not match',
+                    })}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    Sign in
-                  </Link>
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                )}
+              </div>
 
-                <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground">
-                  <Shield className="w-3 h-3" />
-                  <span>Your data is encrypted and secure</span>
-                </div>
-              </CardFooter>
-            </Card>
-          </motion.div>
-        </div>
-      </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="agreeToTerms"
+                  {...register('agreeToTerms', {
+                    required: 'You must agree to the terms and conditions',
+                  })}
+                />
+                <Label
+                  htmlFor="agreeToTerms"
+                  className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  I agree to the{' '}
+                  <Link href="/terms" className="text-primary hover:underline">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/privacy" className="text-primary hover:underline">
+                    Privacy Policy
+                  </Link>
+                </Label>
+              </div>
+              {errors.agreeToTerms && (
+                <p className="text-sm text-destructive">{errors.agreeToTerms.message}</p>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || oauthLoading !== null}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  'Create account'
+                )}
+              </Button>
+            </form>
+
+            <div className="text-center text-sm">
+              <span className="text-muted-foreground">Already have an account? </span>
+              <Link
+                href="/auth/signin"
+                className="text-primary hover:underline font-medium"
+              >
+                Sign in
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Password Requirements */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-6 p-4 bg-muted/50 rounded-lg"
+        >
+          <h4 className="text-sm font-medium mb-2">Password requirements:</h4>
+          <ul className="text-xs text-muted-foreground space-y-1">
+            <li>• At least 8 characters long</li>
+            <li>• At least one uppercase letter</li>
+            <li>• At least one lowercase letter</li>
+            <li>• At least one number</li>
+          </ul>
+        </motion.div>
+
+        {/* Security Info */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-center mt-6 text-xs text-muted-foreground"
+        >
+          <p>
+            🔒 Your data is encrypted and secure. We use bank-level security to protect your information.
+          </p>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

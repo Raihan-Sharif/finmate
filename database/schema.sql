@@ -1,433 +1,683 @@
--- FinMate Database Schema for Supabase
+-- FinMate Database Schema
+-- Run this script in your Supabase SQL editor to set up the complete database
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Custom types
-CREATE TYPE currency_type AS ENUM ('USD', 'BDT', 'INR', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD');
+-- Create custom types
 CREATE TYPE transaction_type AS ENUM ('income', 'expense');
-CREATE TYPE investment_type AS ENUM ('stock', 'mutual_fund', 'crypto', 'fd', 'bond', 'real_estate', 'other');
-CREATE TYPE loan_status AS ENUM ('active', 'paid', 'overdue', 'closed');
-CREATE TYPE lending_status AS ENUM ('lent', 'borrowed', 'paid', 'overdue');
+CREATE TYPE account_type AS ENUM ('bank', 'credit_card', 'wallet', 'investment', 'other');
+CREATE TYPE investment_type AS ENUM ('stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'other');
+CREATE TYPE loan_type AS ENUM ('personal', 'home', 'car', 'education', 'business', 'other');
+CREATE TYPE loan_status AS ENUM ('active', 'closed', 'defaulted');
+CREATE TYPE lending_type AS ENUM ('lent', 'borrowed');
+CREATE TYPE lending_status AS ENUM ('pending', 'partial', 'paid', 'overdue');
+CREATE TYPE budget_period AS ENUM ('weekly', 'monthly', 'yearly');
+CREATE TYPE notification_type AS ENUM ('info', 'warning', 'error', 'success');
+CREATE TYPE theme_type AS ENUM ('light', 'dark', 'system');
 
--- Users table (extends Supabase auth.users)
+-- =============================================
+-- PROFILES TABLE
+-- =============================================
 CREATE TABLE profiles (
-id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-email TEXT UNIQUE NOT NULL,
-full_name TEXT,
-avatar_url TEXT,
-currency currency_type DEFAULT 'USD',
-timezone TEXT DEFAULT 'UTC',
-locale TEXT DEFAULT 'en',
-ai_api_key TEXT, -- Encrypted user API key
-preferences JSONB DEFAULT '{}',
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    full_name TEXT,
+    avatar_url TEXT,
+    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    timezone TEXT DEFAULT 'UTC' NOT NULL,
+    theme theme_type DEFAULT 'system' NOT NULL,
+    notifications_enabled BOOLEAN DEFAULT true NOT NULL,
+    ai_insights_enabled BOOLEAN DEFAULT true NOT NULL,
+    monthly_budget_limit DECIMAL(15,2),
+    ai_api_key TEXT, -- User's personal AI API key (encrypted)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT profiles_user_id_unique UNIQUE (user_id)
 );
 
--- Categories table
+-- =============================================
+-- CATEGORIES TABLE
+-- =============================================
 CREATE TABLE categories (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-name TEXT NOT NULL,
-description TEXT,
-color TEXT DEFAULT '#3B82F6',
-icon TEXT DEFAULT 'folder',
-type transaction_type NOT NULL,
-is_default BOOLEAN DEFAULT FALSE,
-parent_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-UNIQUE(user_id, name, type)
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    icon VARCHAR(50) DEFAULT 'folder' NOT NULL,
+    color VARCHAR(7) DEFAULT '#6B7280' NOT NULL,
+    type transaction_type NOT NULL,
+    parent_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+    is_default BOOLEAN DEFAULT false NOT NULL,
+    budget_limit DECIMAL(15,2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT categories_name_user_unique UNIQUE (user_id, name, type)
 );
 
--- Transactions table (expenses and income)
+-- =============================================
+-- ACCOUNTS TABLE
+-- =============================================
+CREATE TABLE accounts (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    type account_type DEFAULT 'bank' NOT NULL,
+    bank_name VARCHAR(100),
+    account_number VARCHAR(50), -- Encrypted in application
+    balance DECIMAL(15,2) DEFAULT 0 NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    color VARCHAR(7) DEFAULT '#3B82F6' NOT NULL,
+    icon VARCHAR(50) DEFAULT 'credit-card' NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- =============================================
+-- TRANSACTIONS TABLE
+-- =============================================
 CREATE TABLE transactions (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-amount DECIMAL(15,2) NOT NULL CHECK (amount > 0),
-currency currency_type DEFAULT 'USD',
-description TEXT NOT NULL,
-notes TEXT,
-type transaction_type NOT NULL,
-transaction_date DATE NOT NULL DEFAULT NOW(),
-receipt_url TEXT,
-tags TEXT[],
-vendor TEXT,
-is_recurring BOOLEAN DEFAULT FALSE,
-recurring_config JSONB, -- {frequency, end_date, etc}
-imported_from TEXT, -- bank, credit_card, manual
-external_id TEXT, -- for bank imports
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    type transaction_type NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    description TEXT NOT NULL,
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+    account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+    date DATE NOT NULL,
+    tags TEXT[],
+    receipt_url TEXT,
+    location TEXT,
+    notes TEXT,
+    is_recurring BOOLEAN DEFAULT false NOT NULL,
+    recurring_pattern JSONB, -- Store recurring pattern details
+    metadata JSONB, -- Additional transaction metadata
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT transactions_amount_positive CHECK (amount > 0)
 );
 
--- Investments table
-CREATE TABLE investments (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-name TEXT NOT NULL,
-type investment_type NOT NULL,
-symbol TEXT, -- for stocks/crypto
-initial_amount DECIMAL(15,2) NOT NULL CHECK (initial_amount > 0),
-current_value DECIMAL(15,2),
-currency currency_type DEFAULT 'USD',
-purchase_date DATE NOT NULL,
-quantity DECIMAL(15,8),
-notes TEXT,
-goal_amount DECIMAL(15,2),
-goal_date DATE,
-broker TEXT,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Investment transactions table (buy/sell history)
-CREATE TABLE investment_transactions (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-investment_id UUID REFERENCES investments(id) ON DELETE CASCADE,
-type TEXT NOT NULL CHECK (type IN ('buy', 'sell', 'dividend')),
-quantity DECIMAL(15,8) NOT NULL,
-price_per_unit DECIMAL(15,2) NOT NULL,
-total_amount DECIMAL(15,2) NOT NULL,
-fees DECIMAL(15,2) DEFAULT 0,
-transaction_date DATE NOT NULL,
-notes TEXT,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Lending and borrowing table
-CREATE TABLE lendings (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-person_name TEXT NOT NULL,
-person_contact TEXT,
-amount DECIMAL(15,2) NOT NULL CHECK (amount > 0),
-currency currency_type DEFAULT 'USD',
-type TEXT NOT NULL CHECK (type IN ('lent', 'borrowed')),
-status lending_status DEFAULT 'lent',
-lending_date DATE NOT NULL DEFAULT NOW(),
-due_date DATE,
-paid_date DATE,
-interest_rate DECIMAL(5,2) DEFAULT 0,
-notes TEXT,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- EMI and loans table
-CREATE TABLE loans (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-loan_name TEXT NOT NULL,
-lender TEXT NOT NULL,
-principal_amount DECIMAL(15,2) NOT NULL CHECK (principal_amount > 0),
-interest_rate DECIMAL(5,2) NOT NULL CHECK (interest_rate >= 0),
-tenure_months INTEGER NOT NULL CHECK (tenure_months > 0),
-emi_amount DECIMAL(15,2) NOT NULL CHECK (emi_amount > 0),
-currency currency_type DEFAULT 'USD',
-start_date DATE NOT NULL,
-status loan_status DEFAULT 'active',
-paid_amount DECIMAL(15,2) DEFAULT 0,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- EMI payments table
-CREATE TABLE emi_payments (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-loan_id UUID REFERENCES loans(id) ON DELETE CASCADE,
-payment_date DATE NOT NULL,
-amount DECIMAL(15,2) NOT NULL CHECK (amount > 0),
-principal_component DECIMAL(15,2) NOT NULL,
-interest_component DECIMAL(15,2) NOT NULL,
-outstanding_balance DECIMAL(15,2) NOT NULL,
-is_paid BOOLEAN DEFAULT FALSE,
-paid_date DATE,
-late_fee DECIMAL(15,2) DEFAULT 0,
-notes TEXT,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Budgets table
+-- =============================================
+-- BUDGETS TABLE
+-- =============================================
 CREATE TABLE budgets (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
-month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
-year INTEGER NOT NULL CHECK (year > 2000),
-amount DECIMAL(15,2) NOT NULL CHECK (amount > 0),
-currency currency_type DEFAULT 'USD',
-alert_threshold DECIMAL(3,2) DEFAULT 0.80, -- 80%
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-UNIQUE(user_id, category_id, month, year)
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    spent DECIMAL(15,2) DEFAULT 0 NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    period budget_period DEFAULT 'monthly' NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    category_ids UUID[],
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    alert_threshold DECIMAL(5,2) DEFAULT 80.00, -- Alert when 80% of budget is used
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT budgets_amount_positive CHECK (amount > 0),
+    CONSTRAINT budgets_spent_non_negative CHECK (spent >= 0),
+    CONSTRAINT budgets_dates_valid CHECK (end_date > start_date),
+    CONSTRAINT budgets_alert_threshold_valid CHECK (alert_threshold > 0 AND alert_threshold <= 100)
 );
 
--- Reports table (for saved reports)
-CREATE TABLE saved_reports (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-name TEXT NOT NULL,
-description TEXT,
-filters JSONB NOT NULL,
-chart_config JSONB,
-is_favorite BOOLEAN DEFAULT FALSE,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- =============================================
+-- INVESTMENTS TABLE
+-- =============================================
+CREATE TABLE investments (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    type investment_type DEFAULT 'stock' NOT NULL,
+    symbol VARCHAR(20),
+    units DECIMAL(15,4) NOT NULL,
+    purchase_price DECIMAL(15,2) NOT NULL,
+    current_price DECIMAL(15,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    purchase_date DATE NOT NULL,
+    platform VARCHAR(100),
+    notes TEXT,
+    metadata JSONB, -- Store additional investment data
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT investments_units_positive CHECK (units > 0),
+    CONSTRAINT investments_purchase_price_positive CHECK (purchase_price > 0),
+    CONSTRAINT investments_current_price_positive CHECK (current_price > 0)
 );
 
--- Notifications table
+-- =============================================
+-- LOANS TABLE
+-- =============================================
+CREATE TABLE loans (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    lender VARCHAR(100) NOT NULL,
+    principal_amount DECIMAL(15,2) NOT NULL,
+    outstanding_amount DECIMAL(15,2) NOT NULL,
+    interest_rate DECIMAL(5,2) NOT NULL,
+    emi_amount DECIMAL(15,2) NOT NULL,
+    tenure_months INTEGER NOT NULL,
+    start_date DATE NOT NULL,
+    next_due_date DATE NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    type loan_type DEFAULT 'personal' NOT NULL,
+    status loan_status DEFAULT 'active' NOT NULL,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT loans_principal_positive CHECK (principal_amount > 0),
+    CONSTRAINT loans_outstanding_non_negative CHECK (outstanding_amount >= 0),
+    CONSTRAINT loans_interest_rate_valid CHECK (interest_rate >= 0 AND interest_rate <= 100),
+    CONSTRAINT loans_emi_positive CHECK (emi_amount > 0),
+    CONSTRAINT loans_tenure_positive CHECK (tenure_months > 0)
+);
+
+-- =============================================
+-- LENDING TABLE
+-- =============================================
+CREATE TABLE lending (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    person_name VARCHAR(100) NOT NULL,
+    person_contact VARCHAR(100),
+    amount DECIMAL(15,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    type lending_type NOT NULL,
+    date DATE NOT NULL,
+    due_date DATE,
+    interest_rate DECIMAL(5,2) DEFAULT 0,
+    status lending_status DEFAULT 'pending' NOT NULL,
+    description TEXT,
+    paid_amount DECIMAL(15,2) DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT lending_amount_positive CHECK (amount > 0),
+    CONSTRAINT lending_paid_amount_non_negative CHECK (paid_amount >= 0),
+    CONSTRAINT lending_paid_amount_not_exceeds CHECK (paid_amount <= amount),
+    CONSTRAINT lending_interest_rate_valid CHECK (interest_rate >= 0 AND interest_rate <= 100)
+);
+
+-- =============================================
+-- NOTIFICATIONS TABLE
+-- =============================================
 CREATE TABLE notifications (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-title TEXT NOT NULL,
-message TEXT NOT NULL,
-type TEXT NOT NULL CHECK (type IN ('budget_alert', 'emi_reminder', 'lending_reminder', 'goal_reminder')),
-is_read BOOLEAN DEFAULT FALSE,
-data JSONB,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    type notification_type DEFAULT 'info' NOT NULL,
+    is_read BOOLEAN DEFAULT false NOT NULL,
+    action_url TEXT,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- Bank accounts table
-CREATE TABLE bank_accounts (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-account_name TEXT NOT NULL,
-bank_name TEXT NOT NULL,
-account_number TEXT,
-account_type TEXT CHECK (account_type IN ('savings', 'checking', 'credit_card')),
-balance DECIMAL(15,2) DEFAULT 0,
-currency currency_type DEFAULT 'USD',
-is_active BOOLEAN DEFAULT TRUE,
-last_sync_date TIMESTAMP WITH TIME ZONE,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- =============================================
+-- RECURRING TRANSACTIONS TABLE
+-- =============================================
+CREATE TABLE recurring_transactions (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    transaction_template JSONB NOT NULL, -- Template for creating transactions
+    frequency VARCHAR(20) NOT NULL, -- daily, weekly, monthly, yearly
+    interval_value INTEGER DEFAULT 1 NOT NULL, -- Every X days/weeks/months/years
+    start_date DATE NOT NULL,
+    end_date DATE,
+    last_executed DATE,
+    next_execution DATE NOT NULL,
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT recurring_interval_positive CHECK (interval_value > 0)
 );
 
--- Import history table
-CREATE TABLE import_history (
-id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-filename TEXT NOT NULL,
-file_type TEXT NOT NULL CHECK (file_type IN ('csv', 'pdf', 'excel')),
-source TEXT NOT NULL CHECK (source IN ('bank', 'credit_card', 'manual')),
-records_imported INTEGER DEFAULT 0,
-records_failed INTEGER DEFAULT 0,
-status TEXT DEFAULT 'processing' CHECK (status IN ('processing', 'completed', 'failed')),
-error_details JSONB,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- =============================================
+-- AI INSIGHTS TABLE
+-- =============================================
+CREATE TABLE ai_insights (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    type VARCHAR(50) NOT NULL, -- spending_analysis, budget_recommendation, etc.
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    confidence_score DECIMAL(3,2), -- 0.00 to 1.00
+    is_dismissed BOOLEAN DEFAULT false NOT NULL,
+    metadata JSONB,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- Create indexes for better performance
-CREATE INDEX idx_transactions_user_date ON transactions(user_id, transaction_date DESC);
-CREATE INDEX idx_transactions_category ON transactions(category_id);
+-- =============================================
+-- INDEXES FOR PERFORMANCE
+-- =============================================
+
+-- Profiles indexes
+CREATE INDEX idx_profiles_user_id ON profiles(user_id);
+
+-- Categories indexes
+CREATE INDEX idx_categories_user_id ON categories(user_id);
+CREATE INDEX idx_categories_type ON categories(type);
+CREATE INDEX idx_categories_parent_id ON categories(parent_id);
+
+-- Accounts indexes
+CREATE INDEX idx_accounts_user_id ON accounts(user_id);
+CREATE INDEX idx_accounts_type ON accounts(type);
+CREATE INDEX idx_accounts_is_active ON accounts(is_active);
+
+-- Transactions indexes
+CREATE INDEX idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX idx_transactions_date ON transactions(date);
 CREATE INDEX idx_transactions_type ON transactions(type);
-CREATE INDEX idx_investments_user ON investments(user_id);
-CREATE INDEX idx_lendings_user_status ON lendings(user_id, status);
-CREATE INDEX idx_loans_user_status ON loans(user_id, status);
-CREATE INDEX idx_emi_payments_loan ON emi_payments(loan_id);
-CREATE INDEX idx_budgets_user_period ON budgets(user_id, year, month);
-CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read);
+CREATE INDEX idx_transactions_category_id ON transactions(category_id);
+CREATE INDEX idx_transactions_account_id ON transactions(account_id);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at);
+CREATE INDEX idx_transactions_user_date ON transactions(user_id, date);
+CREATE INDEX idx_transactions_user_type ON transactions(user_id, type);
 
--- Row Level Security (RLS) policies
+-- Budgets indexes
+CREATE INDEX idx_budgets_user_id ON budgets(user_id);
+CREATE INDEX idx_budgets_period ON budgets(period);
+CREATE INDEX idx_budgets_is_active ON budgets(is_active);
+CREATE INDEX idx_budgets_dates ON budgets(start_date, end_date);
+
+-- Investments indexes
+CREATE INDEX idx_investments_user_id ON investments(user_id);
+CREATE INDEX idx_investments_type ON investments(type);
+CREATE INDEX idx_investments_symbol ON investments(symbol);
+
+-- Loans indexes
+CREATE INDEX idx_loans_user_id ON loans(user_id);
+CREATE INDEX idx_loans_status ON loans(status);
+CREATE INDEX idx_loans_next_due_date ON loans(next_due_date);
+
+-- Lending indexes
+CREATE INDEX idx_lending_user_id ON lending(user_id);
+CREATE INDEX idx_lending_type ON lending(type);
+CREATE INDEX idx_lending_status ON lending(status);
+CREATE INDEX idx_lending_due_date ON lending(due_date);
+
+-- Notifications indexes
+CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX idx_notifications_created_at ON notifications(created_at);
+
+-- Recurring transactions indexes
+CREATE INDEX idx_recurring_transactions_user_id ON recurring_transactions(user_id);
+CREATE INDEX idx_recurring_transactions_next_execution ON recurring_transactions(next_execution);
+CREATE INDEX idx_recurring_transactions_is_active ON recurring_transactions(is_active);
+
+-- AI insights indexes
+CREATE INDEX idx_ai_insights_user_id ON ai_insights(user_id);
+CREATE INDEX idx_ai_insights_type ON ai_insights(type);
+CREATE INDEX idx_ai_insights_is_dismissed ON ai_insights(is_dismissed);
+CREATE INDEX idx_ai_insights_expires_at ON ai_insights(expires_at);
+
+-- =============================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- =============================================
+
+-- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE investments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE investment_transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lendings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
-ALTER TABLE emi_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE saved_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE investments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lending ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE import_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recurring_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_insights ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
--- Profiles
-CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+-- Profiles policies
+CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = user_id);
 
--- Categories
+-- Categories policies
 CREATE POLICY "Users can view own categories" ON categories FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own categories" ON categories FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own categories" ON categories FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own categories" ON categories FOR DELETE USING (auth.uid() = user_id);
 
--- Transactions
+-- Accounts policies
+CREATE POLICY "Users can view own accounts" ON accounts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own accounts" ON accounts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own accounts" ON accounts FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own accounts" ON accounts FOR DELETE USING (auth.uid() = user_id);
+
+-- Transactions policies
 CREATE POLICY "Users can view own transactions" ON transactions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own transactions" ON transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own transactions" ON transactions FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own transactions" ON transactions FOR DELETE USING (auth.uid() = user_id);
 
--- Investments
+-- Budgets policies
+CREATE POLICY "Users can view own budgets" ON budgets FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own budgets" ON budgets FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own budgets" ON budgets FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own budgets" ON budgets FOR DELETE USING (auth.uid() = user_id);
+
+-- Investments policies
 CREATE POLICY "Users can view own investments" ON investments FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own investments" ON investments FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own investments" ON investments FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own investments" ON investments FOR DELETE USING (auth.uid() = user_id);
 
--- Similar policies for other tables...
--- (Continuing with same pattern for all user-owned tables)
+-- Loans policies
+CREATE POLICY "Users can view own loans" ON loans FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own loans" ON loans FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own loans" ON loans FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own loans" ON loans FOR DELETE USING (auth.uid() = user_id);
 
--- Functions for automated tasks
--- Function to create default categories for new users
-CREATE OR REPLACE FUNCTION create_default_categories(user_uuid UUID)
-RETURNS VOID AS $$
-BEGIN
--- Default expense categories
-INSERT INTO categories (user_id, name, type, color, icon, is_default) VALUES
-(user_uuid, 'Food & Dining', 'expense', '#EF4444', 'utensils', true),
-(user_uuid, 'Transportation', 'expense', '#3B82F6', 'car', true),
-(user_uuid, 'Shopping', 'expense', '#8B5CF6', 'shopping-bag', true),
-(user_uuid, 'Entertainment', 'expense', '#F59E0B', 'film', true),
-(user_uuid, 'Bills & Utilities', 'expense', '#10B981', 'receipt', true),
-(user_uuid, 'Healthcare', 'expense', '#EC4899', 'heart', true),
-(user_uuid, 'Education', 'expense', '#6366F1', 'book', true),
-(user_uuid, 'Travel', 'expense', '#14B8A6', 'plane', true),
-(user_uuid, 'Other', 'expense', '#6B7280', 'more-horizontal', true);
+-- Lending policies
+CREATE POLICY "Users can view own lending" ON lending FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own lending" ON lending FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own lending" ON lending FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own lending" ON lending FOR DELETE USING (auth.uid() = user_id);
 
-    -- Default income categories
-    INSERT INTO categories (user_id, name, type, color, icon, is_default) VALUES
-    (user_uuid, 'Salary', 'income', '#10B981', 'briefcase', true),
-    (user_uuid, 'Freelance', 'income', '#3B82F6', 'laptop', true),
-    (user_uuid, 'Investment Returns', 'income', '#8B5CF6', 'trending-up', true),
-    (user_uuid, 'Business', 'income', '#F59E0B', 'building', true),
-    (user_uuid, 'Gift', 'income', '#EC4899', 'gift', true),
-    (user_uuid, 'Other Income', 'income', '#6B7280', 'plus-circle', true);
+-- Notifications policies
+CREATE POLICY "Users can view own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own notifications" ON notifications FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own notifications" ON notifications FOR DELETE USING (auth.uid() = user_id);
 
-END;
+-- Recurring transactions policies
+CREATE POLICY "Users can view own recurring transactions" ON recurring_transactions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own recurring transactions" ON recurring_transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own recurring transactions" ON recurring_transactions FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own recurring transactions" ON recurring_transactions FOR DELETE USING (auth.uid() = user_id);
 
-$$
-LANGUAGE plpgsql;
+-- AI insights policies
+CREATE POLICY "Users can view own ai insights" ON ai_insights FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own ai insights" ON ai_insights FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own ai insights" ON ai_insights FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own ai insights" ON ai_insights FOR DELETE USING (auth.uid() = user_id);
 
--- Function to update timestamps
+-- =============================================
+-- FUNCTIONS AND TRIGGERS
+-- =============================================
+
+-- Function to update the updated_at column
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS
-$$
-
+RETURNS TRIGGER AS $$
 BEGIN
-NEW.updated_at = NOW();
-RETURN NEW;
+    NEW.updated_at = NOW();
+    RETURN NEW;
 END;
-
-$$
-LANGUAGE plpgsql;
+$$ language 'plpgsql';
 
 -- Create triggers for updated_at
-CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_budgets_updated_at BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_investments_updated_at BEFORE UPDATE ON investments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_loans_updated_at BEFORE UPDATE ON loans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_lending_updated_at BEFORE UPDATE ON lending FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_recurring_transactions_updated_at BEFORE UPDATE ON recurring_transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Add similar triggers for other tables...
-
--- Function to create profile on user signup
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS
-$$
-
+-- Function to update account balance when transaction is added/updated/deleted
+CREATE OR REPLACE FUNCTION update_account_balance()
+RETURNS TRIGGER AS $$
 BEGIN
-INSERT INTO public.profiles (id, email, full_name, avatar_url)
-VALUES (
-NEW.id,
-NEW.email,
-NEW.raw_user_meta_data->>'full_name',
-NEW.raw_user_meta_data->>'avatar_url'
-);
+    -- Handle INSERT
+    IF TG_OP = 'INSERT' THEN
+        IF NEW.account_id IS NOT NULL THEN
+            UPDATE accounts 
+            SET balance = balance + CASE 
+                WHEN NEW.type = 'income' THEN NEW.amount 
+                ELSE -NEW.amount 
+            END
+            WHERE id = NEW.account_id;
+        END IF;
+        RETURN NEW;
+    END IF;
+    
+    -- Handle UPDATE
+    IF TG_OP = 'UPDATE' THEN
+        -- Revert old transaction effect
+        IF OLD.account_id IS NOT NULL THEN
+            UPDATE accounts 
+            SET balance = balance - CASE 
+                WHEN OLD.type = 'income' THEN OLD.amount 
+                ELSE -OLD.amount 
+            END
+            WHERE id = OLD.account_id;
+        END IF;
+        
+        -- Apply new transaction effect
+        IF NEW.account_id IS NOT NULL THEN
+            UPDATE accounts 
+            SET balance = balance + CASE 
+                WHEN NEW.type = 'income' THEN NEW.amount 
+                ELSE -NEW.amount 
+            END
+            WHERE id = NEW.account_id;
+        END IF;
+        RETURN NEW;
+    END IF;
+    
+    -- Handle DELETE
+    IF TG_OP = 'DELETE' THEN
+        IF OLD.account_id IS NOT NULL THEN
+            UPDATE accounts 
+            SET balance = balance - CASE 
+                WHEN OLD.type = 'income' THEN OLD.amount 
+                ELSE -OLD.amount 
+            END
+            WHERE id = OLD.account_id;
+        END IF;
+        RETURN OLD;
+    END IF;
+    
+    RETURN NULL;
+END;
+$$ language 'plpgsql';
 
+-- Create trigger for account balance updates
+CREATE TRIGGER trigger_update_account_balance
+    AFTER INSERT OR UPDATE OR DELETE ON transactions
+    FOR EACH ROW EXECUTE FUNCTION update_account_balance();
+
+-- Function to update budget spent amount
+CREATE OR REPLACE FUNCTION update_budget_spent()
+RETURNS TRIGGER AS $$
+DECLARE
+    budget_record RECORD;
+BEGIN
+    -- Only process expense transactions
+    IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') AND NEW.type = 'expense' THEN
+        -- Find all budgets that include this transaction's category
+        FOR budget_record IN 
+            SELECT id FROM budgets 
+            WHERE user_id = NEW.user_id 
+            AND is_active = true
+            AND NEW.date BETWEEN start_date AND end_date
+            AND (category_ids IS NULL OR NEW.category_id = ANY(category_ids))
+        LOOP
+            -- Recalculate spent amount for this budget
+            UPDATE budgets SET spent = (
+                SELECT COALESCE(SUM(amount), 0)
+                FROM transactions t
+                WHERE t.user_id = NEW.user_id
+                AND t.type = 'expense'
+                AND t.date BETWEEN budget_record.start_date AND budget_record.end_date
+                AND (budgets.category_ids IS NULL OR t.category_id = ANY(budgets.category_ids))
+            )
+            WHERE id = budget_record.id;
+        END LOOP;
+    END IF;
+    
+    -- Handle DELETE
+    IF TG_OP = 'DELETE' AND OLD.type = 'expense' THEN
+        -- Find all budgets that included this transaction's category
+        FOR budget_record IN 
+            SELECT id FROM budgets 
+            WHERE user_id = OLD.user_id 
+            AND is_active = true
+            AND OLD.date BETWEEN start_date AND end_date
+            AND (category_ids IS NULL OR OLD.category_id = ANY(category_ids))
+        LOOP
+            -- Recalculate spent amount for this budget
+            UPDATE budgets SET spent = (
+                SELECT COALESCE(SUM(amount), 0)
+                FROM transactions t
+                WHERE t.user_id = OLD.user_id
+                AND t.type = 'expense'
+                AND t.date BETWEEN budget_record.start_date AND budget_record.end_date
+                AND (budgets.category_ids IS NULL OR t.category_id = ANY(budgets.category_ids))
+            )
+            WHERE id = budget_record.id;
+        END LOOP;
+    END IF;
+    
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ language 'plpgsql';
+
+-- Create trigger for budget spent updates
+CREATE TRIGGER trigger_update_budget_spent
+    AFTER INSERT OR UPDATE OR DELETE ON transactions
+    FOR EACH ROW EXECUTE FUNCTION update_budget_spent();
+
+-- =============================================
+-- DEFAULT CATEGORIES
+-- =============================================
+
+-- Function to create default categories for new users
+CREATE OR REPLACE FUNCTION create_default_categories(p_user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+    -- Default Income Categories
+    INSERT INTO categories (user_id, name, icon, color, type, is_default) VALUES
+    (p_user_id, 'Salary', 'briefcase', '#10B981', 'income', true),
+    (p_user_id, 'Freelance', 'laptop', '#3B82F6', 'income', true),
+    (p_user_id, 'Investment Returns', 'trending-up', '#8B5CF6', 'income', true),
+    (p_user_id, 'Gift', 'gift', '#F59E0B', 'income', true),
+    (p_user_id, 'Other Income', 'plus-circle', '#6B7280', 'income', true);
+    
+    -- Default Expense Categories
+    INSERT INTO categories (user_id, name, icon, color, type, is_default) VALUES
+    (p_user_id, 'Food & Dining', 'utensils', '#EF4444', 'expense', true),
+    (p_user_id, 'Transportation', 'car', '#3B82F6', 'expense', true),
+    (p_user_id, 'Shopping', 'shopping-bag', '#F59E0B', 'expense', true),
+    (p_user_id, 'Entertainment', 'film', '#8B5CF6', 'expense', true),
+    (p_user_id, 'Bills & Utilities', 'zap', '#10B981', 'expense', true),
+    (p_user_id, 'Healthcare', 'heart', '#EF4444', 'expense', true),
+    (p_user_id, 'Education', 'book', '#3B82F6', 'expense', true),
+    (p_user_id, 'Travel', 'map-pin', '#F59E0B', 'expense', true),
+    (p_user_id, 'Personal Care', 'user', '#8B5CF6', 'expense', true),
+    (p_user_id, 'Other Expenses', 'minus-circle', '#6B7280', 'expense', true);
+END;
+$$ language 'plpgsql';
+
+-- Function to handle new user signup
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Create profile
+    INSERT INTO profiles (user_id, full_name, avatar_url)
+    VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),
+        NEW.raw_user_meta_data->>'avatar_url'
+    );
+    
     -- Create default categories
     PERFORM create_default_categories(NEW.id);
-
+    
     RETURN NEW;
-
 END;
+$$ language 'plpgsql' SECURITY DEFINER;
 
-$$
-LANGUAGE plpgsql SECURITY DEFINER;
-
--- Trigger for new user signup
+-- Create trigger for new user signup
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+    FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
--- Function to calculate investment returns
-CREATE OR REPLACE FUNCTION calculate_investment_return(
-    initial_amount DECIMAL,
-    current_value DECIMAL
-)
-RETURNS DECIMAL AS
-$$
+-- =============================================
+-- UTILITY FUNCTIONS
+-- =============================================
 
+-- Function to get user's financial summary
+CREATE OR REPLACE FUNCTION get_financial_summary(p_user_id UUID, p_currency VARCHAR(3) DEFAULT 'USD')
+RETURNS TABLE (
+    total_balance DECIMAL(15,2),
+    monthly_income DECIMAL(15,2),
+    monthly_expenses DECIMAL(15,2),
+    monthly_savings DECIMAL(15,2),
+    total_investments DECIMAL(15,2),
+    total_loans DECIMAL(15,2)
+) AS $$
 BEGIN
-IF initial_amount = 0 THEN
-RETURN 0;
-END IF;
-RETURN ROUND(((current_value - initial_amount) / initial_amount \* 100), 2);
+    RETURN QUERY
+    WITH monthly_data AS (
+        SELECT 
+            COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income,
+            COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expenses
+        FROM transactions 
+        WHERE user_id = p_user_id 
+        AND currency = p_currency
+        AND date >= DATE_TRUNC('month', CURRENT_DATE)
+    )
+    SELECT 
+        COALESCE((SELECT SUM(balance) FROM accounts WHERE user_id = p_user_id AND currency = p_currency), 0),
+        md.income,
+        md.expenses,
+        md.income - md.expenses,
+        COALESCE((SELECT SUM(units * current_price) FROM investments WHERE user_id = p_user_id AND currency = p_currency), 0),
+        COALESCE((SELECT SUM(outstanding_amount) FROM loans WHERE user_id = p_user_id AND currency = p_currency AND status = 'active'), 0)
+    FROM monthly_data md;
 END;
+$$ language 'plpgsql' SECURITY DEFINER;
 
-$$
-LANGUAGE plpgsql;
-
--- Function to generate EMI schedule
-CREATE OR REPLACE FUNCTION generate_emi_schedule(
-    loan_uuid UUID,
-    principal DECIMAL,
-    rate DECIMAL,
-    tenure INTEGER,
-    emi DECIMAL,
-    start_date DATE
-)
-RETURNS VOID AS
-$$
-
+-- Function to cleanup expired AI insights
+CREATE OR REPLACE FUNCTION cleanup_expired_ai_insights()
+RETURNS INTEGER AS $$
 DECLARE
-month_counter INTEGER := 0;
-outstanding_principal DECIMAL := principal;
-monthly_rate DECIMAL := rate / 1200; -- Convert annual rate to monthly decimal
-schedule_date DATE := start_date; -- Renamed variable
-interest_component DECIMAL;
-principal_component DECIMAL;
+    deleted_count INTEGER;
 BEGIN
-WHILE month_counter < tenure AND outstanding_principal > 0 LOOP
-month_counter := month_counter + 1;
-schedule_date := start_date + INTERVAL '1 month' \* (month_counter - 1);
-
-        interest_component := ROUND(outstanding_principal * monthly_rate, 2);
-        principal_component := ROUND(emi - interest_component, 2);
-
-        -- Adjust for last payment
-        IF month_counter = tenure THEN
-            principal_component := outstanding_principal;
-        END IF;
-
-        outstanding_principal := outstanding_principal - principal_component;
-
-        INSERT INTO emi_payments (
-            loan_id,
-            payment_date,
-            amount,
-            principal_component,
-            interest_component,
-            outstanding_balance
-        ) VALUES (
-            loan_uuid,
-            schedule_date, -- Updated variable name
-            emi,
-            principal_component,
-            interest_component,
-            outstanding_principal
-        );
-    END LOOP;
-
+    DELETE FROM ai_insights 
+    WHERE expires_at IS NOT NULL 
+    AND expires_at < NOW();
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    RETURN deleted_count;
 END;
+$$ language 'plpgsql';
 
-$$
-LANGUAGE plpgsql;
-$$
+-- =============================================
+-- SAMPLE DATA (Optional - for development/testing)
+-- =============================================
+
+-- You can uncomment this section to insert sample data for testing
+/*
+-- Sample user (replace with actual user ID from auth.users)
+-- INSERT INTO profiles (user_id, full_name, currency) VALUES 
+-- ('your-user-id-here', 'John Doe', 'USD');
+
+-- Sample categories will be created automatically via trigger
+
+-- Sample accounts
+-- INSERT INTO accounts (user_id, name, type, balance) VALUES 
+-- ('your-user-id-here', 'Checking Account', 'bank', 5000.00),
+-- ('your-user-id-here', 'Credit Card', 'credit_card', -1200.00);
+
+-- Sample transactions
+-- INSERT INTO transactions (user_id, type, amount, description, date) VALUES 
+-- ('your-user-id-here', 'income', 4000.00, 'Monthly Salary', CURRENT_DATE),
+-- ('your-user-id-here', 'expense', 50.00, 'Grocery Shopping', CURRENT_DATE - INTERVAL '1 day');
+*/
+
+-- End of schema

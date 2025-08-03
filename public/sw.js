@@ -1,402 +1,414 @@
 // FinMate Service Worker
-const CACHE_NAME = "finmate-v1.0.0";
-const RUNTIME_CACHE = "finmate-runtime";
+// Provides offline functionality, caching, and background sync
 
-// Files to cache during install
-const STATIC_CACHE_URLS = [
-  "/",
-  "/dashboard",
-  "/manifest.json",
-  "/offline",
-  // Add critical CSS and JS files here
+const CACHE_NAME = 'finmate-v1.0.0';
+const STATIC_CACHE_NAME = 'finmate-static-v1.0.0';
+const DYNAMIC_CACHE_NAME = 'finmate-dynamic-v1.0.0';
+
+// Files to cache for offline functionality
+const STATIC_FILES = [
+  '/',
+  '/dashboard',
+  '/dashboard/overview',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  // Add other critical assets
 ];
 
-// Routes that should always be fetched from network
-const NETWORK_ONLY_URLS = ["/api/", "/auth/", "/_next/webpack-hmr"];
-
-// Routes that should be cached with network-first strategy
-const NETWORK_FIRST_URLS = [
-  "/dashboard",
-  "/transactions",
-  "/budget",
-  "/investments",
-  "/reports",
+// API endpoints to cache
+const API_CACHE_PATTERNS = [
+  /^https:\/\/.*\.supabase\.co\/rest\/v1\//,
+  /^https:\/\/.*\.supabase\.co\/auth\/v1\//,
 ];
+
+// Network-first patterns (always try network first)
+const NETWORK_FIRST_PATTERNS = [
+  /^https:\/\/.*\.supabase\.co\/rest\/v1\/transactions/,
+  /^https:\/\/.*\.supabase\.co\/rest\/v1\/budgets/,
+  /^https:\/\/.*\.supabase\.co\/rest\/v1\/investments/,
+];
+
+// Cache-first patterns (try cache first, fallback to network)
+const CACHE_FIRST_PATTERNS = [
+  /\.(js|css|woff|woff2|ttf|eot)$/,
+  /^https:\/\/fonts\.googleapis\.com/,
+  /^https:\/\/fonts\.gstatic\.com/,
+];
+
+// Maximum age for different types of cached content (in milliseconds)
+const CACHE_EXPIRY = {
+  static: 24 * 60 * 60 * 1000, // 24 hours
+  api: 5 * 60 * 1000, // 5 minutes
+  images: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
 
 // Install event - cache static assets
-self.addEventListener("install", (event) => {
-  console.log("Service Worker: Installing...");
-
+self.addEventListener('install', (event) => {
+  console.log('SW: Installing service worker...');
+  
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => {
-        console.log("Service Worker: Caching static assets");
-        return cache.addAll(STATIC_CACHE_URLS);
-      })
-      .then(() => {
-        console.log("Service Worker: Installation complete");
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error("Service Worker: Installation failed", error);
-      })
+    Promise.all([
+      // Cache static files
+      caches.open(STATIC_CACHE_NAME).then((cache) => {
+        return cache.addAll(STATIC_FILES);
+      }),
+      // Skip waiting to activate immediately
+      self.skipWaiting()
+    ])
   );
 });
 
 // Activate event - clean up old caches
-self.addEventListener("activate", (event) => {
-  console.log("Service Worker: Activating...");
-
+self.addEventListener('activate', (event) => {
+  console.log('SW: Activating service worker...');
+  
   event.waitUntil(
-    caches
-      .keys()
-      .then((cacheNames) => {
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
         return Promise.all(
-          cacheNames
-            .filter((cacheName) => {
-              return cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE;
-            })
-            .map((cacheName) => {
-              console.log("Service Worker: Deleting old cache", cacheName);
+          cacheNames.map((cacheName) => {
+            if (
+              cacheName !== STATIC_CACHE_NAME &&
+              cacheName !== DYNAMIC_CACHE_NAME &&
+              cacheName.startsWith('finmate-')
+            ) {
+              console.log('SW: Deleting old cache:', cacheName);
               return caches.delete(cacheName);
-            })
+            }
+          })
         );
-      })
-      .then(() => {
-        console.log("Service Worker: Activation complete");
-        return self.clients.claim();
-      })
+      }),
+      // Take control of all pages
+      self.clients.claim()
+    ])
   );
 });
 
-// Fetch event - implement caching strategies
-self.addEventListener("fetch", (event) => {
+// Fetch event - handle all network requests
+self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== "GET") {
+  // Skip cross-origin requests that are not API calls
+  if (url.origin !== location.origin && !isApiCall(request.url)) {
     return;
   }
 
-  // Skip cross-origin requests
-  if (url.origin !== location.origin) {
-    return;
+  // Handle different types of requests
+  if (request.method === 'GET') {
+    if (isNetworkFirst(request.url)) {
+      event.respondWith(networkFirst(request));
+    } else if (isCacheFirst(request.url)) {
+      event.respondWith(cacheFirst(request));
+    } else if (isApiCall(request.url)) {
+      event.respondWith(networkFirst(request));
+    } else {
+      event.respondWith(staleWhileRevalidate(request));
+    }
+  } else {
+    // Non-GET requests (POST, PUT, DELETE) - always try network
+    event.respondWith(networkOnly(request));
   }
-
-  // Network-only requests
-  if (NETWORK_ONLY_URLS.some((path) => url.pathname.startsWith(path))) {
-    return;
-  }
-
-  // Network-first strategy for dynamic content
-  if (NETWORK_FIRST_URLS.some((path) => url.pathname.startsWith(path))) {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  // Cache-first strategy for static assets
-  if (
-    url.pathname.startsWith("/_next/static/") ||
-    url.pathname.startsWith("/icons/") ||
-    url.pathname.startsWith("/images/")
-  ) {
-    event.respondWith(cacheFirst(request));
-    return;
-  }
-
-  // Stale-while-revalidate for other requests
-  event.respondWith(staleWhileRevalidate(request));
 });
-
-// Cache-first strategy
-async function cacheFirst(request) {
-  try {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      const cache = await caches.open(RUNTIME_CACHE);
-      cache.put(request, networkResponse.clone());
-    }
-
-    return networkResponse;
-  } catch (error) {
-    console.error("Cache-first strategy failed:", error);
-    return new Response("Offline", { status: 503 });
-  }
-}
 
 // Network-first strategy
 async function networkFirst(request) {
   try {
     const networkResponse = await fetch(request);
-
+    
     if (networkResponse.ok) {
-      const cache = await caches.open(RUNTIME_CACHE);
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
       cache.put(request, networkResponse.clone());
     }
-
+    
     return networkResponse;
   } catch (error) {
-    console.log("Network failed, trying cache:", error);
-
+    console.log('SW: Network failed, trying cache for:', request.url);
     const cachedResponse = await caches.match(request);
+    
     if (cachedResponse) {
       return cachedResponse;
     }
-
+    
     // Return offline page for navigation requests
-    if (request.mode === "navigate") {
-      const offlineResponse = await caches.match("/offline");
-      if (offlineResponse) {
-        return offlineResponse;
-      }
+    if (request.mode === 'navigate') {
+      return caches.match('/offline.html') || new Response('Offline', { status: 503 });
     }
+    
+    throw error;
+  }
+}
 
-    return new Response("Offline", {
-      status: 503,
-      headers: { "Content-Type": "text/plain" },
-    });
+// Cache-first strategy
+async function cacheFirst(request) {
+  const cachedResponse = await caches.match(request);
+  
+  if (cachedResponse && !isExpired(cachedResponse)) {
+    return cachedResponse;
+  }
+  
+  try {
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    throw error;
   }
 }
 
 // Stale-while-revalidate strategy
 async function staleWhileRevalidate(request) {
-  const cache = await caches.open(RUNTIME_CACHE);
-  const cachedResponse = await cache.match(request);
-
-  const fetchPromise = fetch(request)
-    .then((networkResponse) => {
-      if (networkResponse.ok) {
-        cache.put(request, networkResponse.clone());
-      }
-      return networkResponse;
-    })
-    .catch(() => cachedResponse);
-
-  return cachedResponse || fetchPromise;
+  const cachedResponse = await caches.match(request);
+  
+  const networkResponse = fetch(request).then((response) => {
+    if (response.ok) {
+      const cache = caches.open(DYNAMIC_CACHE_NAME);
+      cache.then((c) => c.put(request, response.clone()));
+    }
+    return response;
+  }).catch(() => {
+    // Network failed, return cached response if available
+    return cachedResponse;
+  });
+  
+  return cachedResponse || networkResponse;
 }
 
-// Background sync for offline form submissions
-self.addEventListener("sync", (event) => {
-  console.log("Service Worker: Background sync", event.tag);
+// Network-only strategy
+async function networkOnly(request) {
+  try {
+    return await fetch(request);
+  } catch (error) {
+    // For POST/PUT/DELETE requests, we might want to store them for later sync
+    if (request.method !== 'GET') {
+      await storeFailedRequest(request);
+    }
+    throw error;
+  }
+}
 
-  if (event.tag === "transaction-sync") {
-    event.waitUntil(syncTransactions());
+// Helper functions
+function isNetworkFirst(url) {
+  return NETWORK_FIRST_PATTERNS.some(pattern => pattern.test(url));
+}
+
+function isCacheFirst(url) {
+  return CACHE_FIRST_PATTERNS.some(pattern => pattern.test(url));
+}
+
+function isApiCall(url) {
+  return API_CACHE_PATTERNS.some(pattern => pattern.test(url));
+}
+
+function isExpired(response) {
+  const dateHeader = response.headers.get('date');
+  if (!dateHeader) return false;
+  
+  const responseDate = new Date(dateHeader);
+  const now = new Date();
+  const age = now.getTime() - responseDate.getTime();
+  
+  // Determine expiry based on content type
+  if (response.url.includes('/rest/v1/')) {
+    return age > CACHE_EXPIRY.api;
+  } else if (response.url.match(/\.(png|jpg|jpeg|gif|svg)$/)) {
+    return age > CACHE_EXPIRY.images;
+  } else {
+    return age > CACHE_EXPIRY.static;
+  }
+}
+
+// Store failed requests for background sync
+async function storeFailedRequest(request) {
+  try {
+    const requestData = {
+      url: request.url,
+      method: request.method,
+      headers: Object.fromEntries(request.headers.entries()),
+      body: await request.clone().text(),
+      timestamp: Date.now(),
+    };
+    
+    // Store in IndexedDB for later sync
+    const db = await openDB();
+    const transaction = db.transaction(['failedRequests'], 'readwrite');
+    const store = transaction.objectStore('failedRequests');
+    await store.add(requestData);
+    
+    console.log('SW: Stored failed request for later sync:', request.url);
+  } catch (error) {
+    console.error('SW: Failed to store request:', error);
+  }
+}
+
+// Background sync for failed requests
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync') {
+    event.waitUntil(syncFailedRequests());
   }
 });
 
-// Sync offline transactions
-async function syncTransactions() {
+async function syncFailedRequests() {
   try {
     const db = await openDB();
-    const transactions = await getOfflineTransactions(db);
-
-    for (const transaction of transactions) {
+    const transaction = db.transaction(['failedRequests'], 'readonly');
+    const store = transaction.objectStore('failedRequests');
+    const failedRequests = await store.getAll();
+    
+    for (const requestData of failedRequests) {
       try {
-        const response = await fetch("/api/transactions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(transaction.data),
+        const response = await fetch(requestData.url, {
+          method: requestData.method,
+          headers: requestData.headers,
+          body: requestData.body,
         });
-
+        
         if (response.ok) {
-          await deleteOfflineTransaction(db, transaction.id);
-          console.log("Synced transaction:", transaction.id);
+          // Remove from storage after successful sync
+          const deleteTransaction = db.transaction(['failedRequests'], 'readwrite');
+          const deleteStore = deleteTransaction.objectStore('failedRequests');
+          await deleteStore.delete(requestData.id);
+          
+          console.log('SW: Successfully synced failed request:', requestData.url);
         }
       } catch (error) {
-        console.error("Failed to sync transaction:", error);
+        console.log('SW: Failed to sync request:', requestData.url, error);
       }
     }
   } catch (error) {
-    console.error("Background sync failed:", error);
+    console.error('SW: Background sync failed:', error);
   }
 }
 
-// IndexedDB helpers for offline storage
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open("FinMateOffline", 1);
+// Push notification handling
+self.addEventListener('push', (event) => {
+  const options = {
+    body: 'You have new financial insights!',
+    icon: '/icon-192.png',
+    badge: '/badge-72.png',
+    data: {
+      url: '/dashboard',
+    },
+    actions: [
+      {
+        action: 'view',
+        title: 'View Dashboard',
+        icon: '/actions/view.png',
+      },
+      {
+        action: 'dismiss',
+        title: 'Dismiss',
+        icon: '/actions/dismiss.png',
+      },
+    ],
+  };
 
+  if (event.data) {
+    const data = event.data.json();
+    options.body = data.body || options.body;
+    options.data.url = data.url || options.data.url;
+  }
+
+  event.waitUntil(
+    self.registration.showNotification('FinMate', options)
+  );
+});
+
+// Notification click handling
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const action = event.action;
+  const url = event.notification.data.url || '/dashboard';
+
+  if (action === 'view' || !action) {
+    event.waitUntil(
+      clients.matchAll().then((clientList) => {
+        // If a client is already open, focus it
+        for (const client of clientList) {
+          if (client.url === url && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If no client is open, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
+    );
+  }
+});
+
+// IndexedDB helper
+async function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('FinMateDB', 1);
+    
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
-
+    
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
-
-      if (!db.objectStoreNames.contains("transactions")) {
-        const store = db.createObjectStore("transactions", {
-          keyPath: "id",
+      
+      if (!db.objectStoreNames.contains('failedRequests')) {
+        const store = db.createObjectStore('failedRequests', {
+          keyPath: 'id',
           autoIncrement: true,
         });
-        store.createIndex("timestamp", "timestamp", { unique: false });
+        store.createIndex('timestamp', 'timestamp');
       }
     };
   });
 }
 
-async function getOfflineTransactions(db) {
-  const transaction = db.transaction(["transactions"], "readonly");
-  const store = transaction.objectStore("transactions");
-
-  return new Promise((resolve, reject) => {
-    const request = store.getAll();
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-  });
-}
-
-async function deleteOfflineTransaction(db, id) {
-  const transaction = db.transaction(["transactions"], "readwrite");
-  const store = transaction.objectStore("transactions");
-
-  return new Promise((resolve, reject) => {
-    const request = store.delete(id);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve();
-  });
-}
-
-// Push notifications
-self.addEventListener("push", (event) => {
-  console.log("Service Worker: Push received");
-
-  if (!event.data) {
-    return;
+// Cache cleanup on storage pressure
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
-
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: "/icon-192.png",
-    badge: "/icon-96.png",
-    data: data.data,
-    actions: data.actions || [
-      {
-        action: "open",
-        title: "Open FinMate",
-        icon: "/icons/action-open.png",
-      },
-      {
-        action: "dismiss",
-        title: "Dismiss",
-        icon: "/icons/action-dismiss.png",
-      },
-    ],
-    requireInteraction: data.requireInteraction || false,
-    tag: data.tag || "finmate-notification",
-    renotify: true,
-    vibrate: [200, 100, 200],
-  };
-
-  event.waitUntil(self.registration.showNotification(data.title, options));
+  
+  if (event.data && event.data.type === 'CACHE_CLEANUP') {
+    event.waitUntil(cleanupOldCaches());
+  }
 });
 
-// Notification click handler
-self.addEventListener("notificationclick", (event) => {
-  console.log("Service Worker: Notification clicked");
-
-  event.notification.close();
-
-  const action = event.action;
-  const data = event.notification.data;
-
-  if (action === "dismiss") {
-    return;
-  }
-
-  let url = "/dashboard";
-
-  if (data && data.url) {
-    url = data.url;
-  } else if (action === "open" && data && data.type) {
-    switch (data.type) {
-      case "budget_alert":
-        url = "/budget";
-        break;
-      case "emi_reminder":
-        url = "/loans";
-        break;
-      case "lending_reminder":
-        url = "/lending";
-        break;
-      default:
-        url = "/dashboard";
-    }
-  }
-
-  event.waitUntil(
-    clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if a window is already open
-        for (const client of clientList) {
-          if (client.url.includes(url) && "focus" in client) {
-            return client.focus();
-          }
-        }
-
-        // Open new window
-        if (clients.openWindow) {
-          return clients.openWindow(url);
-        }
-      })
+async function cleanupOldCaches() {
+  const cacheNames = await caches.keys();
+  const oldCaches = cacheNames.filter(name => 
+    name.startsWith('finmate-') && 
+    name !== STATIC_CACHE_NAME && 
+    name !== DYNAMIC_CACHE_NAME
   );
-});
-
-// Share target handler
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SHARE_TARGET") {
-    console.log("Service Worker: Share target received", event.data);
-
-    // Handle shared content
-    const { title, text, url } = event.data;
-
-    // Store shared data for the app to retrieve
-    event.ports[0].postMessage({
-      type: "SHARE_DATA",
-      data: { title, text, url },
-    });
-  }
-});
+  
+  return Promise.all(oldCaches.map(name => caches.delete(name)));
+}
 
 // Periodic background sync (if supported)
-self.addEventListener("periodicsync", (event) => {
-  if (event.tag === "budget-check") {
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'budget-check') {
     event.waitUntil(checkBudgetStatus());
   }
 });
 
 async function checkBudgetStatus() {
+  // This would check budget status and show notifications if needed
+  // Implementation depends on your API structure
   try {
-    const response = await fetch("/api/budget/status");
-    const data = await response.json();
-
-    if (data.nearLimit) {
-      self.registration.showNotification("Budget Alert", {
-        body: `You've used ${data.percentage}% of your monthly budget`,
-        icon: "/icon-192.png",
-        tag: "budget-alert",
-        data: { type: "budget_alert", url: "/budget" },
-      });
-    }
+    // Placeholder for budget checking logic
+    console.log('SW: Checking budget status...');
   } catch (error) {
-    console.error("Budget check failed:", error);
+    console.error('SW: Budget check failed:', error);
   }
 }
 
-// Handle app update
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-console.log("Service Worker: Script loaded");
+console.log('SW: Service worker script loaded successfully');

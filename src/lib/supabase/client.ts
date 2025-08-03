@@ -1,438 +1,313 @@
-// src/lib/supabase/client.ts
-import type { Database } from "@/types/supabase";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { createBrowserClient } from "@supabase/ssr";
+import { createBrowserClient } from '@supabase/ssr';
 
 // Client-side Supabase client
-export const supabase = createClientComponentClient<Database>();
-
-// Browser client for SSR
 export const createClient = () => {
-  return createBrowserClient<Database>(
+  return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 };
 
-// Admin client (server-side only)
-export const createAdminClient = () => {
-  if (typeof window !== "undefined") {
-    throw new Error("Admin client should only be used on the server side");
-  }
+// Database types
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Profile, 'id' | 'created_at'>>;
+      };
+      transactions: {
+        Row: Transaction;
+        Insert: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Transaction, 'id' | 'created_at'>>;
+      };
+      categories: {
+        Row: Category;
+        Insert: Omit<Category, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Category, 'id' | 'created_at'>>;
+      };
+      budgets: {
+        Row: Budget;
+        Insert: Omit<Budget, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Budget, 'id' | 'created_at'>>;
+      };
+      investments: {
+        Row: Investment;
+        Insert: Omit<Investment, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Investment, 'id' | 'created_at'>>;
+      };
+      loans: {
+        Row: Loan;
+        Insert: Omit<Loan, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Loan, 'id' | 'created_at'>>;
+      };
+      lending: {
+        Row: Lending;
+        Insert: Omit<Lending, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Lending, 'id' | 'created_at'>>;
+      };
+      accounts: {
+        Row: Account;
+        Insert: Omit<Account, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Account, 'id' | 'created_at'>>;
+      };
+      notifications: {
+        Row: Notification;
+        Insert: Omit<Notification, 'id' | 'created_at'>;
+        Update: Partial<Omit<Notification, 'id' | 'created_at'>>;
+      };
+    };
+  };
+}
 
-  const { createClient } = require("@supabase/supabase-js");
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
+// Type definitions
+export interface Profile {
+  id: string;
+  user_id: string;
+  full_name?: string;
+  avatar_url?: string;
+  currency: string;
+  timezone: string;
+  theme: 'light' | 'dark' | 'system';
+  notifications_enabled: boolean;
+  ai_insights_enabled: boolean;
+  monthly_budget_limit?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Transaction {
+  id: string;
+  user_id: string;
+  type: 'income' | 'expense';
+  amount: number;
+  currency: string;
+  description: string;
+  category_id: string;
+  account_id?: string;
+  date: string;
+  tags?: string[];
+  receipt_url?: string;
+  location?: string;
+  notes?: string;
+  is_recurring: boolean;
+  recurring_pattern?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Category {
+  id: string;
+  user_id: string;
+  name: string;
+  icon: string;
+  color: string;
+  type: 'income' | 'expense';
+  parent_id?: string;
+  is_default: boolean;
+  budget_limit?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Budget {
+  id: string;
+  user_id: string;
+  name: string;
+  amount: number;
+  spent: number;
+  currency: string;
+  period: 'weekly' | 'monthly' | 'yearly';
+  start_date: string;
+  end_date: string;
+  category_ids?: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Investment {
+  id: string;
+  user_id: string;
+  name: string;
+  type: 'stock' | 'mutual_fund' | 'crypto' | 'bond' | 'fd' | 'other';
+  symbol?: string;
+  units: number;
+  purchase_price: number;
+  current_price: number;
+  currency: string;
+  purchase_date: string;
+  platform?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Loan {
+  id: string;
+  user_id: string;
+  lender: string;
+  principal_amount: number;
+  outstanding_amount: number;
+  interest_rate: number;
+  emi_amount: number;
+  tenure_months: number;
+  start_date: string;
+  next_due_date: string;
+  currency: string;
+  type: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other';
+  status: 'active' | 'closed' | 'defaulted';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Lending {
+  id: string;
+  user_id: string;
+  person_name: string;
+  person_contact?: string;
+  amount: number;
+  currency: string;
+  type: 'lent' | 'borrowed';
+  date: string;
+  due_date?: string;
+  interest_rate?: number;
+  status: 'pending' | 'partial' | 'paid' | 'overdue';
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Account {
+  id: string;
+  user_id: string;
+  name: string;
+  type: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'other';
+  bank_name?: string;
+  account_number?: string;
+  balance: number;
+  currency: string;
+  is_active: boolean;
+  color: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  is_read: boolean;
+  action_url?: string;
+  metadata?: any;
+  created_at: string;
+}
+
+// Helper functions for database operations
+export const dbHelpers = {
+  // Generic fetch with error handling
+  async fetchWithError<T>(
+    promise: Promise<{ data: T | null; error: any }>
+  ): Promise<T> {
+    const { data, error } = await promise;
+    if (error) {
+      console.error('Database error:', error);
+      throw new Error(error.message || 'Database operation failed');
     }
-  );
-};
-
-// Storage helpers
-export const storage = {
-  // Upload file to Supabase Storage
-  async uploadFile(bucket: string, path: string, file: File) {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    if (error) throw error;
+    if (!data) {
+      throw new Error('No data returned');
+    }
     return data;
   },
 
-  // Get public URL for a file
-  getPublicUrl(bucket: string, path: string) {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return data.publicUrl;
+  // Format date for database
+  formatDate(date: Date): string {
+    return date.toISOString();
   },
 
-  // Delete a file
-  async deleteFile(bucket: string, path: string) {
-    const { error } = await supabase.storage.from(bucket).remove([path]);
-
-    if (error) throw error;
+  // Parse date from database
+  parseDate(dateString: string): Date {
+    return new Date(dateString);
   },
 
-  // List files in a directory
-  async listFiles(bucket: string, folder: string = "") {
-    const { data, error } = await supabase.storage.from(bucket).list(folder, {
-      limit: 100,
-      offset: 0,
-      sortBy: { column: "name", order: "asc" },
-    });
+  // Validate currency
+  isValidCurrency(currency: string): boolean {
+    const validCurrencies = ['USD', 'EUR', 'GBP', 'INR', 'BDT', 'JPY', 'CAD', 'AUD'];
+    return validCurrencies.includes(currency);
+  },
 
-    if (error) throw error;
-    return data;
+  // Format amount for database (ensure 2 decimal places)
+  formatAmount(amount: number): number {
+    return Math.round(amount * 100) / 100;
   },
 };
 
-// Real-time subscriptions
-export const realtime = {
-  // Subscribe to table changes
-  subscribeToTable(
-    table: string,
-    callback: (payload: any) => void,
-    filter?: string
+// Real-time subscription helpers
+export const subscriptions = {
+  // Subscribe to user's transactions
+  subscribeToTransactions(
+    userId: string,
+    callback: (payload: any) => void
   ) {
-    const channel = supabase
-      .channel(`${table}-changes`)
+    const client = createClient();
+    return client
+      .channel('transactions')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "*",
-          schema: "public",
-          table,
-          filter,
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${userId}`,
         },
         callback
       )
       .subscribe();
-
-    return () => supabase.removeChannel(channel);
   },
 
-  // Subscribe to user-specific changes
-  subscribeToUserData(
+  // Subscribe to user's budgets
+  subscribeToBudgets(
     userId: string,
-    tables: string[],
     callback: (payload: any) => void
   ) {
-    const channels = tables.map((table) => {
-      return supabase
-        .channel(`${table}-${userId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table,
-            filter: `user_id=eq.${userId}`,
-          },
-          callback
-        )
-        .subscribe();
-    });
-
-    return () => {
-      channels.forEach((channel) => supabase.removeChannel(channel));
-    };
-  },
-};
-
-// Auth helpers
-export const auth = {
-  // Sign in with email and password
-  async signInWithEmail(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
-    return data;
+    const client = createClient();
+    return client
+      .channel('budgets')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'budgets',
+          filter: `user_id=eq.${userId}`,
+        },
+        callback
+      )
+      .subscribe();
   },
 
-  // Sign up with email and password
-  async signUpWithEmail(email: string, password: string, metadata?: any) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    });
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Sign in with OAuth provider
-  async signInWithOAuth(provider: "google" | "github") {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Sign out
-  async signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  },
-
-  // Reset password
-  async resetPassword(email: string) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-
-    if (error) throw error;
-  },
-
-  // Update password
-  async updatePassword(password: string) {
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) throw error;
-  },
-
-  // Get current user
-  async getCurrentUser() {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (error) throw error;
-    return user;
-  },
-
-  // Get current session
-  async getCurrentSession() {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-    if (error) throw error;
-    return session;
-  },
-};
-
-// Database helpers with type safety
-export const db = {
-  // Generic CRUD operations
-  async create<T = any>(table: string, data: Partial<T>) {
-    const { data: result, error } = await supabase
-      .from(table)
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return result;
-  },
-
-  async findById<T = any>(table: string, id: string) {
-    const { data, error } = await supabase
-      .from(table)
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-    return data as T;
-  },
-
-  async findMany<T = any>(
-    table: string,
-    options?: {
-      select?: string;
-      filter?: Record<string, any>;
-      orderBy?: { column: string; ascending?: boolean };
-      limit?: number;
-      offset?: number;
-    }
+  // Subscribe to user's notifications
+  subscribeToNotifications(
+    userId: string,
+    callback: (payload: any) => void
   ) {
-    let query = supabase.from(table).select(options?.select || "*");
-
-    // Apply filters
-    if (options?.filter) {
-      Object.entries(options.filter).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          query = query.in(key, value);
-        } else if (value !== undefined) {
-          query = query.eq(key, value);
-        }
-      });
-    }
-
-    // Apply ordering
-    if (options?.orderBy) {
-      query = query.order(options.orderBy.column, {
-        ascending: options.orderBy.ascending ?? true,
-      });
-    }
-
-    // Apply pagination
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    if (options?.offset) {
-      query = query.range(
-        options.offset,
-        options.offset + (options.limit || 10) - 1
-      );
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return data as T[];
-  },
-
-  async update<T = any>(table: string, id: string, data: Partial<T>) {
-    const { data: result, error } = await supabase
-      .from(table)
-      .update(data)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return result;
-  },
-
-  async delete(table: string, id: string) {
-    const { error } = await supabase.from(table).delete().eq("id", id);
-
-    if (error) throw error;
-  },
-
-  // Bulk operations
-  async bulkInsert<T = any>(table: string, data: Partial<T>[]) {
-    const { data: result, error } = await supabase
-      .from(table)
-      .insert(data)
-      .select();
-
-    if (error) throw error;
-    return result;
-  },
-
-  async bulkUpdate<T = any>(
-    table: string,
-    updates: Array<{ id: string; data: Partial<T> }>
-  ) {
-    const promises = updates.map(({ id, data }) =>
-      this.update(table, id, data)
-    );
-    return Promise.all(promises);
-  },
-
-  // Search functionality
-  async search<T = any>(
-    table: string,
-    searchTerm: string,
-    searchColumns: string[],
-    options?: {
-      limit?: number;
-      orderBy?: { column: string; ascending?: boolean };
-    }
-  ) {
-    let query = supabase.from(table).select("*");
-
-    // Create search condition
-    const searchConditions = searchColumns
-      .map((column) => `${column}.ilike.%${searchTerm}%`)
-      .join(",");
-
-    query = query.or(searchConditions);
-
-    if (options?.orderBy) {
-      query = query.order(options.orderBy.column, {
-        ascending: options.orderBy.ascending ?? true,
-      });
-    }
-
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return data as T[];
-  },
-
-  // Aggregation functions
-  async count(table: string, filter?: Record<string, any>) {
-    let query = supabase
-      .from(table)
-      .select("*", { count: "exact", head: true });
-
-    if (filter) {
-      Object.entries(filter).forEach(([key, value]) => {
-        query = query.eq(key, value);
-      });
-    }
-
-    const { count, error } = await query;
-
-    if (error) throw error;
-    return count || 0;
-  },
-
-  async sum(table: string, column: string, filter?: Record<string, any>) {
-    let query = supabase.from(table).select(column);
-
-    if (filter) {
-      Object.entries(filter).forEach(([key, value]) => {
-        query = query.eq(key, value);
-      });
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return data?.reduce((sum, row) => sum + (row[column] || 0), 0) || 0;
+    const client = createClient();
+    return client
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        callback
+      )
+      .subscribe();
   },
 };
-
-// Error handling utility
-export const handleSupabaseError = (error: any) => {
-  console.error("Supabase error:", error);
-
-  if (error?.code === "PGRST116") {
-    return "No data found";
-  }
-
-  if (error?.code === "23505") {
-    return "This record already exists";
-  }
-
-  if (error?.code === "23503") {
-    return "Cannot delete this record as it is referenced by other data";
-  }
-
-  if (error?.code === "PGRST301") {
-    return "You do not have permission to perform this action";
-  }
-
-  return error?.message || "An unexpected error occurred";
-};
-
-// Type-safe table names
-export const TABLES = {
-  PROFILES: "profiles",
-  CATEGORIES: "categories",
-  TRANSACTIONS: "transactions",
-  INVESTMENTS: "investments",
-  INVESTMENT_TRANSACTIONS: "investment_transactions",
-  LENDINGS: "lendings",
-  LOANS: "loans",
-  EMI_PAYMENTS: "emi_payments",
-  BUDGETS: "budgets",
-  SAVED_REPORTS: "saved_reports",
-  NOTIFICATIONS: "notifications",
-  BANK_ACCOUNTS: "bank_accounts",
-  IMPORT_HISTORY: "import_history",
-} as const;
-
-// Storage buckets
-export const STORAGE_BUCKETS = {
-  RECEIPTS: "receipts",
-  AVATARS: "avatars",
-  EXPORTS: "exports",
-  IMPORTS: "imports",
-} as const;
