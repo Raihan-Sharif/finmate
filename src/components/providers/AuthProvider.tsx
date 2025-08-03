@@ -1,37 +1,15 @@
+// src/components/providers/AuthProvider.tsx
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Profile, supabase } from '@/lib/supabase/client';
+import { Session, User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-// Types
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-  avatar_url?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Profile {
-  id: string;
-  user_id: string;
-  full_name?: string;
-  avatar_url?: string;
-  currency: string;
-  timezone: string;
-  theme: 'light' | 'dark' | 'system';
-  notifications_enabled: boolean;
-  ai_insights_enabled: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   profile: Profile | null;
   loading: boolean;
   signUp: (email: string, password: string, metadata?: any) => Promise<void>;
@@ -46,95 +24,115 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// AuthProvider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const supabase = createClient();
 
   // Fetch user profile
-  const { data: profile, refetch: refetchProfile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
+    try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
-        throw error;
+        return null;
       }
 
       return data;
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      return null;
+    }
+  };
+
+  // Create profile if it doesn't exist
+  const createProfileIfNotExists = async (user: User) => {
+    try {
+      const existingProfile = await fetchProfile(user.id);
+      
+      if (!existingProfile) {
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+            avatar_url: user.user_metadata?.avatar_url || '',
+            currency: 'USD',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            theme: 'system',
+            notifications_enabled: true,
+            ai_insights_enabled: true,
+          });
+
+        if (error) {
+          console.error('Error creating profile:', error);
+        } else {
+          // Fetch the newly created profile
+          const newProfile = await fetchProfile(user.id);
+          setProfile(newProfile);
+        }
+      } else {
+        setProfile(existingProfile);
+      }
+    } catch (error) {
+      console.error('Error in createProfileIfNotExists:', error);
+    }
+  };
 
   // Initialize auth state
   useEffect(() => {
-    const initializeAuth = async () => {
+    let mounted = true;
+
+    async function getInitialSession() {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Error getting session:', error);
           return;
         }
 
-        if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
-            avatar_url: session.user.user_metadata?.avatar_url,
-            created_at: session.user.created_at,
-            updated_at: session.user.updated_at,
-          });
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+
+          if (session?.user) {
+            await createProfileIfNotExists(session.user);
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    };
+    }
 
-    initializeAuth();
+    getInitialSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
+        if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id);
+
+        setSession(session);
+        setUser(session?.user ?? null);
 
         if (event === 'SIGNED_IN' && session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
-            avatar_url: session.user.user_metadata?.avatar_url,
-            created_at: session.user.created_at,
-            updated_at: session.user.updated_at,
-          });
-
-          // Create profile if it doesn't exist
-          await createProfileIfNotExists(session.user.id, {
-            full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
-            avatar_url: session.user.user_metadata?.avatar_url,
-          });
-
-          // Invalidate and refetch profile
-          queryClient.invalidateQueries({ queryKey: ['profile'] });
-          
+          await createProfileIfNotExists(session.user);
           toast.success('Successfully signed in!');
         } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          queryClient.clear();
+          setProfile(null);
           router.push('/auth/signin');
           toast.success('Successfully signed out!');
         } else if (event === 'PASSWORD_RECOVERY') {
@@ -145,40 +143,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, [supabase, router, queryClient]);
-
-  // Create profile if it doesn't exist
-  const createProfileIfNotExists = async (userId: string, metadata: any) => {
-    try {
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
-
-      if (!existingProfile) {
-        const { error } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: userId,
-            full_name: metadata?.full_name || '',
-            avatar_url: metadata?.avatar_url || '',
-            currency: 'USD',
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            theme: 'system',
-            notifications_enabled: true,
-            ai_insights_enabled: true,
-          });
-
-        if (error) {
-          console.error('Error creating profile:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking/creating profile:', error);
-    }
-  };
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   // Sign up
   const signUp = async (email: string, password: string, metadata?: any) => {
@@ -237,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
     } catch (error: any) {
       console.error('OAuth sign in error:', error);
-      toast.error(error.message || `Failed to sign in with ${provider}`);
+      toast.error(error.message || 'Failed to sign in with OAuth');
       throw error;
     } finally {
       setLoading(false);
@@ -308,9 +277,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
 
-      // Invalidate and refetch profile
-      queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
-      await refetchProfile();
+      // Refresh profile
+      const updatedProfile = await fetchProfile(user.id);
+      setProfile(updatedProfile);
 
       toast.success('Profile updated successfully!');
     } catch (error: any) {
@@ -323,12 +292,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Refresh profile
   const refreshProfile = async () => {
     if (!user?.id) return;
-    await refetchProfile();
+    const updatedProfile = await fetchProfile(user.id);
+    setProfile(updatedProfile);
   };
 
   const value: AuthContextType = {
     user,
-    profile: profile || null,
+    session,
+    profile,
     loading,
     signUp,
     signIn,

@@ -1,67 +1,128 @@
+// src/lib/supabase/client.ts
 import { createBrowserClient } from '@supabase/ssr';
 
-// Client-side Supabase client
-export const createClient = () => {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+// Create client instance
+export const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// Also export as createClient for compatibility
+export const createClient = () => supabase;
+
+// Auth instance
+export const auth = supabase.auth;
+
+// Table constants
+export const TABLES = {
+  PROFILES: 'profiles',
+  TRANSACTIONS: 'transactions',
+  CATEGORIES: 'categories',
+  BUDGETS: 'budgets',
+  INVESTMENTS: 'investments',
+  LOANS: 'loans',
+  LENDING: 'lending',
+  ACCOUNTS: 'accounts',
+  NOTIFICATIONS: 'notifications',
+} as const;
+
+// Database helper functions
+export const db = {
+  async findMany<T>(
+    table: string,
+    options?: {
+      filter?: Record<string, any>;
+      orderBy?: { column: string; ascending: boolean };
+      limit?: number;
+    }
+  ): Promise<T[]> {
+    let query = supabase.from(table).select('*');
+    
+    if (options?.filter) {
+      Object.entries(options.filter).forEach(([key, value]) => {
+        query = query.eq(key, value);
+      });
+    }
+    
+    if (options?.orderBy) {
+      query = query.order(options.orderBy.column, { 
+        ascending: options.orderBy.ascending 
+      });
+    }
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async findOne<T>(table: string, id: string): Promise<T | null> {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  },
+
+  async create<T>(table: string, data: any): Promise<T> {
+    const { data: result, error } = await supabase
+      .from(table)
+      .insert(data)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return result;
+  },
+
+  async update<T>(table: string, id: string, data: any): Promise<T> {
+    const { data: result, error } = await supabase
+      .from(table)
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return result;
+  },
+
+  async delete(table: string, id: string): Promise<void> {
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  }
+};
+
+// Real-time subscriptions
+export const realtime = {
+  subscribe(table: string, userId: string, callback: (payload: any) => void) {
+    return supabase
+      .channel(`${table}_${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table,
+          filter: `user_id=eq.${userId}`,
+        },
+        callback
+      )
+      .subscribe();
+  }
 };
 
 // Database types
-export interface Database {
-  public: {
-    Tables: {
-      profiles: {
-        Row: Profile;
-        Insert: Omit<Profile, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Profile, 'id' | 'created_at'>>;
-      };
-      transactions: {
-        Row: Transaction;
-        Insert: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Transaction, 'id' | 'created_at'>>;
-      };
-      categories: {
-        Row: Category;
-        Insert: Omit<Category, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Category, 'id' | 'created_at'>>;
-      };
-      budgets: {
-        Row: Budget;
-        Insert: Omit<Budget, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Budget, 'id' | 'created_at'>>;
-      };
-      investments: {
-        Row: Investment;
-        Insert: Omit<Investment, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Investment, 'id' | 'created_at'>>;
-      };
-      loans: {
-        Row: Loan;
-        Insert: Omit<Loan, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Loan, 'id' | 'created_at'>>;
-      };
-      lending: {
-        Row: Lending;
-        Insert: Omit<Lending, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Lending, 'id' | 'created_at'>>;
-      };
-      accounts: {
-        Row: Account;
-        Insert: Omit<Account, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Account, 'id' | 'created_at'>>;
-      };
-      notifications: {
-        Row: Notification;
-        Insert: Omit<Notification, 'id' | 'created_at'>;
-        Update: Partial<Omit<Notification, 'id' | 'created_at'>>;
-      };
-    };
-  };
-}
-
-// Type definitions
 export interface Profile {
   id: string;
   user_id: string;
@@ -118,11 +179,12 @@ export interface Budget {
   amount: number;
   spent: number;
   currency: string;
-  period: 'weekly' | 'monthly' | 'yearly';
+  period: 'monthly' | 'weekly' | 'yearly';
+  category_ids: string[];
   start_date: string;
   end_date: string;
-  category_ids?: string[];
   is_active: boolean;
+  alert_threshold: number;
   created_at: string;
   updated_at: string;
 }
@@ -131,14 +193,13 @@ export interface Investment {
   id: string;
   user_id: string;
   name: string;
-  type: 'stock' | 'mutual_fund' | 'crypto' | 'bond' | 'fd' | 'other';
-  symbol?: string;
-  units: number;
-  purchase_price: number;
+  symbol: string;
+  type: 'stock' | 'crypto' | 'mutual_fund' | 'bond' | 'other';
+  quantity: number;
+  average_price: number;
   current_price: number;
   currency: string;
-  purchase_date: string;
-  platform?: string;
+  platform: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -147,17 +208,18 @@ export interface Investment {
 export interface Loan {
   id: string;
   user_id: string;
-  lender: string;
+  name: string;
+  type: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other';
   principal_amount: number;
   outstanding_amount: number;
   interest_rate: number;
   emi_amount: number;
   tenure_months: number;
   start_date: string;
-  next_due_date: string;
+  end_date: string;
+  lender: string;
   currency: string;
-  type: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other';
-  status: 'active' | 'closed' | 'defaulted';
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -165,16 +227,19 @@ export interface Loan {
 export interface Lending {
   id: string;
   user_id: string;
-  person_name: string;
-  person_contact?: string;
+  type: 'lent' | 'borrowed';
   amount: number;
   currency: string;
-  type: 'lent' | 'borrowed';
+  person_name: string;
+  person_contact?: string;
+  description: string;
   date: string;
   due_date?: string;
   interest_rate?: number;
-  status: 'pending' | 'partial' | 'paid' | 'overdue';
-  description?: string;
+  is_returned: boolean;
+  returned_amount?: number;
+  returned_date?: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
@@ -206,108 +271,3 @@ export interface Notification {
   metadata?: any;
   created_at: string;
 }
-
-// Helper functions for database operations
-export const dbHelpers = {
-  // Generic fetch with error handling
-  async fetchWithError<T>(
-    promise: Promise<{ data: T | null; error: any }>
-  ): Promise<T> {
-    const { data, error } = await promise;
-    if (error) {
-      console.error('Database error:', error);
-      throw new Error(error.message || 'Database operation failed');
-    }
-    if (!data) {
-      throw new Error('No data returned');
-    }
-    return data;
-  },
-
-  // Format date for database
-  formatDate(date: Date): string {
-    return date.toISOString();
-  },
-
-  // Parse date from database
-  parseDate(dateString: string): Date {
-    return new Date(dateString);
-  },
-
-  // Validate currency
-  isValidCurrency(currency: string): boolean {
-    const validCurrencies = ['USD', 'EUR', 'GBP', 'INR', 'BDT', 'JPY', 'CAD', 'AUD'];
-    return validCurrencies.includes(currency);
-  },
-
-  // Format amount for database (ensure 2 decimal places)
-  formatAmount(amount: number): number {
-    return Math.round(amount * 100) / 100;
-  },
-};
-
-// Real-time subscription helpers
-export const subscriptions = {
-  // Subscribe to user's transactions
-  subscribeToTransactions(
-    userId: string,
-    callback: (payload: any) => void
-  ) {
-    const client = createClient();
-    return client
-      .channel('transactions')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transactions',
-          filter: `user_id=eq.${userId}`,
-        },
-        callback
-      )
-      .subscribe();
-  },
-
-  // Subscribe to user's budgets
-  subscribeToBudgets(
-    userId: string,
-    callback: (payload: any) => void
-  ) {
-    const client = createClient();
-    return client
-      .channel('budgets')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'budgets',
-          filter: `user_id=eq.${userId}`,
-        },
-        callback
-      )
-      .subscribe();
-  },
-
-  // Subscribe to user's notifications
-  subscribeToNotifications(
-    userId: string,
-    callback: (payload: any) => void
-  ) {
-    const client = createClient();
-    return client
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        callback
-      )
-      .subscribe();
-  },
-};

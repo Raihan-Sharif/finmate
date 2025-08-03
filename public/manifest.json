@@ -1,201 +1,57 @@
 {
-  "name": "FinMate - Personal Finance Manager",
+  "name": "FinMate - Personal Finance Companion",
   "short_name": "FinMate",
-  "description": "Ultimate personal finance companion for managing expenses, investments, budgets, and achieving financial goals",
-  "version": "1.0.0",
-  "lang": "en",
-  "dir": "ltr",
-  "scope": "/",
-  "start_url": "/dashboard",
+  "description": "Take control of your finances with the ultimate personal finance app",
+  "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "theme_color": "#3B82F6",
   "background_color": "#ffffff",
-  "prefer_related_applications": false,
-  "categories": ["finance", "business", "productivity"],
-  "screenshots": [
-    {
-      "src": "/screenshots/dashboard-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Dashboard overview with financial summary"
-    },
-    {
-      "src": "/screenshots/dashboard-narrow.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobile dashboard view"
-    },
-    {
-      "src": "/screenshots/transactions-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Transaction management interface"
-    },
-    {
-      "src": "/screenshots/budget-narrow.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Budget tracking on mobile"
-    }
-  ],
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "scope": "/",
   "icons": [
-    {
-      "src": "/icon-72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any"
-    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any"
+      "purpose": "maskable any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
       "src": "/apple-touch-icon.png",
       "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     }
   ],
+  "categories": ["finance", "productivity", "business"],
   "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your financial dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
     {
       "name": "Add Transaction",
       "short_name": "Add Transaction",
-      "description": "Quickly add a new income or expense transaction",
+      "description": "Quickly add a new transaction",
       "url": "/dashboard/transactions/new",
       "icons": [
         {
-          "src": "/shortcuts/add-transaction.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "View Budget",
-      "short_name": "Budget",
-      "description": "Check your budget progress and spending",
-      "url": "/dashboard/budget",
-      "icons": [
-        {
-          "src": "/shortcuts/budget.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Investments",
-      "short_name": "Investments",
-      "description": "Track your investment portfolio",
-      "url": "/dashboard/investments",
-      "icons": [
-        {
-          "src": "/shortcuts/investments.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Reports",
-      "short_name": "Reports",
-      "description": "View financial reports and analytics",
-      "url": "/dashboard/reports",
-      "icons": [
-        {
-          "src": "/shortcuts/reports.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/icon-192.png",
+          "sizes": "192x192"
         }
       ]
     }
-  ],
-  "share_target": {
-    "action": "/dashboard/transactions/new",
-    "method": "GET",
-    "enctype": "application/x-www-form-urlencoded",
-    "params": {
-      "title": "description",
-      "text": "notes",
-      "url": "receipt_url"
-    }
-  },
-  "protocol_handlers": [
-    {
-      "protocol": "web+finmate",
-      "url": "/dashboard?action=%s"
-    }
-  ],
-  "related_applications": [
-    {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=com.finmate.app",
-      "id": "com.finmate.app"
-    },
-    {
-      "platform": "itunes",
-      "url": "https://apps.apple.com/app/finmate/id123456789",
-      "id": "123456789"
-    }
-  ],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
-  "file_handlers": [
-    {
-      "action": "/dashboard/import",
-      "accept": {
-        "text/csv": [".csv"],
-        "application/vnd.ms-excel": [".xls"],
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
-      }
-    }
-  ],
-  "handle_links": "preferred"
+  ]
 }
