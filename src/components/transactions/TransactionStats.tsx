@@ -38,7 +38,6 @@ export function TransactionStats({
         }
         icon={<ArrowDownLeft className="w-5 h-5" />}
         color="green"
-        hover
       />
 
       {/* Total Expenses */}
@@ -51,7 +50,6 @@ export function TransactionStats({
         }
         icon={<ArrowUpRight className="w-5 h-5" />}
         color="red"
-        hover
       />
 
       {/* Net Amount */}
@@ -62,7 +60,6 @@ export function TransactionStats({
         }
         icon={<DollarSign className="w-5 h-5" />}
         color={stats.netAmount >= 0 ? "green" : "red"}
-        hover
       />
 
       {/* Transaction Count & Average */}
@@ -71,7 +68,6 @@ export function TransactionStats({
         value={stats.transactionCount.toString()}
         icon={<BarChart3 className="w-5 h-5" />}
         color="blue"
-        hover
       >
         <div className="mt-2 pt-2 border-t border-border">
           <p className="text-xs text-muted-foreground">

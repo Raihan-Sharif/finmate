@@ -128,7 +128,6 @@ export function CategoryBreakdown({
         <Bar
           dataKey="amount"
           radius={[4, 4, 0, 0]}
-          fill={(entry, index) => entry.color || COLORS[index % COLORS.length]}
         >
           {data.map((entry, index) => (
             <Cell

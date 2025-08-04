@@ -85,7 +85,7 @@ export function QuickActionModal({ isOpen, onClose }: QuickActionModalProps) {
   } = useForm<QuickActionFormData>({
     resolver: zodResolver(quickActionSchema),
     defaultValues: {
-      transaction_date: new Date().toISOString().split("T")[0],
+      transaction_date: new Date().toISOString().split("T")[0] || "",
     },
   });
 
@@ -136,7 +136,7 @@ export function QuickActionModal({ isOpen, onClose }: QuickActionModalProps) {
         toast.success("Investment added successfully!");
       } else if (data.type === "lending") {
         // Create lending record
-        await db.create(TABLES.LENDINGS, {
+        await db.create(TABLES.LENDING, {
           user_id: user.id,
           person_name: data.description,
           amount: data.amount,
@@ -260,7 +260,7 @@ export function QuickActionModal({ isOpen, onClose }: QuickActionModalProps) {
                 : "What was this for?"
             }
             {...register("description")}
-            error={errors.description?.message}
+            {...(errors.description?.message && { error: errors.description.message })}
           />
         </div>
 
@@ -271,7 +271,7 @@ export function QuickActionModal({ isOpen, onClose }: QuickActionModalProps) {
             id="transaction_date"
             type="date"
             {...register("transaction_date")}
-            error={errors.transaction_date?.message}
+            {...(errors.transaction_date?.message && { error: errors.transaction_date.message })}
           />
         </div>
 

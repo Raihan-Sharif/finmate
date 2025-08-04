@@ -171,7 +171,6 @@ export default function DashboardPage() {
           changeLabel="savings rate"
           icon={<DollarSign className="w-6 h-6" />}
           color={stats.net_balance >= 0 ? "green" : "red"}
-          hover
         />
 
         <StatCard
@@ -183,7 +182,6 @@ export default function DashboardPage() {
           }
           icon={<TrendingUp className="w-6 h-6" />}
           color="green"
-          hover
         />
 
         <StatCard
@@ -197,7 +195,6 @@ export default function DashboardPage() {
           changeLabel="vs budget"
           icon={<CreditCard className="w-6 h-6" />}
           color="red"
-          hover
         />
 
         <StatCard
@@ -211,7 +208,6 @@ export default function DashboardPage() {
           changeLabel="return"
           icon={<PiggyBank className="w-6 h-6" />}
           color="purple"
-          hover
         />
       </motion.div>
 

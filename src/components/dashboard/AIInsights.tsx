@@ -63,7 +63,7 @@ export function AIInsights({
       // Spending pattern insights
       if (categoryExpenses.length > 0) {
         const topCategory = categoryExpenses[0];
-        if (topCategory.percentage > 40) {
+        if (topCategory && topCategory.percentage > 40) {
           generatedInsights.push({
             id: "high-category-spending",
             type: "alert",
@@ -86,10 +86,11 @@ export function AIInsights({
         const currentMonth = monthlyData[monthlyData.length - 1];
         const previousMonth = monthlyData[monthlyData.length - 2];
 
-        const expenseChange =
-          ((currentMonth.expenses - previousMonth.expenses) /
-            previousMonth.expenses) *
-          100;
+        if (currentMonth && previousMonth) {
+          const expenseChange =
+            ((currentMonth.expenses - previousMonth.expenses) /
+              previousMonth.expenses) *
+            100;
 
         if (expenseChange > 20) {
           generatedInsights.push({
@@ -115,6 +116,7 @@ export function AIInsights({
             impact: "medium",
             confidence: 85,
           });
+        }
         }
       }
 

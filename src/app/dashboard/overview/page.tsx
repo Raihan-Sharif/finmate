@@ -71,8 +71,7 @@ const sampleData = {
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 }
+  animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
 
 const staggerContainer = {
@@ -112,7 +111,7 @@ export default function DashboardOverview() {
       >
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || user?.name || 'there'}! 👋
+            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || user?.user_metadata?.name || 'there'}! 👋
           </h1>
           <p className="text-muted-foreground mt-1">
             Here's what's happening with your finances today.

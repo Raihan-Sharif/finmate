@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user profile
   const fetchProfile = useCallback(async (userId: string) => {
     try {
-      const profileData = await db.findById<Profile>(TABLES.PROFILES, userId);
+      const profileData = await db.findOne<Profile>(TABLES.PROFILES, userId);
       setProfile(profileData);
     } catch (error: any) {
       console.error("Error fetching profile:", error);
@@ -122,11 +122,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string, metadata?: any) => {
       try {
         setLoading(true);
-        const { data, error } = await auth.signUpWithEmail(
+        const { data, error } = await auth.signUp({
           email,
           password,
-          metadata
-        );
+          options: {
+            data: metadata
+          }
+        });
 
         if (error) throw error;
 
@@ -152,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string) => {
       try {
         setLoading(true);
-        const { data, error } = await auth.signInWithEmail(email, password);
+        const { data, error } = await auth.signInWithPassword({ email, password });
 
         if (error) throw error;
 
@@ -173,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithOAuth = useCallback(async (provider: "google" | "github") => {
     try {
       setLoading(true);
-      const { data, error } = await auth.signInWithOAuth(provider);
+      const { data, error } = await auth.signInWithOAuth({ provider });
 
       if (error) throw error;
 

@@ -101,7 +101,7 @@ export function CurrencyInput({
     onValueChange?.(numericValue);
   };
 
-  const handleKeyDown = (e: React.KeyEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Allow: backspace, delete, tab, escape, enter
     if (
       [46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||

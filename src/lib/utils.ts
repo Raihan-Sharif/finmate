@@ -80,6 +80,9 @@ export function formatRelativeTime(
   }
 }
 
+// Format relative date (alias for formatRelativeTime)
+export const formatRelativeDate = formatRelativeTime;
+
 // Generate random ID
 export function generateId(length: number = 8): string {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

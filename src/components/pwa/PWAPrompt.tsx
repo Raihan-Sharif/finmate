@@ -58,7 +58,7 @@ export function PWAPrompt() {
       const weekInMs = 7 * 24 * 60 * 60 * 1000;
 
       // Show prompt if not dismissed or if it's been more than a week
-      if (!dismissed || (lastDismissed && now - lastDismissed > weekInMs)) {
+      if (!dismissed || (typeof lastDismissed === 'number' && now - lastDismissed > weekInMs)) {
         setTimeout(() => setShowPrompt(true), 3000); // Show after 3 seconds
       }
     };
@@ -82,7 +82,7 @@ export function PWAPrompt() {
 
       if (
         !iosPromptDismissed ||
-        (iosLastDismissed && now - iosLastDismissed > weekInMs)
+        (typeof iosLastDismissed === 'number' && now - iosLastDismissed > weekInMs)
       ) {
         setTimeout(() => setShowIOSPrompt(true), 5000);
       }

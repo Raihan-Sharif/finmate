@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import * as React from "react";
 
 const Card = React.forwardRef<
@@ -14,16 +13,11 @@ const Card = React.forwardRef<
     { className, hover = false, gradient = false, loading = false, ...props },
     ref
   ) => (
-    <motion.div
+    <div
       ref={ref}
-      initial={false}
-      whileHover={
-        hover ? { y: -2, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" } : {}
-      }
-      transition={{ duration: 0.2 }}
       className={cn(
         "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200",
-        hover && "hover:shadow-md cursor-pointer",
+        hover && "hover:shadow-md cursor-pointer hover:-translate-y-0.5",
         gradient &&
           "bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900",
         loading && "animate-pulse",

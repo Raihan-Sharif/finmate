@@ -371,7 +371,7 @@ export function OverviewChart({
       <CardContent className="pt-0">
         <div className="h-64 sm:h-72 lg:h-80">
           <ResponsiveContainer width="100%" height="100%">
-            {renderChart()}
+            {renderChart() || <div>No chart data available</div>}
           </ResponsiveContainer>
         </div>
       </CardContent>

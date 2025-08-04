@@ -198,7 +198,10 @@ export function UpcomingReminders({
                     <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                       <Calendar className="w-3 h-3" />
                       <span>
-                        {formatDate(reminder.due_date, { format: "short" })}
+                        {formatDate(reminder.due_date, { 
+                          month: "short",
+                          day: "numeric"
+                        })}
                       </span>
                     </div>
 
