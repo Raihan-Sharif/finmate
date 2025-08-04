@@ -24,6 +24,7 @@ export const TABLES = {
   LENDING: 'lending',
   ACCOUNTS: 'accounts',
   NOTIFICATIONS: 'notifications',
+  EMI_PAYMENTS: 'emi_payments',
 } as const;
 
 // Database helper functions

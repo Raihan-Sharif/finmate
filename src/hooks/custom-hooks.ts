@@ -140,7 +140,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 // src/hooks/useNotifications.ts
-import { useAuth } from '@/components/providers/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 

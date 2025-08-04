@@ -133,7 +133,7 @@ export function useDashboard(): DashboardData {
 
       // Get overdue lendings
       const { data: overdueLendings } = await supabase
-        .from(TABLES.LENDINGS)
+        .from(TABLES.LENDING)
         .select("id")
         .eq("user_id", user.id)
         .in("status", ["lent", "borrowed"])
@@ -245,7 +245,7 @@ export function useDashboard(): DashboardData {
       const totalExpenses =
         expenseData?.reduce((sum, t) => sum + t.amount, 0) || 0;
 
-      expenseData?.forEach((transaction) => {
+      expenseData?.forEach((transaction: any) => {
         const categoryId = transaction.category_id || "uncategorized";
         const categoryName = transaction.categories?.name || "Uncategorized";
         const categoryColor = transaction.categories?.color || "#6B7280";
@@ -308,7 +308,7 @@ export function useDashboard(): DashboardData {
         .limit(10);
 
       const formattedTransactions =
-        transactions?.map((t) => ({
+        transactions?.map((t: any) => ({
           id: t.id,
           description: t.description,
           amount: t.amount,
@@ -384,7 +384,7 @@ export function useDashboard(): DashboardData {
 
       // Get upcoming lending due dates
       const { data: lendings } = await supabase
-        .from(TABLES.LENDINGS)
+        .from(TABLES.LENDING)
         .select("id, person_name, amount, due_date, type")
         .eq("user_id", user.id)
         .in("status", ["lent", "borrowed"])

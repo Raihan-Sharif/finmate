@@ -128,7 +128,7 @@ export function deepMerge<T extends Record<string, any>>(
   const output = { ...target };
   for (const key in source) {
     if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-      output[key] = deepMerge(output[key] || {}, source[key]);
+      output[key] = deepMerge(output[key] || {} as any, source[key] as any);
     } else {
       output[key] = source[key] as T[typeof key];
     }
@@ -203,9 +203,9 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } | nul
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
+        r: parseInt(result[1]!, 16),
+        g: parseInt(result[2]!, 16),
+        b: parseInt(result[3]!, 16),
       }
     : null;
 }

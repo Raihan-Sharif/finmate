@@ -1,7 +1,7 @@
 'use client';
 
 import { MainLayout } from '@/components/layout/MainLayout';
-import { useAuth } from '@/components/providers/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 

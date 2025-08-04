@@ -1,7 +1,7 @@
 "use client";
 
 import { db, realtime, TABLES } from "@/lib/supabase/client";
-import { Notification } from "@/types";
+import type { Notification } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "./useAuth";
@@ -161,8 +161,9 @@ export function useNotifications(): UseNotificationsReturn {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = realtime.subscribeToTable(
+    const channel = realtime.subscribe(
       TABLES.NOTIFICATIONS,
+      user.id,
       (payload: any) => {
         console.log("Notification update:", payload);
 
@@ -201,11 +202,12 @@ export function useNotifications(): UseNotificationsReturn {
             }
             break;
         }
-      },
-      `user_id=eq.${user.id}`
+      }
     );
 
-    return unsubscribe;
+    return () => {
+      channel.unsubscribe();
+    };
   }, [user]);
 
   return {

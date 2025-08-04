@@ -398,17 +398,19 @@ export function useTransactions(
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = realtime.subscribeToTable(
+    const channel = realtime.subscribe(
       TABLES.TRANSACTIONS,
+      user.id,
       (payload: any) => {
         console.log("Transaction update:", payload);
         // Refresh transactions on any change
         fetchTransactions();
-      },
-      `user_id=eq.${user.id}`
+      }
     );
 
-    return unsubscribe;
+    return () => {
+      channel.unsubscribe();
+    };
   }, [user, fetchTransactions]);
 
   return {

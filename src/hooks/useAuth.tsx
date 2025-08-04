@@ -213,7 +213,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Reset password
   const resetPassword = useCallback(async (email: string) => {
     try {
-      await auth.resetPassword(email);
+      const { error } = await auth.resetPasswordForEmail(email);
+      if (error) throw error;
       toast.success("Password reset email sent!");
     } catch (error: any) {
       console.error("Reset password error:", error);
@@ -225,7 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Update password
   const updatePassword = useCallback(async (password: string) => {
     try {
-      await auth.updatePassword(password);
+      const { error } = await auth.updateUser({ password });
+      if (error) throw error;
       toast.success("Password updated successfully");
     } catch (error: any) {
       console.error("Update password error:", error);
@@ -248,8 +250,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setProfile(updatedProfile);
         toast.success("Profile updated successfully");
-
-        return updatedProfile;
       } catch (error: any) {
         console.error("Update profile error:", error);
         toast.error(error.message || "Failed to update profile");

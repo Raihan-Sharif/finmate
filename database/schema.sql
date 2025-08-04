@@ -221,6 +221,32 @@ CREATE TABLE notifications (
 );
 
 -- =============================================
+-- EMI PAYMENTS TABLE
+-- =============================================
+CREATE TABLE emi_payments (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    loan_id UUID REFERENCES loans(id) ON DELETE CASCADE NOT NULL,
+    payment_date DATE NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    principal_amount DECIMAL(15,2) NOT NULL,
+    interest_amount DECIMAL(15,2) NOT NULL,
+    outstanding_balance DECIMAL(15,2) NOT NULL,
+    is_paid BOOLEAN DEFAULT false NOT NULL,
+    paid_date TIMESTAMP WITH TIME ZONE,
+    payment_method VARCHAR(50),
+    transaction_reference VARCHAR(100),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT emi_payments_amount_positive CHECK (amount > 0),
+    CONSTRAINT emi_payments_principal_positive CHECK (principal_amount > 0),
+    CONSTRAINT emi_payments_interest_non_negative CHECK (interest_amount >= 0),
+    CONSTRAINT emi_payments_outstanding_non_negative CHECK (outstanding_balance >= 0)
+);
+
+-- =============================================
 -- RECURRING TRANSACTIONS TABLE
 -- =============================================
 CREATE TABLE recurring_transactions (
@@ -310,6 +336,12 @@ CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 
+-- EMI payments indexes  
+CREATE INDEX idx_emi_payments_user_id ON emi_payments(user_id);
+CREATE INDEX idx_emi_payments_loan_id ON emi_payments(loan_id);
+CREATE INDEX idx_emi_payments_payment_date ON emi_payments(payment_date);
+CREATE INDEX idx_emi_payments_is_paid ON emi_payments(is_paid);
+
 -- Recurring transactions indexes
 CREATE INDEX idx_recurring_transactions_user_id ON recurring_transactions(user_id);
 CREATE INDEX idx_recurring_transactions_next_execution ON recurring_transactions(next_execution);
@@ -335,6 +367,7 @@ ALTER TABLE investments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lending ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE emi_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recurring_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_insights ENABLE ROW LEVEL SECURITY;
 
@@ -391,6 +424,12 @@ CREATE POLICY "Users can insert own notifications" ON notifications FOR INSERT W
 CREATE POLICY "Users can update own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own notifications" ON notifications FOR DELETE USING (auth.uid() = user_id);
 
+-- EMI payments policies
+CREATE POLICY "Users can view own emi payments" ON emi_payments FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own emi payments" ON emi_payments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own emi payments" ON emi_payments FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own emi payments" ON emi_payments FOR DELETE USING (auth.uid() = user_id);
+
 -- Recurring transactions policies
 CREATE POLICY "Users can view own recurring transactions" ON recurring_transactions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own recurring transactions" ON recurring_transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
@@ -425,6 +464,7 @@ CREATE TRIGGER update_budgets_updated_at BEFORE UPDATE ON budgets FOR EACH ROW E
 CREATE TRIGGER update_investments_updated_at BEFORE UPDATE ON investments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_loans_updated_at BEFORE UPDATE ON loans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_lending_updated_at BEFORE UPDATE ON lending FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_emi_payments_updated_at BEFORE UPDATE ON emi_payments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_recurring_transactions_updated_at BEFORE UPDATE ON recurring_transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to update account balance when transaction is added/updated/deleted
