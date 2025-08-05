@@ -79,8 +79,8 @@ const navigation = [
     bgColor: 'bg-orange-50',
   },
   {
-    name: 'Loans & EMI',
-    href: '/dashboard/loans',
+    name: 'EMI Calculator',
+    href: '/emi',
     icon: Calculator,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
