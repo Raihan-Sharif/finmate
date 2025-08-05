@@ -5,21 +5,70 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create custom types
-CREATE TYPE transaction_type AS ENUM ('income', 'expense');
-CREATE TYPE account_type AS ENUM ('bank', 'credit_card', 'wallet', 'investment', 'other');
-CREATE TYPE investment_type AS ENUM ('stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'other');
-CREATE TYPE loan_type AS ENUM ('personal', 'home', 'car', 'education', 'business', 'other');
-CREATE TYPE loan_status AS ENUM ('active', 'closed', 'defaulted');
-CREATE TYPE lending_type AS ENUM ('lent', 'borrowed');
-CREATE TYPE lending_status AS ENUM ('pending', 'partial', 'paid', 'overdue');
-CREATE TYPE budget_period AS ENUM ('weekly', 'monthly', 'yearly');
-CREATE TYPE notification_type AS ENUM ('info', 'warning', 'error', 'success');
-CREATE TYPE theme_type AS ENUM ('light', 'dark', 'system');
+DO $$ BEGIN
+    CREATE TYPE transaction_type AS ENUM ('income', 'expense');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE account_type AS ENUM ('bank', 'credit_card', 'wallet', 'investment', 'other');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE investment_type AS ENUM ('stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'other');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE loan_type AS ENUM ('personal', 'home', 'car', 'education', 'business', 'other');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE loan_status AS ENUM ('active', 'closed', 'defaulted');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE lending_type AS ENUM ('lent', 'borrowed');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE lending_status AS ENUM ('pending', 'partial', 'paid', 'overdue');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE budget_period AS ENUM ('weekly', 'monthly', 'yearly');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE notification_type AS ENUM ('info', 'warning', 'error', 'success');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE theme_type AS ENUM ('light', 'dark', 'system');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- =============================================
 -- PROFILES TABLE
 -- =============================================
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     full_name TEXT,
@@ -40,7 +89,7 @@ CREATE TABLE profiles (
 -- =============================================
 -- CATEGORIES TABLE
 -- =============================================
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -59,7 +108,7 @@ CREATE TABLE categories (
 -- =============================================
 -- ACCOUNTS TABLE
 -- =============================================
-CREATE TABLE accounts (
+CREATE TABLE IF NOT EXISTS accounts (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -78,7 +127,7 @@ CREATE TABLE accounts (
 -- =============================================
 -- TRANSACTIONS TABLE
 -- =============================================
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     type transaction_type NOT NULL,
@@ -104,7 +153,7 @@ CREATE TABLE transactions (
 -- =============================================
 -- BUDGETS TABLE
 -- =============================================
-CREATE TABLE budgets (
+CREATE TABLE IF NOT EXISTS budgets (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -129,7 +178,7 @@ CREATE TABLE budgets (
 -- =============================================
 -- INVESTMENTS TABLE
 -- =============================================
-CREATE TABLE investments (
+CREATE TABLE IF NOT EXISTS investments (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -154,7 +203,7 @@ CREATE TABLE investments (
 -- =============================================
 -- LOANS TABLE
 -- =============================================
-CREATE TABLE loans (
+CREATE TABLE IF NOT EXISTS loans (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     lender VARCHAR(100) NOT NULL,
@@ -182,7 +231,7 @@ CREATE TABLE loans (
 -- =============================================
 -- LENDING TABLE
 -- =============================================
-CREATE TABLE lending (
+CREATE TABLE IF NOT EXISTS lending (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     person_name VARCHAR(100) NOT NULL,
@@ -208,7 +257,7 @@ CREATE TABLE lending (
 -- =============================================
 -- NOTIFICATIONS TABLE
 -- =============================================
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     title VARCHAR(200) NOT NULL,
@@ -223,7 +272,7 @@ CREATE TABLE notifications (
 -- =============================================
 -- EMI PAYMENTS TABLE
 -- =============================================
-CREATE TABLE emi_payments (
+CREATE TABLE IF NOT EXISTS emi_payments (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     loan_id UUID REFERENCES loans(id) ON DELETE CASCADE NOT NULL,
@@ -249,7 +298,7 @@ CREATE TABLE emi_payments (
 -- =============================================
 -- RECURRING TRANSACTIONS TABLE
 -- =============================================
-CREATE TABLE recurring_transactions (
+CREATE TABLE IF NOT EXISTS recurring_transactions (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     transaction_template JSONB NOT NULL, -- Template for creating transactions
@@ -269,7 +318,7 @@ CREATE TABLE recurring_transactions (
 -- =============================================
 -- AI INSIGHTS TABLE
 -- =============================================
-CREATE TABLE ai_insights (
+CREATE TABLE IF NOT EXISTS ai_insights (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     type VARCHAR(50) NOT NULL, -- spending_analysis, budget_recommendation, etc.
@@ -287,71 +336,71 @@ CREATE TABLE ai_insights (
 -- =============================================
 
 -- Profiles indexes
-CREATE INDEX idx_profiles_user_id ON profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
 
 -- Categories indexes
-CREATE INDEX idx_categories_user_id ON categories(user_id);
-CREATE INDEX idx_categories_type ON categories(type);
-CREATE INDEX idx_categories_parent_id ON categories(parent_id);
+CREATE INDEX IF NOT EXISTS idx_categories_user_id ON categories(user_id);
+CREATE INDEX IF NOT EXISTS idx_categories_type ON categories(type);
+CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON categories(parent_id);
 
 -- Accounts indexes
-CREATE INDEX idx_accounts_user_id ON accounts(user_id);
-CREATE INDEX idx_accounts_type ON accounts(type);
-CREATE INDEX idx_accounts_is_active ON accounts(is_active);
+CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(type);
+CREATE INDEX IF NOT EXISTS idx_accounts_is_active ON accounts(is_active);
 
 -- Transactions indexes
-CREATE INDEX idx_transactions_user_id ON transactions(user_id);
-CREATE INDEX idx_transactions_date ON transactions(date);
-CREATE INDEX idx_transactions_type ON transactions(type);
-CREATE INDEX idx_transactions_category_id ON transactions(category_id);
-CREATE INDEX idx_transactions_account_id ON transactions(account_id);
-CREATE INDEX idx_transactions_created_at ON transactions(created_at);
-CREATE INDEX idx_transactions_user_date ON transactions(user_id, date);
-CREATE INDEX idx_transactions_user_type ON transactions(user_id, type);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
+CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON transactions(category_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_type ON transactions(user_id, type);
 
 -- Budgets indexes
-CREATE INDEX idx_budgets_user_id ON budgets(user_id);
-CREATE INDEX idx_budgets_period ON budgets(period);
-CREATE INDEX idx_budgets_is_active ON budgets(is_active);
-CREATE INDEX idx_budgets_dates ON budgets(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON budgets(user_id);
+CREATE INDEX IF NOT EXISTS idx_budgets_period ON budgets(period);
+CREATE INDEX IF NOT EXISTS idx_budgets_is_active ON budgets(is_active);
+CREATE INDEX IF NOT EXISTS idx_budgets_dates ON budgets(start_date, end_date);
 
 -- Investments indexes
-CREATE INDEX idx_investments_user_id ON investments(user_id);
-CREATE INDEX idx_investments_type ON investments(type);
-CREATE INDEX idx_investments_symbol ON investments(symbol);
+CREATE INDEX IF NOT EXISTS idx_investments_user_id ON investments(user_id);
+CREATE INDEX IF NOT EXISTS idx_investments_type ON investments(type);
+CREATE INDEX IF NOT EXISTS idx_investments_symbol ON investments(symbol);
 
 -- Loans indexes
-CREATE INDEX idx_loans_user_id ON loans(user_id);
-CREATE INDEX idx_loans_status ON loans(status);
-CREATE INDEX idx_loans_next_due_date ON loans(next_due_date);
+CREATE INDEX IF NOT EXISTS idx_loans_user_id ON loans(user_id);
+CREATE INDEX IF NOT EXISTS idx_loans_status ON loans(status);
+CREATE INDEX IF NOT EXISTS idx_loans_next_due_date ON loans(next_due_date);
 
 -- Lending indexes
-CREATE INDEX idx_lending_user_id ON lending(user_id);
-CREATE INDEX idx_lending_type ON lending(type);
-CREATE INDEX idx_lending_status ON lending(status);
-CREATE INDEX idx_lending_due_date ON lending(due_date);
+CREATE INDEX IF NOT EXISTS idx_lending_user_id ON lending(user_id);
+CREATE INDEX IF NOT EXISTS idx_lending_type ON lending(type);
+CREATE INDEX IF NOT EXISTS idx_lending_status ON lending(status);
+CREATE INDEX IF NOT EXISTS idx_lending_due_date ON lending(due_date);
 
 -- Notifications indexes
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_is_read ON notifications(is_read);
-CREATE INDEX idx_notifications_created_at ON notifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
 
 -- EMI payments indexes  
-CREATE INDEX idx_emi_payments_user_id ON emi_payments(user_id);
-CREATE INDEX idx_emi_payments_loan_id ON emi_payments(loan_id);
-CREATE INDEX idx_emi_payments_payment_date ON emi_payments(payment_date);
-CREATE INDEX idx_emi_payments_is_paid ON emi_payments(is_paid);
+CREATE INDEX IF NOT EXISTS idx_emi_payments_user_id ON emi_payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_emi_payments_loan_id ON emi_payments(loan_id);
+CREATE INDEX IF NOT EXISTS idx_emi_payments_payment_date ON emi_payments(payment_date);
+CREATE INDEX IF NOT EXISTS idx_emi_payments_is_paid ON emi_payments(is_paid);
 
 -- Recurring transactions indexes
-CREATE INDEX idx_recurring_transactions_user_id ON recurring_transactions(user_id);
-CREATE INDEX idx_recurring_transactions_next_execution ON recurring_transactions(next_execution);
-CREATE INDEX idx_recurring_transactions_is_active ON recurring_transactions(is_active);
+CREATE INDEX IF NOT EXISTS idx_recurring_transactions_user_id ON recurring_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_recurring_transactions_next_execution ON recurring_transactions(next_execution);
+CREATE INDEX IF NOT EXISTS idx_recurring_transactions_is_active ON recurring_transactions(is_active);
 
 -- AI insights indexes
-CREATE INDEX idx_ai_insights_user_id ON ai_insights(user_id);
-CREATE INDEX idx_ai_insights_type ON ai_insights(type);
-CREATE INDEX idx_ai_insights_is_dismissed ON ai_insights(is_dismissed);
-CREATE INDEX idx_ai_insights_expires_at ON ai_insights(expires_at);
+CREATE INDEX IF NOT EXISTS idx_ai_insights_user_id ON ai_insights(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_insights_type ON ai_insights(type);
+CREATE INDEX IF NOT EXISTS idx_ai_insights_is_dismissed ON ai_insights(is_dismissed);
+CREATE INDEX IF NOT EXISTS idx_ai_insights_expires_at ON ai_insights(expires_at);
 
 -- =============================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -372,74 +421,121 @@ ALTER TABLE recurring_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_insights ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = user_id);
 
 -- Categories policies
+DROP POLICY IF EXISTS "Users can view own categories" ON categories;
 CREATE POLICY "Users can view own categories" ON categories FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own categories" ON categories;
 CREATE POLICY "Users can insert own categories" ON categories FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own categories" ON categories;
 CREATE POLICY "Users can update own categories" ON categories FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own categories" ON categories;
 CREATE POLICY "Users can delete own categories" ON categories FOR DELETE USING (auth.uid() = user_id);
 
 -- Accounts policies
+DROP POLICY IF EXISTS "Users can view own accounts" ON accounts;
 CREATE POLICY "Users can view own accounts" ON accounts FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own accounts" ON accounts;
 CREATE POLICY "Users can insert own accounts" ON accounts FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own accounts" ON accounts;
 CREATE POLICY "Users can update own accounts" ON accounts FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own accounts" ON accounts;
 CREATE POLICY "Users can delete own accounts" ON accounts FOR DELETE USING (auth.uid() = user_id);
 
 -- Transactions policies
+DROP POLICY IF EXISTS "Users can view own transactions" ON transactions;
 CREATE POLICY "Users can view own transactions" ON transactions FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own transactions" ON transactions;
 CREATE POLICY "Users can insert own transactions" ON transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own transactions" ON transactions;
 CREATE POLICY "Users can update own transactions" ON transactions FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own transactions" ON transactions;
 CREATE POLICY "Users can delete own transactions" ON transactions FOR DELETE USING (auth.uid() = user_id);
 
 -- Budgets policies
+DROP POLICY IF EXISTS "Users can view own budgets" ON budgets;
 CREATE POLICY "Users can view own budgets" ON budgets FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own budgets" ON budgets;
 CREATE POLICY "Users can insert own budgets" ON budgets FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own budgets" ON budgets;
 CREATE POLICY "Users can update own budgets" ON budgets FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own budgets" ON budgets;
 CREATE POLICY "Users can delete own budgets" ON budgets FOR DELETE USING (auth.uid() = user_id);
 
 -- Investments policies
+DROP POLICY IF EXISTS "Users can view own investments" ON investments;
 CREATE POLICY "Users can view own investments" ON investments FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own investments" ON investments;
 CREATE POLICY "Users can insert own investments" ON investments FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own investments" ON investments;
 CREATE POLICY "Users can update own investments" ON investments FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own investments" ON investments;
 CREATE POLICY "Users can delete own investments" ON investments FOR DELETE USING (auth.uid() = user_id);
 
--- Loans policies
+-- Loans policies  
+DROP POLICY IF EXISTS "Users can view own loans" ON loans;
 CREATE POLICY "Users can view own loans" ON loans FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own loans" ON loans;
 CREATE POLICY "Users can insert own loans" ON loans FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own loans" ON loans;
 CREATE POLICY "Users can update own loans" ON loans FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own loans" ON loans;
 CREATE POLICY "Users can delete own loans" ON loans FOR DELETE USING (auth.uid() = user_id);
 
 -- Lending policies
+DROP POLICY IF EXISTS "Users can view own lending" ON lending;
 CREATE POLICY "Users can view own lending" ON lending FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own lending" ON lending;
 CREATE POLICY "Users can insert own lending" ON lending FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own lending" ON lending;
 CREATE POLICY "Users can update own lending" ON lending FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own lending" ON lending;
 CREATE POLICY "Users can delete own lending" ON lending FOR DELETE USING (auth.uid() = user_id);
 
 -- Notifications policies
+DROP POLICY IF EXISTS "Users can view own notifications" ON notifications;
 CREATE POLICY "Users can view own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own notifications" ON notifications;
 CREATE POLICY "Users can insert own notifications" ON notifications FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
 CREATE POLICY "Users can update own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own notifications" ON notifications;
 CREATE POLICY "Users can delete own notifications" ON notifications FOR DELETE USING (auth.uid() = user_id);
 
 -- EMI payments policies
+DROP POLICY IF EXISTS "Users can view own emi payments" ON emi_payments;
 CREATE POLICY "Users can view own emi payments" ON emi_payments FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own emi payments" ON emi_payments;
 CREATE POLICY "Users can insert own emi payments" ON emi_payments FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own emi payments" ON emi_payments;
 CREATE POLICY "Users can update own emi payments" ON emi_payments FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own emi payments" ON emi_payments;
 CREATE POLICY "Users can delete own emi payments" ON emi_payments FOR DELETE USING (auth.uid() = user_id);
 
 -- Recurring transactions policies
+DROP POLICY IF EXISTS "Users can view own recurring transactions" ON recurring_transactions;
 CREATE POLICY "Users can view own recurring transactions" ON recurring_transactions FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own recurring transactions" ON recurring_transactions;
 CREATE POLICY "Users can insert own recurring transactions" ON recurring_transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own recurring transactions" ON recurring_transactions;
 CREATE POLICY "Users can update own recurring transactions" ON recurring_transactions FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own recurring transactions" ON recurring_transactions;
 CREATE POLICY "Users can delete own recurring transactions" ON recurring_transactions FOR DELETE USING (auth.uid() = user_id);
 
 -- AI insights policies
+DROP POLICY IF EXISTS "Users can view own ai insights" ON ai_insights;
 CREATE POLICY "Users can view own ai insights" ON ai_insights FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own ai insights" ON ai_insights;
 CREATE POLICY "Users can insert own ai insights" ON ai_insights FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own ai insights" ON ai_insights;
 CREATE POLICY "Users can update own ai insights" ON ai_insights FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own ai insights" ON ai_insights;
 CREATE POLICY "Users can delete own ai insights" ON ai_insights FOR DELETE USING (auth.uid() = user_id);
 
 -- =============================================
@@ -455,16 +551,35 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create triggers for updated_at
+-- Create triggers for updated_at (drop if exists first)
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_categories_updated_at ON categories;
 CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_accounts_updated_at ON accounts;
 CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_transactions_updated_at ON transactions;
 CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_budgets_updated_at ON budgets;
 CREATE TRIGGER update_budgets_updated_at BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_investments_updated_at ON investments;
 CREATE TRIGGER update_investments_updated_at BEFORE UPDATE ON investments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_loans_updated_at ON loans;
 CREATE TRIGGER update_loans_updated_at BEFORE UPDATE ON loans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_lending_updated_at ON lending;
 CREATE TRIGGER update_lending_updated_at BEFORE UPDATE ON lending FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_emi_payments_updated_at ON emi_payments;
 CREATE TRIGGER update_emi_payments_updated_at BEFORE UPDATE ON emi_payments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_recurring_transactions_updated_at ON recurring_transactions;
 CREATE TRIGGER update_recurring_transactions_updated_at BEFORE UPDATE ON recurring_transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to update account balance when transaction is added/updated/deleted
@@ -526,6 +641,7 @@ END;
 $$ language 'plpgsql';
 
 -- Create trigger for account balance updates
+DROP TRIGGER IF EXISTS trigger_update_account_balance ON transactions;
 CREATE TRIGGER trigger_update_account_balance
     AFTER INSERT OR UPDATE OR DELETE ON transactions
     FOR EACH ROW EXECUTE FUNCTION update_account_balance();
@@ -587,6 +703,7 @@ END;
 $$ language 'plpgsql';
 
 -- Create trigger for budget spent updates
+DROP TRIGGER IF EXISTS trigger_update_budget_spent ON transactions;
 CREATE TRIGGER trigger_update_budget_spent
     AFTER INSERT OR UPDATE OR DELETE ON transactions
     FOR EACH ROW EXECUTE FUNCTION update_budget_spent();
@@ -626,12 +743,26 @@ $$ language 'plpgsql';
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Create profile
-    INSERT INTO profiles (user_id, full_name, avatar_url)
+    -- Create profile with all required fields
+    INSERT INTO profiles (
+        user_id, 
+        full_name, 
+        avatar_url, 
+        currency, 
+        timezone, 
+        theme, 
+        notifications_enabled, 
+        ai_insights_enabled
+    )
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),
-        NEW.raw_user_meta_data->>'avatar_url'
+        NEW.raw_user_meta_data->>'avatar_url',
+        'USD',
+        'UTC',
+        'system',
+        true,
+        true
     );
     
     -- Create default categories
@@ -642,6 +773,7 @@ END;
 $$ language 'plpgsql' SECURITY DEFINER;
 
 -- Create trigger for new user signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION handle_new_user();
