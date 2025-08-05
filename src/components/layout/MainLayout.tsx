@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, usePermissions } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +29,7 @@ import {
   Receipt,
   Search,
   Settings,
+  Shield,
   Sun,
   Target,
   TrendingUp,
@@ -141,6 +142,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   const pathname = usePathname();
   const { user, signOut, profile } = useAuth();
+  const { isAdmin } = usePermissions();
   const { theme, setTheme } = useTheme();
 
   // Close sidebar on route change
@@ -271,6 +273,39 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </Link>
             );
           })}
+          
+          {/* Admin section */}
+          {isAdmin() && (
+            <>
+              <div className="px-3 py-2">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <Link
+                href="/admin"
+                className={cn(
+                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                  isActiveRoute('/admin')
+                    ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <div
+                  className={cn(
+                    'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
+                    isActiveRoute('/admin') ? 'bg-red-50' : 'bg-transparent'
+                  )}
+                >
+                  <Shield
+                    className={cn(
+                      'w-5 h-5',
+                      isActiveRoute('/admin') ? 'text-red-600' : 'text-muted-foreground'
+                    )}
+                  />
+                </div>
+                Admin Panel
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* Bottom navigation */}
@@ -374,9 +409,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {profile?.full_name || user?.user_metadata?.name || 'User'}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium leading-none">
+                          {profile?.full_name || user?.user_metadata?.name || 'User'}
+                        </p>
+                        {isAdmin() && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                            <Shield className="w-3 h-3 mr-1" />
+                            Admin
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>
@@ -395,6 +438,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
+                  {isAdmin() && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <Shield className="mr-2 h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />

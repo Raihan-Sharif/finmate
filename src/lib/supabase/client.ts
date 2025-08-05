@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
-import { Database } from '@/types/database'
+import { Database } from '@/types/database_professional'
 
 export const createClient = () =>
   createBrowserClient<Database>(
@@ -14,16 +14,17 @@ export const auth = supabase.auth
 
 // Table constants
 export const TABLES = {
+  ROLES: 'roles',
+  PERMISSIONS: 'permissions',
+  ROLE_PERMISSIONS: 'role_permissions',
   PROFILES: 'profiles',
-  TRANSACTIONS: 'transactions',
+  USER_PERMISSIONS: 'user_permissions',
   CATEGORIES: 'categories',
-  BUDGETS: 'budgets',
-  INVESTMENTS: 'investments',
-  LOANS: 'loans',
-  LENDING: 'lending',
   ACCOUNTS: 'accounts',
-  NOTIFICATIONS: 'notifications',
-  EMI_PAYMENTS: 'emi_payments',
+  TRANSACTIONS: 'transactions',
+  BUDGETS: 'budgets',
+  USER_SESSIONS: 'user_sessions',
+  ADMIN_AUDIT_LOGS: 'admin_audit_logs',
 } as const
 
 // Database helper functions

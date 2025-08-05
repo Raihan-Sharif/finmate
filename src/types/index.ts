@@ -1,4 +1,4 @@
-import { Database } from './database'
+import { Database } from './database_professional'
 
 // Database types
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
@@ -6,37 +6,43 @@ export type Inserts<T extends keyof Database['public']['Tables']> = Database['pu
 export type Updates<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
 
 // Table types
+export type Role = Tables<'roles'>
+export type Permission = Tables<'permissions'>
+export type RolePermission = Tables<'role_permissions'>
 export type Profile = Tables<'profiles'>
+export type UserPermission = Tables<'user_permissions'>
 export type Transaction = Tables<'transactions'>
 export type Category = Tables<'categories'>
 export type Budget = Tables<'budgets'>
-export type Investment = Tables<'investments'>
-export type Loan = Tables<'loans'>
 export type Account = Tables<'accounts'>
-export type Lending = Tables<'lending'>
-export type Notification = Tables<'notifications'>
+export type UserSession = Tables<'user_sessions'>
+export type AdminAuditLog = Tables<'admin_audit_logs'>
 
 // Insert types
+export type RoleInsert = Inserts<'roles'>
+export type PermissionInsert = Inserts<'permissions'>
+export type RolePermissionInsert = Inserts<'role_permissions'>
 export type ProfileInsert = Inserts<'profiles'>
+export type UserPermissionInsert = Inserts<'user_permissions'>
 export type TransactionInsert = Inserts<'transactions'>
 export type CategoryInsert = Inserts<'categories'>
 export type BudgetInsert = Inserts<'budgets'>
-export type InvestmentInsert = Inserts<'investments'>
-export type LoanInsert = Inserts<'loans'>
 export type AccountInsert = Inserts<'accounts'>
-export type LendingInsert = Inserts<'lending'>
-export type NotificationInsert = Inserts<'notifications'>
+export type UserSessionInsert = Inserts<'user_sessions'>
+export type AdminAuditLogInsert = Inserts<'admin_audit_logs'>
 
 // Update types
+export type RoleUpdate = Updates<'roles'>
+export type PermissionUpdate = Updates<'permissions'>
+export type RolePermissionUpdate = Updates<'role_permissions'>
 export type ProfileUpdate = Updates<'profiles'>
+export type UserPermissionUpdate = Updates<'user_permissions'>
 export type TransactionUpdate = Updates<'transactions'>
 export type CategoryUpdate = Updates<'categories'>
 export type BudgetUpdate = Updates<'budgets'>
-export type InvestmentUpdate = Updates<'investments'>
-export type LoanUpdate = Updates<'loans'>
 export type AccountUpdate = Updates<'accounts'>
-export type LendingUpdate = Updates<'lending'>
-export type NotificationUpdate = Updates<'notifications'>
+export type UserSessionUpdate = Updates<'user_sessions'>
+export type AdminAuditLogUpdate = Updates<'admin_audit_logs'>
 
 // Dashboard types
 export type DashboardStats = {
@@ -134,6 +140,15 @@ export type LendingType = 'lent' | 'borrowed'
 export type BudgetPeriod = 'monthly' | 'weekly' | 'yearly'
 export type NotificationType = 'info' | 'warning' | 'error' | 'success'
 export type Theme = 'light' | 'dark' | 'system'
+export type UserRole = 'super_admin' | 'admin' | 'manager' | 'user'
+export type PermissionAction = 'create' | 'read' | 'update' | 'delete' | 'manage'
+export type AuditAction = 'create' | 'update' | 'delete' | 'login' | 'logout' | 'role_change' | 'permission_change'
+
+// Extended Profile with role and permissions
+export type ProfileWithRole = Profile & {
+  role?: Role | null
+  permissions?: Permission[]
+}
 
 export type CurrencyType =
   | "USD"

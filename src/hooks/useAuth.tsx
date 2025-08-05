@@ -1,7 +1,7 @@
 "use client";
 
 import { auth, db, supabase, TABLES } from "@/lib/supabase/client";
-import { Profile } from "@/types";
+import { Profile, ProfileWithRole } from "@/types";
 import { Session, User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import {
@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: Profile | null;
+  profile: ProfileWithRole | null;
   loading: boolean;
   signUp: (email: string, password: string, metadata?: any) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -24,7 +24,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
-  updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  updateProfile: (updates: Partial<ProfileWithRole>) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -33,7 +33,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<ProfileWithRole | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -103,17 +103,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
-  // Fetch user profile
+  // Fetch user profile with role and permissions
   const fetchProfile = useCallback(async (userId: string) => {
     try {
-      const profileData = await db.findOne<Profile>(TABLES.PROFILES, userId);
-      setProfile(profileData);
+      const { data, error } = await supabase
+        .from(TABLES.PROFILES)
+        .select(`
+          *,
+          role:roles(*)
+        `)
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log("Profile not found, might be a new user");
+          setProfile(null);
+          return;
+        }
+        throw error;
+      }
+      
+      // Get user permissions
+      const { data: permissions } = await supabase
+        .rpc('get_user_permissions', { p_user_id: userId });
+      
+      const profileWithRole: ProfileWithRole = {
+        ...data,
+        role: data.role,
+        permissions: permissions?.map(p => ({
+          id: '',
+          name: p.permission_name,
+          display_name: p.permission_name,
+          description: null,
+          resource: p.resource,
+          action: p.action as any,
+          is_system: true,
+          created_at: '',
+          updated_at: ''
+        })) || []
+      };
+      
+      setProfile(profileWithRole);
     } catch (error: any) {
       console.error("Error fetching profile:", error);
-      // If profile doesn't exist, it might be a new user
-      if (error?.code === "PGRST116") {
-        console.log("Profile not found, might be a new user");
-      }
+      setProfile(null);
     }
   }, []);
 
@@ -136,8 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           "Account created! Please check your email for verification."
         );
 
-        // Redirect to verification page or dashboard
-        router.push("/auth/verify-email");
+        // Redirect to verification page with email parameter
+        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
       } catch (error: any) {
         console.error("Sign up error:", error);
         toast.error(error.message || "Failed to create account");
@@ -238,17 +272,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Update profile
   const updateProfile = useCallback(
-    async (updates: Partial<Profile>) => {
+    async (updates: Partial<ProfileWithRole>) => {
       if (!user) throw new Error("No user logged in");
 
       try {
-        const updatedProfile = await db.update<Profile>(
-          TABLES.PROFILES,
-          user.id,
-          updates
-        );
+        const { data, error } = await supabase
+          .from(TABLES.PROFILES)
+          .update(updates)
+          .eq('user_id', user.id)
+          .select()
+          .single();
 
-        setProfile(updatedProfile);
+        if (error) throw error;
+
+        setProfile(data);
         toast.success("Profile updated successfully");
       } catch (error: any) {
         console.error("Update profile error:", error);
@@ -320,29 +357,93 @@ export function withAuth<P extends object>(Component: React.ComponentType<P>) {
   };
 }
 
-// Hook for checking specific permissions
+// Hook for checking user role and permissions
 export function usePermissions() {
   const { user, profile } = useAuth();
 
   const hasPermission = useCallback(
-    (permission: string) => {
+    (permissionName: string) => {
       if (!user || !profile) return false;
-
-      // Add your permission logic here
-      // For now, all authenticated users have all permissions
-      return true;
+      
+      // Check if user has the specific permission
+      return profile.permissions?.some(
+        permission => permission.name === permissionName
+      ) || false;
     },
     [user, profile]
   );
 
+  const hasRole = useCallback(
+    (roleName: string) => {
+      if (!user || !profile || !profile.role) return false;
+      return profile.role.name === roleName;
+    },
+    [user, profile]
+  );
+
+  const isSuperAdmin = useCallback(() => {
+    return hasRole('super_admin');
+  }, [hasRole]);
+
   const isAdmin = useCallback(() => {
-    if (!user || !profile) return false;
-    // Add admin check logic here
-    return false;
-  }, [user, profile]);
+    return hasRole('admin') || isSuperAdmin();
+  }, [hasRole, isSuperAdmin]);
+
+  const isManager = useCallback(() => {
+    return hasRole('manager') || isAdmin();
+  }, [hasRole, isAdmin]);
+
+  const isUser = useCallback(() => {
+    return hasRole('user');
+  }, [hasRole]);
+
+  // Permission-based access control
+  const canManageUsers = useCallback(() => {
+    return hasPermission('users.manage') || hasPermission('users.create');
+  }, [hasPermission]);
+
+  const canManageSystem = useCallback(() => {
+    return hasPermission('system.manage');
+  }, [hasPermission]);
+
+  const canViewAnalytics = useCallback(() => {
+    return hasPermission('analytics.read');
+  }, [hasPermission]);
+
+  const canViewAdminLogs = useCallback(() => {
+    return hasPermission('audit.read');
+  }, [hasPermission]);
+
+  const canManageRoles = useCallback(() => {
+    return hasPermission('roles.manage');
+  }, [hasPermission]);
+
+  const canCreateTransactions = useCallback(() => {
+    return hasPermission('transactions.create');
+  }, [hasPermission]);
+
+  const canUpdateTransactions = useCallback(() => {
+    return hasPermission('transactions.update');
+  }, [hasPermission]);
+
+  const canDeleteTransactions = useCallback(() => {
+    return hasPermission('transactions.delete');
+  }, [hasPermission]);
 
   return {
     hasPermission,
+    hasRole,
+    isSuperAdmin,
     isAdmin,
+    isManager,
+    isUser,
+    canManageUsers,
+    canManageSystem,
+    canViewAnalytics,
+    canViewAdminLogs,
+    canManageRoles,
+    canCreateTransactions,
+    canUpdateTransactions,
+    canDeleteTransactions,
   };
 }

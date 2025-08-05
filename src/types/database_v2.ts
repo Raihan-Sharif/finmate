@@ -9,10 +9,83 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      roles: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          is_system_role: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          is_system_role?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          is_system_role?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      permissions: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          resource: string
+          action: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          resource: string
+          action: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          resource?: string
+          action?: string
+          created_at?: string
+        }
+      }
+      role_permissions: {
+        Row: {
+          id: string
+          role_id: string
+          permission_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          role_id: string
+          permission_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          role_id?: string
+          permission_id?: string
+          created_at?: string
+        }
+      }
       profiles: {
         Row: {
           id: string
           user_id: string
+          role_id: string | null
           full_name: string | null
           avatar_url: string | null
           currency: string
@@ -21,16 +94,14 @@ export interface Database {
           notifications_enabled: boolean
           ai_insights_enabled: boolean
           monthly_budget_limit: number | null
-          role: 'admin' | 'user'
-          can_manage_users: boolean
-          can_manage_system: boolean
-          can_view_analytics: boolean
+          ai_api_key: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
+          role_id?: string | null
           full_name?: string | null
           avatar_url?: string | null
           currency?: string
@@ -39,16 +110,14 @@ export interface Database {
           notifications_enabled?: boolean
           ai_insights_enabled?: boolean
           monthly_budget_limit?: number | null
-          role?: 'admin' | 'user'
-          can_manage_users?: boolean
-          can_manage_system?: boolean
-          can_view_analytics?: boolean
+          ai_api_key?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
+          role_id?: string | null
           full_name?: string | null
           avatar_url?: string | null
           currency?: string
@@ -57,10 +126,7 @@ export interface Database {
           notifications_enabled?: boolean
           ai_insights_enabled?: boolean
           monthly_budget_limit?: number | null
-          role?: 'admin' | 'user'
-          can_manage_users?: boolean
-          can_manage_system?: boolean
-          can_view_analytics?: boolean
+          ai_api_key?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -73,7 +139,7 @@ export interface Database {
           amount: number
           currency: string
           description: string
-          category_id: string
+          category_id: string | null
           account_id: string | null
           date: string
           tags: string[] | null
@@ -81,7 +147,8 @@ export interface Database {
           location: string | null
           notes: string | null
           is_recurring: boolean
-          recurring_pattern: string | null
+          recurring_pattern: Json | null
+          metadata: Json | null
           created_at: string
           updated_at: string
         }
@@ -92,7 +159,7 @@ export interface Database {
           amount: number
           currency?: string
           description: string
-          category_id: string
+          category_id?: string | null
           account_id?: string | null
           date: string
           tags?: string[] | null
@@ -100,7 +167,8 @@ export interface Database {
           location?: string | null
           notes?: string | null
           is_recurring?: boolean
-          recurring_pattern?: string | null
+          recurring_pattern?: Json | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -111,7 +179,7 @@ export interface Database {
           amount?: number
           currency?: string
           description?: string
-          category_id?: string
+          category_id?: string | null
           account_id?: string | null
           date?: string
           tags?: string[] | null
@@ -119,7 +187,8 @@ export interface Database {
           location?: string | null
           notes?: string | null
           is_recurring?: boolean
-          recurring_pattern?: string | null
+          recurring_pattern?: Json | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -174,7 +243,7 @@ export interface Database {
           spent: number
           currency: string
           period: 'monthly' | 'weekly' | 'yearly'
-          category_ids: string[]
+          category_ids: string[] | null
           start_date: string
           end_date: string
           is_active: boolean
@@ -190,7 +259,7 @@ export interface Database {
           spent?: number
           currency?: string
           period?: 'monthly' | 'weekly' | 'yearly'
-          category_ids: string[]
+          category_ids?: string[] | null
           start_date: string
           end_date: string
           is_active?: boolean
@@ -206,7 +275,7 @@ export interface Database {
           spent?: number
           currency?: string
           period?: 'monthly' | 'weekly' | 'yearly'
-          category_ids?: string[]
+          category_ids?: string[] | null
           start_date?: string
           end_date?: string
           is_active?: boolean
@@ -220,14 +289,16 @@ export interface Database {
           id: string
           user_id: string
           name: string
-          symbol: string
-          type: 'stock' | 'crypto' | 'mutual_fund' | 'bond' | 'other'
-          quantity: number
-          average_price: number
+          type: 'stock' | 'mutual_fund' | 'crypto' | 'bond' | 'fd' | 'other'
+          symbol: string | null
+          units: number
+          purchase_price: number
           current_price: number
           currency: string
-          platform: string
+          purchase_date: string
+          platform: string | null
           notes: string | null
+          metadata: Json | null
           created_at: string
           updated_at: string
         }
@@ -235,14 +306,16 @@ export interface Database {
           id?: string
           user_id: string
           name: string
-          symbol: string
-          type: 'stock' | 'crypto' | 'mutual_fund' | 'bond' | 'other'
-          quantity: number
-          average_price: number
+          type?: 'stock' | 'mutual_fund' | 'crypto' | 'bond' | 'fd' | 'other'
+          symbol?: string | null
+          units: number
+          purchase_price: number
           current_price: number
           currency?: string
-          platform: string
+          purchase_date: string
+          platform?: string | null
           notes?: string | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -250,14 +323,16 @@ export interface Database {
           id?: string
           user_id?: string
           name?: string
-          symbol?: string
-          type?: 'stock' | 'crypto' | 'mutual_fund' | 'bond' | 'other'
-          quantity?: number
-          average_price?: number
+          type?: 'stock' | 'mutual_fund' | 'crypto' | 'bond' | 'fd' | 'other'
+          symbol?: string | null
+          units?: number
+          purchase_price?: number
           current_price?: number
           currency?: string
-          platform?: string
+          purchase_date?: string
+          platform?: string | null
           notes?: string | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -266,54 +341,54 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          name: string
-          type: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
+          lender: string
           principal_amount: number
           outstanding_amount: number
           interest_rate: number
           emi_amount: number
           tenure_months: number
           start_date: string
-          end_date: string
-          lender: string
+          next_due_date: string
           currency: string
-          is_active: boolean
+          type: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
+          status: 'active' | 'closed' | 'defaulted'
+          metadata: Json | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          name: string
-          type: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
+          lender: string
           principal_amount: number
           outstanding_amount: number
           interest_rate: number
           emi_amount: number
           tenure_months: number
           start_date: string
-          end_date: string
-          lender: string
+          next_due_date: string
           currency?: string
-          is_active?: boolean
+          type?: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
+          status?: 'active' | 'closed' | 'defaulted'
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
-          name?: string
-          type?: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
+          lender?: string
           principal_amount?: number
           outstanding_amount?: number
           interest_rate?: number
           emi_amount?: number
           tenure_months?: number
           start_date?: string
-          end_date?: string
-          lender?: string
+          next_due_date?: string
           currency?: string
-          is_active?: boolean
+          type?: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
+          status?: 'active' | 'closed' | 'defaulted'
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -338,7 +413,7 @@ export interface Database {
           id?: string
           user_id: string
           name: string
-          type: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'other'
+          type?: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'other'
           bank_name?: string | null
           account_number?: string | null
           balance?: number
@@ -369,57 +444,51 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          type: 'lent' | 'borrowed'
-          amount: number
-          currency: string
           person_name: string
           person_contact: string | null
-          description: string
+          amount: number
+          currency: string
+          type: 'lent' | 'borrowed'
           date: string
           due_date: string | null
           interest_rate: number | null
-          is_returned: boolean
-          returned_amount: number | null
-          returned_date: string | null
-          notes: string | null
+          status: 'pending' | 'partial' | 'paid' | 'overdue'
+          description: string | null
+          paid_amount: number
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          type: 'lent' | 'borrowed'
-          amount: number
-          currency?: string
           person_name: string
           person_contact?: string | null
-          description: string
+          amount: number
+          currency?: string
+          type: 'lent' | 'borrowed'
           date: string
           due_date?: string | null
           interest_rate?: number | null
-          is_returned?: boolean
-          returned_amount?: number | null
-          returned_date?: string | null
-          notes?: string | null
+          status?: 'pending' | 'partial' | 'paid' | 'overdue'
+          description?: string | null
+          paid_amount?: number
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
-          type?: 'lent' | 'borrowed'
-          amount?: number
-          currency?: string
           person_name?: string
           person_contact?: string | null
-          description?: string
+          amount?: number
+          currency?: string
+          type?: 'lent' | 'borrowed'
           date?: string
           due_date?: string | null
           interest_rate?: number | null
-          is_returned?: boolean
-          returned_amount?: number | null
-          returned_date?: string | null
-          notes?: string | null
+          status?: 'pending' | 'partial' | 'paid' | 'overdue'
+          description?: string | null
+          paid_amount?: number
           created_at?: string
           updated_at?: string
         }
@@ -459,14 +528,150 @@ export interface Database {
           created_at?: string
         }
       }
-      admin_logs: {
+      emi_payments: {
+        Row: {
+          id: string
+          user_id: string
+          loan_id: string
+          payment_date: string
+          amount: number
+          principal_amount: number
+          interest_amount: number
+          outstanding_balance: number
+          is_paid: boolean
+          paid_date: string | null
+          payment_method: string | null
+          transaction_reference: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          loan_id: string
+          payment_date: string
+          amount: number
+          principal_amount: number
+          interest_amount: number
+          outstanding_balance: number
+          is_paid?: boolean
+          paid_date?: string | null
+          payment_method?: string | null
+          transaction_reference?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          loan_id?: string
+          payment_date?: string
+          amount?: number
+          principal_amount?: number
+          interest_amount?: number
+          outstanding_balance?: number
+          is_paid?: boolean
+          paid_date?: string | null
+          payment_method?: string | null
+          transaction_reference?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      recurring_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          transaction_template: Json
+          frequency: string
+          interval_value: number
+          start_date: string
+          end_date: string | null
+          last_executed: string | null
+          next_execution: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          transaction_template: Json
+          frequency: string
+          interval_value?: number
+          start_date: string
+          end_date?: string | null
+          last_executed?: string | null
+          next_execution: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          transaction_template?: Json
+          frequency?: string
+          interval_value?: number
+          start_date?: string
+          end_date?: string | null
+          last_executed?: string | null
+          next_execution?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      ai_insights: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          content: string
+          confidence_score: number | null
+          is_dismissed: boolean
+          metadata: Json | null
+          expires_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          title: string
+          content: string
+          confidence_score?: number | null
+          is_dismissed?: boolean
+          metadata?: Json | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          title?: string
+          content?: string
+          confidence_score?: number | null
+          is_dismissed?: boolean
+          metadata?: Json | null
+          expires_at?: string | null
+          created_at?: string
+        }
+      }
+      admin_audit_logs: {
         Row: {
           id: string
           admin_user_id: string
           action: string
-          target_user_id: string | null
-          target_resource: string | null
-          details: Json | null
+          resource_type: string
+          resource_id: string | null
+          old_values: Json | null
+          new_values: Json | null
           ip_address: string | null
           user_agent: string | null
           created_at: string
@@ -475,9 +680,10 @@ export interface Database {
           id?: string
           admin_user_id: string
           action: string
-          target_user_id?: string | null
-          target_resource?: string | null
-          details?: Json | null
+          resource_type: string
+          resource_id?: string | null
+          old_values?: Json | null
+          new_values?: Json | null
           ip_address?: string | null
           user_agent?: string | null
           created_at?: string
@@ -486,9 +692,10 @@ export interface Database {
           id?: string
           admin_user_id?: string
           action?: string
-          target_user_id?: string | null
-          target_resource?: string | null
-          details?: Json | null
+          resource_type?: string
+          resource_id?: string | null
+          old_values?: Json | null
+          new_values?: Json | null
           ip_address?: string | null
           user_agent?: string | null
           created_at?: string
@@ -499,10 +706,31 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_has_permission: {
+        Args: {
+          user_uuid: string
+          permission_name: string
+        }
+        Returns: boolean
+      }
+      get_user_role: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      transaction_type: 'income' | 'expense'
+      account_type: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'other'
+      investment_type: 'stock' | 'mutual_fund' | 'crypto' | 'bond' | 'fd' | 'other'
+      loan_type: 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
+      loan_status: 'active' | 'closed' | 'defaulted'
+      lending_type: 'lent' | 'borrowed'
+      lending_status: 'pending' | 'partial' | 'paid' | 'overdue'
+      budget_period: 'weekly' | 'monthly' | 'yearly'
+      notification_type: 'info' | 'warning' | 'error' | 'success'
+      theme_type: 'light' | 'dark' | 'system'
     }
     CompositeTypes: {
       [_ in never]: never
