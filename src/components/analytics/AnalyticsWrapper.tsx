@@ -219,51 +219,50 @@ export function AnalyticsWrapper() {
       // Track Core Web Vitals
       if ("web-vitals" in window) {
         import("web-vitals")
-          .then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-            getCLS((metric) => {
-              trackEvent(
-                "web_vital",
-                "performance",
-                "CLS",
-                Math.round(metric.value * 1000)
-              );
-            });
+          .then((webVitals) => {
+            if (webVitals.onCLS) {
+              webVitals.onCLS((metric) => {
+                trackEvent(
+                  "web_vital",
+                  "performance",
+                  "CLS",
+                  Math.round(metric.value * 1000)
+                );
+              });
+            }
 
-            getFID((metric) => {
-              trackEvent(
-                "web_vital",
-                "performance",
-                "FID",
-                Math.round(metric.value)
-              );
-            });
+            if (webVitals.onFCP) {
+              webVitals.onFCP((metric) => {
+                trackEvent(
+                  "web_vital",
+                  "performance",
+                  "FCP",
+                  Math.round(metric.value)
+                );
+              });
+            }
 
-            getFCP((metric) => {
-              trackEvent(
-                "web_vital",
-                "performance",
-                "FCP",
-                Math.round(metric.value)
-              );
-            });
+            if (webVitals.onLCP) {
+              webVitals.onLCP((metric) => {
+                trackEvent(
+                  "web_vital",
+                  "performance",
+                  "LCP",
+                  Math.round(metric.value)
+                );
+              });
+            }
 
-            getLCP((metric) => {
-              trackEvent(
-                "web_vital",
-                "performance",
-                "LCP",
-                Math.round(metric.value)
-              );
-            });
-
-            getTTFB((metric) => {
-              trackEvent(
-                "web_vital",
-                "performance",
-                "TTFB",
-                Math.round(metric.value)
-              );
-            });
+            if (webVitals.onTTFB) {
+              webVitals.onTTFB((metric) => {
+                trackEvent(
+                  "web_vital",
+                  "performance",
+                  "TTFB",
+                  Math.round(metric.value)
+                );
+              });
+            }
           })
           .catch(() => {
             // Web Vitals not available

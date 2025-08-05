@@ -44,14 +44,13 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
 
   const getNotificationIcon = (type: Notification["type"]) => {
     switch (type) {
-      case "budget_alert":
+      case "warning":
         return <AlertTriangle className="w-4 h-4" />;
-      case "emi_reminder":
-        return <CreditCard className="w-4 h-4" />;
-      case "lending_reminder":
-        return <Users className="w-4 h-4" />;
-      case "goal_reminder":
+      case "error":
+        return <AlertTriangle className="w-4 h-4" />;
+      case "success":
         return <Target className="w-4 h-4" />;
+      case "info":
       default:
         return <Bell className="w-4 h-4" />;
     }
@@ -59,16 +58,15 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
 
   const getNotificationColor = (type: Notification["type"]) => {
     switch (type) {
-      case "budget_alert":
+      case "error":
         return "text-red-600 bg-red-50 dark:bg-red-900/20";
-      case "emi_reminder":
-        return "text-blue-600 bg-blue-50 dark:bg-blue-900/20";
-      case "lending_reminder":
-        return "text-purple-600 bg-purple-50 dark:bg-purple-900/20";
-      case "goal_reminder":
+      case "warning":
+        return "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20";
+      case "success":
         return "text-green-600 bg-green-50 dark:bg-green-900/20";
+      case "info":
       default:
-        return "text-gray-600 bg-gray-50 dark:bg-gray-900/20";
+        return "text-blue-600 bg-blue-50 dark:bg-blue-900/20";
     }
   };
 
@@ -78,8 +76,8 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
     }
 
     // Handle navigation based on notification type
-    if (notification.data?.url) {
-      window.location.href = notification.data.url;
+    if (notification.action_url) {
+      window.location.href = notification.action_url;
     }
   };
 
