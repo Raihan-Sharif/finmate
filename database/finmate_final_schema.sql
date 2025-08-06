@@ -555,56 +555,19 @@ ALTER TABLE ai_insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies - System tables (admin only)
-CREATE POLICY "Admins can manage roles" ON roles FOR ALL USING (
-    EXISTS (
-        SELECT 1 FROM profiles p
-        JOIN roles r ON p.role_id = r.id
-        WHERE p.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-);
+-- RLS Policies - System tables (simplified to avoid recursion)
+-- Note: System tables are restricted. Admin access should use service_role
+CREATE POLICY "Block access to roles" ON roles FOR ALL USING (false);
+CREATE POLICY "Block access to permissions" ON permissions FOR ALL USING (false);
+CREATE POLICY "Block access to role permissions" ON role_permissions FOR ALL USING (false);
+CREATE POLICY "Block access to user permissions" ON user_permissions FOR ALL USING (false);
 
-CREATE POLICY "Admins can manage permissions" ON permissions FOR ALL USING (
-    EXISTS (
-        SELECT 1 FROM profiles p
-        JOIN roles r ON p.role_id = r.id
-        WHERE p.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-);
-
-CREATE POLICY "Admins can manage role permissions" ON role_permissions FOR ALL USING (
-    EXISTS (
-        SELECT 1 FROM profiles p
-        JOIN roles r ON p.role_id = r.id
-        WHERE p.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-);
-
-CREATE POLICY "Admins can manage user permissions" ON user_permissions FOR ALL USING (
-    EXISTS (
-        SELECT 1 FROM profiles p
-        JOIN roles r ON p.role_id = r.id
-        WHERE p.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-);
-
--- Profiles policies
+-- Profiles policies (simplified to avoid infinite recursion)
+-- Note: For now, users can only see their own profiles to avoid recursion
+-- Admin access can be managed through service_role or separate admin functions
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM profiles p
-        JOIN roles r ON p.role_id = r.id
-        WHERE p.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-);
-CREATE POLICY "Admins can update all profiles" ON profiles FOR UPDATE USING (
-    EXISTS (
-        SELECT 1 FROM profiles p
-        JOIN roles r ON p.role_id = r.id
-        WHERE p.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-);
 
 -- User data policies (users manage their own data)
 CREATE POLICY "Users can manage own categories" ON categories FOR ALL USING (auth.uid() = user_id);
@@ -622,13 +585,7 @@ CREATE POLICY "Users can manage own ai insights" ON ai_insights FOR ALL USING (a
 -- Session and audit policies
 CREATE POLICY "Users can view own sessions" ON user_sessions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "System can manage sessions" ON user_sessions FOR ALL USING (true);
-CREATE POLICY "Admins can view audit logs" ON admin_audit_logs FOR SELECT USING (
-    EXISTS (
-        SELECT 1 FROM profiles p
-        JOIN roles r ON p.role_id = r.id
-        WHERE p.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-);
+CREATE POLICY "Block audit logs access" ON admin_audit_logs FOR ALL USING (false);
 
 -- =============================================
 -- FUNCTIONS
