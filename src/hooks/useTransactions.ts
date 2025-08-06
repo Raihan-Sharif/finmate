@@ -10,6 +10,7 @@ import { useAuth } from "./useAuth";
 interface TransactionFilters {
   type: string;
   category: string;
+  account: string;
   dateRange: string;
   amountRange: { min: number; max: number };
 }
@@ -37,14 +38,11 @@ interface UseTransactionsReturn {
   ) => Promise<Transaction>;
   deleteTransaction: (id: string) => Promise<void>;
   bulkDelete: (ids: string[]) => Promise<void>;
-  exportTransactions: (filters: TransactionFilters) => Promise<void>;
+  exportTransactions: (filters?: TransactionFilters) => Promise<void>;
   refreshTransactions: () => Promise<void>;
 }
 
-export function useTransactions(
-  filters: TransactionFilters,
-  searchQuery?: string
-): UseTransactionsReturn {
+export function useTransactions(): UseTransactionsReturn {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -60,7 +58,7 @@ export function useTransactions(
     avgTransactionAmount: 0,
   });
 
-  // Get date range based on filter
+  // Helper function to get date range (moved to utils later if needed)
   const getDateRange = (dateRange: string) => {
     const now = new Date();
 
@@ -118,7 +116,7 @@ export function useTransactions(
     }
   }, [user]);
 
-  // Fetch transactions
+  // Fetch all transactions (no filters - we'll filter client-side)
   const fetchTransactions = useCallback(async () => {
     if (!user) {
       setTransactions([]);
@@ -130,20 +128,19 @@ export function useTransactions(
       setError(null);
       setLoading(true);
 
-      // Build query
-      const dateRange = getDateRange(filters.dateRange);
-      let query = supabase
+      // Simple query to get all user transactions
+      const { data: transactionsData, error: transactionsError, count } = await supabase
         .from(TABLES.TRANSACTIONS)
         .select(
           `
           *,
-          categories (
+          categories!transactions_category_id_fkey (
             id,
             name,
             color,
             icon
           ),
-          subcategories (
+          subcategories!transactions_subcategory_id_fkey (
             id,
             name,
             color,
@@ -153,50 +150,19 @@ export function useTransactions(
             id,
             name
           )
-        `
+        `,
+          { count: 'exact' }
         )
         .eq("user_id", user.id)
-        .gte("date", dateRange.start)
-        .lte("date", dateRange.end)
         .order("date", { ascending: false })
         .order("created_at", { ascending: false });
-
-      // Apply filters
-      if (filters.type !== "all") {
-        query = query.eq("type", filters.type);
-      }
-
-      if (filters.category !== "all") {
-        query = query.eq("category_id", filters.category);
-      }
-
-      if (filters.amountRange.min > 0) {
-        query = query.gte("amount", filters.amountRange.min);
-      }
-
-      if (filters.amountRange.max > 0) {
-        query = query.lte("amount", filters.amountRange.max);
-      }
-
-      // Apply search
-      if (searchQuery) {
-        query = query.or(
-          `description.ilike.%${searchQuery}%,notes.ilike.%${searchQuery}%,vendor.ilike.%${searchQuery}%`
-        );
-      }
-
-      const {
-        data: transactionsData,
-        error: transactionsError,
-        count,
-      } = await query;
 
       if (transactionsError) throw transactionsError;
 
       setTransactions(transactionsData || []);
       setTotalCount(count || 0);
 
-      // Calculate stats
+      // Calculate stats for all transactions
       const income =
         transactionsData
           ?.filter((t) => t.type === "income")
@@ -226,7 +192,7 @@ export function useTransactions(
     } finally {
       setLoading(false);
     }
-  }, [user, filters, searchQuery]);
+  }, [user]);
 
   // Create transaction
   const createTransaction = useCallback(
@@ -315,44 +281,37 @@ export function useTransactions(
 
   // Export transactions
   const exportTransactions = useCallback(
-    async (exportFilters: TransactionFilters) => {
+    async (exportFilters?: TransactionFilters) => {
       if (!user) return;
 
       try {
-        const dateRange = getDateRange(exportFilters.dateRange);
-
-        let query = supabase
-          .from(TABLES.TRANSACTIONS)
-          .select(
-            `
-          *,
-          categories (
-            name
-          )
-        `
-          )
-          .eq("user_id", user.id)
-          .gte("date", dateRange.start)
-          .lte("date", dateRange.end)
-          .order("date", { ascending: false });
-
-        if (exportFilters.type !== "all") {
-          query = query.eq("type", exportFilters.type);
-        }
-
-        if (exportFilters.category !== "all") {
-          query = query.eq("category_id", exportFilters.category);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
+        // If no filters provided, export all transactions
+        const exportData = exportFilters ? 
+          transactions.filter(transaction => {
+            // Apply same filtering logic as the page
+            if (exportFilters.type !== "all" && transaction.type !== exportFilters.type) {
+              return false;
+            }
+            if (exportFilters.category !== "all") {
+              const matchesCategory = transaction.category_id === exportFilters.category;
+              const matchesSubcategory = (transaction as any).subcategory_id === exportFilters.category;
+              if (!matchesCategory && !matchesSubcategory) {
+                return false;
+              }
+            }
+            if (exportFilters.account !== "all" && transaction.account_id !== exportFilters.account) {
+              return false;
+            }
+            return true;
+          })
+          : transactions;
 
         // Convert to CSV
         const csvHeaders = [
           "Date",
           "Description",
           "Category",
+          "Subcategory",
           "Type",
           "Amount",
           "Vendor",
@@ -360,10 +319,11 @@ export function useTransactions(
         ];
 
         const csvRows =
-          data?.map((transaction) => [
+          exportData?.map((transaction: any) => [
             transaction.date,
             transaction.description,
             transaction.categories?.name || "",
+            transaction.subcategories?.name || "",
             transaction.type,
             transaction.amount.toString(),
             transaction.vendor || "",
@@ -392,7 +352,7 @@ export function useTransactions(
         toast.error("Failed to export transactions");
       }
     },
-    [user]
+    [user, transactions]
   );
 
   // Refresh transactions
@@ -400,13 +360,13 @@ export function useTransactions(
     await fetchTransactions();
   }, [fetchTransactions]);
 
-  // Load data on mount and when dependencies change
+  // Load data on mount
   useEffect(() => {
     if (user) {
       fetchCategories();
       fetchTransactions();
     }
-  }, [user, fetchCategories, fetchTransactions]);
+  }, [user]); // Only depend on user, not the functions
 
   // Set up real-time subscription
   useEffect(() => {

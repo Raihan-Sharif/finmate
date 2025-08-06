@@ -61,22 +61,15 @@ export default function TransactionsPage() {
 
   const currency = profile?.currency || 'BDT';
 
-  // Use the useTransactions hook with filters
-  const filters = {
-    type: selectedType === 'all' ? 'all' : selectedType,
-    category: selectedCategory,
-    dateRange: 'month', // Default to current month
-    amountRange: { min: 0, max: 0 }
-  };
-
+  // Use the simplified useTransactions hook
   const {
-    transactions,
+    transactions: allTransactions,
     loading,
     error,
     stats,
     deleteTransaction: handleDeleteTransaction,
     refreshTransactions
-  } = useTransactions(filters, searchQuery);
+  } = useTransactions();
 
   // Load categories and accounts once
   useEffect(() => {
@@ -97,8 +90,43 @@ export default function TransactionsPage() {
     loadDropdownData();
   }, [user?.id]);
 
+  // Client-side filtering
+  const filteredTransactions = allTransactions.filter((transaction) => {
+    // Type filter
+    if (selectedType !== 'all' && transaction.type !== selectedType) {
+      return false;
+    }
+
+    // Category/Subcategory filter
+    if (selectedCategory !== 'all') {
+      const matchesCategory = transaction.category_id === selectedCategory;
+      const matchesSubcategory = (transaction as any).subcategory_id === selectedCategory;
+      if (!matchesCategory && !matchesSubcategory) {
+        return false;
+      }
+    }
+
+    // Account filter
+    if (selectedAccount !== 'all' && transaction.account_id !== selectedAccount) {
+      return false;
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesDescription = transaction.description.toLowerCase().includes(query);
+      const matchesNotes = transaction.notes?.toLowerCase().includes(query);
+      const matchesVendor = transaction.vendor?.toLowerCase().includes(query);
+      if (!matchesDescription && !matchesNotes && !matchesVendor) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
   // Sort transactions
-  const sortedTransactions = [...transactions].sort((a, b) => {
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     switch (sortBy) {
       case 'date-desc':
         return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -115,8 +143,18 @@ export default function TransactionsPage() {
     }
   });
 
-  // Use stats from useTransactions hook
-  const { totalIncome, totalExpenses, netAmount } = stats;
+  // Calculate stats for filtered transactions
+  const filteredStats = {
+    totalIncome: filteredTransactions
+      .filter((t) => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0),
+    totalExpenses: filteredTransactions
+      .filter((t) => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0),
+  };
+  filteredStats.netAmount = filteredStats.totalIncome - filteredStats.totalExpenses;
+
+  const { totalIncome, totalExpenses, netAmount } = filteredStats;
 
   if (loading) {
     return (
@@ -410,15 +448,15 @@ export default function TransactionsPage() {
                       </div>
                       <div className="flex items-center space-x-2 mt-1">
                         <Badge variant="outline" className="text-xs">
-                          {transaction.subcategory?.name || transaction.category?.name || 'Uncategorized'}
+                          {(transaction as any).subcategories?.name || (transaction as any).categories?.name || 'Uncategorized'}
                         </Badge>
-                        {transaction.subcategory && transaction.category && (
+                        {(transaction as any).subcategories && (transaction as any).categories && (
                           <span className="text-xs text-muted-foreground">
-                            ({transaction.category.name})
+                            ({(transaction as any).categories.name})
                           </span>
                         )}
                         <span className="text-sm text-muted-foreground">
-                          {transaction.account?.name || 'No Account'}
+                          {(transaction as any).accounts?.name || 'No Account'}
                         </span>
                         <span className="text-sm text-muted-foreground">•</span>
                         <span className="text-sm text-muted-foreground flex items-center">
