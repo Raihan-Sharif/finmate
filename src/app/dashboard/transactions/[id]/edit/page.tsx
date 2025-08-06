@@ -35,6 +35,7 @@ interface TransactionForm {
   amount: number;
   description: string;
   category: string;
+  subcategory?: string;
   account: string;
   date: string;
   notes?: string;
@@ -60,6 +61,7 @@ export default function EditTransactionPage() {
   const [loadingTransaction, setLoadingTransaction] = useState(true);
   const [tagInput, setTagInput] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -75,6 +77,7 @@ export default function EditTransactionPage() {
   } = useForm<TransactionForm>();
 
   const watchedType = watch('type');
+  const watchedCategory = watch('category');
   const watchedTags = watch('tags') || [];
   const watchedRecurring = watch('recurring');
   const watchedAmount = watch('amount');
@@ -96,16 +99,17 @@ export default function EditTransactionPage() {
 
         // Reset form with transaction data
         reset({
-          type: transaction.type,
+          type: transaction.type === 'transfer' ? 'expense' : transaction.type, // Convert transfer to expense for form
           amount: transaction.amount,
           description: transaction.description,
           category: transaction.category_id || '',
+          subcategory: (transaction as any).subcategory_id || '',
           account: transaction.account_id || '',
           date: transaction.date,
           notes: transaction.notes || '',
           tags: transaction.tags || [],
           recurring: transaction.is_recurring || false,
-          recurringFrequency: transaction.recurring_pattern?.frequency || '',
+          recurringFrequency: (transaction as any).recurring_pattern?.frequency || '',
           location: transaction.location || '',
           vendor: transaction.vendor || '',
         });
@@ -130,7 +134,7 @@ export default function EditTransactionPage() {
         setLoadingData(true);
         
         const [categoriesData, accountsData] = await Promise.all([
-          CategoryService.getCategories(user.id, watchedType),
+          CategoryService.getCategories(watchedType),
           AccountService.getAccounts(user.id)
         ]);
         
@@ -147,6 +151,26 @@ export default function EditTransactionPage() {
     loadData();
   }, [user, watchedType]);
 
+  // Load subcategories when category changes
+  useEffect(() => {
+    const loadSubcategories = async () => {
+      if (!watchedCategory) {
+        setSubcategories([]);
+        return;
+      }
+
+      try {
+        const subcategoriesData = await CategoryService.getSubcategories(watchedCategory);
+        setSubcategories(subcategoriesData);
+      } catch (error) {
+        console.error('Error loading subcategories:', error);
+        setSubcategories([]);
+      }
+    };
+
+    loadSubcategories();
+  }, [watchedCategory]);
+
   const onSubmit = async (data: TransactionForm) => {
     if (!user || !transactionId) {
       toast.error('You must be logged in to update transactions');
@@ -162,6 +186,7 @@ export default function EditTransactionPage() {
         description: data.description,
         notes: data.notes || null,
         category_id: data.category || null,
+        subcategory_id: data.subcategory || null,
         account_id: data.account || null,
         date: data.date,
         tags: data.tags || [],
@@ -325,13 +350,16 @@ export default function EditTransactionPage() {
                     )}
                   </div>
 
-                  {/* Category and Account */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Category, Subcategory and Account */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Category</Label>
                       <Select 
                         value={watch('category') || ''} 
-                        onValueChange={(value) => setValue('category', value)} 
+                        onValueChange={(value) => {
+                          setValue('category', value);
+                          setValue('subcategory', ''); // Reset subcategory when category changes
+                        }} 
                         disabled={loadingData}
                       >
                         <SelectTrigger>
@@ -347,6 +375,38 @@ export default function EditTransactionPage() {
                           ) : (
                             <SelectItem value="none" disabled>
                               No categories found
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Subcategory</Label>
+                      <Select 
+                        value={watch('subcategory') || ''} 
+                        onValueChange={(value) => setValue('subcategory', value)} 
+                        disabled={!watchedCategory || subcategories.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={
+                            !watchedCategory 
+                              ? 'Select category first' 
+                              : subcategories.length === 0 
+                                ? 'No subcategories' 
+                                : 'Select subcategory'
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subcategories.length > 0 ? (
+                            subcategories.map((subcategory) => (
+                              <SelectItem key={subcategory.id} value={subcategory.id}>
+                                {subcategory.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>
+                              No subcategories available
                             </SelectItem>
                           )}
                         </SelectContent>

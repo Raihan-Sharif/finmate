@@ -12,6 +12,7 @@ DROP TRIGGER IF EXISTS trigger_update_account_balance ON transactions;
 DROP TRIGGER IF EXISTS trigger_update_budget_spent ON transactions;
 DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
 DROP TRIGGER IF EXISTS update_categories_updated_at ON categories;
+DROP TRIGGER IF EXISTS update_subcategories_updated_at ON subcategories;
 DROP TRIGGER IF EXISTS update_accounts_updated_at ON accounts;
 DROP TRIGGER IF EXISTS update_transactions_updated_at ON transactions;
 DROP TRIGGER IF EXISTS update_budgets_updated_at ON budgets;
@@ -43,6 +44,7 @@ DROP TABLE IF EXISTS investments CASCADE;
 DROP TABLE IF EXISTS budgets CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
+DROP TABLE IF EXISTS subcategories CASCADE;
 DROP TABLE IF EXISTS categories CASCADE;
 DROP TABLE IF EXISTS user_permissions CASCADE;
 DROP TABLE IF EXISTS role_permissions CASCADE;
@@ -173,23 +175,36 @@ CREATE TABLE user_permissions (
 -- FINANCIAL CORE TABLES
 -- =============================================
 
--- Categories Table
+-- Categories Table (Global - no user_id)
 CREATE TABLE categories (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     icon VARCHAR(50) DEFAULT 'folder' NOT NULL,
     color VARCHAR(7) DEFAULT '#6B7280' NOT NULL,
     type transaction_type NOT NULL,
-    parent_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-    is_default BOOLEAN DEFAULT false NOT NULL,
     is_active BOOLEAN DEFAULT true NOT NULL,
     sort_order INTEGER DEFAULT 0 NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     
-    CONSTRAINT categories_name_user_type_unique UNIQUE (user_id, name, type)
+    CONSTRAINT categories_name_type_unique UNIQUE (name, type)
+);
+
+-- Subcategories Table (Global - references categories)
+CREATE TABLE subcategories (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    category_id UUID REFERENCES categories(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    icon VARCHAR(50) DEFAULT 'folder' NOT NULL,
+    color VARCHAR(7) DEFAULT '#6B7280' NOT NULL,
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    sort_order INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT subcategories_name_category_unique UNIQUE (name, category_id)
 );
 
 -- Accounts Table
@@ -221,6 +236,7 @@ CREATE TABLE transactions (
     description TEXT NOT NULL,
     notes TEXT,
     category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+    subcategory_id UUID REFERENCES subcategories(id) ON DELETE SET NULL,
     account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
     transfer_to_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
     date DATE NOT NULL,
@@ -467,10 +483,17 @@ CREATE INDEX idx_user_permissions_user_id ON user_permissions(user_id);
 CREATE INDEX idx_user_permissions_permission_id ON user_permissions(permission_id);
 
 -- Financial data indexes
-CREATE INDEX idx_categories_user_id ON categories(user_id);
+-- Indexes for categories table
 CREATE INDEX idx_categories_type ON categories(type);
 CREATE INDEX idx_categories_active ON categories(is_active);
-CREATE INDEX idx_categories_parent_id ON categories(parent_id);
+CREATE INDEX idx_categories_sort_order ON categories(sort_order);
+CREATE INDEX idx_categories_type_active ON categories(type, is_active);
+
+-- Indexes for subcategories table
+CREATE INDEX idx_subcategories_category_id ON subcategories(category_id);
+CREATE INDEX idx_subcategories_active ON subcategories(is_active);
+CREATE INDEX idx_subcategories_sort_order ON subcategories(sort_order);
+CREATE INDEX idx_subcategories_category_active ON subcategories(category_id, is_active);
 
 CREATE INDEX idx_accounts_user_id ON accounts(user_id);
 CREATE INDEX idx_accounts_type ON accounts(type);
@@ -542,6 +565,7 @@ ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subcategories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
@@ -569,8 +593,10 @@ CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.ui
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = user_id);
 
--- User data policies (users manage their own data)
-CREATE POLICY "Users can manage own categories" ON categories FOR ALL USING (auth.uid() = user_id);
+-- User data policies (users can read global categories and manage their own custom ones)
+-- Categories and subcategories are global (read-only for users)
+CREATE POLICY "Users can read all categories" ON categories FOR SELECT USING (true);
+CREATE POLICY "Users can read all subcategories" ON subcategories FOR SELECT USING (true);
 CREATE POLICY "Users can manage own accounts" ON accounts FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own transactions" ON transactions FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own budgets" ON budgets FOR ALL USING (auth.uid() = user_id);
@@ -600,41 +626,189 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
--- Function to create default categories and account
-CREATE OR REPLACE FUNCTION public.create_default_categories(user_id_param UUID)
+-- Function to create GLOBAL default categories (not user-specific)
+CREATE OR REPLACE FUNCTION public.create_global_categories()
+RETURNS VOID AS $$
+DECLARE
+    -- Main category variables
+    utility_bills_id UUID;
+    food_dining_id UUID;
+    transportation_id UUID;
+    shopping_id UUID;
+    entertainment_id UUID;
+    healthcare_id UUID;
+    education_id UUID;
+    travel_id UUID;
+    personal_care_id UUID;
+    salary_id UUID;
+    freelance_id UUID;
+    investment_id UUID;
+    gifts_id UUID;
+BEGIN
+    -- Check if global categories already exist
+    IF EXISTS (SELECT 1 FROM public.categories LIMIT 1) THEN
+        RAISE NOTICE 'Global categories already exist, skipping creation';
+        RETURN;
+    END IF;
+
+    RAISE NOTICE 'Creating global categories...';
+
+    -- Insert main income categories (no user_id since global)
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Salary', 'briefcase', '#10B981', 'income', 1) RETURNING id INTO salary_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Freelance & Business', 'laptop', '#3B82F6', 'income', 2) RETURNING id INTO freelance_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Investment Returns', 'trending-up', '#8B5CF6', 'income', 3) RETURNING id INTO investment_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Gifts & Others', 'gift', '#F59E0B', 'income', 4) RETURNING id INTO gifts_id;
+
+    -- Insert main expense categories
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Utility Bills', 'zap', '#EF4444', 'expense', 1) RETURNING id INTO utility_bills_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Food & Dining', 'utensils', '#F97316', 'expense', 2) RETURNING id INTO food_dining_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Transportation', 'car', '#3B82F6', 'expense', 3) RETURNING id INTO transportation_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Shopping', 'shopping-bag', '#F59E0B', 'expense', 4) RETURNING id INTO shopping_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Entertainment', 'film', '#8B5CF6', 'expense', 5) RETURNING id INTO entertainment_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Healthcare', 'heart', '#EC4899', 'expense', 6) RETURNING id INTO healthcare_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Education', 'book-open', '#06B6D4', 'expense', 7) RETURNING id INTO education_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Travel', 'map-pin', '#84CC16', 'expense', 8) RETURNING id INTO travel_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Personal Care', 'user', '#A855F7', 'expense', 9) RETURNING id INTO personal_care_id;
+
+    -- Insert subcategories for income categories
+    INSERT INTO public.subcategories (category_id, name, icon, color, sort_order) VALUES
+    -- Salary subcategories
+    (salary_id, 'Monthly Salary', 'calendar', '#10B981', 1),
+    (salary_id, 'Bonus', 'star', '#10B981', 2),
+    (salary_id, 'Overtime', 'clock', '#10B981', 3),
+    
+    -- Freelance subcategories
+    (freelance_id, 'Client Projects', 'briefcase', '#3B82F6', 1),
+    (freelance_id, 'Consulting', 'users', '#3B82F6', 2),
+    (freelance_id, 'Online Sales', 'shopping-cart', '#3B82F6', 3),
+    (freelance_id, 'Rental Income', 'home', '#3B82F6', 4),
+    
+    -- Investment subcategories
+    (investment_id, 'Dividends', 'trending-up', '#8B5CF6', 1),
+    (investment_id, 'Interest', 'percent', '#8B5CF6', 2),
+    (investment_id, 'Capital Gains', 'bar-chart', '#8B5CF6', 3),
+    
+    -- Gifts subcategories
+    (gifts_id, 'Cash Gifts', 'gift', '#F59E0B', 1),
+    (gifts_id, 'Refunds', 'rotate-ccw', '#F59E0B', 2),
+    (gifts_id, 'Prize Money', 'award', '#F59E0B', 3);
+
+    -- Insert subcategories for expense categories
+    INSERT INTO public.subcategories (category_id, name, icon, color, sort_order) VALUES
+    -- Utility Bills subcategories
+    (utility_bills_id, 'Electricity Bill', 'zap', '#EF4444', 1),
+    (utility_bills_id, 'Gas Bill', 'flame', '#EF4444', 2),
+    (utility_bills_id, 'Water Bill', 'droplets', '#EF4444', 3),
+    (utility_bills_id, 'Internet Bill', 'wifi', '#EF4444', 4),
+    (utility_bills_id, 'Phone Bill', 'phone', '#EF4444', 5),
+    (utility_bills_id, 'Cable/TV Bill', 'tv', '#EF4444', 6),
+    (utility_bills_id, 'Maintenance', 'wrench', '#EF4444', 7),
+    
+    -- Food & Dining subcategories
+    (food_dining_id, 'Groceries', 'shopping-cart', '#F97316', 1),
+    (food_dining_id, 'Restaurant', 'utensils', '#F97316', 2),
+    (food_dining_id, 'Fast Food', 'truck', '#F97316', 3),
+    (food_dining_id, 'Coffee & Drinks', 'coffee', '#F97316', 4),
+    (food_dining_id, 'Food Delivery', 'bike', '#F97316', 5),
+    (food_dining_id, 'Snacks', 'cookie', '#F97316', 6),
+    
+    -- Transportation subcategories
+    (transportation_id, 'Fuel/Petrol', 'fuel', '#3B82F6', 1),
+    (transportation_id, 'Public Transport', 'bus', '#3B82F6', 2),
+    (transportation_id, 'Taxi/Uber', 'car', '#3B82F6', 3),
+    (transportation_id, 'Vehicle Maintenance', 'settings', '#3B82F6', 4),
+    (transportation_id, 'Parking', 'square', '#3B82F6', 5),
+    (transportation_id, 'Tolls', 'road', '#3B82F6', 6),
+    
+    -- Shopping subcategories
+    (shopping_id, 'Clothing', 'shirt', '#F59E0B', 1),
+    (shopping_id, 'Electronics', 'smartphone', '#F59E0B', 2),
+    (shopping_id, 'Home & Garden', 'home', '#F59E0B', 3),
+    (shopping_id, 'Books & Stationery', 'book', '#F59E0B', 4),
+    (shopping_id, 'Gifts', 'gift', '#F59E0B', 5),
+    (shopping_id, 'Online Shopping', 'shopping-bag', '#F59E0B', 6),
+    
+    -- Entertainment subcategories
+    (entertainment_id, 'Movies & Cinema', 'film', '#8B5CF6', 1),
+    (entertainment_id, 'Games', 'gamepad-2', '#8B5CF6', 2),
+    (entertainment_id, 'Sports Events', 'trophy', '#8B5CF6', 3),
+    (entertainment_id, 'Music & Streaming', 'music', '#8B5CF6', 4),
+    (entertainment_id, 'Concerts & Events', 'calendar', '#8B5CF6', 5),
+    (entertainment_id, 'Hobbies', 'palette', '#8B5CF6', 6),
+    
+    -- Healthcare subcategories
+    (healthcare_id, 'Doctor Visits', 'stethoscope', '#EC4899', 1),
+    (healthcare_id, 'Pharmacy/Medicine', 'pill', '#EC4899', 2),
+    (healthcare_id, 'Health Insurance', 'shield', '#EC4899', 3),
+    (healthcare_id, 'Dental Care', 'smile', '#EC4899', 4),
+    (healthcare_id, 'Eye Care', 'eye', '#EC4899', 5),
+    (healthcare_id, 'Lab Tests', 'test-tube', '#EC4899', 6),
+    
+    -- Education subcategories
+    (education_id, 'Tuition Fees', 'graduation-cap', '#06B6D4', 1),
+    (education_id, 'Books & Materials', 'book-open', '#06B6D4', 2),
+    (education_id, 'Online Courses', 'monitor', '#06B6D4', 3),
+    (education_id, 'Training & Workshops', 'users', '#06B6D4', 4),
+    (education_id, 'Certification', 'award', '#06B6D4', 5),
+    
+    -- Travel subcategories
+    (travel_id, 'Flights', 'plane', '#84CC16', 1),
+    (travel_id, 'Hotels & Accommodation', 'bed', '#84CC16', 2),
+    (travel_id, 'Car Rental', 'car', '#84CC16', 3),
+    (travel_id, 'Tours & Activities', 'camera', '#84CC16', 4),
+    (travel_id, 'Travel Insurance', 'shield-check', '#84CC16', 5),
+    (travel_id, 'Visa & Documents', 'file-text', '#84CC16', 6),
+    
+    -- Personal Care subcategories
+    (personal_care_id, 'Salon & Barber', 'scissors', '#A855F7', 1),
+    (personal_care_id, 'Spa & Wellness', 'heart', '#A855F7', 2),
+    (personal_care_id, 'Gym & Fitness', 'dumbbell', '#A855F7', 3),
+    (personal_care_id, 'Cosmetics', 'sparkles', '#A855F7', 4),
+    (personal_care_id, 'Personal Items', 'user', '#A855F7', 5);
+
+    RAISE NOTICE 'Global categories and subcategories created successfully!';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to create default accounts for new users (still user-specific)
+CREATE OR REPLACE FUNCTION public.create_default_accounts(user_id_param UUID)
 RETURNS VOID AS $$
 BEGIN
-    -- Insert default income categories
-    INSERT INTO public.categories (user_id, name, icon, color, type, is_default) VALUES
-    (user_id_param, 'Salary', 'briefcase', '#10B981', 'income', true),
-    (user_id_param, 'Freelance', 'laptop', '#3B82F6', 'income', true),
-    (user_id_param, 'Investment Returns', 'trending-up', '#8B5CF6', 'income', true),
-    (user_id_param, 'Gift', 'gift', '#F59E0B', 'income', true),
-    (user_id_param, 'Other Income', 'plus-circle', '#6B7280', 'income', true);
+    -- Create default accounts with BDT as primary currency
+    INSERT INTO public.accounts (user_id, name, type, balance, currency, description, icon, color) VALUES
+    (user_id_param, 'Primary Account', 'bank', 0.00, 'BDT', 'Main salary receiving account', 'landmark', '#3B82F6'),
+    (user_id_param, 'Savings Account', 'savings', 0.00, 'BDT', 'Personal savings account', 'piggy-bank', '#10B981'),
+    (user_id_param, 'bKash', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#E11D48'),
+    (user_id_param, 'Nagad', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#F97316'),
+    (user_id_param, 'Rocket', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#8B5CF6'),
+    (user_id_param, 'Credit Card', 'credit_card', 0.00, 'BDT', 'Credit card account', 'credit-card', '#EF4444'),
+    (user_id_param, 'Cash Wallet', 'other', 0.00, 'BDT', 'Physical cash', 'wallet', '#6B7280');
     
-    -- Insert default expense categories
-    INSERT INTO public.categories (user_id, name, icon, color, type, is_default) VALUES
-    (user_id_param, 'Food & Dining', 'utensils', '#EF4444', 'expense', true),
-    (user_id_param, 'Transportation', 'car', '#3B82F6', 'expense', true),
-    (user_id_param, 'Shopping', 'shopping-bag', '#F59E0B', 'expense', true),
-    (user_id_param, 'Entertainment', 'film', '#8B5CF6', 'expense', true),
-    (user_id_param, 'Bills & Utilities', 'zap', '#10B981', 'expense', true),
-    (user_id_param, 'Healthcare', 'heart', '#EF4444', 'expense', true),
-    (user_id_param, 'Education', 'book', '#3B82F6', 'expense', true),
-    (user_id_param, 'Travel', 'map-pin', '#F59E0B', 'expense', true),
-    (user_id_param, 'Personal Care', 'user', '#8B5CF6', 'expense', true),
-    (user_id_param, 'Other Expenses', 'minus-circle', '#6B7280', 'expense', true);
-
-    -- Create default accounts (more generic and useful)
-    INSERT INTO public.accounts (user_id, name, type, balance, currency, description) VALUES
-    (user_id_param, 'Salary Account', 'bank', 0.00, 'USD', 'Main salary receiving account'),
-    (user_id_param, 'Savings Account', 'savings', 0.00, 'USD', 'Personal savings account'),
-    (user_id_param, 'bKash', 'wallet', 0.00, 'BDT', 'Mobile financial service'),
-    (user_id_param, 'Nagad', 'wallet', 0.00, 'BDT', 'Mobile financial service'),
-    (user_id_param, 'Credit Card', 'credit_card', 0.00, 'USD', 'Credit card account'),
-    (user_id_param, 'Cash', 'other', 0.00, 'USD', 'Physical cash');
-    
-    RAISE NOTICE 'Created default categories and account for user: %', user_id_param;
+    RAISE NOTICE 'Created default accounts for user: %', user_id_param;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -682,8 +856,8 @@ BEGIN
         COALESCE(NEW.email_confirmed_at IS NOT NULL, false)
     );
 
-    -- Create default categories and account
-    PERFORM public.create_default_categories(NEW.id);
+    -- Create default accounts (categories are global, no need to create per user)
+    PERFORM public.create_default_accounts(NEW.id);
     
     RAISE NOTICE 'Successfully created profile for user: % with email: %', NEW.id, NEW.email;
     
@@ -1012,6 +1186,9 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
 CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_subcategories_updated_at BEFORE UPDATE ON subcategories
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -1139,6 +1316,9 @@ BEGIN
     ON CONFLICT (role_id, permission_id) DO NOTHING;
 END $$;
 
+-- Create global categories (one-time setup)
+SELECT public.create_global_categories();
+
 -- =============================================
 -- GRANT PERMISSIONS
 -- =============================================
@@ -1157,7 +1337,7 @@ FROM information_schema.tables
 WHERE table_schema = 'public' 
 AND table_name IN (
     'roles', 'permissions', 'role_permissions', 'profiles', 'user_permissions',
-    'categories', 'accounts', 'transactions', 'budgets', 'investments',
+    'categories', 'subcategories', 'accounts', 'transactions', 'budgets', 'investments',
     'loans', 'lending', 'emi_payments', 'recurring_transactions',
     'notifications', 'ai_insights', 'user_sessions', 'admin_audit_logs'
 );

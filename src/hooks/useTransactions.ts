@@ -103,12 +103,16 @@ export function useTransactions(
     if (!user) return;
 
     try {
-      const categoriesData = await db.findMany<Category>(TABLES.CATEGORIES, {
-        filter: { user_id: user.id },
-        orderBy: { column: "name", ascending: true },
-      });
+      // Fetch global categories only (no user_id filter needed)
+      const { data: categoriesData, error } = await supabase
+        .from(TABLES.CATEGORIES)
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
 
-      setCategories(categoriesData);
+      if (error) throw error;
+      setCategories(categoriesData || []);
     } catch (err: any) {
       console.error("Error fetching categories:", err);
     }
@@ -138,13 +142,23 @@ export function useTransactions(
             name,
             color,
             icon
+          ),
+          subcategories (
+            id,
+            name,
+            color,
+            icon
+          ),
+          accounts!transactions_account_id_fkey (
+            id,
+            name
           )
         `
         )
         .eq("user_id", user.id)
-        .gte("transaction_date", dateRange.start)
-        .lte("transaction_date", dateRange.end)
-        .order("transaction_date", { ascending: false })
+        .gte("date", dateRange.start)
+        .lte("date", dateRange.end)
+        .order("date", { ascending: false })
         .order("created_at", { ascending: false });
 
       // Apply filters
@@ -318,9 +332,9 @@ export function useTransactions(
         `
           )
           .eq("user_id", user.id)
-          .gte("transaction_date", dateRange.start)
-          .lte("transaction_date", dateRange.end)
-          .order("transaction_date", { ascending: false });
+          .gte("date", dateRange.start)
+          .lte("date", dateRange.end)
+          .order("date", { ascending: false });
 
         if (exportFilters.type !== "all") {
           query = query.eq("type", exportFilters.type);
@@ -347,7 +361,7 @@ export function useTransactions(
 
         const csvRows =
           data?.map((transaction) => [
-            transaction.transaction_date,
+            transaction.date,
             transaction.description,
             transaction.categories?.name || "",
             transaction.type,

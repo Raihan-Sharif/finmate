@@ -1,13 +1,41 @@
 import { supabase, TABLES } from '@/lib/supabase/client';
-import { Category, CategoryInsert, CategoryUpdate } from '@/types';
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  color: string;
+  type: 'income' | 'expense' | 'transfer';
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Subcategory {
+  id: string;
+  category_id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  color: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CategoryWithSubcategories extends Category {
+  subcategories: Subcategory[];
+}
 
 export class CategoryService {
-  // Get all categories for a user
-  static async getCategories(userId: string, type?: 'income' | 'expense' | 'transfer'): Promise<Category[]> {
+  // Get all categories (global only now)
+  static async getCategories(type?: 'income' | 'expense' | 'transfer'): Promise<Category[]> {
     let query = supabase
       .from(TABLES.CATEGORIES)
       .select('*')
-      .eq('user_id', userId)
       .eq('is_active', true);
 
     if (type) {
@@ -22,13 +50,43 @@ export class CategoryService {
     return data || [];
   }
 
+  // Get all subcategories for a specific category
+  static async getSubcategories(categoryId: string): Promise<Subcategory[]> {
+    const { data, error } = await supabase
+      .from(TABLES.SUBCATEGORIES)
+      .select('*')
+      .eq('category_id', categoryId)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  // Get categories with their subcategories
+  static async getCategoriesWithSubcategories(type?: 'income' | 'expense'): Promise<CategoryWithSubcategories[]> {
+    const categories = await this.getCategories(type);
+    
+    const categoriesWithSubs = await Promise.all(
+      categories.map(async (category) => {
+        const subcategories = await this.getSubcategories(category.id);
+        return {
+          ...category,
+          subcategories
+        };
+      })
+    );
+    
+    return categoriesWithSubs;
+  }
+
   // Get category by ID
-  static async getCategoryById(id: string, userId: string): Promise<Category | null> {
+  static async getCategoryById(id: string): Promise<Category | null> {
     const { data, error } = await supabase
       .from(TABLES.CATEGORIES)
       .select('*')
       .eq('id', id)
-      .eq('user_id', userId)
       .single();
 
     if (error) {
@@ -39,70 +97,256 @@ export class CategoryService {
     return data;
   }
 
-  // Create new category
-  static async createCategory(category: CategoryInsert): Promise<Category> {
+  // Get subcategory by ID
+  static async getSubcategoryById(id: string): Promise<Subcategory | null> {
     const { data, error } = await supabase
-      .from(TABLES.CATEGORIES)
-      .insert(category)
+      .from(TABLES.SUBCATEGORIES)
       .select('*')
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  // Update category
-  static async updateCategory(id: string, updates: CategoryUpdate, userId: string): Promise<Category> {
-    const { data, error } = await supabase
-      .from(TABLES.CATEGORIES)
-      .update(updates)
       .eq('id', id)
-      .eq('user_id', userId)
-      .select('*')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+
     return data;
   }
 
-  // Delete (deactivate) category
-  static async deleteCategory(id: string, userId: string): Promise<void> {
-    // Check if category has transactions
-    const { data: transactions, error: transactionError } = await supabase
-      .from(TABLES.TRANSACTIONS)
-      .select('id')
-      .eq('category_id', id)
-      .limit(1);
-
-    if (transactionError) throw transactionError;
-
-    if (transactions && transactions.length > 0) {
-      // Soft delete - deactivate instead of hard delete
-      const { error } = await supabase
-        .from(TABLES.CATEGORIES)
-        .update({ is_active: false })
-        .eq('id', id)
-        .eq('user_id', userId);
-
-      if (error) throw error;
-    } else {
-      // Hard delete if no transactions
-      const { error } = await supabase
-        .from(TABLES.CATEGORIES)
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId);
-
-      if (error) throw error;
-    }
+  // Get categories for dropdown (formatted for UI)
+  static async getCategoriesForDropdown(type?: 'income' | 'expense') {
+    const categoriesWithSubs = await this.getCategoriesWithSubcategories(type);
+    
+    const options: Array<{ value: string; label: string; parent?: string; level: number }> = [];
+    
+    categoriesWithSubs.forEach(category => {
+      // Add main category
+      options.push({
+        value: category.id,
+        label: category.name,
+        level: 0
+      });
+      
+      // Add subcategories with indentation
+      category.subcategories?.forEach(subcategory => {
+        options.push({
+          value: subcategory.id,
+          label: subcategory.name,
+          parent: category.name,
+          level: 1
+        });
+      });
+    });
+    
+    return options;
   }
 
-  // Get categories with transaction counts
+  // Get all categories and subcategories in flat format for filtering
+  static async getAllCategoryOptions(type?: 'income' | 'expense') {
+    const [categories, subcategories] = await Promise.all([
+      this.getCategories(type),
+      supabase
+        .from(TABLES.SUBCATEGORIES)
+        .select(`
+          *,
+          category:categories(type)
+        `)
+        .eq('is_active', true)
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return data?.filter(sub => !type || sub.category?.type === type) || [];
+        })
+    ]);
+
+    const options: Array<{ value: string; label: string; type: 'category' | 'subcategory'; level: number }> = [];
+
+    // Add categories
+    categories.forEach(category => {
+      options.push({
+        value: category.id,
+        label: category.name,
+        type: 'category',
+        level: 0
+      });
+    });
+
+    // Add subcategories
+    subcategories.forEach(subcategory => {
+      options.push({
+        value: subcategory.id,
+        label: subcategory.name,
+        type: 'subcategory',
+        level: 1
+      });
+    });
+
+    return options;
+  }
+
+  // Search categories and subcategories
+  static async searchCategories(query: string, type?: 'income' | 'expense'): Promise<(Category | Subcategory)[]> {
+    const searchPattern = `%${query}%`;
+    
+    // Search categories
+    let categoryQuery = supabase
+      .from(TABLES.CATEGORIES)
+      .select('*')
+      .eq('is_active', true)
+      .or(`name.ilike.${searchPattern},description.ilike.${searchPattern}`);
+
+    if (type) {
+      categoryQuery = categoryQuery.eq('type', type);
+    }
+
+    // Search subcategories
+    let subcategoryQuery = supabase
+      .from(TABLES.SUBCATEGORIES)
+      .select(`
+        *,
+        category:categories(type)
+      `)
+      .eq('is_active', true)
+      .or(`name.ilike.${searchPattern},description.ilike.${searchPattern}`);
+
+    const [categoriesResult, subcategoriesResult] = await Promise.all([
+      categoryQuery,
+      subcategoryQuery
+    ]);
+
+    if (categoriesResult.error) throw categoriesResult.error;
+    if (subcategoriesResult.error) throw subcategoriesResult.error;
+
+    const categories = categoriesResult.data || [];
+    let subcategories = subcategoriesResult.data || [];
+
+    // Filter subcategories by type if specified
+    if (type) {
+      subcategories = subcategories.filter(sub => sub.category?.type === type);
+    }
+
+    return [...categories, ...subcategories].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  // Get category suggestions based on transaction description
+  static async getCategorySuggestions(description: string): Promise<(Category | Subcategory)[]> {
+    const searchPattern = `%${description}%`;
+
+    // Get categories and subcategories that have been used with similar descriptions
+    const { data: transactions, error } = await supabase
+      .from(TABLES.TRANSACTIONS)
+      .select(`
+        category_id,
+        subcategory_id,
+        category:categories(*),
+        subcategory:subcategories(*)
+      `)
+      .not('category_id', 'is', null)
+      .ilike('description', searchPattern)
+      .limit(10);
+
+    if (error) throw error;
+
+    // Extract unique categories and subcategories
+    const uniqueItems = new Map();
+    
+    transactions?.forEach(transaction => {
+      if (transaction.category && !uniqueItems.has(transaction.category_id)) {
+        uniqueItems.set(transaction.category_id, {
+          ...transaction.category,
+          type: 'category'
+        });
+      }
+      if (transaction.subcategory && !uniqueItems.has(transaction.subcategory_id)) {
+        uniqueItems.set(transaction.subcategory_id, {
+          ...transaction.subcategory,
+          type: 'subcategory'
+        });
+      }
+    });
+
+    return Array.from(uniqueItems.values());
+  }
+
+  // Get most used categories and subcategories
+  static async getMostUsedCategories(userId: string, limit = 10, period?: {
+    startDate: string;
+    endDate: string;
+  }) {
+    let query = supabase
+      .from(TABLES.TRANSACTIONS)
+      .select(`
+        category_id,
+        subcategory_id,
+        amount,
+        category:categories(name, color, icon),
+        subcategory:subcategories(name, color, icon)
+      `)
+      .eq('user_id', userId);
+
+    if (period) {
+      query = query
+        .gte('date', period.startDate)
+        .lte('date', period.endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    // Count usage for both categories and subcategories
+    const usage = new Map();
+
+    data?.forEach(transaction => {
+      // Count category usage
+      if (transaction.category_id && transaction.category) {
+        const key = `category_${transaction.category_id}`;
+        if (usage.has(key)) {
+          usage.get(key).count++;
+          usage.get(key).totalAmount += transaction.amount;
+        } else {
+          usage.set(key, {
+            id: transaction.category_id,
+            name: transaction.category.name,
+            color: transaction.category.color,
+            icon: transaction.category.icon,
+            type: 'category',
+            count: 1,
+            totalAmount: transaction.amount
+          });
+        }
+      }
+
+      // Count subcategory usage
+      if (transaction.subcategory_id && transaction.subcategory) {
+        const key = `subcategory_${transaction.subcategory_id}`;
+        if (usage.has(key)) {
+          usage.get(key).count++;
+          usage.get(key).totalAmount += transaction.amount;
+        } else {
+          usage.set(key, {
+            id: transaction.subcategory_id,
+            name: transaction.subcategory.name,
+            color: transaction.subcategory.color,
+            icon: transaction.subcategory.icon,
+            type: 'subcategory',
+            count: 1,
+            totalAmount: transaction.amount
+          });
+        }
+      }
+    });
+
+    return Array.from(usage.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+  }
+
+  // Get categories with transaction stats
   static async getCategoriesWithStats(userId: string, period?: {
     startDate: string;
     endDate: string;
   }) {
-    const categories = await this.getCategories(userId);
+    const categories = await this.getCategories();
     
     const categoriesWithStats = await Promise.all(
       categories.map(async (category) => {
@@ -139,189 +383,6 @@ export class CategoryService {
     );
 
     return categoriesWithStats.sort((a, b) => b.transaction_count - a.transaction_count);
-  }
-
-  // Get category hierarchy (for nested categories)
-  static async getCategoryHierarchy(userId: string): Promise<Category[]> {
-    const categories = await this.getCategories(userId);
-    
-    // Build hierarchy
-    const categoryMap = new Map(categories.map(cat => [cat.id, { ...cat, children: [] as Category[] }]));
-    const rootCategories: Category[] = [];
-
-    categories.forEach(category => {
-      const categoryWithChildren = categoryMap.get(category.id)!;
-      
-      if (category.parent_id && categoryMap.has(category.parent_id)) {
-        const parent = categoryMap.get(category.parent_id)!;
-        parent.children.push(categoryWithChildren);
-      } else {
-        rootCategories.push(categoryWithChildren);
-      }
-    });
-
-    return rootCategories;
-  }
-
-  // Update category order
-  static async updateCategoryOrder(categoryIds: string[], userId: string): Promise<void> {
-    const updates = categoryIds.map((id, index) => ({
-      id,
-      sort_order: index
-    }));
-
-    for (const update of updates) {
-      await supabase
-        .from(TABLES.CATEGORIES)
-        .update({ sort_order: update.sort_order })
-        .eq('id', update.id)
-        .eq('user_id', userId);
-    }
-  }
-
-  // Get most used categories
-  static async getMostUsedCategories(userId: string, limit = 10, period?: {
-    startDate: string;
-    endDate: string;
-  }) {
-    let query = supabase
-      .from(TABLES.TRANSACTIONS)
-      .select(`
-        category_id,
-        amount,
-        category:categories(name, color, icon)
-      `)
-      .eq('user_id', userId)
-      .not('category_id', 'is', null);
-
-    if (period) {
-      query = query
-        .gte('date', period.startDate)
-        .lte('date', period.endDate);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    // Group by category and count usage
-    const categoryUsage = new Map();
-
-    data?.forEach(transaction => {
-      const categoryId = transaction.category_id;
-      const category = transaction.category;
-      
-      if (categoryUsage.has(categoryId)) {
-        categoryUsage.get(categoryId).count++;
-        categoryUsage.get(categoryId).totalAmount += transaction.amount;
-      } else {
-        categoryUsage.set(categoryId, {
-          category_id: categoryId,
-          name: category?.name || 'Unknown',
-          color: category?.color || '#6B7280',
-          icon: category?.icon || 'folder',
-          count: 1,
-          totalAmount: transaction.amount
-        });
-      }
-    });
-
-    return Array.from(categoryUsage.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
-  }
-
-  // Search categories
-  static async searchCategories(userId: string, query: string): Promise<Category[]> {
-    const { data, error } = await supabase
-      .from(TABLES.CATEGORIES)
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
-  }
-
-  // Get category suggestions based on transaction description
-  static async getCategorySuggestions(userId: string, description: string): Promise<Category[]> {
-    // Get categories that have been used with similar descriptions
-    const { data, error } = await supabase
-      .from(TABLES.TRANSACTIONS)
-      .select(`
-        category_id,
-        category:categories(*)
-      `)
-      .eq('user_id', userId)
-      .not('category_id', 'is', null)
-      .ilike('description', `%${description}%`)
-      .limit(5);
-
-    if (error) throw error;
-
-    // Remove duplicates and return unique categories
-    const uniqueCategories = new Map();
-    data?.forEach(transaction => {
-      if (transaction.category && !uniqueCategories.has(transaction.category_id)) {
-        uniqueCategories.set(transaction.category_id, transaction.category);
-      }
-    });
-
-    return Array.from(uniqueCategories.values());
-  }
-
-  // Create default categories for new user (called by trigger)
-  static async createDefaultCategories(userId: string): Promise<void> {
-    const defaultCategories: CategoryInsert[] = [
-      // Income categories
-      { user_id: userId, name: 'Salary', icon: 'briefcase', color: '#10B981', type: 'income', is_default: true },
-      { user_id: userId, name: 'Freelance', icon: 'laptop', color: '#3B82F6', type: 'income', is_default: true },
-      { user_id: userId, name: 'Investment Returns', icon: 'trending-up', color: '#8B5CF6', type: 'income', is_default: true },
-      { user_id: userId, name: 'Other Income', icon: 'plus-circle', color: '#6B7280', type: 'income', is_default: true },
-      
-      // Expense categories
-      { user_id: userId, name: 'Food & Dining', icon: 'utensils', color: '#EF4444', type: 'expense', is_default: true },
-      { user_id: userId, name: 'Transportation', icon: 'car', color: '#3B82F6', type: 'expense', is_default: true },
-      { user_id: userId, name: 'Shopping', icon: 'shopping-bag', color: '#F59E0B', type: 'expense', is_default: true },
-      { user_id: userId, name: 'Bills & Utilities', icon: 'zap', color: '#10B981', type: 'expense', is_default: true },
-      { user_id: userId, name: 'Healthcare', icon: 'heart', color: '#EC4899', type: 'expense', is_default: true },
-      { user_id: userId, name: 'Entertainment', icon: 'film', color: '#8B5CF6', type: 'expense', is_default: true },
-      { user_id: userId, name: 'Education', icon: 'book-open', color: '#06B6D4', type: 'expense', is_default: true },
-      { user_id: userId, name: 'Other Expenses', icon: 'minus-circle', color: '#6B7280', type: 'expense', is_default: true }
-    ];
-
-    for (const category of defaultCategories) {
-      try {
-        await this.createCategory(category);
-      } catch (error) {
-        console.error('Error creating default category:', category.name, error);
-      }
-    }
-  }
-
-  // Archive unused categories
-  static async archiveUnusedCategories(userId: string, daysUnused = 90): Promise<void> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysUnused);
-    
-    const categories = await this.getCategories(userId);
-    
-    for (const category of categories) {
-      if (category.is_default) continue; // Don't archive default categories
-      
-      const { data: recentTransactions } = await supabase
-        .from(TABLES.TRANSACTIONS)
-        .select('id')
-        .eq('category_id', category.id)
-        .gte('date', cutoffDate.toISOString().split('T')[0])
-        .limit(1);
-
-      if (!recentTransactions || recentTransactions.length === 0) {
-        await this.updateCategory(category.id, { is_active: false }, userId);
-      }
-    }
   }
 }
 

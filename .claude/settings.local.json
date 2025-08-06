@@ -9,7 +9,8 @@
       "Bash(timeout 5 npm run dev)",
       "Bash(npx tsc:*)",
       "Bash(npm run lint)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run type-check:*)"
     ],
     "deny": []
   }

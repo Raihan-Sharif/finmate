@@ -30,117 +30,11 @@ import {
   Upload
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
-import { TransactionService } from '@/lib/services/transactions';
+import { useState, useEffect } from 'react';
+import { CategoryService } from '@/lib/services/categories';
+import { AccountService } from '@/lib/services/accounts';
+import { useTransactions } from '@/hooks/useTransactions';
 import toast from 'react-hot-toast';
-
-// Sample transaction data - in real app, this would come from API
-const sampleTransactions = [
-  {
-    id: 1,
-    type: 'expense' as const,
-    amount: 85.50,
-    description: 'Grocery Shopping - Whole Foods',
-    category: 'Food & Dining',
-    account: 'Checking Account',
-    date: '2024-01-15',
-    tags: ['groceries', 'food'],
-    receipt_url: '/receipts/receipt-1.jpg',
-    notes: 'Weekly grocery shopping',
-  },
-  {
-    id: 2,
-    type: 'income' as const,
-    amount: 4200.00,
-    description: 'Monthly Salary',
-    category: 'Salary',
-    account: 'Checking Account',
-    date: '2024-01-15',
-    tags: ['salary', 'work'],
-  },
-  {
-    id: 3,
-    type: 'expense' as const,
-    amount: 12.50,
-    description: 'Coffee - Starbucks',
-    category: 'Food & Dining',
-    account: 'Credit Card',
-    date: '2024-01-14',
-    tags: ['coffee', 'drinks'],
-  },
-  {
-    id: 4,
-    type: 'expense' as const,
-    amount: 45.00,
-    description: 'Gas Station - Shell',
-    category: 'Transportation',
-    account: 'Credit Card',
-    date: '2024-01-14',
-    tags: ['gas', 'car'],
-  },
-  {
-    id: 5,
-    type: 'expense' as const,
-    amount: 125.99,
-    description: 'Online Shopping - Amazon',
-    category: 'Shopping',
-    account: 'Credit Card',
-    date: '2024-01-13',
-    tags: ['online', 'electronics'],
-  },
-  {
-    id: 6,
-    type: 'income' as const,
-    amount: 500.00,
-    description: 'Freelance Project Payment',
-    category: 'Freelance',
-    account: 'Checking Account',
-    date: '2024-01-12',
-    tags: ['freelance', 'project'],
-  },
-  {
-    id: 7,
-    type: 'expense' as const,
-    amount: 75.00,
-    description: 'Electric Bill',
-    category: 'Bills & Utilities',
-    account: 'Checking Account',
-    date: '2024-01-10',
-    tags: ['bills', 'utilities'],
-  },
-  {
-    id: 8,
-    type: 'expense' as const,
-    amount: 28.50,
-    description: 'Movie Tickets',
-    category: 'Entertainment',
-    account: 'Credit Card',
-    date: '2024-01-09',
-    tags: ['movies', 'entertainment'],
-  },
-];
-
-const categories = [
-  'All Categories',
-  'Food & Dining',
-  'Transportation',
-  'Shopping',
-  'Entertainment',
-  'Bills & Utilities',
-  'Healthcare',
-  'Travel',
-  'Salary',
-  'Freelance',
-  'Investment Returns',
-];
-
-const accounts = [
-  'All Accounts',
-  'Checking Account',
-  'Savings Account',
-  'Credit Card',
-  'Cash',
-];
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -158,66 +52,53 @@ const staggerContainer = {
 export default function TransactionsPage() {
   const { user, profile } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [selectedAccount, setSelectedAccount] = useState('All Accounts');
-  const [selectedType, setSelectedType] = useState('All Types');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedAccount, setSelectedAccount] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
   const [sortBy, setSortBy] = useState('date-desc');
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
 
-  const currency = profile?.currency || 'USD';
+  const currency = profile?.currency || 'BDT';
 
-  const loadTransactions = useCallback(async () => {
-    if (!user?.id) return;
-    
-    try {
-      setLoading(true);
-      const result = await TransactionService.getTransactions(user.id, 1, 100);
-      console.log('Loaded transactions:', result.transactions);
-      setTransactions(result.transactions);
-    } catch (error) {
-      console.error('Error loading transactions:', error);
-      toast.error('Failed to load transactions');
-      // Fall back to sample data for now
-      setTransactions(sampleTransactions);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  const handleDeleteTransaction = async (id: string) => {
-    if (!user?.id) return;
-    
-    try {
-      await TransactionService.deleteTransaction(id, user.id);
-      toast.success('Transaction deleted successfully');
-      loadTransactions(); // Reload transactions
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
-      toast.error('Failed to delete transaction');
-    }
+  // Use the useTransactions hook with filters
+  const filters = {
+    type: selectedType === 'all' ? 'all' : selectedType,
+    category: selectedCategory,
+    dateRange: 'month', // Default to current month
+    amountRange: { min: 0, max: 0 }
   };
 
-  // Load transactions from database
+  const {
+    transactions,
+    loading,
+    error,
+    stats,
+    deleteTransaction: handleDeleteTransaction,
+    refreshTransactions
+  } = useTransactions(filters, searchQuery);
+
+  // Load categories and accounts once
   useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
-
-  // Filter transactions based on search and filters
-  const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (transaction.category?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (transaction.tags || []).some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    const loadDropdownData = async () => {
+      try {
+        const [categoriesData, accountsData] = await Promise.all([
+          CategoryService.getCategoriesForDropdown(),
+          user?.id ? AccountService.getAccountsForDropdown(user.id) : Promise.resolve([])
+        ]);
+        
+        setCategories([{ value: 'all', label: 'All Categories', level: 0 }, ...categoriesData]);
+        setAccounts([{ value: 'all', label: 'All Accounts' }, ...accountsData]);
+      } catch (err) {
+        console.error('Error loading dropdown data:', err);
+      }
+    };
     
-    const matchesCategory = selectedCategory === 'All Categories' || (transaction.category?.name || '') === selectedCategory;
-    const matchesAccount = selectedAccount === 'All Accounts' || (transaction.account?.name || '') === selectedAccount;
-    const matchesType = selectedType === 'All Types' || transaction.type === selectedType.toLowerCase();
-
-    return matchesSearch && matchesCategory && matchesAccount && matchesType;
-  });
+    loadDropdownData();
+  }, [user?.id]);
 
   // Sort transactions
-  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+  const sortedTransactions = [...transactions].sort((a, b) => {
     switch (sortBy) {
       case 'date-desc':
         return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -234,16 +115,8 @@ export default function TransactionsPage() {
     }
   });
 
-  // Calculate summary statistics
-  const totalIncome = filteredTransactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const totalExpenses = filteredTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const netAmount = totalIncome - totalExpenses;
+  // Use stats from useTransactions hook
+  const { totalIncome, totalExpenses, netAmount } = stats;
 
   if (loading) {
     return (
@@ -405,8 +278,12 @@ export default function TransactionsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
+                    <SelectItem 
+                      key={category.value} 
+                      value={category.value}
+                      className={category.level === 1 ? 'pl-6 text-sm text-muted-foreground' : ''}
+                    >
+                      {category.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -418,8 +295,8 @@ export default function TransactionsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map((account) => (
-                    <SelectItem key={account} value={account}>
-                      {account}
+                    <SelectItem key={account.value || account} value={account.value || account}>
+                      {account.label || account}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -430,7 +307,7 @@ export default function TransactionsPage() {
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All Types">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="income">Income</SelectItem>
                   <SelectItem value="expense">Expense</SelectItem>
                 </SelectContent>
@@ -438,7 +315,7 @@ export default function TransactionsPage() {
             </div>
 
             {/* Active Filters */}
-            {(searchQuery || selectedCategory !== 'All Categories' || selectedAccount !== 'All Accounts' || selectedType !== 'All Types') && (
+            {(searchQuery || selectedCategory !== 'all' || selectedAccount !== 'all' || selectedType !== 'all') && (
               <div className="flex items-center space-x-2 flex-wrap">
                 <span className="text-sm text-muted-foreground">Active filters:</span>
                 {searchQuery && (
@@ -449,26 +326,26 @@ export default function TransactionsPage() {
                     </button>
                   </Badge>
                 )}
-                {selectedCategory !== 'All Categories' && (
+                {selectedCategory !== 'all' && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>Category: {selectedCategory}</span>
-                    <button onClick={() => setSelectedCategory('All Categories')} className="ml-1 hover:bg-muted rounded">
+                    <span>Category: {categories.find(c => c.value === selectedCategory)?.label || selectedCategory}</span>
+                    <button onClick={() => setSelectedCategory('all')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
                   </Badge>
                 )}
-                {selectedAccount !== 'All Accounts' && (
+                {selectedAccount !== 'all' && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>Account: {selectedAccount}</span>
-                    <button onClick={() => setSelectedAccount('All Accounts')} className="ml-1 hover:bg-muted rounded">
+                    <span>Account: {accounts.find(a => a.value === selectedAccount)?.label || selectedAccount}</span>
+                    <button onClick={() => setSelectedAccount('all')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
                   </Badge>
                 )}
-                {selectedType !== 'All Types' && (
+                {selectedType !== 'all' && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>Type: {selectedType}</span>
-                    <button onClick={() => setSelectedType('All Types')} className="ml-1 hover:bg-muted rounded">
+                    <span>Type: {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}</span>
+                    <button onClick={() => setSelectedType('all')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
                   </Badge>
@@ -491,7 +368,7 @@ export default function TransactionsPage() {
               <div>
                 <CardTitle>Transactions</CardTitle>
                 <CardDescription>
-                  {filteredTransactions.length} of {sampleTransactions.length} transactions
+                  {sortedTransactions.length} transactions
                 </CardDescription>
               </div>
               <div className="text-sm text-muted-foreground">
@@ -533,8 +410,13 @@ export default function TransactionsPage() {
                       </div>
                       <div className="flex items-center space-x-2 mt-1">
                         <Badge variant="outline" className="text-xs">
-                          {transaction.category?.name || 'Uncategorized'}
+                          {transaction.subcategory?.name || transaction.category?.name || 'Uncategorized'}
                         </Badge>
+                        {transaction.subcategory && transaction.category && (
+                          <span className="text-xs text-muted-foreground">
+                            ({transaction.category.name})
+                          </span>
+                        )}
                         <span className="text-sm text-muted-foreground">
                           {transaction.account?.name || 'No Account'}
                         </span>
@@ -547,7 +429,7 @@ export default function TransactionsPage() {
                           })}
                         </span>
                       </div>
-                      {(transaction.tags || []).length > 0 && (
+                      {transaction.tags && transaction.tags.length > 0 && (
                         <div className="flex items-center space-x-1 mt-2">
                           <Tag className="w-3 h-3 text-muted-foreground" />
                           {transaction.tags.map((tag: string, tagIndex: number) => (
@@ -605,10 +487,7 @@ export default function TransactionsPage() {
                   <Receipt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground mb-2">No transactions found</h3>
                   <p className="text-muted-foreground mb-4">
-                    {filteredTransactions.length === 0 && sampleTransactions.length > 0
-                      ? 'Try adjusting your search or filters'
-                      : 'Start by adding your first transaction'
-                    }
+                    {error ? 'Failed to load transactions' : 'Start by adding your first transaction'}
                   </p>
                   <Link href="/dashboard/transactions/new">
                     <Button>

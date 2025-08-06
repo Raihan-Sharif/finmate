@@ -35,43 +35,14 @@ import { AccountService } from '@/lib/services/accounts';
 import { supabase } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 
-// Sample categories and accounts
-const expenseCategories = [
-  'Food & Dining',
-  'Transportation',
-  'Shopping',
-  'Entertainment',
-  'Bills & Utilities',
-  'Healthcare',
-  'Travel',
-  'Education',
-  'Personal Care',
-  'Home & Garden',
-  'Other'
-];
-
-const incomeCategories = [
-  'Salary',
-  'Freelance',
-  'Investment Returns',
-  'Business Income',
-  'Rental Income',
-  'Other Income'
-];
-
-const accounts = [
-  'Checking Account',
-  'Savings Account',
-  'Credit Card',
-  'Cash',
-  'Investment Account'
-];
+// Categories and accounts are now loaded from database
 
 interface TransactionForm {
   type: 'income' | 'expense';
   amount: number;
   description: string;
   category: string;
+  subcategory?: string;
   account: string;
   date: string;
   notes?: string;
@@ -95,6 +66,7 @@ export default function NewTransactionPage() {
   const [tagInput, setTagInput] = useState('');
   const [receipt, setReceipt] = useState<File | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -116,11 +88,13 @@ export default function NewTransactionPage() {
       amount: 0,
       description: '',
       category: '',
+      subcategory: '',
       account: ''
     }
   });
 
   const watchedType = watch('type');
+  const watchedCategory = watch('category');
   const watchedTags = watch('tags') || [];
   const watchedRecurring = watch('recurring');
   const watchedAmount = watch('amount');
@@ -135,22 +109,23 @@ export default function NewTransactionPage() {
         
         // Load categories for the selected type
         const [categoriesData, accountsData] = await Promise.all([
-          CategoryService.getCategories(user.id, watchedType),
+          CategoryService.getCategories(watchedType),
           AccountService.getAccounts(user.id)
         ]);
         
         // If no data found, create default data
         if (categoriesData.length === 0 || accountsData.length === 0) {
           try {
-            // Call the function to create default categories and accounts
-            await supabase.rpc('create_default_categories', { user_id_param: user.id });
+            // Call the function to create default accounts and global categories
+            await supabase.rpc('create_default_accounts', { user_id_param: user.id });
+            await supabase.rpc('create_global_categories');
             
             // Small delay to ensure data is created
             await new Promise(resolve => setTimeout(resolve, 500));
             
             // Reload data after creating defaults
             const [newCategoriesData, newAccountsData] = await Promise.all([
-              CategoryService.getCategories(user.id, watchedType),
+              CategoryService.getCategories(watchedType),
               AccountService.getAccounts(user.id)
             ]);
             
@@ -179,6 +154,28 @@ export default function NewTransactionPage() {
     loadData();
   }, [user, watchedType]);
 
+  // Load subcategories when category changes
+  useEffect(() => {
+    const loadSubcategories = async () => {
+      if (!watchedCategory) {
+        setSubcategories([]);
+        setValue('subcategory', '');
+        return;
+      }
+
+      try {
+        const subcategoriesData = await CategoryService.getSubcategories(watchedCategory);
+        setSubcategories(subcategoriesData);
+        setValue('subcategory', ''); // Reset subcategory when category changes
+      } catch (error) {
+        console.error('Error loading subcategories:', error);
+        setSubcategories([]);
+      }
+    };
+
+    loadSubcategories();
+  }, [watchedCategory, setValue]);
+
   const availableCategories = categories;
 
   const onSubmit = async (data: TransactionForm) => {
@@ -198,6 +195,7 @@ export default function NewTransactionPage() {
         description: data.description,
         notes: data.notes || null,
         category_id: data.category || null,
+        subcategory_id: data.subcategory || null,
         account_id: data.account || null,
         date: data.date,
         tags: data.tags || [],
@@ -361,8 +359,8 @@ export default function NewTransactionPage() {
                     )}
                   </div>
 
-                  {/* Category and Account */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Category, Subcategory and Account */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Category</Label>
                       <Select onValueChange={(value) => setValue('category', value)} disabled={loadingData}>
@@ -379,6 +377,37 @@ export default function NewTransactionPage() {
                           ) : (
                             <SelectItem value="none" disabled>
                               No categories found
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Subcategory</Label>
+                      <Select 
+                        onValueChange={(value) => setValue('subcategory', value)} 
+                        disabled={!watchedCategory || subcategories.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={
+                            !watchedCategory 
+                              ? 'Select category first' 
+                              : subcategories.length === 0 
+                                ? 'No subcategories' 
+                                : 'Select subcategory'
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subcategories.length > 0 ? (
+                            subcategories.map((subcategory) => (
+                              <SelectItem key={subcategory.id} value={subcategory.id}>
+                                {subcategory.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>
+                              No subcategories available
                             </SelectItem>
                           )}
                         </SelectContent>

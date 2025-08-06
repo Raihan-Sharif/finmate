@@ -206,6 +206,19 @@ export class AccountService {
     if (error) throw error;
     return data || [];
   }
+
+  // Get accounts for dropdown (formatted for UI)
+  static async getAccountsForDropdown(userId: string) {
+    const accounts = await this.getAccounts(userId);
+    
+    return accounts.map(account => ({
+      value: account.id,
+      label: account.name,
+      type: account.type,
+      balance: account.balance,
+      currency: account.currency
+    }));
+  }
 }
 
 export default AccountService;
