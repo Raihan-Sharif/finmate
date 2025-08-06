@@ -19,6 +19,7 @@ import {
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 // Animation variants
 const fadeInUp = {
@@ -36,6 +37,7 @@ const staggerContainer = {
 
 export default function LandingPage() {
   const { theme } = useTheme();
+  const { user, profile, loading } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -156,17 +158,33 @@ export default function LandingPage() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Link href="/auth/signin">
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/auth/signup">
-                <Button size="sm">
-                  Get Started
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-sm text-muted-foreground">
+                    Welcome, {profile?.full_name || user.email}
+                  </span>
+                  <Link href="/dashboard">
+                    <Button size="sm">
+                      Go to Dashboard
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/signin">
+                    <Button variant="ghost" size="sm">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/auth/signup">
+                    <Button size="sm">
+                      Get Started
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -398,7 +416,7 @@ export default function LandingPage() {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-blue-600">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-blue-600 dark:text-white dark:border-white dark:hover:bg-white dark:hover:text-blue-600">
                 Schedule Demo
               </Button>
             </div>

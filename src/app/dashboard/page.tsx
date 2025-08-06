@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import DashboardService from '@/lib/services/dashboard';
 import { formatCurrency } from '@/lib/utils';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 
 interface DashboardData {
@@ -72,8 +73,8 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       const period = selectedPeriod !== 'all' ? {
-        startDate: new Date(Date.now() - parseInt(selectedPeriod) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        endDate: new Date().toISOString().split('T')[0]
+        startDate: new Date(Date.now() - parseInt(selectedPeriod) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
+        endDate: new Date().toISOString().split('T')[0]!
       } : undefined;
 
       const data = await DashboardService.getDashboardData(user!.id, period);
@@ -115,20 +116,20 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Welcome back, {profile?.full_name || 'User'}!
           </h1>
-          <p className="text-gray-600">Here's your financial overview</p>
+          <p className="text-muted-foreground">Here's your financial overview</p>
         </div>
         <div className="flex items-center space-x-4">
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm"
           >
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
@@ -137,10 +138,12 @@ export default function DashboardPage() {
             <option value="all">All time</option>
           </select>
           {canCreateTransactions() && (
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Transaction
-            </Button>
+            <Link href="/dashboard/transactions/new">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Transaction
+              </Button>
+            </Link>
           )}
         </div>
       </div>
@@ -293,11 +296,11 @@ export default function DashboardPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+          <div className="h-64 flex items-center justify-center bg-muted/50 rounded-lg">
             <div className="text-center">
-              <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500">Chart will be rendered here</p>
-              <p className="text-sm text-gray-400">Income vs Expenses over time</p>
+              <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">Chart will be rendered here</p>
+              <p className="text-sm text-muted-foreground">Income vs Expenses over time</p>
             </div>
           </div>
         </CardContent>
@@ -316,18 +319,18 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-4">
               {dashboardData.insights.map((insight, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
+                <div key={index} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
                   <div className={`p-2 rounded-full ${
-                    insight.type === 'positive' ? 'bg-green-100 text-green-600' :
-                    insight.type === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                    insight.type === 'negative' ? 'bg-red-100 text-red-600' :
-                    'bg-blue-100 text-blue-600'
+                    insight.type === 'positive' ? 'bg-green-100 dark:bg-green-900/20 text-green-600' :
+                    insight.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600' :
+                    insight.type === 'negative' ? 'bg-red-100 dark:bg-red-900/20 text-red-600' :
+                    'bg-blue-100 dark:bg-blue-900/20 text-blue-600'
                   }`}>
                     <TrendingUp className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="font-medium">{insight.title}</h4>
-                    <p className="text-sm text-gray-600">{insight.message}</p>
+                    <h4 className="font-medium text-foreground">{insight.title}</h4>
+                    <p className="text-sm text-muted-foreground">{insight.message}</p>
                   </div>
                 </div>
               ))}
@@ -358,8 +361,8 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium">{transaction.description}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium text-foreground">{transaction.description}</p>
+                      <p className="text-sm text-muted-foreground">
                         {transaction.category_name} • {new Date(transaction.transaction_date).toLocaleDateString()}
                       </p>
                     </div>

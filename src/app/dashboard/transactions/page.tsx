@@ -21,7 +21,9 @@ import {
   Upload
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { TransactionService } from '@/lib/services/transactions';
+import toast from 'react-hot-toast';
 
 // Sample transaction data - in real app, this would come from API
 const sampleTransactions = [
@@ -145,23 +147,48 @@ const staggerContainer = {
 };
 
 export default function TransactionsPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedAccount, setSelectedAccount] = useState('All Accounts');
   const [selectedType, setSelectedType] = useState('All Types');
   const [sortBy, setSortBy] = useState('date-desc');
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const currency = profile?.currency || 'USD';
 
+  // Load transactions from database
+  useEffect(() => {
+    if (user) {
+      loadTransactions();
+    }
+  }, [user]);
+
+  const loadTransactions = async () => {
+    try {
+      setLoading(true);
+      const result = await TransactionService.getTransactions(user!.id, 1, 100);
+      console.log('Loaded transactions:', result.transactions);
+      setTransactions(result.transactions);
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      toast.error('Failed to load transactions');
+      // Fall back to sample data for now
+      setTransactions(sampleTransactions);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter transactions based on search and filters
-  const filteredTransactions = sampleTransactions.filter(transaction => {
+  const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         transaction.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         transaction.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+                         (transaction.category?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (transaction.tags || []).some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    const matchesCategory = selectedCategory === 'All Categories' || transaction.category === selectedCategory;
-    const matchesAccount = selectedAccount === 'All Accounts' || transaction.account === selectedAccount;
+    const matchesCategory = selectedCategory === 'All Categories' || (transaction.category?.name || '') === selectedCategory;
+    const matchesAccount = selectedAccount === 'All Accounts' || (transaction.account?.name || '') === selectedAccount;
     const matchesType = selectedType === 'All Types' || transaction.type === selectedType.toLowerCase();
 
     return matchesSearch && matchesCategory && matchesAccount && matchesType;
@@ -195,6 +222,16 @@ export default function TransactionsPage() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const netAmount = totalIncome - totalExpenses;
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -474,10 +511,10 @@ export default function TransactionsPage() {
                       </div>
                       <div className="flex items-center space-x-2 mt-1">
                         <Badge variant="outline" className="text-xs">
-                          {transaction.category}
+                          {transaction.category?.name || 'Uncategorized'}
                         </Badge>
                         <span className="text-sm text-muted-foreground">
-                          {transaction.account}
+                          {transaction.account?.name || 'No Account'}
                         </span>
                         <span className="text-sm text-muted-foreground">•</span>
                         <span className="text-sm text-muted-foreground flex items-center">
@@ -488,10 +525,10 @@ export default function TransactionsPage() {
                           })}
                         </span>
                       </div>
-                      {transaction.tags.length > 0 && (
+                      {(transaction.tags || []).length > 0 && (
                         <div className="flex items-center space-x-1 mt-2">
                           <Tag className="w-3 h-3 text-muted-foreground" />
-                          {transaction.tags.map((tag, tagIndex) => (
+                          {transaction.tags.map((tag: string, tagIndex: number) => (
                             <Badge key={tagIndex} variant="secondary" className="text-xs">
                               {tag}
                             </Badge>

@@ -23,7 +23,7 @@ export class TransactionService {
       .select(`
         *,
         category:categories(*),
-        account:accounts(*),
+        account:accounts!transactions_account_id_fkey(*),
         transfer_to_account:accounts!transactions_transfer_to_account_id_fkey(*)
       `)
       .eq('user_id', userId);
@@ -70,7 +70,7 @@ export class TransactionService {
       .select(`
         *,
         category:categories(*),
-        account:accounts(*),
+        account:accounts!transactions_account_id_fkey(*),
         transfer_to_account:accounts!transactions_transfer_to_account_id_fkey(*)
       `)
       .eq('id', id)
@@ -87,18 +87,32 @@ export class TransactionService {
 
   // Create new transaction
   static async createTransaction(transaction: TransactionInsert): Promise<Transaction> {
+    // First insert the transaction
     const { data, error } = await supabase
       .from(TABLES.TRANSACTIONS)
       .insert(transaction)
-      .select(`
-        *,
-        category:categories(*),
-        account:accounts(*),
-        transfer_to_account:accounts!transactions_transfer_to_account_id_fkey(*)
-      `)
+      .select('*')
       .single();
 
     if (error) throw error;
+    
+    // Then fetch it with relationships (if needed)
+    if (data.category_id || data.account_id) {
+      const { data: fullData, error: fetchError } = await supabase
+        .from(TABLES.TRANSACTIONS)
+        .select(`
+          *,
+          category:categories(*),
+          account:accounts!transactions_account_id_fkey(*),
+          transfer_to_account:accounts!transactions_transfer_to_account_id_fkey(*)
+        `)
+        .eq('id', data.id)
+        .single();
+        
+      if (fetchError) throw fetchError;
+      return fullData;
+    }
+    
     return data;
   }
 
@@ -112,7 +126,7 @@ export class TransactionService {
       .select(`
         *,
         category:categories(*),
-        account:accounts(*),
+        account:accounts!transactions_account_id_fkey(*),
         transfer_to_account:accounts!transactions_transfer_to_account_id_fkey(*)
       `)
       .single();

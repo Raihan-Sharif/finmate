@@ -29,6 +29,8 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { TransactionService } from '@/lib/services/transactions';
+import toast from 'react-hot-toast';
 
 // Sample categories and accounts
 const expenseCategories = [
@@ -83,7 +85,7 @@ const fadeInUp = {
 };
 
 export default function NewTransactionPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -120,18 +122,45 @@ export default function NewTransactionPage() {
   const categories = watchedType === 'income' ? incomeCategories : expenseCategories;
 
   const onSubmit = async (data: TransactionForm) => {
+    if (!user) {
+      toast.error('You must be logged in to create transactions');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // TODO: Implement API call to save transaction
-      console.log('Transaction data:', data);
-      console.log('Receipt file:', receipt);
+      // Convert form data to database format
+      const transactionData = {
+        user_id: user.id,
+        type: data.type,
+        amount: parseFloat(data.amount.toString()),
+        currency: profile?.currency || 'USD',
+        description: data.description,
+        notes: data.notes || null,
+        // For now, we'll use null for category_id and account_id since we're using strings
+        // In a real implementation, you'd need to map these to actual UUIDs from the database
+        category_id: null,
+        account_id: null,
+        date: data.date,
+        tags: data.tags || [],
+        location: data.location || null,
+        vendor: data.vendor || null,
+        is_recurring: data.recurring,
+        recurring_pattern: data.recurring && data.recurringFrequency 
+          ? { frequency: data.recurringFrequency }
+          : null,
+      };
+
+      console.log('Saving transaction data:', transactionData);
+
+      // Save to database
+      const savedTransaction = await TransactionService.createTransaction(transactionData);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      router.push('/dashboard/transactions?success=true');
-    } catch (error) {
+      toast.success('Transaction created successfully!');
+      router.push('/dashboard/transactions');
+    } catch (error: any) {
       console.error('Error saving transaction:', error);
+      toast.error(error.message || 'Failed to save transaction');
     } finally {
       setIsLoading(false);
     }

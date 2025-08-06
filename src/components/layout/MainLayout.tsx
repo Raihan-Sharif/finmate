@@ -1,6 +1,5 @@
 'use client';
 
-import { useAuth, usePermissions } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { useAuth, usePermissions } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -52,7 +52,7 @@ interface MainLayoutProps {
 const navigation = [
   {
     name: 'Dashboard',
-    href: '/dashboard/overview',
+    href: '/dashboard',
     icon: LayoutDashboard,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
@@ -172,8 +172,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }, []);
 
   const isActiveRoute = (href: string) => {
-    if (href === '/dashboard/overview') {
-      return pathname === '/dashboard' || pathname === '/dashboard/overview';
+    if (href === '/dashboard') {
+      return pathname === '/dashboard';
     }
     return pathname.startsWith(href);
   };
@@ -206,22 +206,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <motion.div
-        initial={false}
-        animate={{
-          x: sidebarOpen ? 0 : '-100%',
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 30,
-        }}
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 shadow-xl lg:translate-x-0 lg:static lg:inset-0',
-          'lg:flex lg:flex-col lg:w-64 border-r border-border'
-        )}
-      >
-        {/* Sidebar header */}
+      <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:z-50 bg-white dark:bg-gray-900 border-r border-border">
+        {/* Sidebar content for desktop */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-border">
           <Link href="/dashboard" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -231,14 +217,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
               FinMate
             </span>
           </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="w-5 h-5" />
-          </Button>
         </div>
 
         {/* Navigation */}
@@ -331,10 +309,136 @@ export default function MainLayout({ children }: MainLayoutProps) {
             })}
           </div>
         </div>
+      </div>
+
+      {/* Mobile Sidebar */}
+      <motion.div
+        initial={false}
+        animate={{
+          x: sidebarOpen ? 0 : '-100%',
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 300,
+          damping: 30,
+        }}
+        className={cn(
+          'lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 shadow-xl border-r border-border'
+        )}
+      >
+        {/* Mobile Sidebar header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-border">
+          <Link href="/dashboard" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-foreground">
+              FinMate
+            </span>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {/* Mobile Navigation */}
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          {navigation.map((item) => {
+            const isActive = isActiveRoute(item.href);
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                  isActive
+                    ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <div
+                  className={cn(
+                    'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
+                    isActive ? item.bgColor : 'bg-transparent'
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      'w-5 h-5',
+                      isActive ? item.color : 'text-muted-foreground'
+                    )}
+                  />
+                </div>
+                {item.name}
+              </Link>
+            );
+          })}
+          
+          {/* Admin section */}
+          {isAdmin() && (
+            <>
+              <div className="px-3 py-2">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <Link
+                href="/admin"
+                className={cn(
+                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                  isActiveRoute('/admin')
+                    ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <div
+                  className={cn(
+                    'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
+                    isActiveRoute('/admin') ? 'bg-red-50' : 'bg-transparent'
+                  )}
+                >
+                  <Shield
+                    className={cn(
+                      'w-5 h-5',
+                      isActiveRoute('/admin') ? 'text-red-600' : 'text-muted-foreground'
+                    )}
+                  />
+                </div>
+                Admin Panel
+              </Link>
+            </>
+          )}
+        </nav>
+
+        {/* Mobile Bottom navigation */}
+        <div className="px-4 py-4 border-t border-border">
+          <div className="space-y-1">
+            {bottomNavigation.map((item) => {
+              const isActive = isActiveRoute(item.href);
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                    isActive
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </motion.div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 flex flex-col min-h-screen">
         {/* Top navigation */}
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -369,10 +473,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
             {/* Right side */}
             <div className="flex items-center space-x-4">
               {/* Quick actions */}
-              <Button size="sm" className="hidden sm:flex">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Transaction
-              </Button>
+              <Link href="/dashboard/transactions/new">
+                <Button size="sm" className="hidden sm:flex">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Transaction
+                </Button>
+              </Link>
 
               {/* Notifications */}
               <Button variant="ghost" size="sm" className="relative">
