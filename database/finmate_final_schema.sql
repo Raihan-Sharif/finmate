@@ -873,31 +873,39 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql' SECURITY DEFINER;
 
--- Function to get user permissions (used by frontend)
+-- Function to get user permissions (used by frontend) - FIXED VERSION
 CREATE OR REPLACE FUNCTION public.get_user_permissions(p_user_id UUID)
-RETURNS TABLE(permission_name TEXT, resource TEXT, action TEXT) AS $$
+RETURNS TABLE(
+    permission_name TEXT, 
+    resource TEXT, 
+    action TEXT
+) AS $$
 BEGIN
     RETURN QUERY
-    SELECT DISTINCT
-        p.name as permission_name,
-        p.resource,
-        p.action::TEXT
-    FROM permissions p
-    JOIN role_permissions rp ON p.id = rp.permission_id
-    JOIN profiles pr ON rp.role_id = pr.role_id
-    WHERE pr.user_id = p_user_id
-    
+    WITH role_perms AS (
+        SELECT DISTINCT
+            p.name::TEXT as permission_name,
+            p.resource::TEXT,
+            p.action::TEXT
+        FROM permissions p
+        JOIN role_permissions rp ON p.id = rp.permission_id
+        JOIN profiles pr ON rp.role_id = pr.role_id
+        WHERE pr.user_id = p_user_id
+    ),
+    user_specific_perms AS (
+        SELECT DISTINCT
+            p.name::TEXT as permission_name,
+            p.resource::TEXT,
+            p.action::TEXT
+        FROM permissions p
+        JOIN user_permissions up ON p.id = up.permission_id
+        WHERE up.user_id = p_user_id 
+        AND up.granted = true
+        AND (up.expires_at IS NULL OR up.expires_at > NOW())
+    )
+    SELECT * FROM role_perms
     UNION
-    
-    SELECT DISTINCT
-        p.name as permission_name,
-        p.resource,
-        p.action::TEXT
-    FROM permissions p
-    JOIN user_permissions up ON p.id = up.permission_id
-    WHERE up.user_id = p_user_id 
-    AND up.granted = true
-    AND (up.expires_at IS NULL OR up.expires_at > NOW());
+    SELECT * FROM user_specific_perms;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -1052,6 +1060,13 @@ INSERT INTO permissions (name, display_name, description, resource, action, is_s
 ('users.update', 'Update Users', 'Can modify user profiles and settings', 'users', 'update', true),
 ('users.delete', 'Delete Users', 'Can delete user accounts', 'users', 'delete', true),
 ('users.manage', 'Manage Users', 'Full user management capabilities', 'users', 'manage', true),
+
+-- Role management
+('roles.create', 'Create Roles', 'Can create new roles', 'roles', 'create', true),
+('roles.read', 'View Roles', 'Can view roles and permissions', 'roles', 'read', true),
+('roles.update', 'Update Roles', 'Can modify roles and permissions', 'roles', 'update', true),
+('roles.delete', 'Delete Roles', 'Can delete roles', 'roles', 'delete', true),
+('roles.manage', 'Manage Roles', 'Full role management capabilities', 'roles', 'manage', true),
 
 -- System management
 ('system.manage', 'System Management', 'Can manage system settings and configuration', 'system', 'manage', true),
