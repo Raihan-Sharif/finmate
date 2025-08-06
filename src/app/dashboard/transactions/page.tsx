@@ -4,6 +4,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -13,15 +19,18 @@ import {
   ArrowUp,
   Calendar,
   Download,
+  Edit,
   Filter,
+  MoreHorizontal,
   Plus,
   Receipt,
   Search,
   Tag,
+  Trash2,
   Upload
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TransactionService } from '@/lib/services/transactions';
 import toast from 'react-hot-toast';
 
@@ -158,17 +167,12 @@ export default function TransactionsPage() {
 
   const currency = profile?.currency || 'USD';
 
-  // Load transactions from database
-  useEffect(() => {
-    if (user) {
-      loadTransactions();
-    }
-  }, [user]);
-
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
       setLoading(true);
-      const result = await TransactionService.getTransactions(user!.id, 1, 100);
+      const result = await TransactionService.getTransactions(user.id, 1, 100);
       console.log('Loaded transactions:', result.transactions);
       setTransactions(result.transactions);
     } catch (error) {
@@ -179,7 +183,25 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
+  }, [user?.id]);
+
+  const handleDeleteTransaction = async (id: string) => {
+    if (!user?.id) return;
+    
+    try {
+      await TransactionService.deleteTransaction(id, user.id);
+      toast.success('Transaction deleted successfully');
+      loadTransactions(); // Reload transactions
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      toast.error('Failed to delete transaction');
+    }
   };
+
+  // Load transactions from database
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   // Filter transactions based on search and filters
   const filteredTransactions = transactions.filter(transaction => {
@@ -538,16 +560,42 @@ export default function TransactionsPage() {
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <div className={`text-lg font-semibold ${
-                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {transaction.type === 'income' ? '+' : '-'}
-                      {formatCurrency(transaction.amount, currency)}
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className={`text-lg font-semibold ${
+                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transaction.type === 'income' ? '+' : '-'}
+                        {formatCurrency(transaction.amount, currency)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatDate(new Date(transaction.date))}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatDate(new Date(transaction.date))}
-                    </div>
+
+                    {/* Action Menu */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/transactions/${transaction.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteTransaction(transaction.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </motion.div>
               ))}

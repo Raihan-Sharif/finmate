@@ -625,9 +625,14 @@ BEGIN
     (user_id_param, 'Personal Care', 'user', '#8B5CF6', 'expense', true),
     (user_id_param, 'Other Expenses', 'minus-circle', '#6B7280', 'expense', true);
 
-    -- Create default account
-    INSERT INTO public.accounts (user_id, name, type, balance, currency) VALUES
-    (user_id_param, 'Main Account', 'bank', 0.00, 'USD');
+    -- Create default accounts (more generic and useful)
+    INSERT INTO public.accounts (user_id, name, type, balance, currency, description) VALUES
+    (user_id_param, 'Salary Account', 'bank', 0.00, 'USD', 'Main salary receiving account'),
+    (user_id_param, 'Savings Account', 'savings', 0.00, 'USD', 'Personal savings account'),
+    (user_id_param, 'bKash', 'wallet', 0.00, 'BDT', 'Mobile financial service'),
+    (user_id_param, 'Nagad', 'wallet', 0.00, 'BDT', 'Mobile financial service'),
+    (user_id_param, 'Credit Card', 'credit_card', 0.00, 'USD', 'Credit card account'),
+    (user_id_param, 'Cash', 'other', 0.00, 'USD', 'Physical cash');
     
     RAISE NOTICE 'Created default categories and account for user: %', user_id_param;
 END;
