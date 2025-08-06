@@ -916,6 +916,116 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql' SECURITY DEFINER;
 
+-- Function to get user permissions (used by frontend)
+CREATE OR REPLACE FUNCTION public.get_user_permissions(p_user_id UUID)
+RETURNS TABLE(permission_name TEXT, resource TEXT, action TEXT) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT DISTINCT
+        p.name as permission_name,
+        p.resource,
+        p.action::TEXT
+    FROM permissions p
+    JOIN role_permissions rp ON p.id = rp.permission_id
+    JOIN profiles pr ON rp.role_id = pr.role_id
+    WHERE pr.user_id = p_user_id
+    
+    UNION
+    
+    SELECT DISTINCT
+        p.name as permission_name,
+        p.resource,
+        p.action::TEXT
+    FROM permissions p
+    JOIN user_permissions up ON p.id = up.permission_id
+    WHERE up.user_id = p_user_id 
+    AND up.granted = true
+    AND (up.expires_at IS NULL OR up.expires_at > NOW());
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to check if user has specific permission (used by frontend)
+CREATE OR REPLACE FUNCTION public.has_permission(p_user_id UUID, p_resource TEXT, p_action TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.get_user_permissions(p_user_id)
+        WHERE resource = p_resource 
+        AND action = p_action
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to cleanup expired AI insights (maintenance function)
+CREATE OR REPLACE FUNCTION public.cleanup_expired_ai_insights()
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+BEGIN
+    DELETE FROM ai_insights 
+    WHERE expires_at IS NOT NULL 
+    AND expires_at < NOW();
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get user profile with role (used by frontend)
+CREATE OR REPLACE FUNCTION public.get_user_profile(p_user_id UUID)
+RETURNS TABLE(
+    id UUID,
+    user_id UUID,
+    email TEXT,
+    full_name TEXT,
+    avatar_url TEXT,
+    currency VARCHAR(3),
+    timezone TEXT,
+    theme TEXT,
+    notifications_enabled BOOLEAN,
+    ai_insights_enabled BOOLEAN,
+    monthly_budget_limit DECIMAL(15,2),
+    email_verified BOOLEAN,
+    phone_number TEXT,
+    phone_verified BOOLEAN,
+    two_factor_enabled BOOLEAN,
+    last_login TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    role_name TEXT,
+    role_display_name TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        p.id,
+        p.user_id,
+        p.email,
+        p.full_name,
+        p.avatar_url,
+        p.currency,
+        p.timezone,
+        p.theme::TEXT,
+        p.notifications_enabled,
+        p.ai_insights_enabled,
+        p.monthly_budget_limit,
+        p.email_verified,
+        p.phone_number,
+        p.phone_verified,
+        p.two_factor_enabled,
+        p.last_login,
+        p.is_active,
+        p.created_at,
+        p.updated_at,
+        r.name as role_name,
+        r.display_name as role_display_name
+    FROM profiles p
+    LEFT JOIN roles r ON p.role_id = r.id
+    WHERE p.user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- =============================================
 -- TRIGGERS
 -- =============================================
