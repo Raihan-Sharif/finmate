@@ -1,10 +1,12 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/hooks/useAuth';
+import { RecurringTransactionService } from '@/lib/services/recurring-transactions';
+import { supabase } from '@/lib/supabase/client';
 import { formatCurrency } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import {
@@ -21,8 +23,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { RecurringTransactionService } from '@/lib/services/recurring-transactions';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 const fadeInUp = {
@@ -335,12 +336,64 @@ export default function RecurringTransactionsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          // Find the latest transaction from this recurring pattern
-                          // For now, we'll redirect to the recurring edit page that shows info
-                          router.push(`/dashboard/transactions/recurring/${recurring.id}/edit`);
+                        onClick={async () => {
+                          // Find the most recent transaction generated from this recurring template
+                          try {
+                            const { data: recentTransactions, error } = await supabase
+                              .from('transactions')
+                              .select('id, created_at, date')
+                              .eq('user_id', user.id)
+                              .eq('recurring_template_id', recurring.id)
+                              .order('created_at', { ascending: false })
+                              .limit(1);
+
+                            if (!error && recentTransactions && recentTransactions.length > 0) {
+                              // Redirect to edit the most recent transaction from this recurring pattern
+                              router.push(`/dashboard/transactions/${recentTransactions[0].id}/edit`);
+                            } else {
+                              // If no transactions found, show an informative message with option to create first transaction
+                              if (confirm('No transactions found for this recurring template. Would you like to create the first transaction now?')) {
+                                // Create the first transaction manually using the template
+                                try {
+                                  const template = recurring.transaction_template;
+                                  const { data: newTransaction, error: createError } = await supabase
+                                    .from('transactions')
+                                    .insert({
+                                      user_id: user.id,
+                                      type: template.type,
+                                      amount: template.amount,
+                                      currency: template.currency || 'BDT',
+                                      description: template.description,
+                                      notes: template.notes,
+                                      category_id: template.category_id,
+                                      subcategory_id: template.subcategory_id,
+                                      account_id: template.account_id,
+                                      date: new Date().toISOString().split('T')[0], // Today's date
+                                      tags: template.tags || [],
+                                      location: template.location,
+                                      vendor: template.vendor,
+                                      is_recurring: true,
+                                      recurring_template_id: recurring.id
+                                    })
+                                    .select('id')
+                                    .single();
+
+                                  if (createError) throw createError;
+                                  
+                                  toast.success('First transaction created successfully!');
+                                  router.push(`/dashboard/transactions/${newTransaction.id}/edit`);
+                                } catch (createError) {
+                                  console.error('Error creating first transaction:', createError);
+                                  toast.error('Failed to create first transaction');
+                                }
+                              }
+                            }
+                          } catch (error) {
+                            console.error('Error finding transaction for recurring pattern:', error);
+                            toast.error('Could not find transaction to edit');
+                          }
                         }}
-                        title="Edit recurring transaction settings"
+                        title="Edit recurring transaction (opens most recent transaction)"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>

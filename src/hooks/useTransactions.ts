@@ -241,18 +241,51 @@ export function useTransactions(): UseTransactionsReturn {
     [user, fetchTransactions]
   );
 
-  // Delete transaction
+  // Delete transaction (also deletes recurring if exists)
   const deleteTransaction = useCallback(
     async (id: string) => {
       if (!user) return;
 
-      if (!confirm("Are you sure you want to delete this transaction?")) {
+      if (!confirm("Are you sure you want to delete this transaction? If this is part of a recurring transaction, the recurring schedule will also be deleted.")) {
         return;
       }
 
       try {
+        // First check if this transaction is part of a recurring pattern
+        const { data: transaction, error: fetchError } = await supabase
+          .from(TABLES.TRANSACTIONS)
+          .select('recurring_template_id, recurring_pattern')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          throw fetchError;
+        }
+
+        // Delete the main transaction first
         await db.delete(TABLES.TRANSACTIONS, id);
-        toast.success("Transaction deleted successfully");
+
+        // Check for recurring template using new FK relationship or old pattern
+        const recurringId = transaction?.recurring_template_id || transaction?.recurring_pattern?.recurring_id;
+        
+        if (recurringId) {
+          try {
+            await supabase
+              .from(TABLES.RECURRING_TRANSACTIONS)
+              .delete()
+              .eq('id', recurringId)
+              .eq('user_id', user.id);
+            
+            toast.success("Transaction and recurring schedule deleted successfully");
+          } catch (recurringError) {
+            console.warn("Failed to delete recurring transaction:", recurringError);
+            toast.success("Transaction deleted successfully (recurring schedule may still exist)");
+          }
+        } else {
+          toast.success("Transaction deleted successfully");
+        }
+
         await fetchTransactions();
       } catch (err: any) {
         console.error("Error deleting transaction:", err);
@@ -262,14 +295,51 @@ export function useTransactions(): UseTransactionsReturn {
     [user, fetchTransactions]
   );
 
-  // Bulk delete transactions
+  // Bulk delete transactions (also deletes associated recurring transactions)
   const bulkDelete = useCallback(
     async (ids: string[]) => {
       if (!user || ids.length === 0) return;
 
+      if (!confirm(`Are you sure you want to delete ${ids.length} transaction(s)? Any associated recurring schedules will also be deleted.`)) {
+        return;
+      }
+
       try {
+        // First fetch all transactions to check for recurring patterns
+        const { data: transactionsToDelete, error: fetchError } = await supabase
+          .from(TABLES.TRANSACTIONS)
+          .select('id, recurring_template_id, recurring_pattern')
+          .in('id', ids)
+          .eq('user_id', user.id);
+
+        if (fetchError) throw fetchError;
+
+        // Extract recurring_ids from transactions that have them (new FK or old pattern)
+        const recurringIds = transactionsToDelete
+          ?.map(t => t.recurring_template_id || t.recurring_pattern?.recurring_id)
+          .filter(Boolean) || [];
+
+        // Delete all transactions
         await Promise.all(ids.map((id) => db.delete(TABLES.TRANSACTIONS, id)));
-        toast.success(`${ids.length} transaction(s) deleted successfully`);
+
+        // Delete associated recurring transactions if any
+        if (recurringIds.length > 0) {
+          try {
+            await supabase
+              .from(TABLES.RECURRING_TRANSACTIONS)
+              .delete()
+              .in('id', recurringIds)
+              .eq('user_id', user.id);
+
+            toast.success(`${ids.length} transaction(s) and ${recurringIds.length} recurring schedule(s) deleted successfully`);
+          } catch (recurringError) {
+            console.warn("Failed to delete some recurring transactions:", recurringError);
+            toast.success(`${ids.length} transaction(s) deleted successfully (some recurring schedules may still exist)`);
+          }
+        } else {
+          toast.success(`${ids.length} transaction(s) deleted successfully`);
+        }
+
         await fetchTransactions();
       } catch (err: any) {
         console.error("Error bulk deleting transactions:", err);
@@ -352,7 +422,7 @@ export function useTransactions(): UseTransactionsReturn {
         toast.error("Failed to export transactions");
       }
     },
-    [user, transactions]
+    [user]
   );
 
   // Refresh transactions

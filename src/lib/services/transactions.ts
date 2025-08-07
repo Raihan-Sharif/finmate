@@ -85,6 +85,38 @@ export class TransactionService {
     return data;
   }
 
+  // Get transaction by ID with recurring data (using proper FK relationship)
+  static async getTransactionWithRecurringById(id: string, userId: string) {
+    const { data, error } = await supabase
+      .from(TABLES.TRANSACTIONS)
+      .select(`
+        *,
+        category:categories(*),
+        account:accounts!transactions_account_id_fkey(*),
+        transfer_to_account:accounts!transactions_transfer_to_account_id_fkey(*),
+        recurring_transaction:recurring_transactions(
+          id,
+          frequency,
+          start_date,
+          next_execution,
+          is_active,
+          transaction_template,
+          end_date,
+          last_executed
+        )
+      `)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+
+    return data;
+  }
+
   // Create new transaction
   static async createTransaction(transaction: TransactionInsert): Promise<Transaction> {
     // First insert the transaction

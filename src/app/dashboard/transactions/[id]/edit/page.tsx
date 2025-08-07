@@ -84,41 +84,37 @@ export default function EditTransactionPage() {
   const watchedRecurring = watch('recurring');
   const watchedAmount = watch('amount');
 
-  // Load transaction data
+  // Load transaction data with recurring data using improved method
   useEffect(() => {
     const loadTransaction = async () => {
       if (!user?.id || !transactionId) return;
       
       try {
         setLoadingTransaction(true);
-        const transaction = await TransactionService.getTransactionById(transactionId, user.id);
+        // Use the new method that handles recurring data properly
+        const transactionWithRecurring = await TransactionService.getTransactionWithRecurringById(transactionId, user.id);
         
-        if (!transaction) {
+        if (!transactionWithRecurring) {
           toast.error('Transaction not found');
           router.push('/dashboard/transactions');
           return;
         }
 
-        // Check if this transaction is part of a recurring pattern
-        let recurringData = null;
-        let isRecurring = transaction.is_recurring || false;
-        let recurringFrequency = transaction.recurring_pattern?.frequency || '';
+        const transaction = transactionWithRecurring;
+        const recurringData = transactionWithRecurring.recurring_transaction;
 
-        // If transaction has recurring_pattern with recurring_id, fetch the recurring transaction
-        if (transaction.recurring_pattern?.recurring_id) {
-          try {
-            recurringData = await RecurringTransactionService.getRecurringTransactionById(
-              transaction.recurring_pattern.recurring_id,
-              user.id
-            );
-            if (recurringData) {
-              isRecurring = true;
-              recurringFrequency = recurringData.frequency;
-              setRecurringTransactionId(recurringData.id);
-            }
-          } catch (error) {
-            console.warn('Could not load recurring transaction data:', error);
-          }
+        // Determine recurring status and frequency
+        let isRecurring = false;
+        let recurringFrequency = '';
+
+        if (recurringData) {
+          isRecurring = true;
+          recurringFrequency = recurringData.frequency;
+          setRecurringTransactionId(recurringData.id);
+        } else if (transaction.is_recurring) {
+          // Fallback: transaction is marked as recurring but no template found
+          isRecurring = true;
+          recurringFrequency = transaction.recurring_pattern?.frequency || '';
         }
 
         // Reset form with transaction data
@@ -203,6 +199,72 @@ export default function EditTransactionPage() {
 
     setIsLoading(true);
     try {
+      let newRecurringTemplateId = recurringTransactionId;
+
+      // Handle recurring transaction updates
+      if (data.recurring && data.recurringFrequency) {
+        if (recurringTransactionId) {
+          // Update existing recurring transaction
+          const template = {
+            type: data.type,
+            amount: parseFloat(data.amount.toString()),
+            currency: profile?.currency || 'BDT',
+            description: data.description,
+            notes: data.notes || null,
+            category_id: data.category || null,
+            subcategory_id: data.subcategory || null,
+            account_id: data.account || null,
+            tags: data.tags || [],
+            location: data.location || null,
+            vendor: data.vendor || null,
+          };
+
+          await RecurringTransactionService.updateRecurringTransaction(
+            recurringTransactionId,
+            {
+              transaction_template: template,
+              frequency: data.recurringFrequency as any,
+            },
+            user.id
+          );
+        } else {
+          // Create new recurring transaction
+          const template = {
+            type: data.type,
+            amount: parseFloat(data.amount.toString()),
+            currency: profile?.currency || 'BDT',
+            description: data.description,
+            notes: data.notes || null,
+            category_id: data.category || null,
+            subcategory_id: data.subcategory || null,
+            account_id: data.account || null,
+            tags: data.tags || [],
+            location: data.location || null,
+            vendor: data.vendor || null,
+          };
+
+          const nextExecution = RecurringTransactionService.calculateNextExecution(
+            data.date,
+            data.recurringFrequency
+          );
+
+          const newRecurring = await RecurringTransactionService.createRecurringTransaction({
+            user_id: user.id,
+            transaction_template: template,
+            frequency: data.recurringFrequency as any,
+            start_date: data.date,
+            next_execution: nextExecution,
+            is_active: true
+          });
+
+          newRecurringTemplateId = newRecurring.id;
+        }
+      } else if (recurringTransactionId && !data.recurring) {
+        // Remove recurring transaction if recurring was turned off
+        await RecurringTransactionService.deleteRecurringTransaction(recurringTransactionId, user.id);
+        newRecurringTemplateId = null;
+      }
+
       const transactionData = {
         type: data.type,
         amount: parseFloat(data.amount.toString()),
@@ -216,49 +278,22 @@ export default function EditTransactionPage() {
         tags: data.tags || [],
         location: data.location || null,
         vendor: data.vendor || null,
-        is_recurring: false, // We handle recurring separately
-        recurring_pattern: null,
+        is_recurring: data.recurring || false,
+        recurring_template_id: newRecurringTemplateId,
+        recurring_pattern: null, // Keep for backward compatibility
       };
 
       // Update the main transaction
       await TransactionService.updateTransaction(transactionId, transactionData, user.id);
 
-      // Handle recurring transaction updates
+      // Show appropriate success message
       if (data.recurring && data.recurringFrequency) {
-        // Create transaction template (remove user-specific data)
-        const { user_id, is_recurring, recurring_pattern, ...template } = transactionData;
-
         if (recurringTransactionId) {
-          // Update existing recurring transaction
-          await RecurringTransactionService.updateRecurringTransaction(
-            recurringTransactionId,
-            {
-              transaction_template: template,
-              frequency: data.recurringFrequency as any,
-            },
-            user.id
-          );
           toast.success('Transaction and recurring schedule updated successfully!');
         } else {
-          // Create new recurring transaction
-          const nextExecution = RecurringTransactionService.calculateNextExecution(
-            data.date,
-            data.recurringFrequency
-          );
-
-          await RecurringTransactionService.createRecurringTransaction({
-            user_id: user.id,
-            transaction_template: template,
-            frequency: data.recurringFrequency as any,
-            start_date: data.date,
-            next_execution: nextExecution,
-            is_active: true
-          });
           toast.success('Transaction updated and recurring schedule created!');
         }
       } else if (recurringTransactionId && !data.recurring) {
-        // Remove recurring transaction if recurring was turned off
-        await RecurringTransactionService.deleteRecurringTransaction(recurringTransactionId, user.id);
         toast.success('Transaction updated and recurring schedule removed!');
       } else {
         toast.success('Transaction updated successfully!');

@@ -1,15 +1,20 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { formatCurrency } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/hooks/useAuth';
+import { AccountService } from '@/lib/services/accounts';
+import { CategoryService } from '@/lib/services/categories';
+import { RecurringTransactionService } from '@/lib/services/recurring-transactions';
+import { TransactionService } from '@/lib/services/transactions';
+import { supabase } from '@/lib/supabase/client';
+import { cn, formatCurrency } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -27,13 +32,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { TransactionService } from '@/lib/services/transactions';
-import { CategoryService } from '@/lib/services/categories';
-import { AccountService } from '@/lib/services/accounts';
-import { RecurringTransactionService } from '@/lib/services/recurring-transactions';
-import { supabase } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 
 // Categories and accounts are now loaded from database
@@ -206,6 +206,43 @@ export default function NewTransactionPage() {
 
     setIsLoading(true);
     try {
+      let recurringTemplateId = null;
+
+      // If it's a recurring transaction, create the recurring template first
+      if (data.recurring && data.recurringFrequency) {
+        // Create transaction template (without user-specific data)
+        const template = {
+          type: data.type,
+          amount: parseFloat(data.amount.toString()),
+          currency: profile?.currency || 'BDT',
+          description: data.description,
+          notes: data.notes || null,
+          category_id: data.category || null,
+          subcategory_id: data.subcategory || null,
+          account_id: data.account || null,
+          tags: data.tags || [],
+          location: data.location || null,
+          vendor: data.vendor || null,
+        };
+        
+        // Calculate next execution date
+        const nextExecution = RecurringTransactionService.calculateNextExecution(
+          data.date, 
+          data.recurringFrequency
+        );
+
+        const recurringTransaction = await RecurringTransactionService.createRecurringTransaction({
+          user_id: user.id,
+          transaction_template: template,
+          frequency: data.recurringFrequency as any,
+          start_date: data.date,
+          next_execution: nextExecution,
+          is_active: true
+        });
+
+        recurringTemplateId = recurringTransaction.id;
+      }
+
       // Convert form data to database format
       const transactionData = {
         user_id: user.id,
@@ -221,8 +258,9 @@ export default function NewTransactionPage() {
         tags: data.tags || [],
         location: data.location || null,
         vendor: data.vendor || null,
-        is_recurring: false, // We handle recurring separately
-        recurring_pattern: null,
+        is_recurring: data.recurring || false,
+        recurring_template_id: recurringTemplateId, // Link to recurring template
+        recurring_pattern: null, // Keep for backward compatibility
       };
 
       console.log('Saving transaction data:', transactionData);
@@ -230,26 +268,7 @@ export default function NewTransactionPage() {
       // Save the main transaction to database
       const savedTransaction = await TransactionService.createTransaction(transactionData);
 
-      // If it's a recurring transaction, create the recurring transaction record
       if (data.recurring && data.recurringFrequency) {
-        // Create transaction template (remove user-specific data)
-        const { user_id, is_recurring, recurring_pattern, ...template } = transactionData;
-        
-        // Calculate next execution date
-        const nextExecution = RecurringTransactionService.calculateNextExecution(
-          data.date, 
-          data.recurringFrequency
-        );
-
-        await RecurringTransactionService.createRecurringTransaction({
-          user_id: user.id,
-          transaction_template: template,
-          frequency: data.recurringFrequency as any,
-          start_date: data.date,
-          next_execution: nextExecution,
-          is_active: true
-        });
-
         toast.success('Transaction and recurring schedule created successfully!');
       } else {
         toast.success('Transaction created successfully!');

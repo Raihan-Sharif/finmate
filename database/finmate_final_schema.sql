@@ -246,6 +246,7 @@ CREATE TABLE transactions (
     vendor TEXT,
     is_recurring BOOLEAN DEFAULT false NOT NULL,
     recurring_pattern JSONB,
+    recurring_template_id UUID REFERENCES recurring_transactions(id) ON DELETE SET NULL,
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -508,6 +509,7 @@ CREATE INDEX idx_transactions_account_id ON transactions(account_id);
 CREATE INDEX idx_transactions_created_at ON transactions(created_at);
 CREATE INDEX idx_transactions_user_date ON transactions(user_id, date);
 CREATE INDEX idx_transactions_user_type ON transactions(user_id, type);
+CREATE INDEX idx_transactions_recurring_template_id ON transactions(recurring_template_id);
 
 CREATE INDEX idx_budgets_user_id ON budgets(user_id);
 CREATE INDEX idx_budgets_period ON budgets(period);
@@ -1460,6 +1462,138 @@ END $$;
 -- Create global categories and accounts (one-time setup)
 SELECT public.create_global_categories();
 SELECT public.create_global_accounts();
+
+-- =============================================
+-- RECURRING TRANSACTIONS FUNCTIONS
+-- =============================================
+
+-- Function to automatically execute recurring transactions
+CREATE OR REPLACE FUNCTION execute_pending_recurring_transactions()
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    rec RECORD;
+    transaction_data JSONB;
+    new_transaction_id UUID;
+    executed_count INTEGER := 0;
+BEGIN
+    -- Find all recurring transactions that need to be executed
+    FOR rec IN 
+        SELECT rt.* 
+        FROM recurring_transactions rt
+        WHERE rt.is_active = true 
+        AND rt.next_execution <= CURRENT_DATE
+        AND (rt.end_date IS NULL OR rt.next_execution <= rt.end_date)
+    LOOP
+        -- Get the transaction template
+        transaction_data := rec.transaction_template;
+        
+        -- Create new transaction from template
+        INSERT INTO transactions (
+            id,
+            user_id,
+            type,
+            amount,
+            currency,
+            description,
+            notes,
+            category_id,
+            subcategory_id,
+            account_id,
+            date,
+            tags,
+            location,
+            vendor,
+            is_recurring,
+            recurring_template_id,
+            created_at,
+            updated_at
+        ) VALUES (
+            uuid_generate_v4(),
+            rec.user_id,
+            COALESCE((transaction_data->>'type')::transaction_type, 'expense'),
+            COALESCE((transaction_data->>'amount')::NUMERIC, 0),
+            COALESCE(transaction_data->>'currency', 'BDT'),
+            COALESCE(transaction_data->>'description', 'Recurring Transaction'),
+            transaction_data->>'notes',
+            CASE WHEN transaction_data ? 'category_id' THEN CAST(transaction_data->>'category_id' AS UUID) ELSE NULL END,
+            CASE WHEN transaction_data ? 'subcategory_id' THEN CAST(transaction_data->>'subcategory_id' AS UUID) ELSE NULL END,
+            CASE WHEN transaction_data ? 'account_id' THEN CAST(transaction_data->>'account_id' AS UUID) ELSE NULL END,
+            CURRENT_DATE,
+            COALESCE((transaction_data->'tags')::JSONB, '[]'::JSONB),
+            transaction_data->>'location',
+            transaction_data->>'vendor',
+            true,
+            rec.id,
+            NOW(),
+            NOW()
+        );
+        
+        -- Calculate next execution date
+        UPDATE recurring_transactions 
+        SET 
+            last_executed = CURRENT_DATE,
+            next_execution = CASE 
+                WHEN frequency = 'weekly' THEN CURRENT_DATE + INTERVAL '7 days'
+                WHEN frequency = 'biweekly' THEN CURRENT_DATE + INTERVAL '14 days'  
+                WHEN frequency = 'monthly' THEN CURRENT_DATE + INTERVAL '1 month'
+                WHEN frequency = 'quarterly' THEN CURRENT_DATE + INTERVAL '3 months'
+                WHEN frequency = 'yearly' THEN CURRENT_DATE + INTERVAL '1 year'
+                ELSE CURRENT_DATE + INTERVAL '1 month' -- default fallback
+            END,
+            updated_at = NOW()
+        WHERE id = rec.id;
+        
+        executed_count := executed_count + 1;
+    END LOOP;
+    
+    RETURN executed_count;
+END;
+$$;
+
+-- Helper function to calculate next execution date
+CREATE OR REPLACE FUNCTION calculate_next_execution_date(
+    base_date DATE,
+    frequency VARCHAR(20),
+    interval_value INTEGER DEFAULT 1
+) RETURNS DATE
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+BEGIN
+    RETURN CASE 
+        WHEN frequency = 'weekly' THEN base_date + (interval_value * INTERVAL '7 days')
+        WHEN frequency = 'biweekly' THEN base_date + (interval_value * INTERVAL '14 days')
+        WHEN frequency = 'monthly' THEN base_date + (interval_value * INTERVAL '1 month')
+        WHEN frequency = 'quarterly' THEN base_date + (interval_value * INTERVAL '3 months')
+        WHEN frequency = 'yearly' THEN base_date + (interval_value * INTERVAL '1 year')
+        ELSE base_date + INTERVAL '1 month'
+    END;
+END;
+$$;
+
+-- Update existing transactions to link to their recurring templates (migration)
+-- This updates transactions that have recurring_pattern with recurring_id
+UPDATE transactions 
+SET recurring_template_id = CAST(recurring_pattern->>'recurring_id' AS UUID)
+WHERE recurring_pattern IS NOT NULL 
+AND recurring_pattern ? 'recurring_id'
+AND CAST(recurring_pattern->>'recurring_id' AS UUID) IN (
+    SELECT id FROM recurring_transactions
+);
+
+-- =============================================
+-- CRON JOB SETUP (Supabase pg_cron extension)
+-- =============================================
+-- Note: This requires the pg_cron extension to be enabled
+-- You can enable it in Supabase Dashboard > Database > Extensions
+-- Or run: CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- Schedule recurring transactions to run daily at 2 AM
+-- Uncomment the following line after enabling pg_cron extension:
+-- SELECT cron.schedule('execute-recurring-transactions', '0 2 * * *', 'SELECT execute_pending_recurring_transactions();');
 
 -- =============================================
 -- GRANT PERMISSIONS
