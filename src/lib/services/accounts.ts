@@ -2,12 +2,12 @@ import { supabase, TABLES } from '@/lib/supabase/client';
 import { Account, AccountInsert, AccountUpdate } from '@/types';
 
 export class AccountService {
-  // Get all accounts for a user
-  static async getAccounts(userId: string): Promise<Account[]> {
+  // Get all global accounts (shared by all users)
+  static async getAccounts(userId?: string): Promise<Account[]> {
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
       .select('*')
-      .eq('user_id', userId)
+      .is('user_id', null)
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
@@ -15,13 +15,13 @@ export class AccountService {
     return data || [];
   }
 
-  // Get account by ID
-  static async getAccountById(id: string, userId: string): Promise<Account | null> {
+  // Get global account by ID
+  static async getAccountById(id: string, userId?: string): Promise<Account | null> {
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
       .select('*')
       .eq('id', id)
-      .eq('user_id', userId)
+      .is('user_id', null)
       .single();
 
     if (error) {
@@ -32,11 +32,12 @@ export class AccountService {
     return data;
   }
 
-  // Create new account
+  // Create new global account (admin only)
   static async createAccount(account: AccountInsert): Promise<Account> {
+    const accountData = { ...account, user_id: null }; // Ensure it's global
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
-      .insert(account)
+      .insert(accountData)
       .select('*')
       .single();
 
@@ -44,13 +45,13 @@ export class AccountService {
     return data;
   }
 
-  // Update account
-  static async updateAccount(id: string, updates: AccountUpdate, userId: string): Promise<Account> {
+  // Update global account (admin only)
+  static async updateAccount(id: string, updates: AccountUpdate, userId?: string): Promise<Account> {
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
       .update(updates)
       .eq('id', id)
-      .eq('user_id', userId)
+      .is('user_id', null)
       .select('*')
       .single();
 
@@ -58,23 +59,23 @@ export class AccountService {
     return data;
   }
 
-  // Delete (deactivate) account
-  static async deleteAccount(id: string, userId: string): Promise<void> {
+  // Delete (deactivate) global account (admin only)
+  static async deleteAccount(id: string, userId?: string): Promise<void> {
     const { error } = await supabase
       .from(TABLES.ACCOUNTS)
       .update({ is_active: false })
       .eq('id', id)
-      .eq('user_id', userId);
+      .is('user_id', null);
 
     if (error) throw error;
   }
 
-  // Get account balance summary
-  static async getAccountSummary(userId: string) {
+  // Get global accounts balance summary
+  static async getAccountSummary(userId?: string) {
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
       .select('id, name, type, balance, currency, include_in_total')
-      .eq('user_id', userId)
+      .is('user_id', null)
       .eq('is_active', true);
 
     if (error) throw error;
@@ -119,13 +120,13 @@ export class AccountService {
     return data || [];
   }
 
-  // Update account balance manually (admin override)
-  static async updateAccountBalance(id: string, newBalance: number, userId: string): Promise<Account> {
+  // Update global account balance manually (admin only)
+  static async updateAccountBalance(id: string, newBalance: number, userId?: string): Promise<Account> {
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
       .update({ balance: newBalance })
       .eq('id', id)
-      .eq('user_id', userId)
+      .is('user_id', null)
       .select('*')
       .single();
 
@@ -133,12 +134,12 @@ export class AccountService {
     return data;
   }
 
-  // Get account types summary
-  static async getAccountTypesSummary(userId: string) {
+  // Get global account types summary
+  static async getAccountTypesSummary(userId?: string) {
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
       .select('type, balance, include_in_total')
-      .eq('user_id', userId)
+      .is('user_id', null)
       .eq('is_active', true);
 
     if (error) throw error;
@@ -164,8 +165,8 @@ export class AccountService {
     return typesSummary;
   }
 
-  // Archive old accounts
-  static async archiveAccount(id: string, userId: string): Promise<void> {
+  // Archive global accounts (admin only)
+  static async archiveAccount(id: string, userId?: string): Promise<void> {
     const { error } = await supabase
       .from(TABLES.ACCOUNTS)
       .update({ 
@@ -173,13 +174,13 @@ export class AccountService {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .eq('user_id', userId);
+      .is('user_id', null);
 
     if (error) throw error;
   }
 
-  // Restore archived account
-  static async restoreAccount(id: string, userId: string): Promise<Account> {
+  // Restore archived global account (admin only)
+  static async restoreAccount(id: string, userId?: string): Promise<Account> {
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
       .update({ 
@@ -187,7 +188,7 @@ export class AccountService {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .eq('user_id', userId)
+      .is('user_id', null)
       .select('*')
       .single();
 
@@ -195,21 +196,21 @@ export class AccountService {
     return data;
   }
 
-  // Get all accounts including inactive ones (for admin)
-  static async getAllAccounts(userId: string): Promise<Account[]> {
+  // Get all global accounts including inactive ones
+  static async getAllAccounts(userId?: string): Promise<Account[]> {
     const { data, error } = await supabase
       .from(TABLES.ACCOUNTS)
       .select('*')
-      .eq('user_id', userId)
+      .is('user_id', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
     return data || [];
   }
 
-  // Get accounts for dropdown (formatted for UI)
-  static async getAccountsForDropdown(userId: string) {
-    const accounts = await this.getAccounts(userId);
+  // Get global accounts for dropdown (formatted for UI)
+  static async getAccountsForDropdown(userId?: string) {
+    const accounts = await this.getAccounts();
     
     return accounts.map(account => ({
       value: account.id,

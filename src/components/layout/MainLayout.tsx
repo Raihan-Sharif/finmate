@@ -18,6 +18,9 @@ import {
   BarChart3,
   Bell,
   Calculator,
+  ChevronDown,
+  ChevronRight,
+  Clock,
   CreditCard,
   Download,
   HelpCircle,
@@ -49,7 +52,16 @@ interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-const navigation = [
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: any;
+  color: string;
+  bgColor: string;
+  children?: NavigationItem[];
+}
+
+const navigation: NavigationItem[] = [
   {
     name: 'Dashboard',
     href: '/dashboard',
@@ -63,6 +75,22 @@ const navigation = [
     icon: Receipt,
     color: 'text-green-600',
     bgColor: 'bg-green-50',
+    children: [
+      {
+        name: 'All Transactions',
+        href: '/dashboard/transactions',
+        icon: Receipt,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50',
+      },
+      {
+        name: 'Recurring',
+        href: '/dashboard/transactions/recurring',
+        icon: Clock,
+        color: 'text-emerald-600',
+        bgColor: 'bg-emerald-50',
+      },
+    ],
   },
   {
     name: 'Investments',
@@ -139,6 +167,7 @@ const bottomNavigation = [
 export default function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Transactions']); // Default expand Transactions
 
   const pathname = usePathname();
   const { user, signOut, profile } = useAuth();
@@ -176,6 +205,21 @@ export default function MainLayout({ children }: MainLayoutProps) {
       return pathname === '/dashboard';
     }
     return pathname.startsWith(href);
+  };
+
+  const toggleExpanded = (itemName: string) => {
+    setExpandedItems(prev => 
+      prev.includes(itemName) 
+        ? prev.filter(name => name !== itemName)
+        : [...prev, itemName]
+    );
+  };
+
+  const isExpanded = (itemName: string) => expandedItems.includes(itemName);
+
+  const hasActiveChild = (item: NavigationItem) => {
+    if (!item.children) return false;
+    return item.children.some(child => isActiveRoute(child.href));
   };
 
   const handleSignOut = async () => {
@@ -223,32 +267,121 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = isActiveRoute(item.href);
+            const hasChildren = item.children && item.children.length > 0;
+            const expanded = isExpanded(item.name);
+            const childActive = hasActiveChild(item);
+            
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
-                  isActive
-                    ? 'bg-primary/10 text-primary border-r-2 border-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <div
-                  className={cn(
-                    'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
-                    isActive ? item.bgColor : 'bg-transparent'
-                  )}
-                >
-                  <item.icon
+              <div key={item.name} className="space-y-1">
+                {hasChildren ? (
+                  // Parent item with children - clickable to expand/collapse
+                  <button
+                    onClick={() => toggleExpanded(item.name)}
                     className={cn(
-                      'w-5 h-5',
-                      isActive ? item.color : 'text-muted-foreground'
+                      'w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02]',
+                      isActive || childActive
+                        ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-r-2 border-primary shadow-lg'
+                        : 'text-muted-foreground hover:bg-gradient-to-r hover:from-muted/80 hover:to-muted hover:text-foreground hover:shadow-md'
                     )}
-                  />
-                </div>
-                {item.name}
-              </Link>
+                  >
+                    <div className="flex items-center">
+                      <div
+                        className={cn(
+                          'flex items-center justify-center w-8 h-8 rounded-lg mr-3 transform transition-all duration-200',
+                          (isActive || childActive) ? `${item.bgColor} shadow-lg` : 'bg-transparent',
+                          hasChildren && 'hover:scale-110'
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            'w-5 h-5 transition-all duration-200',
+                            (isActive || childActive) ? item.color : 'text-muted-foreground'
+                          )}
+                        />
+                      </div>
+                      {item.name}
+                    </div>
+                    <motion.div
+                      animate={{ rotate: expanded ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </motion.div>
+                  </button>
+                ) : (
+                  // Regular item without children
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02]',
+                      isActive
+                        ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-r-2 border-primary shadow-lg'
+                        : 'text-muted-foreground hover:bg-gradient-to-r hover:from-muted/80 hover:to-muted hover:text-foreground hover:shadow-md'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex items-center justify-center w-8 h-8 rounded-lg mr-3 transform transition-all duration-200 hover:scale-110',
+                        isActive ? `${item.bgColor} shadow-lg` : 'bg-transparent'
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          'w-5 h-5 transition-all duration-200',
+                          isActive ? item.color : 'text-muted-foreground'
+                        )}
+                      />
+                    </div>
+                    {item.name}
+                  </Link>
+                )}
+                
+                {/* Sub-menu items */}
+                {hasChildren && (
+                  <AnimatePresence>
+                    {expanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="ml-4 space-y-1"
+                      >
+                        {item.children!.map((child) => {
+                          const childIsActive = isActiveRoute(child.href);
+                          return (
+                            <Link
+                              key={child.name}
+                              href={child.href}
+                              className={cn(
+                                'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] ml-2',
+                                childIsActive
+                                  ? 'bg-gradient-to-r from-primary/15 to-primary/5 text-primary shadow-md border-l-2 border-primary'
+                                  : 'text-muted-foreground/80 hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 hover:text-foreground hover:shadow-sm'
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  'flex items-center justify-center w-6 h-6 rounded-md mr-3 transform transition-all duration-200 hover:scale-110',
+                                  childIsActive ? `${child.bgColor} shadow-md` : 'bg-transparent'
+                                )}
+                              >
+                                <child.icon
+                                  className={cn(
+                                    'w-4 h-4 transition-all duration-200',
+                                    childIsActive ? child.color : 'text-muted-foreground/70'
+                                  )}
+                                />
+                              </div>
+                              {child.name}
+                            </Link>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </div>
             );
           })}
           
@@ -349,32 +482,122 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = isActiveRoute(item.href);
+            const hasChildren = item.children && item.children.length > 0;
+            const expanded = isExpanded(item.name);
+            const childActive = hasActiveChild(item);
+            
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
-                  isActive
-                    ? 'bg-primary/10 text-primary border-r-2 border-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <div
-                  className={cn(
-                    'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
-                    isActive ? item.bgColor : 'bg-transparent'
-                  )}
-                >
-                  <item.icon
+              <div key={item.name} className="space-y-1">
+                {hasChildren ? (
+                  // Parent item with children - clickable to expand/collapse
+                  <button
+                    onClick={() => toggleExpanded(item.name)}
                     className={cn(
-                      'w-5 h-5',
-                      isActive ? item.color : 'text-muted-foreground'
+                      'w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02]',
+                      isActive || childActive
+                        ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-r-2 border-primary shadow-lg'
+                        : 'text-muted-foreground hover:bg-gradient-to-r hover:from-muted/80 hover:to-muted hover:text-foreground hover:shadow-md'
                     )}
-                  />
-                </div>
-                {item.name}
-              </Link>
+                  >
+                    <div className="flex items-center">
+                      <div
+                        className={cn(
+                          'flex items-center justify-center w-8 h-8 rounded-lg mr-3 transform transition-all duration-200',
+                          (isActive || childActive) ? `${item.bgColor} shadow-lg` : 'bg-transparent',
+                          hasChildren && 'hover:scale-110'
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            'w-5 h-5 transition-all duration-200',
+                            (isActive || childActive) ? item.color : 'text-muted-foreground'
+                          )}
+                        />
+                      </div>
+                      {item.name}
+                    </div>
+                    <motion.div
+                      animate={{ rotate: expanded ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </motion.div>
+                  </button>
+                ) : (
+                  // Regular item without children
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02]',
+                      isActive
+                        ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-r-2 border-primary shadow-lg'
+                        : 'text-muted-foreground hover:bg-gradient-to-r hover:from-muted/80 hover:to-muted hover:text-foreground hover:shadow-md'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex items-center justify-center w-8 h-8 rounded-lg mr-3 transform transition-all duration-200 hover:scale-110',
+                        isActive ? `${item.bgColor} shadow-lg` : 'bg-transparent'
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          'w-5 h-5 transition-all duration-200',
+                          isActive ? item.color : 'text-muted-foreground'
+                        )}
+                      />
+                    </div>
+                    {item.name}
+                  </Link>
+                )}
+                
+                {/* Sub-menu items */}
+                {hasChildren && (
+                  <AnimatePresence>
+                    {expanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="ml-4 space-y-1"
+                      >
+                        {item.children!.map((child) => {
+                          const childIsActive = isActiveRoute(child.href);
+                          return (
+                            <Link
+                              key={child.name}
+                              href={child.href}
+                              className={cn(
+                                'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] ml-2',
+                                childIsActive
+                                  ? 'bg-gradient-to-r from-primary/15 to-primary/5 text-primary shadow-md border-l-2 border-primary'
+                                  : 'text-muted-foreground/80 hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 hover:text-foreground hover:shadow-sm'
+                              )}
+                              onClick={() => setSidebarOpen(false)} // Close mobile menu on click
+                            >
+                              <div
+                                className={cn(
+                                  'flex items-center justify-center w-6 h-6 rounded-md mr-3 transform transition-all duration-200 hover:scale-110',
+                                  childIsActive ? `${child.bgColor} shadow-md` : 'bg-transparent'
+                                )}
+                              >
+                                <child.icon
+                                  className={cn(
+                                    'w-4 h-4 transition-all duration-200',
+                                    childIsActive ? child.color : 'text-muted-foreground/70'
+                                  )}
+                                />
+                              </div>
+                              {child.name}
+                            </Link>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </div>
             );
           })}
           

@@ -32,6 +32,7 @@ import { useForm } from 'react-hook-form';
 import { TransactionService } from '@/lib/services/transactions';
 import { CategoryService } from '@/lib/services/categories';
 import { AccountService } from '@/lib/services/accounts';
+import { RecurringTransactionService } from '@/lib/services/recurring-transactions';
 import { supabase } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -56,6 +57,25 @@ interface TransactionForm {
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+};
+
+const cardHover = {
+  initial: { scale: 1 },
+  hover: { 
+    scale: 1.02, 
+    y: -5,
+    transition: { 
+      type: "spring", 
+      stiffness: 300, 
+      damping: 20 
+    } 
+  }
+};
+
+const buttonScale = {
+  initial: { scale: 1 },
+  whileHover: { scale: 1.05, transition: { duration: 0.2 } },
+  whileTap: { scale: 0.98, transition: { duration: 0.1 } }
 };
 
 export default function NewTransactionPage() {
@@ -107,18 +127,18 @@ export default function NewTransactionPage() {
       try {
         setLoadingData(true);
         
-        // Load categories for the selected type
+        // Load categories for the selected type and global accounts
         const [categoriesData, accountsData] = await Promise.all([
           CategoryService.getCategories(watchedType),
-          AccountService.getAccounts(user.id)
+          AccountService.getAccounts() // No user ID needed for global accounts
         ]);
         
         // If no data found, create default data
         if (categoriesData.length === 0 || accountsData.length === 0) {
           try {
-            // Call the function to create default accounts and global categories
-            await supabase.rpc('create_default_accounts', { user_id_param: user.id });
+            // Call the function to create global categories and accounts
             await supabase.rpc('create_global_categories');
+            await supabase.rpc('create_global_accounts');
             
             // Small delay to ensure data is created
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -126,7 +146,7 @@ export default function NewTransactionPage() {
             // Reload data after creating defaults
             const [newCategoriesData, newAccountsData] = await Promise.all([
               CategoryService.getCategories(watchedType),
-              AccountService.getAccounts(user.id)
+              AccountService.getAccounts()
             ]);
             
             setCategories(newCategoriesData);
@@ -191,7 +211,7 @@ export default function NewTransactionPage() {
         user_id: user.id,
         type: data.type,
         amount: parseFloat(data.amount.toString()),
-        currency: profile?.currency || 'USD',
+        currency: profile?.currency || 'BDT',
         description: data.description,
         notes: data.notes || null,
         category_id: data.category || null,
@@ -201,18 +221,40 @@ export default function NewTransactionPage() {
         tags: data.tags || [],
         location: data.location || null,
         vendor: data.vendor || null,
-        is_recurring: data.recurring,
-        recurring_pattern: data.recurring && data.recurringFrequency 
-          ? { frequency: data.recurringFrequency }
-          : null,
+        is_recurring: false, // We handle recurring separately
+        recurring_pattern: null,
       };
 
       console.log('Saving transaction data:', transactionData);
 
-      // Save to database
+      // Save the main transaction to database
       const savedTransaction = await TransactionService.createTransaction(transactionData);
+
+      // If it's a recurring transaction, create the recurring transaction record
+      if (data.recurring && data.recurringFrequency) {
+        // Create transaction template (remove user-specific data)
+        const { user_id, is_recurring, recurring_pattern, ...template } = transactionData;
+        
+        // Calculate next execution date
+        const nextExecution = RecurringTransactionService.calculateNextExecution(
+          data.date, 
+          data.recurringFrequency
+        );
+
+        await RecurringTransactionService.createRecurringTransaction({
+          user_id: user.id,
+          transaction_template: template,
+          frequency: data.recurringFrequency as any,
+          start_date: data.date,
+          next_execution: nextExecution,
+          is_active: true
+        });
+
+        toast.success('Transaction and recurring schedule created successfully!');
+      } else {
+        toast.success('Transaction created successfully!');
+      }
       
-      toast.success('Transaction created successfully!');
       router.push('/dashboard/transactions');
     } catch (error: any) {
       console.error('Error saving transaction:', error);
@@ -281,38 +323,81 @@ export default function NewTransactionPage() {
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Transaction Type & Amount */}
-            <motion.div variants={fadeInUp} initial="initial" animate="animate">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <DollarSign className="w-5 h-5 mr-2" />
-                    Transaction Details
-                  </CardTitle>
-                </CardHeader>
+            <motion.div 
+              variants={fadeInUp} 
+              initial="initial" 
+              animate="animate"
+              whileHover="hover"
+            >
+              <motion.div
+                variants={cardHover}
+                className="relative"
+              >
+                <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 backdrop-blur-sm">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-lg"></div>
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="flex items-center">
+                      <motion.div 
+                        whileHover={{ rotate: 360, scale: 1.1 }}
+                        transition={{ duration: 0.5 }}
+                        className="mr-2"
+                      >
+                        <DollarSign className="w-5 h-5" />
+                      </motion.div>
+                      Transaction Details
+                    </CardTitle>
+                  </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Type Selection */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Transaction Type</Label>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          type="button"
-                          variant={watchedType === 'expense' ? 'default' : 'outline'}
-                          onClick={() => setValue('type', 'expense')}
-                          className="h-12"
-                        >
-                          <Receipt className="w-4 h-4 mr-2" />
-                          Expense
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={watchedType === 'income' ? 'default' : 'outline'}
-                          onClick={() => setValue('type', 'income')}
-                          className="h-12"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Income
-                        </Button>
+                        <motion.div variants={buttonScale} whileHover="whileHover" whileTap="whileTap">
+                          <Button
+                            type="button"
+                            variant={watchedType === 'expense' ? 'default' : 'outline'}
+                            onClick={() => setValue('type', 'expense')}
+                            className={cn(
+                              "h-12 w-full transition-all duration-300 transform",
+                              watchedType === 'expense' 
+                                ? "bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-500/25 border-0" 
+                                : "hover:shadow-md hover:border-red-200"
+                            )}
+                          >
+                            <motion.div
+                              whileHover={{ rotate: [0, -10, 10, 0] }}
+                              transition={{ duration: 0.5 }}
+                              className="mr-2"
+                            >
+                              <Receipt className="w-4 h-4" />
+                            </motion.div>
+                            Expense
+                          </Button>
+                        </motion.div>
+                        
+                        <motion.div variants={buttonScale} whileHover="whileHover" whileTap="whileTap">
+                          <Button
+                            type="button"
+                            variant={watchedType === 'income' ? 'default' : 'outline'}
+                            onClick={() => setValue('type', 'income')}
+                            className={cn(
+                              "h-12 w-full transition-all duration-300 transform",
+                              watchedType === 'income' 
+                                ? "bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/25 border-0" 
+                                : "hover:shadow-md hover:border-green-200"
+                            )}
+                          >
+                            <motion.div
+                              whileHover={{ rotate: [0, -10, 10, 0] }}
+                              transition={{ duration: 0.5 }}
+                              className="mr-2"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </motion.div>
+                            Income
+                          </Button>
+                        </motion.div>
                       </div>
                     </div>
 
@@ -364,19 +449,36 @@ export default function NewTransactionPage() {
                     <div className="space-y-2">
                       <Label>Category</Label>
                       <Select onValueChange={(value) => setValue('category', value)} disabled={loadingData}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={loadingData ? 'Loading...' : `Select ${watchedType} category`} />
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder={loadingData ? 'Loading categories...' : `Select ${watchedType} category`} />
                         </SelectTrigger>
                         <SelectContent>
                           {availableCategories.length > 0 ? (
                             availableCategories.map((category) => (
                               <SelectItem key={category.id} value={category.id}>
-                                {category.name}
+                                <div className="flex items-center space-x-3">
+                                  <div 
+                                    className="w-4 h-4 rounded-full border-2 border-gray-200" 
+                                    style={{ backgroundColor: category.color }}
+                                  />
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium">{category.name}</span>
+                                    <Badge 
+                                      variant={watchedType === 'income' ? 'default' : 'destructive'} 
+                                      className="text-xs capitalize"
+                                    >
+                                      {category.type || watchedType}
+                                    </Badge>
+                                  </div>
+                                </div>
                               </SelectItem>
                             ))
                           ) : (
                             <SelectItem value="none" disabled>
-                              No categories found
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 bg-gray-300 rounded-full animate-pulse" />
+                                <span>No categories found</span>
+                              </div>
                             </SelectItem>
                           )}
                         </SelectContent>
@@ -389,7 +491,7 @@ export default function NewTransactionPage() {
                         onValueChange={(value) => setValue('subcategory', value)} 
                         disabled={!watchedCategory || subcategories.length === 0}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-12">
                           <SelectValue placeholder={
                             !watchedCategory 
                               ? 'Select category first' 
@@ -402,12 +504,21 @@ export default function NewTransactionPage() {
                           {subcategories.length > 0 ? (
                             subcategories.map((subcategory) => (
                               <SelectItem key={subcategory.id} value={subcategory.id}>
-                                {subcategory.name}
+                                <div className="flex items-center space-x-3">
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-gray-300" 
+                                    style={{ backgroundColor: subcategory.color || '#6B7280' }}
+                                  />
+                                  <span className="font-medium">{subcategory.name}</span>
+                                </div>
                               </SelectItem>
                             ))
                           ) : (
                             <SelectItem value="none" disabled>
-                              No subcategories available
+                              <div className="flex items-center space-x-2 text-muted-foreground">
+                                <div className="w-3 h-3 bg-gray-300 rounded-full" />
+                                <span>No subcategories available</span>
+                              </div>
                             </SelectItem>
                           )}
                         </SelectContent>
@@ -417,14 +528,32 @@ export default function NewTransactionPage() {
                     <div className="space-y-2">
                       <Label>Account</Label>
                       <Select onValueChange={(value) => setValue('account', value)} disabled={loadingData}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={loadingData ? 'Loading...' : 'Select account'} />
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder={loadingData ? 'Loading accounts...' : 'Select account'} />
                         </SelectTrigger>
                         <SelectContent>
                           {accounts.length > 0 ? (
                             accounts.map((account) => (
                               <SelectItem key={account.id} value={account.id}>
-                                {account.name}
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex items-center space-x-2">
+                                    <div 
+                                      className="w-3 h-3 rounded-full" 
+                                      style={{ backgroundColor: account.color }}
+                                    />
+                                    <span className="font-medium">{account.name}</span>
+                                    {account.type && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {account.type.replace('_', ' ')}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {account.balance !== undefined && (
+                                    <span className="text-sm text-muted-foreground ml-2">
+                                      {formatCurrency(account.balance, account.currency)}
+                                    </span>
+                                  )}
+                                </div>
                               </SelectItem>
                             ))
                           ) : (
@@ -454,7 +583,8 @@ export default function NewTransactionPage() {
                     )}
                   </div>
                 </CardContent>
-              </Card>
+                </Card>
+              </motion.div>
             </motion.div>
 
             {/* Additional Details */}
@@ -560,31 +690,83 @@ export default function NewTransactionPage() {
                     Set up this transaction to repeat automatically
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={watchedRecurring}
-                      onCheckedChange={(checked) => setValue('recurring', checked)}
-                    />
-                    <Label>This is a recurring transaction</Label>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-dashed border-muted-foreground/25 bg-muted/10">
+                    <div className="flex items-center space-x-3">
+                      <Switch
+                        checked={watchedRecurring}
+                        onCheckedChange={(checked) => setValue('recurring', checked)}
+                      />
+                      <div>
+                        <Label className="text-base font-medium">Recurring Transaction</Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Automatically create this transaction on a schedule
+                        </p>
+                      </div>
+                    </div>
+                    {watchedRecurring && (
+                      <Badge variant="secondary" className="ml-4">
+                        Active
+                      </Badge>
+                    )}
                   </div>
 
                   {watchedRecurring && (
-                    <div className="space-y-2">
-                      <Label>Frequency</Label>
-                      <Select onValueChange={(value) => setValue('recurringFrequency', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="How often does this repeat?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="quarterly">Quarterly</SelectItem>
-                          <SelectItem value="yearly">Yearly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800"
+                    >
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Repeat Frequency</Label>
+                        <Select onValueChange={(value) => setValue('recurringFrequency', value)}>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="How often should this repeat?" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="w-4 h-4" />
+                                <span>Weekly (Every 7 days)</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="biweekly">
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="w-4 h-4" />
+                                <span>Bi-weekly (Every 14 days)</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="monthly">
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="w-4 h-4" />
+                                <span>Monthly</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="quarterly">
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="w-4 h-4" />
+                                <span>Quarterly (Every 3 months)</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="yearly">
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="w-4 h-4" />
+                                <span>Yearly</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {watchedRecurring && (
+                        <div className="mt-3 p-3 rounded-md bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+                          <p className="text-xs text-blue-700 dark:text-blue-300">
+                            💡 <strong>Tip:</strong> The first transaction will be created immediately, then future transactions will be generated automatically based on your selected frequency.
+                          </p>
+                        </div>
+                      )}
+                    </motion.div>
                   )}
                 </CardContent>
               </Card>

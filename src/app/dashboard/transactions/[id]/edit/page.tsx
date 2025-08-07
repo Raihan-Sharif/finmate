@@ -27,6 +27,7 @@ import { useForm } from 'react-hook-form';
 import { TransactionService } from '@/lib/services/transactions';
 import { CategoryService } from '@/lib/services/categories';
 import { AccountService } from '@/lib/services/accounts';
+import { RecurringTransactionService } from '@/lib/services/recurring-transactions';
 import { supabase } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -64,6 +65,7 @@ export default function EditTransactionPage() {
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [recurringTransactionId, setRecurringTransactionId] = useState<string | null>(null);
 
   const currency = profile?.currency || 'USD';
 
@@ -97,6 +99,28 @@ export default function EditTransactionPage() {
           return;
         }
 
+        // Check if this transaction is part of a recurring pattern
+        let recurringData = null;
+        let isRecurring = transaction.is_recurring || false;
+        let recurringFrequency = transaction.recurring_pattern?.frequency || '';
+
+        // If transaction has recurring_pattern with recurring_id, fetch the recurring transaction
+        if (transaction.recurring_pattern?.recurring_id) {
+          try {
+            recurringData = await RecurringTransactionService.getRecurringTransactionById(
+              transaction.recurring_pattern.recurring_id,
+              user.id
+            );
+            if (recurringData) {
+              isRecurring = true;
+              recurringFrequency = recurringData.frequency;
+              setRecurringTransactionId(recurringData.id);
+            }
+          } catch (error) {
+            console.warn('Could not load recurring transaction data:', error);
+          }
+        }
+
         // Reset form with transaction data
         reset({
           type: transaction.type === 'transfer' ? 'expense' : transaction.type, // Convert transfer to expense for form
@@ -108,8 +132,8 @@ export default function EditTransactionPage() {
           date: transaction.date,
           notes: transaction.notes || '',
           tags: transaction.tags || [],
-          recurring: transaction.is_recurring || false,
-          recurringFrequency: (transaction as any).recurring_pattern?.frequency || '',
+          recurring: isRecurring,
+          recurringFrequency: recurringFrequency,
           location: transaction.location || '',
           vendor: transaction.vendor || '',
         });
@@ -135,7 +159,7 @@ export default function EditTransactionPage() {
         
         const [categoriesData, accountsData] = await Promise.all([
           CategoryService.getCategories(watchedType),
-          AccountService.getAccounts(user.id)
+          AccountService.getAccounts() // Use global accounts
         ]);
         
         setCategories(categoriesData);
@@ -182,7 +206,7 @@ export default function EditTransactionPage() {
       const transactionData = {
         type: data.type,
         amount: parseFloat(data.amount.toString()),
-        currency: profile?.currency || 'USD',
+        currency: profile?.currency || 'BDT',
         description: data.description,
         notes: data.notes || null,
         category_id: data.category || null,
@@ -192,15 +216,54 @@ export default function EditTransactionPage() {
         tags: data.tags || [],
         location: data.location || null,
         vendor: data.vendor || null,
-        is_recurring: data.recurring,
-        recurring_pattern: data.recurring && data.recurringFrequency 
-          ? { frequency: data.recurringFrequency }
-          : null,
+        is_recurring: false, // We handle recurring separately
+        recurring_pattern: null,
       };
 
+      // Update the main transaction
       await TransactionService.updateTransaction(transactionId, transactionData, user.id);
+
+      // Handle recurring transaction updates
+      if (data.recurring && data.recurringFrequency) {
+        // Create transaction template (remove user-specific data)
+        const { user_id, is_recurring, recurring_pattern, ...template } = transactionData;
+
+        if (recurringTransactionId) {
+          // Update existing recurring transaction
+          await RecurringTransactionService.updateRecurringTransaction(
+            recurringTransactionId,
+            {
+              transaction_template: template,
+              frequency: data.recurringFrequency as any,
+            },
+            user.id
+          );
+          toast.success('Transaction and recurring schedule updated successfully!');
+        } else {
+          // Create new recurring transaction
+          const nextExecution = RecurringTransactionService.calculateNextExecution(
+            data.date,
+            data.recurringFrequency
+          );
+
+          await RecurringTransactionService.createRecurringTransaction({
+            user_id: user.id,
+            transaction_template: template,
+            frequency: data.recurringFrequency as any,
+            start_date: data.date,
+            next_execution: nextExecution,
+            is_active: true
+          });
+          toast.success('Transaction updated and recurring schedule created!');
+        }
+      } else if (recurringTransactionId && !data.recurring) {
+        // Remove recurring transaction if recurring was turned off
+        await RecurringTransactionService.deleteRecurringTransaction(recurringTransactionId, user.id);
+        toast.success('Transaction updated and recurring schedule removed!');
+      } else {
+        toast.success('Transaction updated successfully!');
+      }
       
-      toast.success('Transaction updated successfully!');
       router.push('/dashboard/transactions');
     } catch (error: any) {
       console.error('Error updating transaction:', error);
@@ -558,7 +621,10 @@ export default function EditTransactionPage() {
                     {watchedRecurring && (
                       <div className="space-y-2">
                         <Label>Frequency</Label>
-                        <Select onValueChange={(value) => setValue('recurringFrequency', value)}>
+                        <Select 
+                          value={watch('recurringFrequency') || ''} 
+                          onValueChange={(value) => setValue('recurringFrequency', value)}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="How often does this repeat?" />
                           </SelectTrigger>
