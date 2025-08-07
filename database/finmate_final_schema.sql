@@ -207,17 +207,17 @@ CREATE TABLE subcategories (
     CONSTRAINT subcategories_name_category_unique UNIQUE (name, category_id)
 );
 
--- Accounts Table
+-- Accounts Table (Global - user_id nullable for global accounts)
 CREATE TABLE accounts (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    user_id UUID,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     type account_type DEFAULT 'bank' NOT NULL,
     bank_name VARCHAR(100),
     account_number TEXT,
     balance DECIMAL(15,2) DEFAULT 0 NOT NULL,
-    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
     is_active BOOLEAN DEFAULT true NOT NULL,
     include_in_total BOOLEAN DEFAULT true NOT NULL,
     color VARCHAR(7) DEFAULT '#3B82F6' NOT NULL,
@@ -496,6 +496,7 @@ CREATE INDEX idx_subcategories_sort_order ON subcategories(sort_order);
 CREATE INDEX idx_subcategories_category_active ON subcategories(category_id, is_active);
 
 CREATE INDEX idx_accounts_user_id ON accounts(user_id);
+CREATE INDEX idx_accounts_global ON accounts(user_id) WHERE user_id IS NULL;
 CREATE INDEX idx_accounts_type ON accounts(type);
 CREATE INDEX idx_accounts_active ON accounts(is_active);
 
@@ -597,7 +598,13 @@ CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.
 -- Categories and subcategories are global (read-only for users)
 CREATE POLICY "Users can read all categories" ON categories FOR SELECT USING (true);
 CREATE POLICY "Users can read all subcategories" ON subcategories FOR SELECT USING (true);
-CREATE POLICY "Users can manage own accounts" ON accounts FOR ALL USING (auth.uid() = user_id);
+-- Users can read global accounts (user_id IS NULL) OR their own accounts
+CREATE POLICY "Users can read all accounts" ON accounts FOR SELECT USING (
+    user_id IS NULL OR auth.uid() = user_id
+);
+CREATE POLICY "Users can insert own accounts" ON accounts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own accounts" ON accounts FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own accounts" ON accounts FOR DELETE USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own transactions" ON transactions FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own budgets" ON budgets FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own investments" ON investments FOR ALL USING (auth.uid() = user_id);
@@ -630,7 +637,15 @@ $$ LANGUAGE 'plpgsql';
 CREATE OR REPLACE FUNCTION public.create_global_categories()
 RETURNS VOID AS $$
 DECLARE
-    -- Main category variables
+    -- Main category variables - Income
+    salary_id UUID;
+    freelance_id UUID;
+    investment_id UUID;
+    gifts_id UUID;
+    rental_income_id UUID;
+    
+    -- Main category variables - Expense
+    accommodation_id UUID;
     utility_bills_id UUID;
     food_dining_id UUID;
     transportation_id UUID;
@@ -640,10 +655,11 @@ DECLARE
     education_id UUID;
     travel_id UUID;
     personal_care_id UUID;
-    salary_id UUID;
-    freelance_id UUID;
-    investment_id UUID;
-    gifts_id UUID;
+    financial_services_id UUID;
+    household_maintenance_id UUID;
+    family_childcare_id UUID;
+    insurance_id UUID;
+    taxes_fees_id UUID;
 BEGIN
     -- Check if global categories already exist
     IF EXISTS (SELECT 1 FROM public.categories LIMIT 1) THEN
@@ -664,35 +680,56 @@ BEGIN
     ('Investment Returns', 'trending-up', '#8B5CF6', 'income', 3) RETURNING id INTO investment_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Gifts & Others', 'gift', '#F59E0B', 'income', 4) RETURNING id INTO gifts_id;
+    ('Rental Income', 'home', '#84CC16', 'income', 4) RETURNING id INTO rental_income_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Gifts & Others', 'gift', '#F59E0B', 'income', 5) RETURNING id INTO gifts_id;
 
     -- Insert main expense categories
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Utility Bills', 'zap', '#EF4444', 'expense', 1) RETURNING id INTO utility_bills_id;
+    ('Accommodation', 'home', '#EF4444', 'expense', 1) RETURNING id INTO accommodation_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Food & Dining', 'utensils', '#F97316', 'expense', 2) RETURNING id INTO food_dining_id;
+    ('Utility Bills', 'zap', '#F97316', 'expense', 2) RETURNING id INTO utility_bills_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Transportation', 'car', '#3B82F6', 'expense', 3) RETURNING id INTO transportation_id;
+    ('Food & Dining', 'utensils', '#10B981', 'expense', 3) RETURNING id INTO food_dining_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Shopping', 'shopping-bag', '#F59E0B', 'expense', 4) RETURNING id INTO shopping_id;
+    ('Transportation', 'car', '#3B82F6', 'expense', 4) RETURNING id INTO transportation_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Entertainment', 'film', '#8B5CF6', 'expense', 5) RETURNING id INTO entertainment_id;
+    ('Healthcare', 'heart', '#EC4899', 'expense', 5) RETURNING id INTO healthcare_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Healthcare', 'heart', '#EC4899', 'expense', 6) RETURNING id INTO healthcare_id;
+    ('Education', 'book-open', '#06B6D4', 'expense', 6) RETURNING id INTO education_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Education', 'book-open', '#06B6D4', 'expense', 7) RETURNING id INTO education_id;
+    ('Financial Services', 'banknote', '#8B5CF6', 'expense', 7) RETURNING id INTO financial_services_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Travel', 'map-pin', '#84CC16', 'expense', 8) RETURNING id INTO travel_id;
+    ('Insurance', 'shield', '#84CC16', 'expense', 8) RETURNING id INTO insurance_id;
     
     INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
-    ('Personal Care', 'user', '#A855F7', 'expense', 9) RETURNING id INTO personal_care_id;
+    ('Family & Childcare', 'baby', '#F59E0B', 'expense', 9) RETURNING id INTO family_childcare_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Shopping', 'shopping-bag', '#A855F7', 'expense', 10) RETURNING id INTO shopping_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Entertainment', 'film', '#14B8A6', 'expense', 11) RETURNING id INTO entertainment_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Personal Care', 'user', '#F472B6', 'expense', 12) RETURNING id INTO personal_care_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Travel', 'map-pin', '#06D6A0', 'expense', 13) RETURNING id INTO travel_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Household Maintenance', 'wrench', '#8B5A3C', 'expense', 14) RETURNING id INTO household_maintenance_id;
+    
+    INSERT INTO public.categories (name, icon, color, type, sort_order) VALUES
+    ('Taxes & Fees', 'receipt', '#6B7280', 'expense', 15) RETURNING id INTO taxes_fees_id;
 
     -- Insert subcategories for income categories
     INSERT INTO public.subcategories (category_id, name, icon, color, sort_order) VALUES
@@ -700,115 +737,220 @@ BEGIN
     (salary_id, 'Monthly Salary', 'calendar', '#10B981', 1),
     (salary_id, 'Bonus', 'star', '#10B981', 2),
     (salary_id, 'Overtime', 'clock', '#10B981', 3),
+    (salary_id, 'Festival Bonus', 'gift', '#10B981', 4),
+    (salary_id, 'Commission', 'percent', '#10B981', 5),
     
-    -- Freelance subcategories
+    -- Freelance & Business subcategories
     (freelance_id, 'Client Projects', 'briefcase', '#3B82F6', 1),
     (freelance_id, 'Consulting', 'users', '#3B82F6', 2),
     (freelance_id, 'Online Sales', 'shopping-cart', '#3B82F6', 3),
-    (freelance_id, 'Rental Income', 'home', '#3B82F6', 4),
+    (freelance_id, 'Business Profit', 'trending-up', '#3B82F6', 4),
+    (freelance_id, 'Partnership Income', 'handshake', '#3B82F6', 5),
     
-    -- Investment subcategories
-    (investment_id, 'Dividends', 'trending-up', '#8B5CF6', 1),
-    (investment_id, 'Interest', 'percent', '#8B5CF6', 2),
+    -- Investment Returns subcategories (including DPS, Shanchay Potro)
+    (investment_id, 'Bank Interest', 'banknote', '#8B5CF6', 1),
+    (investment_id, 'Stock Dividends', 'trending-up', '#8B5CF6', 2),
     (investment_id, 'Capital Gains', 'bar-chart', '#8B5CF6', 3),
+    (investment_id, 'DPS (Deposit Pension Scheme)', 'piggy-bank', '#8B5CF6', 4),
+    (investment_id, 'Shanchay Potro (Savings Certificate)', 'certificate', '#8B5CF6', 5),
+    (investment_id, 'Mutual Fund Returns', 'pie-chart', '#8B5CF6', 6),
+    (investment_id, 'Bond Interest', 'scroll', '#8B5CF6', 7),
+    (investment_id, 'Fixed Deposit (FDR)', 'lock', '#8B5CF6', 8),
     
-    -- Gifts subcategories
+    -- Rental Income subcategories
+    (rental_income_id, 'House Rent', 'home', '#84CC16', 1),
+    (rental_income_id, 'Shop Rent', 'store', '#84CC16', 2),
+    (rental_income_id, 'Land Rent', 'map', '#84CC16', 3),
+    (rental_income_id, 'Vehicle Rent', 'car', '#84CC16', 4),
+    
+    -- Gifts & Others subcategories
     (gifts_id, 'Cash Gifts', 'gift', '#F59E0B', 1),
     (gifts_id, 'Refunds', 'rotate-ccw', '#F59E0B', 2),
-    (gifts_id, 'Prize Money', 'award', '#F59E0B', 3);
+    (gifts_id, 'Prize Money', 'award', '#F59E0B', 3),
+    (gifts_id, 'Insurance Claims', 'shield-check', '#F59E0B', 4),
+    (gifts_id, 'Tax Refund', 'receipt', '#F59E0B', 5);
 
     -- Insert subcategories for expense categories
     INSERT INTO public.subcategories (category_id, name, icon, color, sort_order) VALUES
+    -- Accommodation subcategories (including maid, service charges, etc.)
+    (accommodation_id, 'House Rent', 'home', '#EF4444', 1),
+    (accommodation_id, 'Flat Rent', 'building', '#EF4444', 2),
+    (accommodation_id, 'Mortgage Payment', 'key', '#EF4444', 3),
+    (accommodation_id, 'Service Charge', 'settings', '#EF4444', 4),
+    (accommodation_id, 'Security Guard', 'shield', '#EF4444', 5),
+    (accommodation_id, 'Maid/Housekeeper', 'user', '#EF4444', 6),
+    (accommodation_id, 'Cleaner', 'brush', '#EF4444', 7),
+    (accommodation_id, 'Property Tax', 'receipt', '#EF4444', 8),
+    (accommodation_id, 'Home Insurance', 'shield-check', '#EF4444', 9),
+    (accommodation_id, 'Generator Bill', 'battery', '#EF4444', 10),
+    
     -- Utility Bills subcategories
-    (utility_bills_id, 'Electricity Bill', 'zap', '#EF4444', 1),
-    (utility_bills_id, 'Gas Bill', 'flame', '#EF4444', 2),
-    (utility_bills_id, 'Water Bill', 'droplets', '#EF4444', 3),
-    (utility_bills_id, 'Internet Bill', 'wifi', '#EF4444', 4),
-    (utility_bills_id, 'Phone Bill', 'phone', '#EF4444', 5),
-    (utility_bills_id, 'Cable/TV Bill', 'tv', '#EF4444', 6),
-    (utility_bills_id, 'Maintenance', 'wrench', '#EF4444', 7),
+    (utility_bills_id, 'Electricity Bill', 'zap', '#F97316', 1),
+    (utility_bills_id, 'Gas Bill', 'flame', '#F97316', 2),
+    (utility_bills_id, 'Water Bill', 'droplets', '#F97316', 3),
+    (utility_bills_id, 'Internet Bill', 'wifi', '#F97316', 4),
+    (utility_bills_id, 'Phone Bill', 'phone', '#F97316', 5),
+    (utility_bills_id, 'Cable/TV Bill', 'tv', '#F97316', 6),
+    (utility_bills_id, 'Dish/Satellite TV', 'radio', '#F97316', 7),
     
     -- Food & Dining subcategories
-    (food_dining_id, 'Groceries', 'shopping-cart', '#F97316', 1),
-    (food_dining_id, 'Restaurant', 'utensils', '#F97316', 2),
-    (food_dining_id, 'Fast Food', 'truck', '#F97316', 3),
-    (food_dining_id, 'Coffee & Drinks', 'coffee', '#F97316', 4),
-    (food_dining_id, 'Food Delivery', 'bike', '#F97316', 5),
-    (food_dining_id, 'Snacks', 'cookie', '#F97316', 6),
+    (food_dining_id, 'Groceries', 'shopping-cart', '#10B981', 1),
+    (food_dining_id, 'Restaurant', 'utensils', '#10B981', 2),
+    (food_dining_id, 'Fast Food', 'truck', '#10B981', 3),
+    (food_dining_id, 'Coffee & Tea', 'coffee', '#10B981', 4),
+    (food_dining_id, 'Food Delivery', 'bike', '#10B981', 5),
+    (food_dining_id, 'Snacks & Beverages', 'cookie', '#10B981', 6),
+    (food_dining_id, 'Meat & Fish', 'fish', '#10B981', 7),
+    (food_dining_id, 'Fruits & Vegetables', 'apple', '#10B981', 8),
     
     -- Transportation subcategories
-    (transportation_id, 'Fuel/Petrol', 'fuel', '#3B82F6', 1),
+    (transportation_id, 'Fuel/Petrol/CNG', 'fuel', '#3B82F6', 1),
     (transportation_id, 'Public Transport', 'bus', '#3B82F6', 2),
-    (transportation_id, 'Taxi/Uber', 'car', '#3B82F6', 3),
-    (transportation_id, 'Vehicle Maintenance', 'settings', '#3B82F6', 4),
-    (transportation_id, 'Parking', 'square', '#3B82F6', 5),
-    (transportation_id, 'Tolls', 'road', '#3B82F6', 6),
+    (transportation_id, 'Taxi/Uber/Pathao', 'car', '#3B82F6', 3),
+    (transportation_id, 'Rickshaw/Auto', 'bike', '#3B82F6', 4),
+    (transportation_id, 'Vehicle Maintenance', 'settings', '#3B82F6', 5),
+    (transportation_id, 'Parking', 'square', '#3B82F6', 6),
+    (transportation_id, 'Tolls', 'road', '#3B82F6', 7),
+    (transportation_id, 'Vehicle Insurance', 'shield-check', '#3B82F6', 8),
+    (transportation_id, 'Registration/License', 'id-card', '#3B82F6', 9),
     
     -- Shopping subcategories
-    (shopping_id, 'Clothing', 'shirt', '#F59E0B', 1),
-    (shopping_id, 'Electronics', 'smartphone', '#F59E0B', 2),
-    (shopping_id, 'Home & Garden', 'home', '#F59E0B', 3),
-    (shopping_id, 'Books & Stationery', 'book', '#F59E0B', 4),
-    (shopping_id, 'Gifts', 'gift', '#F59E0B', 5),
-    (shopping_id, 'Online Shopping', 'shopping-bag', '#F59E0B', 6),
+    (shopping_id, 'Clothing & Fashion', 'shirt', '#A855F7', 1),
+    (shopping_id, 'Electronics & Gadgets', 'smartphone', '#A855F7', 2),
+    (shopping_id, 'Home & Garden', 'home', '#A855F7', 3),
+    (shopping_id, 'Books & Stationery', 'book', '#A855F7', 4),
+    (shopping_id, 'Gifts & Occasions', 'gift', '#A855F7', 5),
+    (shopping_id, 'Online Shopping', 'shopping-bag', '#A855F7', 6),
+    (shopping_id, 'Furniture', 'sofa', '#A855F7', 7),
+    (shopping_id, 'Sports Equipment', 'dumbbell', '#A855F7', 8),
     
     -- Entertainment subcategories
-    (entertainment_id, 'Movies & Cinema', 'film', '#8B5CF6', 1),
-    (entertainment_id, 'Games', 'gamepad-2', '#8B5CF6', 2),
-    (entertainment_id, 'Sports Events', 'trophy', '#8B5CF6', 3),
-    (entertainment_id, 'Music & Streaming', 'music', '#8B5CF6', 4),
-    (entertainment_id, 'Concerts & Events', 'calendar', '#8B5CF6', 5),
-    (entertainment_id, 'Hobbies', 'palette', '#8B5CF6', 6),
+    (entertainment_id, 'Movies & Cinema', 'film', '#14B8A6', 1),
+    (entertainment_id, 'Games & Gaming', 'gamepad-2', '#14B8A6', 2),
+    (entertainment_id, 'Sports Events', 'trophy', '#14B8A6', 3),
+    (entertainment_id, 'Music & Streaming', 'music', '#14B8A6', 4),
+    (entertainment_id, 'Concerts & Events', 'calendar', '#14B8A6', 5),
+    (entertainment_id, 'Hobbies & Crafts', 'palette', '#14B8A6', 6),
+    (entertainment_id, 'Books & Magazines', 'book-open', '#14B8A6', 7),
+    (entertainment_id, 'Subscription Services', 'monitor', '#14B8A6', 8),
     
     -- Healthcare subcategories
     (healthcare_id, 'Doctor Visits', 'stethoscope', '#EC4899', 1),
     (healthcare_id, 'Pharmacy/Medicine', 'pill', '#EC4899', 2),
-    (healthcare_id, 'Health Insurance', 'shield', '#EC4899', 3),
+    (healthcare_id, 'Hospital Bills', 'building-2', '#EC4899', 3),
     (healthcare_id, 'Dental Care', 'smile', '#EC4899', 4),
     (healthcare_id, 'Eye Care', 'eye', '#EC4899', 5),
-    (healthcare_id, 'Lab Tests', 'test-tube', '#EC4899', 6),
+    (healthcare_id, 'Lab Tests & X-ray', 'test-tube', '#EC4899', 6),
+    (healthcare_id, 'Vaccination', 'syringe', '#EC4899', 7),
+    (healthcare_id, 'Mental Health', 'brain', '#EC4899', 8),
+    (healthcare_id, 'Physiotherapy', 'activity', '#EC4899', 9),
     
     -- Education subcategories
     (education_id, 'Tuition Fees', 'graduation-cap', '#06B6D4', 1),
     (education_id, 'Books & Materials', 'book-open', '#06B6D4', 2),
-    (education_id, 'Online Courses', 'monitor', '#06B6D4', 3),
-    (education_id, 'Training & Workshops', 'users', '#06B6D4', 4),
-    (education_id, 'Certification', 'award', '#06B6D4', 5),
+    (education_id, 'School/College Fees', 'school', '#06B6D4', 3),
+    (education_id, 'Private Tutoring', 'user-check', '#06B6D4', 4),
+    (education_id, 'Online Courses', 'monitor', '#06B6D4', 5),
+    (education_id, 'Training & Workshops', 'users', '#06B6D4', 6),
+    (education_id, 'Certification & Exams', 'award', '#06B6D4', 7),
+    (education_id, 'Educational Supplies', 'pen-tool', '#06B6D4', 8),
     
-    -- Travel subcategories
-    (travel_id, 'Flights', 'plane', '#84CC16', 1),
-    (travel_id, 'Hotels & Accommodation', 'bed', '#84CC16', 2),
-    (travel_id, 'Car Rental', 'car', '#84CC16', 3),
-    (travel_id, 'Tours & Activities', 'camera', '#84CC16', 4),
-    (travel_id, 'Travel Insurance', 'shield-check', '#84CC16', 5),
-    (travel_id, 'Visa & Documents', 'file-text', '#84CC16', 6),
+    -- Financial Services subcategories (including investment payments like DPS)
+    (financial_services_id, 'Bank Charges & Fees', 'banknote', '#8B5CF6', 1),
+    (financial_services_id, 'ATM Fees', 'credit-card', '#8B5CF6', 2),
+    (financial_services_id, 'Investment in DPS', 'piggy-bank', '#8B5CF6', 3),
+    (financial_services_id, 'Investment in Shanchay Potro', 'certificate', '#8B5CF6', 4),
+    (financial_services_id, 'Stock Market Investment', 'trending-up', '#8B5CF6', 5),
+    (financial_services_id, 'Mutual Fund Investment', 'pie-chart', '#8B5CF6', 6),
+    (financial_services_id, 'Fixed Deposit (FDR)', 'lock', '#8B5CF6', 7),
+    (financial_services_id, 'Loan Payments', 'credit-card', '#8B5CF6', 8),
+    (financial_services_id, 'Credit Card Payments', 'card', '#8B5CF6', 9),
+    (financial_services_id, 'Money Transfer Fees', 'send', '#8B5CF6', 10),
+    (financial_services_id, 'Financial Advisor', 'user-check', '#8B5CF6', 11),
+    
+    -- Insurance subcategories
+    (insurance_id, 'Health Insurance', 'heart', '#84CC16', 1),
+    (insurance_id, 'Life Insurance', 'shield', '#84CC16', 2),
+    (insurance_id, 'Vehicle Insurance', 'car', '#84CC16', 3),
+    (insurance_id, 'Home Insurance', 'home', '#84CC16', 4),
+    (insurance_id, 'Travel Insurance', 'plane', '#84CC16', 5),
+    (insurance_id, 'Business Insurance', 'briefcase', '#84CC16', 6),
+    
+    -- Family & Childcare subcategories
+    (family_childcare_id, 'Childcare/Daycare', 'baby', '#F59E0B', 1),
+    (family_childcare_id, 'School Fees', 'graduation-cap', '#F59E0B', 2),
+    (family_childcare_id, 'Baby Products', 'baby', '#F59E0B', 3),
+    (family_childcare_id, 'Toys & Games', 'toy-brick', '#F59E0B', 4),
+    (family_childcare_id, 'Family Events', 'calendar', '#F59E0B', 5),
+    (family_childcare_id, 'Elderly Care', 'user', '#F59E0B', 6),
+    (family_childcare_id, 'Medical Expenses', 'heart', '#F59E0B', 7),
     
     -- Personal Care subcategories
-    (personal_care_id, 'Salon & Barber', 'scissors', '#A855F7', 1),
-    (personal_care_id, 'Spa & Wellness', 'heart', '#A855F7', 2),
-    (personal_care_id, 'Gym & Fitness', 'dumbbell', '#A855F7', 3),
-    (personal_care_id, 'Cosmetics', 'sparkles', '#A855F7', 4),
-    (personal_care_id, 'Personal Items', 'user', '#A855F7', 5);
+    (personal_care_id, 'Salon & Barber', 'scissors', '#F472B6', 1),
+    (personal_care_id, 'Spa & Wellness', 'heart', '#F472B6', 2),
+    (personal_care_id, 'Gym & Fitness', 'dumbbell', '#F472B6', 3),
+    (personal_care_id, 'Cosmetics & Beauty', 'sparkles', '#F472B6', 4),
+    (personal_care_id, 'Personal Hygiene', 'droplets', '#F472B6', 5),
+    (personal_care_id, 'Clothing Care', 'shirt', '#F472B6', 6),
+    
+    -- Travel subcategories
+    (travel_id, 'Flights & Airlines', 'plane', '#06D6A0', 1),
+    (travel_id, 'Hotels & Accommodation', 'bed', '#06D6A0', 2),
+    (travel_id, 'Transportation', 'car', '#06D6A0', 3),
+    (travel_id, 'Food & Dining', 'utensils', '#06D6A0', 4),
+    (travel_id, 'Tours & Activities', 'camera', '#06D6A0', 5),
+    (travel_id, 'Travel Insurance', 'shield-check', '#06D6A0', 6),
+    (travel_id, 'Visa & Documents', 'file-text', '#06D6A0', 7),
+    (travel_id, 'Shopping & Souvenirs', 'shopping-bag', '#06D6A0', 8),
+    
+    -- Household Maintenance subcategories
+    (household_maintenance_id, 'Home Repairs', 'wrench', '#8B5A3C', 1),
+    (household_maintenance_id, 'Plumbing', 'droplets', '#8B5A3C', 2),
+    (household_maintenance_id, 'Electrical Work', 'zap', '#8B5A3C', 3),
+    (household_maintenance_id, 'Painting & Decoration', 'brush', '#8B5A3C', 4),
+    (household_maintenance_id, 'Cleaning Supplies', 'spray-can', '#8B5A3C', 5),
+    (household_maintenance_id, 'Gardening', 'flower', '#8B5A3C', 6),
+    (household_maintenance_id, 'Pest Control', 'bug', '#8B5A3C', 7),
+    (household_maintenance_id, 'Appliance Repair', 'settings', '#8B5A3C', 8),
+    
+    -- Taxes & Fees subcategories
+    (taxes_fees_id, 'Income Tax', 'receipt', '#6B7280', 1),
+    (taxes_fees_id, 'VAT/Sales Tax', 'percent', '#6B7280', 2),
+    (taxes_fees_id, 'Property Tax', 'home', '#6B7280', 3),
+    (taxes_fees_id, 'Vehicle Tax', 'car', '#6B7280', 4),
+    (taxes_fees_id, 'Government Fees', 'landmark', '#6B7280', 5),
+    (taxes_fees_id, 'Legal Fees', 'scale', '#6B7280', 6),
+    (taxes_fees_id, 'Professional Fees', 'user-check', '#6B7280', 7),
+    (taxes_fees_id, 'Penalties & Fines', 'alert-triangle', '#6B7280', 8);
 
     RAISE NOTICE 'Global categories and subcategories created successfully!';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to create default accounts for new users (still user-specific)
-CREATE OR REPLACE FUNCTION public.create_default_accounts(user_id_param UUID)
+-- Function to create global default accounts (shared by all users)
+CREATE OR REPLACE FUNCTION public.create_global_accounts()
 RETURNS VOID AS $$
 BEGIN
-    -- Create default accounts with BDT as primary currency
-    INSERT INTO public.accounts (user_id, name, type, balance, currency, description, icon, color) VALUES
-    (user_id_param, 'Primary Account', 'bank', 0.00, 'BDT', 'Main salary receiving account', 'landmark', '#3B82F6'),
-    (user_id_param, 'Savings Account', 'savings', 0.00, 'BDT', 'Personal savings account', 'piggy-bank', '#10B981'),
-    (user_id_param, 'bKash', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#E11D48'),
-    (user_id_param, 'Nagad', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#F97316'),
-    (user_id_param, 'Rocket', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#8B5CF6'),
-    (user_id_param, 'Credit Card', 'credit_card', 0.00, 'BDT', 'Credit card account', 'credit-card', '#EF4444'),
-    (user_id_param, 'Cash Wallet', 'other', 0.00, 'BDT', 'Physical cash', 'wallet', '#6B7280');
-    
-    RAISE NOTICE 'Created default accounts for user: %', user_id_param;
+    -- Check if global accounts already exist
+    IF EXISTS (SELECT 1 FROM public.accounts WHERE user_id IS NULL LIMIT 1) THEN
+        RAISE NOTICE 'Global accounts already exist, skipping creation';
+        RETURN;
+    END IF;
+
+    RAISE NOTICE 'Creating global default accounts...';
+
+    -- Create global default accounts (user_id = NULL)
+    INSERT INTO public.accounts (user_id, name, type, balance, currency, description, icon, color, include_in_total) VALUES
+    (NULL, 'Cash', 'other', 0.00, 'BDT', 'Physical cash wallet', 'wallet', '#6B7280', true),
+    (NULL, 'Bank Account', 'bank', 0.00, 'BDT', 'General bank account', 'landmark', '#3B82F6', true),
+    (NULL, 'Savings Account', 'savings', 0.00, 'BDT', 'Savings account', 'piggy-bank', '#10B981', true),
+    (NULL, 'Credit Card', 'credit_card', 0.00, 'BDT', 'Credit card account', 'credit-card', '#EF4444', true),
+    (NULL, 'bKash', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#E11D48', true),
+    (NULL, 'Nagad', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#F97316', true),
+    (NULL, 'Rocket', 'wallet', 0.00, 'BDT', 'Mobile financial service', 'smartphone', '#8B5CF6', true),
+    (NULL, 'Investment Account', 'investment', 0.00, 'BDT', 'Investment portfolio', 'trending-up', '#8B5CF6', false);
+
+    RAISE NOTICE 'Global accounts created successfully!';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -848,16 +990,15 @@ BEGIN
         user_full_name, 
         NEW.raw_user_meta_data->>'avatar_url',
         default_role_id,
-        'USD',
-        'UTC', 
+        'BDT',
+        'Asia/Dhaka', 
         'system',
         true,
         true,
         COALESCE(NEW.email_confirmed_at IS NOT NULL, false)
     );
 
-    -- Create default accounts (categories are global, no need to create per user)
-    PERFORM public.create_default_accounts(NEW.id);
+    -- NOTE: No longer creating user-specific accounts - they will use global accounts
     
     RAISE NOTICE 'Successfully created profile for user: % with email: %', NEW.id, NEW.email;
     
@@ -1042,7 +1183,7 @@ BEGIN
         AND date >= DATE_TRUNC('month', CURRENT_DATE)
     )
     SELECT 
-        COALESCE((SELECT SUM(balance) FROM accounts WHERE user_id = p_user_id AND currency = p_currency AND include_in_total = true), 0),
+        COALESCE((SELECT SUM(balance) FROM accounts WHERE (user_id = p_user_id OR user_id IS NULL) AND currency = p_currency AND include_in_total = true), 0),
         md.income,
         md.expenses,
         md.income - md.expenses,
@@ -1316,8 +1457,9 @@ BEGIN
     ON CONFLICT (role_id, permission_id) DO NOTHING;
 END $$;
 
--- Create global categories (one-time setup)
+-- Create global categories and accounts (one-time setup)
 SELECT public.create_global_categories();
+SELECT public.create_global_accounts();
 
 -- =============================================
 -- GRANT PERMISSIONS
