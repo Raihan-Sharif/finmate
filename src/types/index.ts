@@ -144,7 +144,7 @@ export type LendingType = 'lent' | 'borrowed'
 export type BudgetPeriod = 'monthly' | 'weekly' | 'yearly'
 export type NotificationType = 'info' | 'warning' | 'error' | 'success'
 export type Theme = 'light' | 'dark' | 'system'
-export type UserRole = 'super_admin' | 'admin' | 'manager' | 'user'
+export type UserRole = 'super_admin' | 'admin' | 'paid_user' | 'user'
 export type PermissionAction = 'create' | 'read' | 'update' | 'delete' | 'manage'
 export type AuditAction = 'create' | 'update' | 'delete' | 'login' | 'logout' | 'role_change' | 'permission_change'
 

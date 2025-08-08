@@ -31,12 +31,14 @@ export function RecentTransactions({
   currency,
 }: RecentTransactionsProps) {
   // Get icon for transaction type
-  const getTransactionIcon = (type: "income" | "expense") => {
-    return type === "income" ? (
-      <ArrowDownLeft className="w-4 h-4 text-green-600" />
-    ) : (
-      <ArrowUpRight className="w-4 h-4 text-red-600" />
-    );
+  const getTransactionIcon = (type: "income" | "expense" | "transfer") => {
+    if (type === "income") {
+      return <ArrowDownLeft className="w-4 h-4 text-green-600" />;
+    } else if (type === "expense") {
+      return <ArrowUpRight className="w-4 h-4 text-red-600" />;
+    } else {
+      return <ArrowUpRight className="w-4 h-4 text-blue-600" />;
+    }
   };
 
   // Get category icon fallback

@@ -99,12 +99,11 @@ export default function NewBudgetPage() {
         description: formData.description.trim() || null,
         amount: parseFloat(formData.amount),
         period: formData.period,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
+        start_date: formData.start_date || '',
+        end_date: formData.end_date || '',
         category_ids: formData.category_ids.length > 0 ? formData.category_ids : null,
         alert_percentage: formData.alert_threshold,
         alert_enabled: formData.alert_enabled,
-        currency: profile.currency || 'BDT',
       };
 
       createBudget(budgetData, {
@@ -131,7 +130,7 @@ export default function NewBudgetPage() {
     setFormData(prev => ({
       ...prev,
       period,
-      end_date: getEndDateForPeriod(prev.start_date, period)
+      end_date: getEndDateForPeriod(prev.start_date || '', period)
     }));
   };
 
@@ -154,7 +153,7 @@ export default function NewBudgetPage() {
         end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
     }
 
-    return end.toISOString().split('T')[0];
+    return end?.toISOString().split('T')[0] || '';
   };
 
   const currency = profile?.currency || 'BDT';

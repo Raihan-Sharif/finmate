@@ -223,7 +223,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
         end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
     }
 
-    return end.toISOString().split('T')[0];
+    return end?.toISOString().split('T')[0] || '';
   };
 
   if (loading) {

@@ -151,6 +151,7 @@ export default function TransactionsPage() {
     totalExpenses: filteredTransactions
       .filter((t) => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0),
+    netAmount: 0
   };
   filteredStats.netAmount = filteredStats.totalIncome - filteredStats.totalExpenses;
 

@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from(TABLES.PROFILES)
         .select(`
           *,
-          role:roles(*)
+          role:roles!role_id(*)
         `)
         .eq('user_id', userId)
         .single();
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profileWithRole: ProfileWithRole = {
         ...data,
         role: data.role,
-        permissions: permissions?.map(p => ({
+        permissions: permissions?.map((p: any) => ({
           id: '',
           name: p.permission_name,
           display_name: p.permission_name,

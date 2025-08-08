@@ -202,7 +202,7 @@ export interface Database {
       categories: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           name: string
           description: string | null
           icon: string
@@ -217,7 +217,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           name: string
           description?: string | null
           icon?: string
@@ -232,7 +232,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           name?: string
           description?: string | null
           icon?: string
@@ -530,7 +530,7 @@ export interface Database {
       }
     }
     Enums: {
-      user_role: 'super_admin' | 'admin' | 'manager' | 'user'
+      user_role: 'super_admin' | 'admin' | 'paid_user' | 'user'
       transaction_type: 'income' | 'expense' | 'transfer'
       account_type: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
       permission_action: 'create' | 'read' | 'update' | 'delete' | 'manage'

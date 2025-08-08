@@ -42,7 +42,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
     clearAll,
   } = useNotifications();
 
-  const getNotificationIcon = (type: Notification["type"]) => {
+  const getNotificationIcon = (type: "info" | "warning" | "error" | "success") => {
     switch (type) {
       case "warning":
         return <AlertTriangle className="w-4 h-4" />;
@@ -56,7 +56,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
     }
   };
 
-  const getNotificationColor = (type: Notification["type"]) => {
+  const getNotificationColor = (type: "info" | "warning" | "error" | "success") => {
     switch (type) {
       case "error":
         return "text-red-600 bg-red-50 dark:bg-red-900/20";
@@ -70,7 +70,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
     }
   };
 
-  const handleNotificationClick = async (notification: Notification) => {
+  const handleNotificationClick = async (notification: any) => {
     if (!notification.is_read) {
       await markAsRead(notification.id);
     }
@@ -167,7 +167,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               <AnimatePresence initial={false}>
-                {notifications.map((notification, index) => (
+                {notifications.map((notification: any, index) => (
                   <motion.div
                     key={notification.id}
                     initial={{ opacity: 0, y: -10 }}

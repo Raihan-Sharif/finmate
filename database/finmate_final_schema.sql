@@ -88,7 +88,7 @@ CREATE TYPE lending_status AS ENUM ('pending', 'partial', 'paid', 'overdue');
 CREATE TYPE budget_period AS ENUM ('weekly', 'monthly', 'quarterly', 'yearly');
 CREATE TYPE notification_type AS ENUM ('info', 'warning', 'error', 'success');
 CREATE TYPE theme_type AS ENUM ('light', 'dark', 'system');
-CREATE TYPE user_role AS ENUM ('super_admin', 'admin', 'user');
+CREATE TYPE user_role AS ENUM ('super_admin', 'admin', 'paid_user', 'user');
 CREATE TYPE permission_action AS ENUM ('create', 'read', 'update', 'delete', 'manage');
 CREATE TYPE audit_action AS ENUM ('create', 'update', 'delete', 'login', 'logout', 'role_change');
 
@@ -175,15 +175,18 @@ CREATE TABLE user_permissions (
 -- FINANCIAL CORE TABLES
 -- =============================================
 
--- Categories Table (Global - no user_id)
+-- Categories Table (Global - nullable user_id for admin-created categories)
 CREATE TABLE categories (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Nullable - NULL for global categories
     name VARCHAR(100) NOT NULL,
     description TEXT,
     icon VARCHAR(50) DEFAULT 'folder' NOT NULL,
     color VARCHAR(7) DEFAULT '#6B7280' NOT NULL,
     type transaction_type NOT NULL,
+    is_default BOOLEAN DEFAULT false NOT NULL,
     is_active BOOLEAN DEFAULT true NOT NULL,
+    parent_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     sort_order INTEGER DEFAULT 0 NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,

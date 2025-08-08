@@ -6,7 +6,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -15,6 +14,7 @@ import { useAuth, usePermissions } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  ArrowRight,
   BarChart3,
   Bell,
   Calculator,
@@ -84,11 +84,55 @@ const navigation: NavigationItem[] = [
         bgColor: 'bg-green-50',
       },
       {
-        name: 'Recurring',
+        name: 'Add Transaction',
+        href: '/dashboard/transactions/add',
+        icon: Plus,
+        color: 'text-emerald-600',
+        bgColor: 'bg-emerald-50',
+      },
+      {
+        name: 'Recurring Transactions',
         href: '/dashboard/transactions/recurring',
         icon: Clock,
         color: 'text-emerald-600',
         bgColor: 'bg-emerald-50',
+      },
+      {
+        name: 'Import/Export',
+        href: '/dashboard/transactions/import-export',
+        icon: Upload,
+        color: 'text-teal-600',
+        bgColor: 'bg-teal-50',
+      },
+    ],
+  },
+  {
+    name: 'Budget',
+    href: '/dashboard/budget',
+    icon: Target,
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
+    children: [
+      {
+        name: 'Current Budget',
+        href: '/dashboard/budget',
+        icon: Target,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50',
+      },
+      {
+        name: 'Create Budget',
+        href: '/dashboard/budget/create',
+        icon: Plus,
+        color: 'text-amber-600',
+        bgColor: 'bg-amber-50',
+      },
+      {
+        name: 'Recurring Budget',
+        href: '/dashboard/budget/recurring',
+        icon: Clock,
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-50',
       },
     ],
   },
@@ -100,13 +144,6 @@ const navigation: NavigationItem[] = [
     bgColor: 'bg-purple-50',
   },
   {
-    name: 'Budget',
-    href: '/dashboard/budget',
-    icon: Target,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
-  },
-  {
     name: 'EMI Calculator',
     href: '/emi',
     icon: Calculator,
@@ -114,50 +151,113 @@ const navigation: NavigationItem[] = [
     bgColor: 'bg-red-50',
   },
   {
-    name: 'Lending',
-    href: '/dashboard/lending',
-    icon: Users,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
-  },
-  {
-    name: 'Reports',
-    href: '/dashboard/reports',
+    name: 'Analytics',
+    href: '/dashboard/analytics',
     icon: BarChart3,
     color: 'text-cyan-600',
     bgColor: 'bg-cyan-50',
-  },
-  {
-    name: 'Cards & Banks',
-    href: '/dashboard/accounts',
-    icon: CreditCard,
-    color: 'text-pink-600',
-    bgColor: 'bg-pink-50',
-  },
-];
-
-const bottomNavigation = [
-  {
-    name: 'Import Data',
-    href: '/dashboard/import',
-    icon: Upload,
-    color: 'text-gray-600',
-  },
-  {
-    name: 'Export Data',
-    href: '/dashboard/export',
-    icon: Download,
-    color: 'text-gray-600',
   },
   {
     name: 'Settings',
     href: '/dashboard/settings',
     icon: Settings,
     color: 'text-gray-600',
+    bgColor: 'bg-gray-50',
+    children: [
+      {
+        name: 'General',
+        href: '/dashboard/settings',
+        icon: Settings,
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-50',
+      },
+      {
+        name: 'Accounts',
+        href: '/dashboard/settings/accounts',
+        icon: CreditCard,
+        color: 'text-pink-600',
+        bgColor: 'bg-pink-50',
+      },
+      {
+        name: 'Categories',
+        href: '/dashboard/settings/categories',
+        icon: Receipt,
+        color: 'text-indigo-600',
+        bgColor: 'bg-indigo-50',
+      },
+      {
+        name: 'Export Data',
+        href: '/dashboard/settings/export',
+        icon: Download,
+        color: 'text-slate-600',
+        bgColor: 'bg-slate-50',
+      },
+    ],
+  },
+];
+
+const adminNavigation: NavigationItem[] = [
+  {
+    name: 'Admin Panel',
+    href: '/admin',
+    icon: Shield,
+    color: 'text-red-600',
+    bgColor: 'bg-red-50',
+    children: [
+      {
+        name: 'Dashboard',
+        href: '/admin',
+        icon: LayoutDashboard,
+        color: 'text-red-600',
+        bgColor: 'bg-red-50',
+      },
+      {
+        name: 'User Management',
+        href: '/admin/users',
+        icon: Users,
+        color: 'text-rose-600',
+        bgColor: 'bg-rose-50',
+      },
+      {
+        name: 'System Settings',
+        href: '/admin/settings',
+        icon: Settings,
+        color: 'text-pink-600',
+        bgColor: 'bg-pink-50',
+      },
+      {
+        name: 'Audit Logs',
+        href: '/admin/audit-logs',
+        icon: Receipt,
+        color: 'text-red-700',
+        bgColor: 'bg-red-100',
+      },
+    ],
+  },
+];
+
+const quickActions = [
+  {
+    name: 'Add Transaction',
+    href: '/dashboard/transactions/add',
+    icon: Plus,
+    color: 'text-green-600',
   },
   {
-    name: 'Help',
-    href: '/dashboard/help',
+    name: 'Create Budget',
+    href: '/dashboard/budget/create',
+    icon: Target,
+    color: 'text-blue-600',
+  },
+  {
+    name: 'View Analytics',
+    href: '/dashboard/analytics',
+    icon: BarChart3,
+    color: 'text-purple-600',
+  },
+  {
+    name: 'Help Center',
+    href: '/help',
     icon: HelpCircle,
     color: 'text-gray-600',
   },
@@ -232,6 +332,36 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const getRoleDisplayName = (roleName: string) => {
+    switch (roleName) {
+      case 'super_admin': return 'Super Admin';
+      case 'admin': return 'Admin';
+      case 'paid_user': return 'Paid User';
+      case 'user': return 'User';
+      default: return 'User';
+    }
+  };
+
+  const getRoleEmoji = (roleName: string) => {
+    switch (roleName) {
+      case 'super_admin': return '👑';
+      case 'admin': return '🛡️';
+      case 'paid_user': return '💎';
+      case 'user': return '👤';
+      default: return '👤';
+    }
+  };
+
+  const getRoleRingColor = (roleName: string) => {
+    switch (roleName) {
+      case 'super_admin': return 'ring-yellow-500 shadow-yellow-500/20';
+      case 'admin': return 'ring-red-500 shadow-red-500/20';
+      case 'paid_user': return 'ring-purple-500 shadow-purple-500/20';
+      case 'user': return 'ring-blue-500 shadow-blue-500/20';
+      default: return 'ring-blue-500 shadow-blue-500/20';
+    }
   };
 
   return (
@@ -388,58 +518,96 @@ export default function MainLayout({ children }: MainLayoutProps) {
           {/* Admin section */}
           {isAdmin() && (
             <>
-              <div className="px-3 py-2">
-                <div className="w-full border-t border-border"></div>
+              <div className="my-4 border-t border-border pt-4">
+                <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Administration
+                </p>
               </div>
-              <Link
-                href="/admin"
-                className={cn(
-                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
-                  isActiveRoute('/admin')
-                    ? 'bg-primary/10 text-primary border-r-2 border-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <div
-                  className={cn(
-                    'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
-                    isActiveRoute('/admin') ? 'bg-red-50' : 'bg-transparent'
-                  )}
-                >
-                  <Shield
+              {adminNavigation.map((item) => (
+                <div key={item.name} className="space-y-1">
+                  <button
+                    onClick={() => toggleExpanded(item.name)}
                     className={cn(
-                      'w-5 h-5',
-                      isActiveRoute('/admin') ? 'text-red-600' : 'text-muted-foreground'
+                      'w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                      isExpanded(item.name) 
+                        ? 'bg-destructive/10 text-destructive border border-destructive/20' 
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                     )}
-                  />
+                  >
+                    <div className="flex items-center space-x-3">
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.name}</span>
+                    </div>
+                    <motion.div
+                      animate={{ rotate: isExpanded(item.name) ? 90 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </motion.div>
+                  </button>
+
+                  <AnimatePresence>
+                    {isExpanded(item.name) && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="ml-4 space-y-1"
+                      >
+                        {item.children?.map((child) => (
+                          <Link
+                            key={child.name}
+                            href={child.href}
+                            className={cn(
+                              'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] ml-2',
+                              isActiveRoute(child.href) 
+                                ? 'bg-gradient-to-r from-primary/15 to-primary/5 text-primary shadow-md border-l-2 border-primary'
+                                : 'text-muted-foreground/80 hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 hover:text-foreground hover:shadow-sm'
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                'flex items-center justify-center w-6 h-6 rounded-md mr-3 transform transition-all duration-200 hover:scale-110',
+                                isActiveRoute(child.href) ? `${child.bgColor} shadow-md` : 'bg-transparent'
+                              )}
+                            >
+                              <child.icon
+                                className={cn(
+                                  'w-4 h-4 transition-all duration-200',
+                                  isActiveRoute(child.href) ? child.color : 'text-muted-foreground/70'
+                                )}
+                              />
+                            </div>
+                            {child.name}
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                Admin Panel
-              </Link>
+              ))}
             </>
           )}
         </nav>
 
-        {/* Bottom navigation */}
-        <div className="px-4 py-4 border-t border-border">
-          <div className="space-y-1">
-            {bottomNavigation.map((item) => {
-              const isActive = isActiveRoute(item.href);
-              return (
+        <div className="p-4 border-t border-border">
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Quick Actions
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {quickActions.map((action) => (
                 <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
+                  key={action.name}
+                  href={action.href}
+                  className="flex flex-col items-center p-2 text-xs rounded-lg hover:bg-accent transition-colors"
                 >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  {item.name}
+                  <action.icon className={cn("w-4 h-4 mb-1", action.color)} />
+                  <span className="text-muted-foreground">{action.name}</span>
                 </Link>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -478,7 +646,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           </Button>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - same as desktop but with mobile close on click */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = isActiveRoute(item.href);
@@ -489,7 +657,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
             return (
               <div key={item.name} className="space-y-1">
                 {hasChildren ? (
-                  // Parent item with children - clickable to expand/collapse
                   <button
                     onClick={() => toggleExpanded(item.name)}
                     className={cn(
@@ -524,7 +691,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     </motion.div>
                   </button>
                 ) : (
-                  // Regular item without children
                   <Link
                     href={item.href}
                     className={cn(
@@ -533,6 +699,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                         ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-r-2 border-primary shadow-lg'
                         : 'text-muted-foreground hover:bg-gradient-to-r hover:from-muted/80 hover:to-muted hover:text-foreground hover:shadow-md'
                     )}
+                    onClick={() => setSidebarOpen(false)}
                   >
                     <div
                       className={cn(
@@ -551,7 +718,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   </Link>
                 )}
                 
-                {/* Sub-menu items */}
                 {hasChildren && (
                   <AnimatePresence>
                     {expanded && (
@@ -574,7 +740,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                   ? 'bg-gradient-to-r from-primary/15 to-primary/5 text-primary shadow-md border-l-2 border-primary'
                                   : 'text-muted-foreground/80 hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 hover:text-foreground hover:shadow-sm'
                               )}
-                              onClick={() => setSidebarOpen(false)} // Close mobile menu on click
+                              onClick={() => setSidebarOpen(false)}
                             >
                               <div
                                 className={cn(
@@ -600,64 +766,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </div>
             );
           })}
-          
-          {/* Admin section */}
-          {isAdmin() && (
-            <>
-              <div className="px-3 py-2">
-                <div className="w-full border-t border-border"></div>
-              </div>
-              <Link
-                href="/admin"
-                className={cn(
-                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
-                  isActiveRoute('/admin')
-                    ? 'bg-primary/10 text-primary border-r-2 border-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <div
-                  className={cn(
-                    'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
-                    isActiveRoute('/admin') ? 'bg-red-50' : 'bg-transparent'
-                  )}
-                >
-                  <Shield
-                    className={cn(
-                      'w-5 h-5',
-                      isActiveRoute('/admin') ? 'text-red-600' : 'text-muted-foreground'
-                    )}
-                  />
-                </div>
-                Admin Panel
-              </Link>
-            </>
-          )}
         </nav>
-
-        {/* Mobile Bottom navigation */}
-        <div className="px-4 py-4 border-t border-border">
-          <div className="space-y-1">
-            {bottomNavigation.map((item) => {
-              const isActive = isActiveRoute(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
       </motion.div>
 
       {/* Main content */}
@@ -696,7 +805,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             {/* Right side */}
             <div className="flex items-center space-x-4">
               {/* Quick actions */}
-              <Link href="/dashboard/transactions/new">
+              <Link href="/dashboard/transactions/add">
                 <Button size="sm" className="hidden sm:flex">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Transaction
@@ -718,43 +827,86 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 )}
               </Button>
 
-              {/* User menu */}
+              {/* Enhanced User menu with role display */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={profile?.avatar_url || user?.user_metadata?.avatar_url}
-                        alt={profile?.full_name || user?.user_metadata?.name || user?.email || ''}
-                      />
-                      <AvatarFallback>
-                        {(profile?.full_name || user?.user_metadata?.name || user?.email || '')
-                          .charAt(0)
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                  <Button variant="ghost" className="relative h-10 w-auto px-2 space-x-2">
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }} 
+                      whileTap={{ scale: 0.95 }}
+                      className="relative"
+                    >
+                      <Avatar className={cn("h-8 w-8 ring-2 shadow-lg transition-all duration-300", getRoleRingColor(profile?.role?.name || ''))}>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                          className="absolute inset-0 rounded-full ring-1 ring-offset-1 ring-current opacity-30"
+                        />
+                        <AvatarImage 
+                          src={user?.user_metadata?.avatar_url} 
+                          alt={profile?.full_name || user?.email || ''} 
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                          {profile?.full_name 
+                            ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
+                            : user?.email?.[0]?.toUpperCase() || 'U'
+                          }
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <motion.div
+                        className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-background border-2 border-background flex items-center justify-center text-xs"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        {getRoleEmoji(profile?.role?.name || '')}
+                      </motion.div>
+                    </motion.div>
+                    
+                    <div className="hidden sm:block text-left">
+                      <div className="text-sm font-medium leading-none">
+                        {profile?.full_name || user?.email?.split('@')[0] || 'User'}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {getRoleDisplayName(profile?.role?.name || '')}
+                      </div>
+                    </div>
+                    
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
+                
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <div className="flex items-center justify-between">
+                  <div className="p-2">
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={profile?.avatar_url || user?.user_metadata?.avatar_url}
+                          alt={profile?.full_name || user?.user_metadata?.name || user?.email || ''}
+                        />
+                        <AvatarFallback>
+                          {(profile?.full_name || user?.user_metadata?.name || user?.email || '')
+                            .charAt(0)
+                            .toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">
                           {profile?.full_name || user?.user_metadata?.name || 'User'}
                         </p>
-                        {isAdmin() && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
-                            <Shield className="w-3 h-3 mr-1" />
-                            Admin
-                          </span>
-                        )}
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email}
+                        </p>
                       </div>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email}
-                      </p>
                     </div>
-                  </DropdownMenuLabel>
+                  </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/settings">
                       <User className="mr-2 h-4 w-4" />
@@ -797,4 +949,3 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
 // Also export as named export for compatibility
 export { MainLayout };
-

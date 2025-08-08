@@ -18,7 +18,9 @@
       "Bash(pkill:*)",
       "Bash(timeout 10s npm run dev)",
       "Bash(grep:*)",
-      "Bash(timeout 8s npm run dev)"
+      "Bash(timeout 8s npm run dev)",
+      "Bash(find:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }

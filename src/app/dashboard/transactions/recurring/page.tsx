@@ -342,14 +342,14 @@ export default function RecurringTransactionsPage() {
                             const { data: recentTransactions, error } = await supabase
                               .from('transactions')
                               .select('id, created_at, date')
-                              .eq('user_id', user.id)
+                              .eq('user_id', user?.id || '')
                               .eq('recurring_template_id', recurring.id)
                               .order('created_at', { ascending: false })
                               .limit(1);
 
                             if (!error && recentTransactions && recentTransactions.length > 0) {
                               // Redirect to edit the most recent transaction from this recurring pattern
-                              router.push(`/dashboard/transactions/${recentTransactions[0].id}/edit`);
+                              router.push(`/dashboard/transactions/${recentTransactions[0]?.id}/edit`);
                             } else {
                               // If no transactions found, show an informative message with option to create first transaction
                               if (confirm('No transactions found for this recurring template. Would you like to create the first transaction now?')) {
@@ -359,7 +359,7 @@ export default function RecurringTransactionsPage() {
                                   const { data: newTransaction, error: createError } = await supabase
                                     .from('transactions')
                                     .insert({
-                                      user_id: user.id,
+                                      user_id: user?.id || '',
                                       type: template.type,
                                       amount: template.amount,
                                       currency: template.currency || 'BDT',

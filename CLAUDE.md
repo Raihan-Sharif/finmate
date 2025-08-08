@@ -264,14 +264,38 @@ npm run clean           # Clean build artifacts
 8. Make professionally and follow the world's best practice and scalabel adn clean code in simple way.
 
 ### Database Changes
-1. Update schema in `database/` folder and try to maintain only one schema file. so easy to manage and never be confused.
-2. Run SQL migrations in Supabase dashboard
-3. Regenerate types with Supabase CLI
-4. Update service functions
-5. Test with proper data isolation
-6. Update UI components to reflect changes
-7. Update documentation
-8. If existing table/function/anything change in database, update the code accordingly. And don't exclude current features.
+**IMPORTANT**: Always maintain database schema consistency and create migration files for production.
+
+#### Schema Management Process:
+1. **Update Main Schema**: Always update `database/finmate_final_schema.sql` - this is the single source of truth
+2. **Create Migration Files**: For any changes, create separate migration files in `database/` folder with naming pattern:
+   - `migration_[feature_name]_[date].sql` (e.g., `migration_budget_templates_and_paid_users.sql`)
+3. **Migration File Requirements**:
+   - Must be safe to run multiple times (use IF NOT EXISTS, DO $$ blocks)
+   - Include detailed comments and descriptions
+   - Handle existing data carefully
+   - Include rollback instructions if needed
+4. **Deployment Process**:
+   - For new deployments: Use main schema file
+   - For existing databases: Use migration files only
+5. **After Schema Changes**:
+   - Regenerate TypeScript types with Supabase CLI
+   - Update service functions to match schema changes
+   - Update UI components to reflect new data structure
+   - Test with proper data isolation and RLS policies
+   - Update documentation and comments
+
+#### Schema Change Checklist:
+- [ ] Updated `database/finmate_final_schema.sql`
+- [ ] Created migration file for existing databases
+- [ ] Tested migration script for safety
+- [ ] Updated TypeScript types
+- [ ] Updated service functions
+- [ ] Updated UI components
+- [ ] Tested RLS policies work correctly
+- [ ] Updated documentation
+
+**Never exclude current features when making database changes.**
 
 ### Component Development
 1. Follow ShadCN UI patterns

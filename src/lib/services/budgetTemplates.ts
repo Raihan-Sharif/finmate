@@ -1,5 +1,5 @@
 import { supabase, TABLES } from '@/lib/supabase/client';
-import { BudgetPeriod } from '@/types';
+import { BudgetPeriod, UserRole } from '@/types';
 
 export interface BudgetTemplate {
   id?: string;
@@ -10,6 +10,12 @@ export interface BudgetTemplate {
   currency?: string;
   period: BudgetPeriod;
   category_ids?: string[];
+  categories?: Array<{
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+  }>;
   alert_percentage: number;
   alert_enabled?: boolean;
   is_active?: boolean;
@@ -20,7 +26,7 @@ export interface BudgetTemplate {
 }
 
 export class BudgetTemplateService {
-  // Get all templates (user's own + global)
+  // Get all templates (user's own + global) with category details
   static async getTemplates(userId: string): Promise<BudgetTemplate[]> {
     const { data, error } = await supabase
       .from(TABLES.BUDGET_TEMPLATES)
@@ -32,7 +38,33 @@ export class BudgetTemplateService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+
+    // For each template, get the category details if category_ids exist
+    const templatesWithCategories = await Promise.all(
+      (data || []).map(async (template) => {
+        if (template.category_ids && template.category_ids.length > 0) {
+          // Get global categories (user_id IS NULL for global categories)
+          // All categories are now global and available to everyone
+          const { data: categories } = await supabase
+            .from(TABLES.CATEGORIES)
+            .select('id, name, icon, color')
+            .in('id', template.category_ids)
+            .is('user_id', null) // Global categories have NULL user_id
+            .eq('is_active', true);
+
+          return {
+            ...template,
+            categories: categories || []
+          };
+        }
+        return {
+          ...template,
+          categories: []
+        };
+      })
+    );
+
+    return templatesWithCategories;
   }
 
   // Search templates by name or description
@@ -47,7 +79,32 @@ export class BudgetTemplateService {
       .order('usage_count', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+
+    // Add category details to search results
+    const templatesWithCategories = await Promise.all(
+      (data || []).map(async (template) => {
+        if (template.category_ids && template.category_ids.length > 0) {
+          // Get global categories (all categories are global with NULL user_id)
+          const { data: categories } = await supabase
+            .from(TABLES.CATEGORIES)
+            .select('id, name, icon, color')
+            .in('id', template.category_ids)
+            .is('user_id', null) // Global categories have NULL user_id
+            .eq('is_active', true);
+
+          return {
+            ...template,
+            categories: categories || []
+          };
+        }
+        return {
+          ...template,
+          categories: []
+        };
+      })
+    );
+
+    return templatesWithCategories;
   }
 
   // Get template by ID
@@ -64,11 +121,78 @@ export class BudgetTemplateService {
       throw error;
     }
 
-    return data;
+    // Add category details if they exist
+    if (data && data.category_ids && data.category_ids.length > 0) {
+      // Get global categories (all categories are global with NULL user_id)
+      const { data: categories } = await supabase
+        .from(TABLES.CATEGORIES)
+        .select('id, name, icon, color')
+        .in('id', data.category_ids)
+        .is('user_id', null) // Global categories have NULL user_id
+        .eq('is_active', true);
+
+      return {
+        ...data,
+        categories: categories || []
+      };
+    }
+
+    return {
+      ...data,
+      categories: []
+    };
   }
 
-  // Create new template
-  static async createTemplate(template: Omit<BudgetTemplate, 'id' | 'created_at' | 'updated_at' | 'usage_count'>): Promise<BudgetTemplate> {
+  // Check if user can create custom templates
+  static async canCreateCustomTemplate(userId: string): Promise<boolean> {
+    const { data: profile, error } = await supabase
+      .from(TABLES.PROFILES)
+      .select(`
+        role:roles(name)
+      `)
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !profile) return false;
+    
+    const roleName = profile.role?.name;
+    return roleName === 'paid_user' || roleName === 'admin' || roleName === 'super_admin';
+  }
+
+  // Check if user can create global templates
+  static async canCreateGlobalTemplate(userId: string): Promise<boolean> {
+    const { data: profile, error } = await supabase
+      .from(TABLES.PROFILES)
+      .select(`
+        role:roles(name)
+      `)
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !profile) return false;
+    
+    const roleName = profile.role?.name;
+    return roleName === 'admin' || roleName === 'super_admin';
+  }
+
+  // Create new template with role-based validation
+  static async createTemplate(
+    template: Omit<BudgetTemplate, 'id' | 'created_at' | 'updated_at' | 'usage_count'>,
+    userRole?: UserRole
+  ): Promise<BudgetTemplate> {
+    // Validate permissions
+    if (template.is_global) {
+      const canCreateGlobal = await this.canCreateGlobalTemplate(template.user_id!);
+      if (!canCreateGlobal) {
+        throw new Error('You do not have permission to create global templates');
+      }
+    } else {
+      const canCreateCustom = await this.canCreateCustomTemplate(template.user_id!);
+      if (!canCreateCustom) {
+        throw new Error('Only paid users can create custom templates. Please upgrade your account.');
+      }
+    }
+
     const { data, error } = await supabase
       .from(TABLES.BUDGET_TEMPLATES)
       .insert({
@@ -82,33 +206,83 @@ export class BudgetTemplateService {
     return data;
   }
 
-  // Update template
+  // Update template (supports both user and global templates for admins)
   static async updateTemplate(
     id: string, 
     updates: Partial<BudgetTemplate>, 
     userId: string
   ): Promise<BudgetTemplate> {
-    const { data, error } = await supabase
+    // First check if it's a global template and user has permissions
+    const { data: template } = await supabase
+      .from(TABLES.BUDGET_TEMPLATES)
+      .select('is_global, user_id')
+      .eq('id', id)
+      .single();
+
+    let query = supabase
       .from(TABLES.BUDGET_TEMPLATES)
       .update(updates)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select('*')
-      .single();
+      .eq('id', id);
+
+    if (template?.is_global) {
+      // For global templates, check admin permissions
+      const canManageGlobal = await this.canCreateGlobalTemplate(userId);
+      if (!canManageGlobal) {
+        throw new Error('You do not have permission to edit global templates');
+      }
+    } else {
+      // For user templates, check ownership
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query.select('*').single();
 
     if (error) throw error;
     return data;
   }
 
-  // Delete template
+  // Delete template (supports both user and global templates for admins)
   static async deleteTemplate(id: string, userId: string): Promise<void> {
-    const { error } = await supabase
+    // First check if it's a global template and user has permissions
+    const { data: template } = await supabase
+      .from(TABLES.BUDGET_TEMPLATES)
+      .select('is_global, user_id')
+      .eq('id', id)
+      .single();
+
+    let query = supabase
       .from(TABLES.BUDGET_TEMPLATES)
       .update({ is_active: false })
-      .eq('id', id)
-      .eq('user_id', userId);
+      .eq('id', id);
+
+    if (template?.is_global) {
+      // For global templates, check admin permissions
+      const canManageGlobal = await this.canCreateGlobalTemplate(userId);
+      if (!canManageGlobal) {
+        throw new Error('You do not have permission to delete global templates');
+      }
+    } else {
+      // For user templates, check ownership
+      query = query.eq('user_id', userId);
+    }
+
+    const { error } = await query;
 
     if (error) throw error;
+  }
+
+  // Get only global templates (for admin management)
+  static async getGlobalTemplates(): Promise<BudgetTemplate[]> {
+    const { data, error } = await supabase
+      .from(TABLES.BUDGET_TEMPLATES)
+      .select('*')
+      .eq('is_global', true)
+      .eq('is_active', true)
+      .order('usage_count', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   }
 
   // Save budget as template (or update existing if name matches)

@@ -1,15 +1,29 @@
 'use client';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
   BarChart3,
   Calculator,
+  ChevronDown,
   DollarSign,
+  HelpCircle,
+  LogOut,
+  Moon,
+  Settings,
   Shield,
   Smartphone,
   Star,
+  Sun,
   Target,
   TrendingUp,
   Users,
@@ -20,6 +34,7 @@ import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
 
 // Animation variants
 const fadeInUp = {
@@ -36,13 +51,55 @@ const staggerContainer = {
 };
 
 export default function LandingPage() {
-  const { theme } = useTheme();
-  const { user, profile, loading } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const { user, profile, loading, signOut } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const getRoleDisplayName = (roleName: string) => {
+    switch (roleName) {
+      case 'super_admin': return 'Super Admin';
+      case 'admin': return 'Admin';
+      case 'paid_user': return 'Paid User';
+      case 'user': return 'User';
+      default: return 'User';
+    }
+  };
+
+  const getRoleEmoji = (roleName: string) => {
+    switch (roleName) {
+      case 'super_admin': return '👑';
+      case 'admin': return '🛡️';
+      case 'paid_user': return '💎';
+      case 'user': return '👤';
+      default: return '👤';
+    }
+  };
+
+  const getRoleRingColor = (roleName: string) => {
+    switch (roleName) {
+      case 'super_admin': return 'ring-yellow-500 shadow-yellow-500/20';
+      case 'admin': return 'ring-red-500 shadow-red-500/20';
+      case 'paid_user': return 'ring-purple-500 shadow-purple-500/20';
+      case 'user': return 'ring-blue-500 shadow-blue-500/20';
+      default: return 'ring-blue-500 shadow-blue-500/20';
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
   const features = [
     {
@@ -160,18 +217,260 @@ export default function LandingPage() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <span className="text-sm text-muted-foreground">
-                    Welcome, {profile?.full_name || user.email}
-                  </span>
+                  {/* Theme Toggle */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleTheme}
+                    className="relative overflow-hidden"
+                  >
+                    <motion.div
+                      initial={false}
+                      animate={{ 
+                        scale: theme === 'dark' ? 0 : 1,
+                        rotate: theme === 'dark' ? 180 : 0
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <Sun className="h-4 w-4" />
+                    </motion.div>
+                    <motion.div
+                      initial={false}
+                      animate={{ 
+                        scale: theme === 'dark' ? 1 : 0,
+                        rotate: theme === 'dark' ? 0 : -180
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className="flex items-center justify-center"
+                    >
+                      <Moon className="h-4 w-4" />
+                    </motion.div>
+                  </Button>
+
+                  {/* Dashboard Link */}
                   <Link href="/dashboard">
-                    <Button size="sm">
-                      Go to Dashboard
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button size="sm" className="hidden sm:flex">
+                        Dashboard
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </motion.div>
                   </Link>
+
+                  {/* User Profile Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-10 w-auto px-2 space-x-2">
+                        <motion.div 
+                          whileHover={{ scale: 1.05 }} 
+                          whileTap={{ scale: 0.95 }}
+                          className="relative"
+                        >
+                          <Avatar className={cn("h-8 w-8 ring-2 shadow-lg transition-all duration-300", getRoleRingColor(profile?.role?.name || ''))}>
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                              className="absolute inset-0 rounded-full ring-1 ring-offset-1 ring-current opacity-30"
+                            />
+                            <AvatarImage 
+                              src={user?.user_metadata?.avatar_url} 
+                              alt={profile?.full_name || user?.email || ''} 
+                            />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                              {profile?.full_name 
+                                ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
+                                : user?.email?.[0]?.toUpperCase() || 'U'
+                              }
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          <motion.div
+                            className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-background border-2 border-background flex items-center justify-center text-xs"
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          >
+                            {getRoleEmoji(profile?.role?.name || '')}
+                          </motion.div>
+                        </motion.div>
+                        
+                        <div className="hidden sm:block text-left">
+                          <div className="text-sm font-medium leading-none">
+                            {profile?.full_name || user?.email?.split('@')[0] || 'User'}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {getRoleDisplayName(profile?.role?.name || '')}
+                          </div>
+                        </div>
+                        
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    
+                    <DropdownMenuContent 
+                      align="end" 
+                      className="w-72 p-0 bg-gradient-to-br from-white via-gray-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 border-0 shadow-2xl"
+                    >
+                      <div className="relative overflow-hidden">
+                        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+                        <div className="relative">
+                          <div className="p-4 pb-2">
+                            <div className="flex items-center space-x-3">
+                              <motion.div
+                                whileHover={{ scale: 1.1, rotate: 5 }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                                className="relative"
+                              >
+                                <Avatar className={cn("h-12 w-12 ring-4 shadow-2xl", getRoleRingColor(profile?.role?.name || ''))}>
+                                  <AvatarImage 
+                                    src={user?.user_metadata?.avatar_url} 
+                                    alt={profile?.full_name || user?.email || ''} 
+                                  />
+                                  <AvatarFallback className="bg-gradient-to-br from-blue-500 via-purple-600 to-pink-600 text-white font-bold">
+                                    {profile?.full_name 
+                                      ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
+                                      : user?.email?.[0]?.toUpperCase() || 'U'
+                                    }
+                                  </AvatarFallback>
+                                </Avatar>
+                                
+                                <motion.div
+                                  className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg"
+                                  animate={{ 
+                                    scale: [1, 1.1, 1],
+                                    rotate: [0, 10, -10, 0]
+                                  }}
+                                  transition={{ duration: 3, repeat: Infinity }}
+                                >
+                                  <span className="text-sm">
+                                    {getRoleEmoji(profile?.role?.name || '')}
+                                  </span>
+                                </motion.div>
+                              </motion.div>
+                              
+                              <div className="flex-1">
+                                <motion.h3 
+                                  className="font-bold text-base bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.1 }}
+                                >
+                                  {profile?.full_name || user?.email?.split('@')[0] || 'User'}
+                                </motion.h3>
+                                
+                                <motion.p 
+                                  className="text-xs text-gray-600 dark:text-gray-400 mb-2"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.2 }}
+                                >
+                                  {user?.email}
+                                </motion.p>
+                                
+                                <motion.div
+                                  className={cn(
+                                    "inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold shadow-md",
+                                    profile?.role?.name === 'super_admin' && "bg-gradient-to-r from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 text-yellow-800 dark:text-yellow-200 border border-yellow-300",
+                                    profile?.role?.name === 'admin' && "bg-gradient-to-r from-red-100 to-red-200 dark:from-red-900 dark:to-red-800 text-red-800 dark:text-red-200 border border-red-300",
+                                    profile?.role?.name === 'paid_user' && "bg-gradient-to-r from-purple-100 to-purple-200 dark:from-purple-900 dark:to-purple-800 text-purple-800 dark:text-purple-200 border border-purple-300",
+                                    (!profile?.role?.name || profile?.role?.name === 'user') && "bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 text-blue-800 dark:text-blue-200 border border-blue-300"
+                                  )}
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: 0.3 }}
+                                >
+                                  <motion.span
+                                    animate={{ rotate: [0, 360] }}
+                                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                    className="mr-1"
+                                  >
+                                    {getRoleEmoji(profile?.role?.name || '')}
+                                  </motion.span>
+                                  {getRoleDisplayName(profile?.role?.name || '')}
+                                </motion.div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-gray-200/50 dark:border-gray-700/50">
+                            <DropdownMenuItem asChild className="cursor-pointer p-0 m-0">
+                              <Link 
+                                href="/dashboard" 
+                                className="flex items-center w-full px-4 py-3 text-sm hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all duration-200"
+                              >
+                                <ArrowRight className="mr-3 h-4 w-4 text-gray-500" />
+                                <span>Go to Dashboard</span>
+                              </Link>
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem asChild className="cursor-pointer p-0 m-0">
+                              <Link 
+                                href="/dashboard/settings" 
+                                className="flex items-center w-full px-4 py-3 text-sm hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all duration-200"
+                              >
+                                <Settings className="mr-3 h-4 w-4 text-gray-500" />
+                                <span>Settings</span>
+                              </Link>
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem asChild className="cursor-pointer p-0 m-0">
+                              <Link 
+                                href="/help" 
+                                className="flex items-center w-full px-4 py-3 text-sm hover:bg-white/70 dark:hover:bg-gray-800/70 transition-all duration-200"
+                              >
+                                <HelpCircle className="mr-3 h-4 w-4 text-gray-500" />
+                                <span>Help & Support</span>
+                              </Link>
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-700/50" />
+                            
+                            <DropdownMenuItem 
+                              onClick={handleSignOut}
+                              className="cursor-pointer flex items-center w-full px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-all duration-200"
+                            >
+                              <LogOut className="mr-3 h-4 w-4" />
+                              <span>Sign out</span>
+                            </DropdownMenuItem>
+                          </div>
+                        </div>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </>
               ) : (
                 <>
+                  {/* Theme Toggle for non-authenticated users */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleTheme}
+                    className="relative overflow-hidden"
+                  >
+                    <motion.div
+                      initial={false}
+                      animate={{ 
+                        scale: theme === 'dark' ? 0 : 1,
+                        rotate: theme === 'dark' ? 180 : 0
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <Sun className="h-4 w-4" />
+                    </motion.div>
+                    <motion.div
+                      initial={false}
+                      animate={{ 
+                        scale: theme === 'dark' ? 1 : 0,
+                        rotate: theme === 'dark' ? 0 : -180
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className="flex items-center justify-center"
+                    >
+                      <Moon className="h-4 w-4" />
+                    </motion.div>
+                  </Button>
+
                   <Link href="/auth/signin">
                     <Button variant="ghost" size="sm">
                       Sign In
