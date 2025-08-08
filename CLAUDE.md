@@ -282,6 +282,9 @@ npm run clean           # Clean build artifacts
 6. Add proper form validation
 7. Aesthetic design and ui/ux experience
 8. Fully responsive and modern design.
+9. Modular based component design and try to reuse.
+10. Make aesthetic and beautiful design with best professional ui/ux.
+11. Use smoth animation, gradient color, shadow, 3d effect where best fit.
 
 ## Troubleshooting
 

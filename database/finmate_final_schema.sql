@@ -272,13 +272,16 @@ CREATE TABLE budgets (
     category_ids UUID[],
     is_active BOOLEAN DEFAULT true NOT NULL,
     alert_threshold DECIMAL(5,2) DEFAULT 80.00,
+    alert_percentage DECIMAL(5,2) DEFAULT 80.00,
+    alert_enabled BOOLEAN DEFAULT true NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     
     CONSTRAINT budgets_amount_positive CHECK (amount > 0),
     CONSTRAINT budgets_spent_non_negative CHECK (spent >= 0),
     CONSTRAINT budgets_dates_valid CHECK (end_date > start_date),
-    CONSTRAINT budgets_alert_threshold_valid CHECK (alert_threshold > 0 AND alert_threshold <= 100)
+    CONSTRAINT budgets_alert_threshold_valid CHECK (alert_threshold > 0 AND alert_threshold <= 100),
+    CONSTRAINT budgets_alert_percentage_valid CHECK (alert_percentage > 0 AND alert_percentage <= 100)
 );
 
 -- =============================================
