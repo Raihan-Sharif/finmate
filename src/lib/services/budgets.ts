@@ -34,12 +34,17 @@ export interface BudgetPerformance {
 }
 
 export interface BudgetTemplate {
+  id?: string;
   name: string;
   description?: string;
   amount: number;
   period: BudgetPeriod;
   category_ids?: string[];
   alert_percentage: number;
+  alert_enabled?: boolean;
+  currency?: string;
+  is_global?: boolean;
+  usage_count?: number;
 }
 
 export class BudgetService {
@@ -368,6 +373,8 @@ export class BudgetService {
         end_date: budgetEndDate.toISOString().split('T')[0],
         category_ids: template.category_ids,
         alert_percentage: template.alert_percentage,
+        alert_enabled: template.alert_enabled ?? true,
+        currency: template.currency || 'BDT',
       };
 
       const budget = await this.createBudget(budgetData);

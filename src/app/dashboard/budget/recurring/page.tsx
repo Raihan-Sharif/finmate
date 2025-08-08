@@ -13,7 +13,13 @@ import {
   Copy,
   Info,
   Zap,
-  Clock
+  Clock,
+  Search,
+  Save,
+  Edit,
+  Trash2,
+  Star,
+  History
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,12 +33,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 
 import { useAuth } from '@/hooks/useAuth';
 import { useBudgets } from '@/hooks/useBudgets';
 import { useCategories } from '@/hooks/useCategories';
+import { useBudgetTemplates } from '@/hooks/useBudgetTemplates';
 import { BudgetPeriod } from '@/types';
-import { BudgetTemplate } from '@/lib/services/budgets';
+import { BudgetTemplate } from '@/lib/services/budgetTemplates';
 import { formatCurrency } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -41,48 +49,6 @@ const fadeInUp = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
 
-const budgetTemplates: BudgetTemplate[] = [
-  {
-    name: 'Essential Bills',
-    description: 'Monthly bills and utilities',
-    amount: 800,
-    period: 'monthly',
-    alert_percentage: 90,
-    category_ids: ['6']
-  },
-  {
-    name: 'Food & Groceries',
-    description: 'Monthly food and dining budget',
-    amount: 600,
-    period: 'monthly',
-    alert_percentage: 85,
-    category_ids: ['1']
-  },
-  {
-    name: 'Transportation',
-    description: 'Monthly transportation costs',
-    amount: 300,
-    period: 'monthly',
-    alert_percentage: 80,
-    category_ids: ['2']
-  },
-  {
-    name: 'Entertainment & Leisure',
-    description: 'Monthly entertainment budget',
-    amount: 200,
-    period: 'monthly',
-    alert_percentage: 75,
-    category_ids: ['4']
-  },
-  {
-    name: 'Healthcare',
-    description: 'Monthly healthcare expenses',
-    amount: 150,
-    period: 'monthly',
-    alert_percentage: 85,
-    category_ids: ['5']
-  }
-];
 
 export default function RecurringBudgetPage() {
   const router = useRouter();
@@ -94,6 +60,25 @@ export default function RecurringBudgetPage() {
     isCreatingRecurring, 
     isCreatingFromPrevious 
   } = useBudgets();
+  
+  const {
+    templates,
+    userTemplates,
+    globalTemplates,
+    popularTemplates,
+    recentTemplates,
+    isLoading: templatesLoading,
+    searchQuery,
+    setSearchQuery,
+    saveAsTemplate,
+    deleteTemplate,
+    duplicateTemplate,
+    incrementUsage,
+    canManageGlobal,
+    isSaving,
+    isDeleting,
+    isDuplicating
+  } = useBudgetTemplates();
 
   const [customTemplate, setCustomTemplate] = useState<BudgetTemplate>({
     name: '',
@@ -101,12 +86,15 @@ export default function RecurringBudgetPage() {
     amount: 0,
     period: 'monthly',
     alert_percentage: 80,
+    alert_enabled: true,
+    is_global: false,
     category_ids: []
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState<BudgetTemplate | null>(null);
   const [recurringMonths, setRecurringMonths] = useState(12);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [editingTemplate, setEditingTemplate] = useState<BudgetTemplate | null>(null);
 
   const currency = profile?.currency || 'BDT';
 
@@ -130,6 +118,11 @@ export default function RecurringBudgetPage() {
   };
 
   const handleCreateRecurring = (template: BudgetTemplate) => {
+    // Increment usage count for the template
+    if (template.id) {
+      incrementUsage(template.id);
+    }
+    
     createRecurringBudget({ template, months: recurringMonths }, {
       onSuccess: () => {
         toast.success(`Created ${recurringMonths} recurring budgets successfully!`);
@@ -155,6 +148,51 @@ export default function RecurringBudgetPage() {
 
     handleCreateRecurring(customTemplate);
   };
+  
+  const handleSaveCustomTemplate = () => {
+    if (!validateCustomTemplate()) {
+      toast.error('Please fix the form errors');
+      return;
+    }
+    
+    saveAsTemplate({
+      name: customTemplate.name,
+      description: customTemplate.description,
+      amount: customTemplate.amount,
+      period: customTemplate.period,
+      category_ids: customTemplate.category_ids,
+      alert_percentage: customTemplate.alert_percentage,
+      alert_enabled: customTemplate.alert_enabled,
+      is_global: canManageGlobal ? customTemplate.is_global : false,
+      currency: profile?.currency || 'BDT'
+    });
+  };
+  
+  const handleEditTemplate = (template: BudgetTemplate) => {
+    setEditingTemplate(template);
+    setCustomTemplate({
+      name: template.name,
+      description: template.description || '',
+      amount: template.amount,
+      period: template.period,
+      category_ids: template.category_ids || [],
+      alert_percentage: template.alert_percentage,
+      alert_enabled: template.alert_enabled ?? true,
+      is_global: template.is_global ?? false
+    });
+  };
+  
+  const handleDeleteTemplate = (template: BudgetTemplate) => {
+    if (template.id && !template.is_global) {
+      deleteTemplate(template.id);
+    }
+  };
+  
+  const handleDuplicateTemplate = (template: BudgetTemplate) => {
+    if (template.id) {
+      duplicateTemplate({ id: template.id, newName: `${template.name} (Copy)` });
+    }
+  };
 
   const handleCategoryToggle = (categoryId: string) => {
     setCustomTemplate(prev => ({
@@ -164,6 +202,8 @@ export default function RecurringBudgetPage() {
         : [...(prev.category_ids || []), categoryId]
     }));
   };
+  
+  const displayedTemplates = searchQuery ? templates : [...userTemplates, ...globalTemplates];
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
@@ -255,41 +295,159 @@ export default function RecurringBudgetPage() {
                 <Target className="w-5 h-5 mr-2 text-orange-600" />
                 Budget Templates
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Pre-made templates to get you started quickly
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Choose from your saved templates or global templates
+                </p>
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search templates..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 w-64"
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {budgetTemplates.map((template, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 border rounded-lg transition-colors cursor-pointer ${
-                      selectedTemplate === template
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => setSelectedTemplate(template)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{template.name}</h4>
-                      <Badge variant="outline">
-                        {formatCurrency(template.amount, currency)}
-                      </Badge>
+              {templatesLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="p-4 border rounded-lg animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/3"></div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {template.description}
-                    </p>
-                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                      <span className="capitalize">{template.period}</span>
-                      <span>Alert at {template.alert_percentage}%</span>
-                      {template.category_ids && (
-                        <span>{template.category_ids.length} categories</span>
-                      )}
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* User Templates */}
+                  {userTemplates.length > 0 && !searchQuery && (
+                    <div>
+                      <div className="flex items-center mb-3">
+                        <Star className="w-4 h-4 mr-1 text-yellow-500" />
+                        <h4 className="font-medium text-sm">Your Templates</h4>
+                      </div>
+                      <div className="space-y-2">
+                        {userTemplates.map((template) => (
+                          <div
+                            key={template.id}
+                            className={`p-3 border rounded-lg transition-colors cursor-pointer group ${
+                              selectedTemplate?.id === template.id
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'hover:bg-muted/50'
+                            }`}
+                            onClick={() => setSelectedTemplate(template)}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-medium text-sm">{template.name}</h4>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {formatCurrency(template.amount, currency)}
+                                </Badge>
+                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditTemplate(template);
+                                    }}
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDuplicateTemplate(template);
+                                    }}
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteTemplate(template);
+                                    }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {template.description}
+                            </p>
+                            <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                              <span className="capitalize">{template.period}</span>
+                              <span>Alert at {template.alert_percentage}%</span>
+                              {template.usage_count && template.usage_count > 0 && (
+                                <span>Used {template.usage_count}x</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  )}
+
+                  {/* Global Templates */}
+                  {displayedTemplates.filter(t => t.is_global).length > 0 && (
+                    <div>
+                      {!searchQuery && userTemplates.length > 0 && <Separator className="my-4" />}
+                      <div className="flex items-center mb-3">
+                        <Zap className="w-4 h-4 mr-1 text-purple-500" />
+                        <h4 className="font-medium text-sm">Global Templates</h4>
+                      </div>
+                      <div className="space-y-2">
+                        {displayedTemplates.filter(t => t.is_global).map((template) => (
+                          <div
+                            key={template.id}
+                            className={`p-3 border rounded-lg transition-colors cursor-pointer ${
+                              selectedTemplate?.id === template.id
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'hover:bg-muted/50'
+                            }`}
+                            onClick={() => setSelectedTemplate(template)}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-medium text-sm">{template.name}</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {formatCurrency(template.amount, currency)}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {template.description}
+                            </p>
+                            <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                              <span className="capitalize">{template.period}</span>
+                              <span>Alert at {template.alert_percentage}%</span>
+                              <span className="text-purple-600">Global</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {displayedTemplates.length === 0 && searchQuery && (
+                    <div className="text-center py-6">
+                      <p className="text-sm text-muted-foreground">
+                        No templates found matching "{searchQuery}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <Separator className="my-4" />
 
@@ -413,25 +571,61 @@ export default function RecurringBudgetPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="template-threshold">
-                    Alert Threshold ({customTemplate.alert_percentage}%)
-                  </Label>
-                  <Input
-                    id="template-threshold"
-                    type="range"
-                    min="1"
-                    max="100"
-                    value={customTemplate.alert_percentage}
-                    onChange={(e) => setCustomTemplate(prev => ({ ...prev, alert_percentage: parseInt(e.target.value) }))}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>1%</span>
-                    <span>50%</span>
-                    <span>100%</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Enable Budget Alerts</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Receive notifications when approaching budget limit
+                      </p>
+                    </div>
+                    <Switch
+                      checked={customTemplate.alert_enabled ?? true}
+                      onCheckedChange={(checked) => setCustomTemplate(prev => ({ ...prev, alert_enabled: checked }))}
+                    />
                   </div>
-                  {errors.alert_percentage && <p className="text-sm text-red-500 mt-1">{errors.alert_percentage}</p>}
+
+                  {customTemplate.alert_enabled && (
+                    <div>
+                      <Label htmlFor="template-threshold">
+                        Alert Threshold ({customTemplate.alert_percentage}%)
+                      </Label>
+                      <Input
+                        id="template-threshold"
+                        type="range"
+                        min="1"
+                        max="100"
+                        value={customTemplate.alert_percentage}
+                        onChange={(e) => setCustomTemplate(prev => ({ ...prev, alert_percentage: parseInt(e.target.value) }))}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                        <span>1%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                      </div>
+                      {errors.alert_percentage && <p className="text-sm text-red-500 mt-1">{errors.alert_percentage}</p>}
+                    </div>
+                  )}
                 </div>
+
+                {/* Global Template Toggle (Admin Only) */}
+                {canManageGlobal && (
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <div className="space-y-0.5">
+                      <Label className="text-base flex items-center">
+                        <Star className="w-4 h-4 mr-1 text-yellow-600" />
+                        Make Global Template
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        This template will be available to all users
+                      </p>
+                    </div>
+                    <Switch
+                      checked={customTemplate.is_global ?? false}
+                      onCheckedChange={(checked) => setCustomTemplate(prev => ({ ...prev, is_global: checked }))}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Category Selection */}
@@ -496,23 +690,66 @@ export default function RecurringBudgetPage() {
                 </Alert>
               </div>
 
-              <Button
-                onClick={handleCreateCustomRecurring}
-                disabled={isCreatingRecurring}
-                className="w-full"
-              >
-                {isCreatingRecurring ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Create Recurring Budget
-                  </>
+              <div className="space-y-2">
+                <Button
+                  onClick={handleCreateCustomRecurring}
+                  disabled={isCreatingRecurring}
+                  className="w-full"
+                >
+                  {isCreatingRecurring ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 mr-2" />
+                      Create Recurring Budget
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  onClick={handleSaveCustomTemplate}
+                  disabled={isSaving || !customTemplate.name.trim()}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      {editingTemplate ? 'Update Template' : 'Save as Template'}
+                    </>
+                  )}
+                </Button>
+                
+                {editingTemplate && (
+                  <Button
+                    onClick={() => {
+                      setEditingTemplate(null);
+                      setCustomTemplate({
+                        name: '',
+                        description: '',
+                        amount: 0,
+                        period: 'monthly',
+                        alert_percentage: 80,
+                        alert_enabled: true,
+                        is_global: false,
+                        category_ids: []
+                      });
+                    }}
+                    variant="ghost"
+                    className="w-full"
+                  >
+                    Cancel Edit
+                  </Button>
                 )}
-              </Button>
+              </div>
             </CardContent>
           </Card>
         </motion.div>

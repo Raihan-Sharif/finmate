@@ -24,6 +24,7 @@ export const TABLES = {
   ACCOUNTS: 'accounts',
   TRANSACTIONS: 'transactions',
   BUDGETS: 'budgets',
+  BUDGET_TEMPLATES: 'budget_templates',
   INVESTMENTS: 'investments',
   LOANS: 'loans',
   LENDING: 'lending',

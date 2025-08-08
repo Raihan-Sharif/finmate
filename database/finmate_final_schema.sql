@@ -434,6 +434,29 @@ CREATE TABLE ai_insights (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
+-- Budget Templates Table
+CREATE TABLE budget_templates (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    amount DECIMAL(15,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
+    period budget_period DEFAULT 'monthly' NOT NULL,
+    category_ids UUID[],
+    alert_percentage DECIMAL(5,2) DEFAULT 80.00,
+    alert_enabled BOOLEAN DEFAULT true NOT NULL,
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    is_global BOOLEAN DEFAULT false NOT NULL,
+    usage_count INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT budget_templates_amount_positive CHECK (amount > 0),
+    CONSTRAINT budget_templates_alert_percentage_valid CHECK (alert_percentage > 0 AND alert_percentage <= 100),
+    CONSTRAINT budget_templates_name_user_unique UNIQUE (user_id, name)
+);
+
 -- =============================================
 -- ADMIN AND SECURITY TABLES
 -- =============================================
@@ -519,6 +542,12 @@ CREATE INDEX idx_budgets_period ON budgets(period);
 CREATE INDEX idx_budgets_active ON budgets(is_active);
 CREATE INDEX idx_budgets_dates ON budgets(start_date, end_date);
 
+CREATE INDEX idx_budget_templates_user_id ON budget_templates(user_id);
+CREATE INDEX idx_budget_templates_active ON budget_templates(is_active);
+CREATE INDEX idx_budget_templates_global ON budget_templates(is_global);
+CREATE INDEX idx_budget_templates_usage_count ON budget_templates(usage_count);
+CREATE INDEX idx_budget_templates_created_at ON budget_templates(created_at);
+
 -- Advanced features indexes
 CREATE INDEX idx_investments_user_id ON investments(user_id);
 CREATE INDEX idx_investments_type ON investments(type);
@@ -575,6 +604,7 @@ ALTER TABLE subcategories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budget_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE investments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lending ENABLE ROW LEVEL SECURITY;
@@ -612,6 +642,17 @@ CREATE POLICY "Users can update own accounts" ON accounts FOR UPDATE USING (auth
 CREATE POLICY "Users can delete own accounts" ON accounts FOR DELETE USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own transactions" ON transactions FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own budgets" ON budgets FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own templates" ON budget_templates FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can read global templates" ON budget_templates FOR SELECT USING (is_global = true);
+CREATE POLICY "Admins can manage global templates" ON budget_templates FOR ALL USING (
+    is_global = true AND EXISTS (
+        SELECT 1 FROM profiles p 
+        JOIN role_permissions rp ON p.role_id = rp.role_id 
+        JOIN permissions pe ON rp.permission_id = pe.id 
+        WHERE p.user_id = auth.uid() 
+        AND pe.name IN ('admin:all', 'templates:manage_global')
+    )
+);
 CREATE POLICY "Users can manage own investments" ON investments FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own loans" ON loans FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own lending" ON lending FOR ALL USING (auth.uid() = user_id);
@@ -1261,6 +1302,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Function to increment template usage count
+CREATE OR REPLACE FUNCTION increment_template_usage(template_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    UPDATE budget_templates 
+    SET usage_count = usage_count + 1,
+        updated_at = NOW()
+    WHERE id = template_id;
+END;
+$$;
+
 -- Function to get user profile with role (used by frontend)
 CREATE OR REPLACE FUNCTION public.get_user_profile(p_user_id UUID)
 RETURNS TABLE(
@@ -1342,6 +1397,9 @@ CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_budgets_updated_at BEFORE UPDATE ON budgets
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_budget_templates_updated_at BEFORE UPDATE ON budget_templates
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_investments_updated_at BEFORE UPDATE ON investments
