@@ -36,7 +36,7 @@ import {
   Clock,
   Repeat
 } from 'lucide-react';
-import { INVESTMENT_TYPES, FREQUENCIES, CreateInvestmentTemplateInput } from '@/types/investments';
+import { INVESTMENT_TYPES, INVESTMENT_INVESTMENT_FREQUENCIES, CreateInvestmentTemplateInput } from '@/types/investments';
 import { CURRENCIES } from '@/types';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
@@ -82,17 +82,28 @@ export function CreateSIPForm({
   const form = useForm<SIPFormData>({
     resolver: zodResolver(sipSchema),
     defaultValues: {
-      currency: 'BDT',
+      name: '',
+      description: '',
+      portfolio_id: '',
       investment_type: 'sip',
+      symbol: '',
+      amount_per_investment: 0,
+      currency: 'BDT',
       frequency: 'monthly',
+      interval_value: 1,
+      start_date: '',
+      end_date: '',
+      target_amount: undefined,
       auto_execute: true,
       market_order: true,
+      limit_price: undefined,
+      notes: ''
     }
   });
 
   const selectedPortfolio = portfolios.find(p => p.id === form.watch('portfolio_id'));
   const selectedType = INVESTMENT_TYPES[form.watch('investment_type')];
-  const selectedFrequency = FREQUENCIES[form.watch('frequency')];
+  const selectedFrequency = INVESTMENT_FREQUENCIES[form.watch('frequency')];
 
   const handleSubmit = async (data: SIPFormData) => {
     const requestData: CreateInvestmentTemplateInput = {
@@ -336,7 +347,7 @@ export function CreateSIPForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white'}>
-                      {Object.entries(FREQUENCIES).map(([key, freq]) => (
+                      {Object.entries(INVESTMENT_FREQUENCIES).map(([key, freq]) => (
                         <SelectItem key={key} value={key} className="text-base py-3">
                           <div className="flex items-center space-x-3">
                             <Repeat className="h-4 w-4 text-blue-500" />
@@ -436,7 +447,7 @@ export function CreateSIPForm({
                           "h-12 text-base pl-11",
                           theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
                         )}
-                        {...field}
+                        value={field.value || ''}
                         onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                       />
                     </div>

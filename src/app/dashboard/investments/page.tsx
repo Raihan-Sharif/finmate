@@ -40,8 +40,8 @@ import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
 // Hooks
 import { useInvestmentDashboard } from '@/hooks/useInvestmentAnalytics';
 import { useInvestmentPortfolios, useCreateInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
-import { useInvestments } from '@/hooks/useInvestments';
-import { useSIPTemplates } from '@/hooks/useInvestmentTemplates';
+import { useInvestments, useCreateInvestment } from '@/hooks/useInvestments';
+import { useSIPTemplates, useCreateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentTransactions } from '@/hooks/useInvestmentTransactions';
 
 export default function InvestmentDashboardPage() {
@@ -58,6 +58,8 @@ export default function InvestmentDashboardPage() {
   const { data: sipTemplates = [], isLoading: sipsLoading } = useSIPTemplates();
   const { data: transactions = [], isLoading: transactionsLoading } = useInvestmentTransactions();
   const createPortfolioMutation = useCreateInvestmentPortfolio();
+  const createInvestmentMutation = useCreateInvestment();
+  const createSIPMutation = useCreateInvestmentTemplate();
 
   // Mock data for charts (replace with real data from hooks)
   const mockPerformanceData = [
@@ -161,11 +163,48 @@ export default function InvestmentDashboardPage() {
         <CreateInvestmentForm
           portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
           onSubmit={async (data) => {
-            // Handle investment creation
-            console.log('Creating investment:', data);
-            setShowCreateForm(false);
+            try {
+              console.log('Submitting investment data:', data);
+              
+              // Transform CreateInvestmentRequest to CreateInvestmentInput
+              const investmentInput = {
+                portfolio_id: data.portfolio_id,
+                name: data.name,
+                symbol: data.symbol,
+                type: data.type,
+                total_units: data.initial_amount / data.current_price, // Calculate units from amount and price
+                average_cost: data.current_price,
+                current_price: data.current_price,
+                currency: data.currency,
+                tags: data.tags,
+                notes: data.notes,
+                purchase_date: new Date().toISOString().split('T')[0], // Today's date
+                // Additional fields can be added later
+                platform: undefined,
+                account_number: undefined,
+                folio_number: undefined,
+                maturity_date: data.target_date,
+                interest_rate: undefined,
+                exchange: undefined,
+                documents: undefined,
+                metadata: data.target_amount ? { target_amount: data.target_amount } : undefined
+              };
+              
+              const result = await createInvestmentMutation.mutateAsync(investmentInput);
+              console.log('Investment creation result:', result);
+              setShowCreateForm(false);
+            } catch (error) {
+              console.error('Failed to create investment:', error);
+              console.error('Error details:', {
+                message: error?.message,
+                code: error?.code,
+                details: error?.details,
+                hint: error?.hint
+              });
+            }
           }}
           onCancel={() => setShowCreateForm(false)}
+          isLoading={createInvestmentMutation.isPending}
         />
       </div>
     );
@@ -205,11 +244,23 @@ export default function InvestmentDashboardPage() {
         <CreateSIPForm
           portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
           onSubmit={async (data) => {
-            // Handle SIP creation
-            console.log('Creating SIP:', data);
-            setShowCreateForm(false);
+            try {
+              console.log('Submitting SIP data:', data);
+              const result = await createSIPMutation.mutateAsync(data);
+              console.log('SIP creation result:', result);
+              setShowCreateForm(false);
+            } catch (error) {
+              console.error('Failed to create SIP:', error);
+              console.error('Error details:', {
+                message: error?.message,
+                code: error?.code,
+                details: error?.details,
+                hint: error?.hint
+              });
+            }
           }}
           onCancel={() => setShowCreateForm(false)}
+          isLoading={createSIPMutation.isPending}
         />
       </div>
     );

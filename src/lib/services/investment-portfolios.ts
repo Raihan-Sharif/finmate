@@ -102,30 +102,19 @@ export class InvestmentPortfolioService {
     portfolio: CreateInvestmentPortfolioInput,
     userId: string
   ): Promise<InvestmentPortfolio> {
-    console.log('Creating portfolio with data:', { portfolio, userId });
-    
-    const insertData = {
-      ...portfolio,
-      user_id: userId,
-      currency: portfolio.currency || 'BDT',
-      color: portfolio.color || '#8B5CF6',
-      icon: portfolio.icon || 'trending-up'
-    };
-    
-    console.log('Insert data:', insertData);
-    
     const { data, error } = await supabase
       .from('investment_portfolios')
-      .insert(insertData)
+      .insert({
+        ...portfolio,
+        user_id: userId,
+        currency: portfolio.currency || 'BDT',
+        color: portfolio.color || '#8B5CF6',
+        icon: portfolio.icon || 'trending-up'
+      })
       .select('*')
       .single();
 
-    if (error) {
-      console.error('Portfolio creation error:', error);
-      throw error;
-    }
-    
-    console.log('Portfolio created successfully:', data);
+    if (error) throw error;
     return data;
   }
 

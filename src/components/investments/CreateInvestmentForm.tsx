@@ -93,9 +93,18 @@ export function CreateInvestmentForm({
   const form = useForm<InvestmentFormData>({
     resolver: zodResolver(investmentSchema),
     defaultValues: {
+      name: '',
+      symbol: '',
+      type: 'sip',
+      portfolio_id: '',
+      initial_amount: 0,
+      current_price: 0,
       currency: 'BDT',
       risk_level: 'medium',
-      type: 'sip'
+      target_amount: undefined,
+      target_date: '',
+      notes: '',
+      tags: ''
     }
   });
 
@@ -468,7 +477,7 @@ export function CreateInvestmentForm({
                         type="number"
                         placeholder="100000"
                         className="h-12 text-base pl-11"
-                        {...field}
+                        value={field.value || ''}
                         onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                       />
                     </div>
