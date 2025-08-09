@@ -141,19 +141,52 @@ export class InvestmentService {
     investment: CreateInvestmentInput,
     userId: string
   ): Promise<Investment> {
+    console.log('🔥 SERVICE: Received investment data:', investment);
+    console.log('🔥 SERVICE: User ID:', userId);
+    console.log('🔥 SERVICE: average_cost value:', investment.average_cost, typeof investment.average_cost);
+    console.log('🔥 SERVICE: current_price value:', investment.current_price, typeof investment.current_price);
+    console.log('🔥 SERVICE: total_units value:', investment.total_units, typeof investment.total_units);
+    
     // Calculate initial values
     const total_invested = investment.total_units * investment.average_cost;
     const current_value = investment.total_units * investment.current_price;
+    
+    console.log('🔥 SERVICE: Calculated total_invested:', total_invested);
+    console.log('🔥 SERVICE: Calculated current_value:', current_value);
 
+    const insertData = {
+      user_id: userId,
+      portfolio_id: investment.portfolio_id,
+      name: investment.name,
+      symbol: investment.symbol,
+      type: investment.type,
+      total_units: investment.total_units,
+      average_cost: investment.average_cost,
+      current_price: investment.current_price,
+      total_invested,
+      current_value,
+      platform: investment.platform,
+      account_number: investment.account_number,
+      folio_number: investment.folio_number,
+      maturity_date: investment.maturity_date,
+      interest_rate: investment.interest_rate,
+      currency: investment.currency || 'BDT',
+      exchange: investment.exchange,
+      tags: investment.tags,
+      notes: investment.notes,
+      documents: investment.documents,
+      metadata: investment.metadata,
+      purchase_date: investment.purchase_date
+    };
+    
+    console.log('🔥 SERVICE: EXACT data being inserted to DB:', insertData);
+    console.log('🔥 SERVICE: average_cost in insert object:', insertData.average_cost);
+
+    console.log('🔥 SERVICE: About to insert to database...');
+    
     const { data, error } = await supabase
       .from('investments')
-      .insert({
-        ...investment,
-        user_id: userId,
-        total_invested,
-        current_value,
-        currency: investment.currency || 'BDT'
-      })
+      .insert(insertData)
       .select(`
         *,
         portfolio:investment_portfolios(
@@ -165,10 +198,18 @@ export class InvestmentService {
       `)
       .single();
 
-    if (error) throw error;
+    console.log('🔥 SERVICE: Database response received');
+    console.log('🔥 SERVICE: Error:', error);
+    console.log('🔥 SERVICE: Data:', data);
+
+    if (error) {
+      console.error('🔥 SERVICE: Database insert failed:', error);
+      throw error;
+    }
 
     // Create initial buy transaction
-    await supabase
+    console.log('🔥 SERVICE: Creating initial transaction...');
+    const transactionResult = await supabase
       .from('investment_transactions')
       .insert({
         user_id: userId,
@@ -184,7 +225,17 @@ export class InvestmentService {
         currency: investment.currency || 'BDT',
         notes: 'Initial investment'
       });
+      
+    console.log('🔥 SERVICE: Transaction result:', transactionResult);
+    console.log('🔥 SERVICE: Transaction error:', transactionResult.error);
+    
+    if (transactionResult.error) {
+      console.error('🔥 SERVICE: Transaction insert failed:', transactionResult.error);
+      // Don't throw here - investment was created successfully
+      console.warn('🔥 SERVICE: Investment created but initial transaction failed');
+    }
 
+    console.log('🔥 SERVICE: Investment creation completed successfully');
     return data;
   }
 

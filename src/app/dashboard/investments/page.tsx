@@ -37,6 +37,9 @@ import { CreateInvestmentForm } from '@/components/investments/CreateInvestmentF
 import { CreatePortfolioForm } from '@/components/investments/CreatePortfolioForm';
 import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
 
+// Types
+import { CreateInvestmentInput } from '@/types/investments';
+
 // Hooks
 import { useInvestmentDashboard } from '@/hooks/useInvestmentAnalytics';
 import { useInvestmentPortfolios, useCreateInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
@@ -132,9 +135,11 @@ export default function InvestmentDashboardPage() {
         variant="outline" 
         className="hover:bg-white/70"
         onClick={() => {
-          console.log('SIP button clicked, current state:', showCreateForm);
+          console.log('=== SIP BUTTON CLICKED ===');
+          console.log('Current state BEFORE:', showCreateForm);
           setShowCreateForm('sip');
-          console.log('SIP button clicked, new state should be: sip');
+          console.log('State set to: sip');
+          console.log('=========================');
         }}
       >
         <Zap className="h-4 w-4 mr-2" />
@@ -160,16 +165,24 @@ export default function InvestmentDashboardPage() {
             try {
               console.log('Submitting investment data:', data);
               
+              // Validate required fields
+              if (!data.initial_amount || data.initial_amount <= 0) {
+                throw new Error('Initial amount must be greater than 0');
+              }
+              if (!data.current_price || data.current_price <= 0) {
+                throw new Error('Current price must be greater than 0');
+              }
+
               // Transform CreateInvestmentRequest to CreateInvestmentInput
               const investmentInput: CreateInvestmentInput = {
                 portfolio_id: data.portfolio_id,
                 name: data.name,
                 type: data.type,
-                total_units: data.initial_amount / data.current_price, // Calculate units from amount and price
-                average_cost: data.current_price,
-                current_price: data.current_price,
-                currency: data.currency,
-                purchase_date: new Date().toISOString().split('T')[0], // Today's date
+                total_units: Number((data.initial_amount / data.current_price).toFixed(4)), // Calculate units from amount and price
+                average_cost: Number(data.current_price.toFixed(2)),
+                current_price: Number(data.current_price.toFixed(2)),
+                currency: data.currency || 'BDT',
+                purchase_date: new Date().toISOString().split('T')[0]!, // Today's date
                 // Optional fields with defaults
                 symbol: data.symbol || '',
                 tags: data.tags || [],
@@ -177,6 +190,8 @@ export default function InvestmentDashboardPage() {
                 ...(data.target_date && { maturity_date: data.target_date }),
                 ...(data.target_amount && { metadata: { target_amount: data.target_amount } })
               };
+              
+              console.log('Transformed investment input:', investmentInput);
               
               const result = await createInvestmentMutation.mutateAsync(investmentInput);
               console.log('Investment creation result:', result);
@@ -226,8 +241,32 @@ export default function InvestmentDashboardPage() {
     );
   }
 
+  // FRESH START: Debug what's happening with SIP form
+  console.log('=== COMPONENT RENDER ===');
+  console.log('showCreateForm state:', showCreateForm);
+  console.log('portfolios count:', portfolios.length);
+  console.log('======================');
+  
   if (showCreateForm === 'sip') {
-    console.log('Rendering SIP form, showCreateForm state:', showCreateForm);
+    console.log('🚨 SIP FORM SHOULD RENDER NOW!');
+    console.log('Portfolios data:', portfolios.map(p => ({id: p.id, name: p.name})));
+    console.log('createSIPMutation status:', createSIPMutation.isPending);
+    console.log('🚨 About to return SIP form component...');
+    
+    if (portfolios.length === 0) {
+      console.log('No portfolios available for SIP creation');
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h2>No Portfolios Available</h2>
+            <p>Please create a portfolio first before setting up a SIP.</p>
+            <button onClick={() => setShowCreateForm('portfolio')}>Create Portfolio</button>
+            <button onClick={() => setShowCreateForm(false)}>Go Back</button>
+          </div>
+        </div>
+      );
+    }
+
     try {
       return (
         <div className="container mx-auto px-4 py-8">
@@ -235,13 +274,13 @@ export default function InvestmentDashboardPage() {
             portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
             onSubmit={async (data) => {
               try {
-                console.log('Submitting SIP data:', data);
+                console.log('Main Dashboard: Submitting SIP data:', data);
                 const result = await createSIPMutation.mutateAsync(data);
-                console.log('SIP creation result:', result);
+                console.log('Main Dashboard: SIP creation result:', result);
                 setShowCreateForm(false);
               } catch (error: any) {
-                console.error('Failed to create SIP:', error);
-                console.error('Error details:', {
+                console.error('Main Dashboard: Failed to create SIP:', error);
+                console.error('Main Dashboard: Error details:', {
                   message: error?.message,
                   code: error?.code,
                   details: error?.details,
@@ -260,7 +299,7 @@ export default function InvestmentDashboardPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h2>Error Loading SIP Form</h2>
-            <p>There was an error loading the SIP creation form.</p>
+            <p>There was an error loading the SIP creation form: {String(error)}</p>
             <button onClick={() => setShowCreateForm(false)}>Go Back</button>
           </div>
         </div>

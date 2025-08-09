@@ -77,12 +77,17 @@ export class InvestmentTemplateService {
     template: CreateInvestmentTemplateInput,
     userId: string
   ): Promise<InvestmentTemplate> {
+    console.log('🚀 SIP SERVICE: Creating template with data:', template);
+    console.log('🚀 SIP SERVICE: User ID:', userId);
+    
     // Calculate next execution date
     const next_execution = this.calculateNextExecution(
       template.start_date,
       template.frequency,
       template.interval_value || 1
     );
+    
+    console.log('🚀 SIP SERVICE: Calculated next_execution:', next_execution);
 
     const { data, error } = await supabase
       .from('investment_templates')

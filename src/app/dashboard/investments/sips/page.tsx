@@ -36,15 +36,20 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SIPTemplateCard } from '@/components/investments/SIPTemplateCard';
-import { useSIPTemplates } from '@/hooks/useInvestmentTemplates';
+import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
+import { useSIPTemplates, useCreateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
+import { useInvestmentPortfolios } from '@/hooks/useInvestmentPortfolios';
 import { formatCurrency } from '@/lib/utils';
 
 export default function SIPManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
   const [activeTab, setActiveTab] = useState('overview');
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const { data: sipTemplates = [], isLoading } = useSIPTemplates();
+  const { data: portfolios = [], isLoading: portfoliosLoading } = useInvestmentPortfolios();
+  const createSIPMutation = useCreateInvestmentTemplate();
 
   // Filter SIPs based on search and status
   const filteredSIPs = sipTemplates.filter(template => {
@@ -122,6 +127,35 @@ export default function SIPManagementPage() {
     </motion.div>
   );
 
+  // Show create form if requested
+  if (showCreateForm) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <CreateSIPForm
+          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
+          onSubmit={async (data) => {
+            try {
+              console.log('SIP Management: Submitting SIP data:', data);
+              const result = await createSIPMutation.mutateAsync(data);
+              console.log('SIP Management: SIP creation result:', result);
+              setShowCreateForm(false);
+            } catch (error: any) {
+              console.error('SIP Management: Failed to create SIP:', error);
+              console.error('SIP Management: Error details:', {
+                message: error?.message,
+                code: error?.code,
+                details: error?.details,
+                hint: error?.hint
+              });
+            }
+          }}
+          onCancel={() => setShowCreateForm(false)}
+          isLoading={createSIPMutation.isPending}
+        />
+      </div>
+    );
+  }
+
   const QuickActions = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -129,7 +163,13 @@ export default function SIPManagementPage() {
       transition={{ duration: 0.3, delay: 0.1 }}
       className="flex flex-wrap gap-3"
     >
-      <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-300">
+      <Button 
+        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-300"
+        onClick={() => {
+          console.log('🎯 SIP MANAGEMENT: Create SIP button clicked!');
+          setShowCreateForm(true);
+        }}
+      >
         <Plus className="h-4 w-4 mr-2" />
         Create SIP
       </Button>
@@ -297,7 +337,13 @@ export default function SIPManagementPage() {
                     ? 'Try adjusting your search or filters' 
                     : 'Create your first systematic investment plan'}
                 </p>
-                <Button className="bg-gradient-to-r from-green-500 to-emerald-600">
+                <Button 
+                  className="bg-gradient-to-r from-green-500 to-emerald-600"
+                  onClick={() => {
+                    console.log('🎯 SIP MANAGEMENT: Empty state Create SIP button clicked!');
+                    setShowCreateForm(true);
+                  }}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Create SIP
                 </Button>

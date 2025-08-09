@@ -156,7 +156,10 @@ export function CreateInvestmentForm({
       if (data.target_date) requestData.target_date = data.target_date;
       if (data.notes) requestData.notes = data.notes;
 
-      console.log('CreateInvestmentForm submitting request data:', requestData);
+      console.log('🔥 FORM: Raw form data:', data);
+      console.log('🔥 FORM: Request data being sent:', requestData);
+      console.log('🔥 FORM: initial_amount value:', data.initial_amount);
+      console.log('🔥 FORM: current_price value:', data.current_price);
       await onSubmit(requestData);
     } catch (error) {
       console.error('CreateInvestmentForm handleSubmit error:', error);

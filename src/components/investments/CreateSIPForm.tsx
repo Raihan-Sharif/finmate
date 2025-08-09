@@ -78,6 +78,9 @@ export function CreateSIPForm({
 }: CreateSIPFormProps) {
   const { theme } = useTheme();
   const [step, setStep] = useState<'basic' | 'schedule' | 'settings'>('basic');
+  
+  console.log('🔍 SIP FORM: Current step:', step);
+  console.log('🔍 SIP FORM: Show submit button:', step === 'settings');
 
   const form = useForm<SIPFormData>({
     resolver: zodResolver(sipSchema),
@@ -105,6 +108,9 @@ export function CreateSIPForm({
   const selectedFrequency = INVESTMENT_FREQUENCIES[form.watch('frequency')];
 
   const handleSubmit = async (data: SIPFormData) => {
+    console.log('🎯 SIP FORM: handleSubmit called with data:', data);
+    console.log('🎯 SIP FORM: Current step:', step);
+    
     const requestData: any = {
       name: data.name,
       investment_type: data.investment_type,
@@ -117,6 +123,8 @@ export function CreateSIPForm({
       template_type: 'user_sip',
       interval_value: 1 // Default interval
     };
+    
+    console.log('🎯 SIP FORM: Base requestData:', requestData);
 
     // Add optional fields only if they have values
     if (data.portfolio_id) requestData.portfolio_id = data.portfolio_id;
@@ -127,7 +135,16 @@ export function CreateSIPForm({
     if (data.limit_price) requestData.limit_price = data.limit_price;
     if (data.notes) requestData.notes = data.notes;
 
-    await onSubmit(requestData);
+    console.log('🎯 SIP FORM: Final requestData before onSubmit:', requestData);
+    console.log('🎯 SIP FORM: Calling parent onSubmit...');
+    
+    try {
+      await onSubmit(requestData);
+      console.log('🎯 SIP FORM: onSubmit completed successfully');
+    } catch (error) {
+      console.error('🎯 SIP FORM: onSubmit failed:', error);
+      throw error;
+    }
   };
 
   const renderStepContent = () => {
@@ -658,8 +675,15 @@ export function CreateSIPForm({
                     <Button
                       type="button"
                       onClick={() => {
-                        if (step === 'basic') setStep('schedule');
-                        if (step === 'schedule') setStep('settings');
+                        console.log('🔍 SIP FORM: Next button clicked, current step:', step);
+                        if (step === 'basic') {
+                          console.log('🔍 SIP FORM: Moving from basic to schedule');
+                          setStep('schedule');
+                        }
+                        if (step === 'schedule') {
+                          console.log('🔍 SIP FORM: Moving from schedule to settings');
+                          setStep('settings');
+                        }
                       }}
                       className="px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                     >
@@ -670,6 +694,13 @@ export function CreateSIPForm({
                       type="submit" 
                       disabled={isLoading}
                       className="px-8 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                      onClick={(e) => {
+                        console.log('🚨 SIP FORM: Submit button clicked!');
+                        console.log('🚨 SIP FORM: Form values:', form.getValues());
+                        console.log('🚨 SIP FORM: Form errors:', form.formState.errors);
+                        console.log('🚨 SIP FORM: Form is valid:', form.formState.isValid);
+                        console.log('🚨 SIP FORM: isLoading:', isLoading);
+                      }}
                     >
                       {isLoading ? 'Creating...' : 'Create SIP Plan'}
                     </Button>
