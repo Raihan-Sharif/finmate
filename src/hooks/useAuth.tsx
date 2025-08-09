@@ -106,31 +106,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user profile with role and permissions
   const fetchProfile = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.PROFILES)
-        .select(`
-          *,
-          role:roles!role_id(*)
-        `)
-        .eq('user_id', userId)
-        .single();
+      console.log("Fetching profile for user ID:", userId);
       
-      if (error) {
-        if (error.code === 'PGRST116') {
-          console.log("Profile not found, might be a new user");
-          setProfile(null);
-          return;
-        }
-        throw error;
+      // Use the database function that bypasses RLS for role data
+      const { data: profileData, error: profileError } = await supabase
+        .rpc('get_user_profile', { p_user_id: userId });
+      
+      console.log("Profile function result:", { data: profileData, error: profileError });
+      
+      if (profileError) {
+        throw profileError;
       }
+      
+      if (!profileData || profileData.length === 0) {
+        console.log("Profile not found, might be a new user");
+        setProfile(null);
+        return;
+      }
+      
+      const profile = profileData[0];
+      console.log("Profile data:", profile);
+      console.log("Role name from profile:", profile.role_name);
       
       // Get user permissions
       const { data: permissions } = await supabase
         .rpc('get_user_permissions', { p_user_id: userId });
       
+      // Construct the role object from the flattened data
+      const role = profile.role_name ? {
+        id: '', // Not returned by function but not needed for UI
+        name: profile.role_name,
+        display_name: profile.role_display_name,
+        description: null,
+        is_system: false,
+        is_active: true,
+        created_at: '',
+        updated_at: ''
+      } : null;
+      
       const profileWithRole: ProfileWithRole = {
-        ...data,
-        role: data.role,
+        id: profile.id,
+        user_id: profile.user_id,
+        email: profile.email,
+        full_name: profile.full_name,
+        avatar_url: profile.avatar_url,
+        role_id: profile.role_id,
+        currency: profile.currency,
+        timezone: profile.timezone,
+        theme: profile.theme,
+        notifications_enabled: profile.notifications_enabled,
+        ai_insights_enabled: profile.ai_insights_enabled,
+        monthly_budget_limit: profile.monthly_budget_limit,
+        email_verified: profile.email_verified,
+        phone_number: profile.phone_number,
+        phone_verified: profile.phone_verified,
+        two_factor_enabled: profile.two_factor_enabled,
+        last_login: profile.last_login,
+        is_active: profile.is_active,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
+        role: role,
         permissions: permissions?.map((p: any) => ({
           id: '',
           name: p.permission_name,
@@ -144,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })) || []
       };
       
+      console.log("Final profile with role:", profileWithRole);
       setProfile(profileWithRole);
     } catch (error: any) {
       console.error("Error fetching profile:", error);

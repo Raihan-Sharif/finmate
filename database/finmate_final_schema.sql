@@ -1319,6 +1319,8 @@ BEGIN
 END;
 $$;
 
+
+
 -- Function to get user profile with role (used by frontend)
 CREATE OR REPLACE FUNCTION public.get_user_profile(p_user_id UUID)
 RETURNS TABLE(
@@ -1366,14 +1368,13 @@ BEGIN
         p.is_active,
         p.created_at,
         p.updated_at,
-        r.name as role_name,
-        r.display_name as role_display_name
+        r.name::TEXT as role_name,
+        r.display_name::TEXT as role_display_name
     FROM profiles p
     LEFT JOIN roles r ON p.role_id = r.id
     WHERE p.user_id = p_user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- =============================================
 -- TRIGGERS
 -- =============================================

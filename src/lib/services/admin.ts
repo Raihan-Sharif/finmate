@@ -6,19 +6,51 @@ export class AdminService {
   static async getAllUsers(page = 1, limit = 50) {
     const offset = (page - 1) * limit;
     
-    const { data, error, count } = await supabase
+    // First get user IDs with pagination
+    const { data: profileIds, error: profileError, count } = await supabase
       .from(TABLES.PROFILES)
-      .select(`
-        *,
-        role:roles(*)
-      `, { count: 'exact' })
+      .select('user_id', { count: 'exact' })
       .range(offset, offset + limit - 1)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (profileError) throw profileError;
+    if (!profileIds || profileIds.length === 0) {
+      return {
+        users: [],
+        totalCount: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+        currentPage: page
+      };
+    }
+
+    // Then get full profile data using the custom function
+    const usersWithRoles = await Promise.all(
+      profileIds.map(async (profile) => {
+        const { data: userData } = await supabase
+          .rpc('get_user_profile', { p_user_id: profile.user_id });
+        
+        if (userData && userData.length > 0) {
+          const user = userData[0];
+          return {
+            ...user,
+            role: user.role_name ? {
+              id: '',
+              name: user.role_name,
+              display_name: user.role_display_name,
+              description: null,
+              is_system: false,
+              is_active: true,
+              created_at: '',
+              updated_at: ''
+            } : null
+          };
+        }
+        return null;
+      })
+    );
 
     return {
-      users: data || [],
+      users: usersWithRoles.filter(user => user !== null),
       totalCount: count || 0,
       totalPages: Math.ceil((count || 0) / limit),
       currentPage: page
@@ -29,37 +61,90 @@ export class AdminService {
   static async searchUsers(query: string, limit = 20) {
     const { data, error } = await supabase
       .from(TABLES.PROFILES)
-      .select('*')
-      .or(`full_name.ilike.%${query}%,user_id.ilike.%${query}%`)
+      .select('user_id')
+      .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    if (!data || data.length === 0) return [];
+
+    // Get full profile data using the custom function
+    const usersWithRoles = await Promise.all(
+      data.map(async (profile) => {
+        const { data: userData } = await supabase
+          .rpc('get_user_profile', { p_user_id: profile.user_id });
+        
+        if (userData && userData.length > 0) {
+          const user = userData[0];
+          return {
+            ...user,
+            role: user.role_name ? {
+              id: '',
+              name: user.role_name,
+              display_name: user.role_display_name,
+              description: null,
+              is_system: false,
+              is_active: true,
+              created_at: '',
+              updated_at: ''
+            } : null
+          };
+        }
+        return null;
+      })
+    );
+
+    return usersWithRoles.filter(user => user !== null);
   }
 
   // Get user by ID
   static async getUserById(userId: string): Promise<ProfileWithRole | null> {
-    const { data, error } = await supabase
-      .from(TABLES.PROFILES)
-      .select(`
-        *,
-        role:roles(*)
-      `)
-      .eq('user_id', userId)
-      .single();
+    const { data: profileData, error } = await supabase
+      .rpc('get_user_profile', { p_user_id: userId });
 
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw error;
-    }
+    if (error) throw error;
+    if (!profileData || profileData.length === 0) return null;
 
+    const profile = profileData[0];
+    
     // Get user permissions
     const { data: permissions } = await supabase
       .rpc('get_user_permissions', { p_user_id: userId });
     
+    // Construct the role object from the flattened data
+    const role = profile.role_name ? {
+      id: '',
+      name: profile.role_name,
+      display_name: profile.role_display_name,
+      description: null,
+      is_system: false,
+      is_active: true,
+      created_at: '',
+      updated_at: ''
+    } : null;
+    
     const profileWithRole: ProfileWithRole = {
-      ...data,
-      role: data.role,
+      id: profile.id,
+      user_id: profile.user_id,
+      email: profile.email,
+      full_name: profile.full_name,
+      avatar_url: profile.avatar_url,
+      role_id: profile.role_id,
+      currency: profile.currency,
+      timezone: profile.timezone,
+      theme: profile.theme,
+      notifications_enabled: profile.notifications_enabled,
+      ai_insights_enabled: profile.ai_insights_enabled,
+      monthly_budget_limit: profile.monthly_budget_limit,
+      email_verified: profile.email_verified,
+      phone_number: profile.phone_number,
+      phone_verified: profile.phone_verified,
+      two_factor_enabled: profile.two_factor_enabled,
+      last_login: profile.last_login,
+      is_active: profile.is_active,
+      created_at: profile.created_at,
+      updated_at: profile.updated_at,
+      role: role,
       permissions: permissions?.map(p => ({
         id: '',
         name: p.permission_name,
@@ -96,11 +181,14 @@ export class AdminService {
       .from(TABLES.PROFILES)
       .update({ role_id: roleId, updated_at: new Date().toISOString() })
       .eq('user_id', userId)
-      .select(`
-        *,
-        role:roles(*)
-      `)
+      .select('*')
       .single();
+    
+    if (error) throw error;
+    
+    // Get updated profile with role using custom function
+    const updatedProfile = await this.getUserById(userId);
+    if (!updatedProfile) throw new Error('Failed to fetch updated profile');
 
     if (error) throw error;
 
@@ -111,11 +199,11 @@ export class AdminService {
       'user',
       {
         old_role: oldProfile?.role?.name,
-        new_role: data.role?.name
+        new_role: updatedProfile.role?.name
       }
     );
 
-    return data;
+    return updatedProfile;
   }
 
   // Promote user to admin

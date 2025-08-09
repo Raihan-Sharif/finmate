@@ -297,6 +297,78 @@ npm run clean           # Clean build artifacts
 
 **Never exclude current features when making database changes.**
 
+### Database Query Guidelines for Joined Data
+
+**CRITICAL RULE**: Always use custom database functions for fetching data that requires joins, especially when Row Level Security (RLS) policies are involved.
+
+#### Why Use Custom Functions:
+1. **RLS Bypass**: Custom functions with `SECURITY DEFINER` can access restricted tables (like `roles`) that have blocking RLS policies
+2. **Performance**: Single function call vs multiple round trips for joins
+3. **Consistency**: Centralized logic for complex queries
+4. **Security**: Controlled access to sensitive data through well-defined interfaces
+
+#### Available Custom Functions:
+1. **`get_user_profile(p_user_id UUID)`** - Get user profile with role information
+   - Returns flattened data: `role_name`, `role_display_name`
+   - Bypasses RLS policies on roles table
+   - Use instead of: `profiles.select('*, role:roles(*)')`
+
+2. **`get_user_permissions(p_user_id UUID)`** - Get user's aggregated permissions
+   - Returns role-based + user-specific permissions
+   - Use for permission checks and authorization
+
+3. **`get_financial_summary(p_user_id UUID, p_currency VARCHAR(3))`** - Get user's financial overview
+   - Aggregated financial data across multiple tables
+   - Use for dashboard summaries
+
+#### Implementation Rules:
+
+**❌ NEVER DO THIS:**
+```typescript
+// Direct join with roles (will fail due to RLS)
+const { data } = await supabase
+  .from('profiles')
+  .select('*, role:roles(*)')
+  .eq('user_id', userId);
+```
+
+**✅ ALWAYS DO THIS:**
+```typescript
+// Use custom function
+const { data: profileData } = await supabase
+  .rpc('get_user_profile', { p_user_id: userId });
+
+// Reconstruct role object from flattened data
+const role = profileData[0]?.role_name ? {
+  name: profileData[0].role_name,
+  display_name: profileData[0].role_display_name,
+  // ... other fields
+} : null;
+```
+
+#### When to Create New Custom Functions:
+- When you need to join multiple tables
+- When accessing tables with restrictive RLS policies
+- When performing complex aggregations
+- When the same query pattern is used in multiple places
+- When performance optimization is needed
+
+#### Function Creation Guidelines:
+- Always use `SECURITY DEFINER` for functions that need to bypass RLS
+- Include proper parameter validation
+- Return consistent, well-documented data structures
+- Add appropriate error handling
+- Use meaningful function names: `get_[entity]_[context]`
+
+#### Examples of When to Use Custom Functions:
+- User profiles with roles ✅ `get_user_profile()`
+- User permissions ✅ `get_user_permissions()`
+- Financial summaries ✅ `get_financial_summary()`
+- Category hierarchies ✅ `get_categories_with_subcategories()`
+- Budget analytics ✅ `get_budget_analysis()`
+
+**Remember**: If you find yourself writing complex SELECT queries with JOINs in TypeScript, create a database function instead!
+
 ### Component Development
 1. Follow ShadCN UI patterns
 2. Use Tailwind CSS for styling

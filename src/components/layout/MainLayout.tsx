@@ -85,7 +85,7 @@ const navigation: NavigationItem[] = [
       },
       {
         name: 'Add Transaction',
-        href: '/dashboard/transactions/add',
+        href: '/dashboard/transactions/new',
         icon: Plus,
         color: 'text-emerald-600',
         bgColor: 'bg-emerald-50',
@@ -122,7 +122,7 @@ const navigation: NavigationItem[] = [
       },
       {
         name: 'Create Budget',
-        href: '/dashboard/budget/create',
+        href: '/dashboard/budget/new',
         icon: Plus,
         color: 'text-amber-600',
         bgColor: 'bg-amber-50',
@@ -239,13 +239,13 @@ const adminNavigation: NavigationItem[] = [
 const quickActions = [
   {
     name: 'Add Transaction',
-    href: '/dashboard/transactions/add',
+    href: '/dashboard/transactions/new',
     icon: Plus,
     color: 'text-green-600',
   },
   {
     name: 'Create Budget',
-    href: '/dashboard/budget/create',
+    href: '/dashboard/budget/new',
     icon: Target,
     color: 'text-blue-600',
   },
@@ -805,7 +805,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             {/* Right side */}
             <div className="flex items-center space-x-4">
               {/* Quick actions */}
-              <Link href="/dashboard/transactions/add">
+              <Link href="/dashboard/transactions/new">
                 <Button size="sm" className="hidden sm:flex">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Transaction
@@ -949,3 +949,4 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
 // Also export as named export for compatibility
 export { MainLayout };
+

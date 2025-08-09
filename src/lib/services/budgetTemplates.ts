@@ -145,33 +145,25 @@ export class BudgetTemplateService {
 
   // Check if user can create custom templates
   static async canCreateCustomTemplate(userId: string): Promise<boolean> {
-    const { data: profile, error } = await supabase
-      .from(TABLES.PROFILES)
-      .select(`
-        role:roles(name)
-      `)
-      .eq('user_id', userId)
-      .single();
+    const { data: profileData, error } = await supabase
+      .rpc('get_user_profile', { p_user_id: userId });
 
-    if (error || !profile) return false;
+    if (error || !profileData || profileData.length === 0) return false;
     
-    const roleName = profile.role?.name;
+    const profile = profileData[0];
+    const roleName = profile.role_name;
     return roleName === 'paid_user' || roleName === 'admin' || roleName === 'super_admin';
   }
 
   // Check if user can create global templates
   static async canCreateGlobalTemplate(userId: string): Promise<boolean> {
-    const { data: profile, error } = await supabase
-      .from(TABLES.PROFILES)
-      .select(`
-        role:roles(name)
-      `)
-      .eq('user_id', userId)
-      .single();
+    const { data: profileData, error } = await supabase
+      .rpc('get_user_profile', { p_user_id: userId });
 
-    if (error || !profile) return false;
+    if (error || !profileData || profileData.length === 0) return false;
     
-    const roleName = profile.role?.name;
+    const profile = profileData[0];
+    const roleName = profile.role_name;
     return roleName === 'admin' || roleName === 'super_admin';
   }
 
