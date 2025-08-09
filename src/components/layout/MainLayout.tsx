@@ -142,6 +142,36 @@ const navigation: NavigationItem[] = [
     icon: TrendingUp,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
+    children: [
+      {
+        name: 'Portfolio Overview',
+        href: '/dashboard/investments',
+        icon: TrendingUp,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50',
+      },
+      {
+        name: 'Add Investment',
+        href: '/dashboard/investments/new',
+        icon: Plus,
+        color: 'text-violet-600',
+        bgColor: 'bg-violet-50',
+      },
+      {
+        name: 'SIP Management',
+        href: '/dashboard/investments/sips',
+        icon: Clock,
+        color: 'text-indigo-600',
+        bgColor: 'bg-indigo-50',
+      },
+      {
+        name: 'Analytics',
+        href: '/dashboard/investments/analytics',
+        icon: BarChart3,
+        color: 'text-purple-700',
+        bgColor: 'bg-purple-100',
+      },
+    ],
   },
   {
     name: 'EMI Calculator',

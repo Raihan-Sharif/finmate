@@ -35,6 +35,11 @@ DROP FUNCTION IF EXISTS cleanup_expired_ai_insights() CASCADE;
 
 -- Drop all tables in correct dependency order
 DROP TABLE IF EXISTS ai_insights CASCADE;
+DROP TABLE IF EXISTS investment_performance_snapshots CASCADE;
+DROP TABLE IF EXISTS investment_price_history CASCADE;
+DROP TABLE IF EXISTS investment_templates CASCADE;
+DROP TABLE IF EXISTS investment_transactions CASCADE;
+DROP TABLE IF EXISTS investment_portfolios CASCADE;
 DROP TABLE IF EXISTS recurring_transactions CASCADE;
 DROP TABLE IF EXISTS emi_payments CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
@@ -63,6 +68,8 @@ DROP TYPE IF EXISTS lending_type CASCADE;
 DROP TYPE IF EXISTS loan_status CASCADE;
 DROP TYPE IF EXISTS loan_type CASCADE;
 DROP TYPE IF EXISTS investment_type CASCADE;
+DROP TYPE IF EXISTS investment_status CASCADE;
+DROP TYPE IF EXISTS investment_frequency CASCADE;
 DROP TYPE IF EXISTS account_type CASCADE;
 DROP TYPE IF EXISTS transaction_type CASCADE;
 DROP TYPE IF EXISTS permission_action CASCADE;
@@ -80,7 +87,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- =============================================
 CREATE TYPE transaction_type AS ENUM ('income', 'expense', 'transfer');
 CREATE TYPE account_type AS ENUM ('bank', 'credit_card', 'wallet', 'investment', 'savings', 'other');
-CREATE TYPE investment_type AS ENUM ('stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'other');
+CREATE TYPE investment_type AS ENUM ('stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension', 'other');
+CREATE TYPE investment_status AS ENUM ('active', 'matured', 'sold', 'paused', 'closed');
+CREATE TYPE investment_frequency AS ENUM ('daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly');
 CREATE TYPE loan_type AS ENUM ('personal', 'home', 'car', 'education', 'business', 'other');
 CREATE TYPE loan_status AS ENUM ('active', 'closed', 'defaulted');
 CREATE TYPE lending_type AS ENUM ('lent', 'borrowed');
@@ -291,27 +300,277 @@ CREATE TABLE budgets (
 -- ADVANCED FINANCIAL TABLES
 -- =============================================
 
--- Investments Table
-CREATE TABLE investments (
+-- =============================================
+-- COMPREHENSIVE INVESTMENT SYSTEM
+-- =============================================
+
+-- Investment Portfolios Table (organize investments into portfolios)
+CREATE TABLE investment_portfolios (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     name VARCHAR(100) NOT NULL,
-    type investment_type DEFAULT 'stock' NOT NULL,
-    symbol VARCHAR(20),
-    units DECIMAL(15,4) NOT NULL,
-    purchase_price DECIMAL(15,2) NOT NULL,
-    current_price DECIMAL(15,2) NOT NULL,
-    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
-    purchase_date DATE NOT NULL,
-    platform VARCHAR(100),
-    notes TEXT,
-    metadata JSONB,
+    description TEXT,
+    target_amount DECIMAL(15,2),
+    target_date DATE,
+    risk_level VARCHAR(20) DEFAULT 'moderate', -- conservative, moderate, aggressive
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    color VARCHAR(7) DEFAULT '#8B5CF6' NOT NULL,
+    icon VARCHAR(50) DEFAULT 'trending-up' NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     
-    CONSTRAINT investments_units_positive CHECK (units > 0),
-    CONSTRAINT investments_purchase_price_positive CHECK (purchase_price > 0),
-    CONSTRAINT investments_current_price_positive CHECK (current_price > 0)
+    CONSTRAINT investment_portfolios_name_user_unique UNIQUE (user_id, name),
+    CONSTRAINT investment_portfolios_target_amount_positive CHECK (target_amount > 0)
+);
+
+-- Enhanced Investments Table
+CREATE TABLE investments (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    portfolio_id UUID REFERENCES investment_portfolios(id) ON DELETE SET NULL,
+    
+    -- Basic Investment Info
+    name VARCHAR(100) NOT NULL,
+    symbol VARCHAR(20), -- Stock symbol, mutual fund code, etc.
+    type investment_type DEFAULT 'stock' NOT NULL,
+    status investment_status DEFAULT 'active' NOT NULL,
+    
+    -- Investment Details
+    total_units DECIMAL(15,4) DEFAULT 0 NOT NULL, -- Total units owned
+    average_cost DECIMAL(15,2) NOT NULL, -- Average cost per unit
+    current_price DECIMAL(15,2) NOT NULL, -- Current market price per unit
+    total_invested DECIMAL(15,2) DEFAULT 0 NOT NULL, -- Total amount invested
+    current_value DECIMAL(15,2) DEFAULT 0 NOT NULL, -- Current market value
+    
+    -- Investment Platform & Details
+    platform VARCHAR(100), -- Brokerage, bank, etc.
+    account_number VARCHAR(100),
+    folio_number VARCHAR(100), -- For mutual funds
+    maturity_date DATE, -- For FDs, DPS, etc.
+    interest_rate DECIMAL(5,2), -- For FDs, bonds, etc.
+    
+    -- Currency & Location
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
+    exchange VARCHAR(50), -- DSE, CSE, NSE, etc.
+    
+    -- Metadata
+    tags TEXT[],
+    notes TEXT,
+    documents JSONB, -- Store document URLs, certificates, etc.
+    metadata JSONB, -- Additional flexible data
+    
+    -- Auto-calculated fields (updated by triggers)
+    gain_loss DECIMAL(15,2) DEFAULT 0, -- Unrealized gain/loss
+    gain_loss_percentage DECIMAL(8,4) DEFAULT 0, -- Percentage gain/loss
+    dividend_earned DECIMAL(15,2) DEFAULT 0, -- Total dividends earned
+    
+    -- Timestamps
+    purchase_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    -- Constraints
+    CONSTRAINT investments_total_units_non_negative CHECK (total_units >= 0),
+    CONSTRAINT investments_average_cost_positive CHECK (average_cost > 0),
+    CONSTRAINT investments_current_price_positive CHECK (current_price > 0),
+    CONSTRAINT investments_total_invested_non_negative CHECK (total_invested >= 0),
+    CONSTRAINT investments_current_value_non_negative CHECK (current_value >= 0),
+    CONSTRAINT investments_interest_rate_valid CHECK (interest_rate IS NULL OR (interest_rate >= 0 AND interest_rate <= 100))
+);
+
+-- Investment Transactions Table (detailed transaction history)
+CREATE TABLE investment_transactions (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    investment_id UUID REFERENCES investments(id) ON DELETE CASCADE NOT NULL,
+    portfolio_id UUID REFERENCES investment_portfolios(id) ON DELETE SET NULL,
+    
+    -- Transaction Details
+    type VARCHAR(20) NOT NULL, -- buy, sell, dividend, bonus, split, merge, etc.
+    units DECIMAL(15,4) NOT NULL, -- Units bought/sold
+    price_per_unit DECIMAL(15,2) NOT NULL, -- Price per unit for this transaction
+    total_amount DECIMAL(15,2) NOT NULL, -- Total transaction amount
+    
+    -- Charges & Fees
+    brokerage_fee DECIMAL(10,2) DEFAULT 0,
+    tax_amount DECIMAL(10,2) DEFAULT 0,
+    other_charges DECIMAL(10,2) DEFAULT 0,
+    net_amount DECIMAL(15,2) NOT NULL, -- Amount after all charges
+    
+    -- Transaction Info
+    transaction_date DATE NOT NULL,
+    settlement_date DATE,
+    transaction_reference VARCHAR(100), -- Broker reference, order ID, etc.
+    exchange_reference VARCHAR(100), -- Exchange order ID
+    
+    -- Platform Details
+    platform VARCHAR(100),
+    account_number VARCHAR(100),
+    
+    -- Currency & Metadata
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
+    notes TEXT,
+    metadata JSONB,
+    
+    -- Link to recurring investment (if applicable)
+    recurring_investment_id UUID, -- Will be linked to investment_templates
+    is_recurring BOOLEAN DEFAULT false NOT NULL,
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    -- Constraints
+    CONSTRAINT investment_transactions_units_positive CHECK (units > 0),
+    CONSTRAINT investment_transactions_price_positive CHECK (price_per_unit > 0),
+    CONSTRAINT investment_transactions_total_positive CHECK (total_amount > 0),
+    CONSTRAINT investment_transactions_charges_non_negative CHECK (
+        brokerage_fee >= 0 AND tax_amount >= 0 AND other_charges >= 0
+    ),
+    CONSTRAINT investment_transactions_net_positive CHECK (net_amount > 0),
+    CONSTRAINT investment_transactions_type_valid CHECK (
+        type IN ('buy', 'sell', 'dividend', 'bonus', 'split', 'merge', 'rights', 'redemption')
+    )
+);
+
+-- Investment Templates Table (for recurring investments like SIP, DCA)
+CREATE TABLE investment_templates (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    portfolio_id UUID REFERENCES investment_portfolios(id) ON DELETE SET NULL,
+    
+    -- Template Details
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    investment_type investment_type NOT NULL,
+    symbol VARCHAR(20), -- Stock symbol, mutual fund code
+    
+    -- Investment Parameters
+    amount_per_investment DECIMAL(15,2) NOT NULL, -- Amount to invest each time
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
+    platform VARCHAR(100),
+    account_number VARCHAR(100),
+    
+    -- Recurring Configuration
+    frequency investment_frequency DEFAULT 'monthly' NOT NULL,
+    interval_value INTEGER DEFAULT 1 NOT NULL, -- Every X periods
+    start_date DATE NOT NULL,
+    end_date DATE, -- Optional end date
+    target_amount DECIMAL(15,2), -- Optional target amount
+    
+    -- Auto-execution Configuration
+    auto_execute BOOLEAN DEFAULT true NOT NULL, -- Execute automatically or manual only
+    market_order BOOLEAN DEFAULT true NOT NULL, -- Market order vs limit order
+    limit_price DECIMAL(15,2), -- For limit orders
+    
+    -- Status & Control
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    last_executed DATE,
+    next_execution DATE NOT NULL,
+    total_executed INTEGER DEFAULT 0 NOT NULL,
+    total_invested DECIMAL(15,2) DEFAULT 0 NOT NULL,
+    
+    -- Metadata
+    tags TEXT[],
+    notes TEXT,
+    metadata JSONB,
+    
+    -- Template Type (for organization)
+    template_type VARCHAR(50) DEFAULT 'sip', -- sip, dca, value_averaging, etc.
+    
+    -- Global Templates (for admins to create shared templates)
+    is_global BOOLEAN DEFAULT false NOT NULL,
+    usage_count INTEGER DEFAULT 0 NOT NULL,
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    -- Constraints
+    CONSTRAINT investment_templates_amount_positive CHECK (amount_per_investment > 0),
+    CONSTRAINT investment_templates_interval_positive CHECK (interval_value > 0),
+    CONSTRAINT investment_templates_target_amount_positive CHECK (target_amount IS NULL OR target_amount > 0),
+    CONSTRAINT investment_templates_limit_price_positive CHECK (limit_price IS NULL OR limit_price > 0),
+    CONSTRAINT investment_templates_total_invested_non_negative CHECK (total_invested >= 0),
+    CONSTRAINT investment_templates_name_user_unique UNIQUE (user_id, name)
+);
+
+-- Investment Price History Table (for performance tracking)
+CREATE TABLE investment_price_history (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    investment_id UUID REFERENCES investments(id) ON DELETE CASCADE NOT NULL,
+    symbol VARCHAR(20) NOT NULL,
+    
+    -- Price Data
+    date DATE NOT NULL,
+    open_price DECIMAL(15,2),
+    high_price DECIMAL(15,2),
+    low_price DECIMAL(15,2),
+    close_price DECIMAL(15,2) NOT NULL,
+    volume BIGINT DEFAULT 0,
+    
+    -- Currency
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
+    
+    -- Data Source
+    source VARCHAR(50), -- yahoo, alpha_vantage, manual, etc.
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    -- Constraints
+    CONSTRAINT investment_price_history_prices_positive CHECK (
+        close_price > 0 AND
+        (open_price IS NULL OR open_price > 0) AND
+        (high_price IS NULL OR high_price > 0) AND
+        (low_price IS NULL OR low_price > 0)
+    ),
+    CONSTRAINT investment_price_history_volume_non_negative CHECK (volume >= 0),
+    CONSTRAINT investment_price_history_date_symbol_unique UNIQUE (investment_id, date)
+);
+
+-- Investment Performance Snapshots (daily/monthly snapshots for analytics)
+CREATE TABLE investment_performance_snapshots (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    portfolio_id UUID REFERENCES investment_portfolios(id) ON DELETE CASCADE,
+    investment_id UUID REFERENCES investments(id) ON DELETE CASCADE, -- NULL for portfolio-level snapshots
+    
+    -- Snapshot Details
+    snapshot_date DATE NOT NULL,
+    snapshot_type VARCHAR(20) NOT NULL, -- daily, weekly, monthly, yearly
+    
+    -- Performance Metrics
+    total_invested DECIMAL(15,2) NOT NULL,
+    current_value DECIMAL(15,2) NOT NULL,
+    unrealized_gain_loss DECIMAL(15,2) NOT NULL,
+    realized_gain_loss DECIMAL(15,2) DEFAULT 0 NOT NULL,
+    dividend_income DECIMAL(15,2) DEFAULT 0 NOT NULL,
+    
+    -- Performance Percentages
+    total_return_percentage DECIMAL(8,4) NOT NULL,
+    annualized_return DECIMAL(8,4),
+    
+    -- Additional Metrics
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
+    total_units DECIMAL(15,4), -- For individual investments
+    
+    -- Metadata
+    metadata JSONB, -- Store additional calculated metrics
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    -- Constraints
+    CONSTRAINT investment_performance_total_invested_positive CHECK (total_invested >= 0),
+    CONSTRAINT investment_performance_current_value_non_negative CHECK (current_value >= 0),
+    CONSTRAINT investment_performance_snapshot_type_valid CHECK (
+        snapshot_type IN ('daily', 'weekly', 'monthly', 'quarterly', 'yearly')
+    ),
+    CONSTRAINT investment_performance_unique_snapshot UNIQUE (
+        user_id, portfolio_id, investment_id, snapshot_date, snapshot_type
+    )
 );
 
 -- Loans Table
@@ -551,10 +810,51 @@ CREATE INDEX idx_budget_templates_global ON budget_templates(is_global);
 CREATE INDEX idx_budget_templates_usage_count ON budget_templates(usage_count);
 CREATE INDEX idx_budget_templates_created_at ON budget_templates(created_at);
 
--- Advanced features indexes
+-- Investment system indexes
+-- Investment Portfolios indexes
+CREATE INDEX idx_investment_portfolios_user_id ON investment_portfolios(user_id);
+CREATE INDEX idx_investment_portfolios_active ON investment_portfolios(is_active);
+CREATE INDEX idx_investment_portfolios_user_active ON investment_portfolios(user_id, is_active);
+
+-- Enhanced Investments indexes
 CREATE INDEX idx_investments_user_id ON investments(user_id);
+CREATE INDEX idx_investments_portfolio_id ON investments(portfolio_id);
 CREATE INDEX idx_investments_type ON investments(type);
+CREATE INDEX idx_investments_status ON investments(status);
 CREATE INDEX idx_investments_symbol ON investments(symbol);
+CREATE INDEX idx_investments_user_status ON investments(user_id, status);
+CREATE INDEX idx_investments_user_type ON investments(user_id, type);
+
+-- Investment Transactions indexes
+CREATE INDEX idx_investment_transactions_user_id ON investment_transactions(user_id);
+CREATE INDEX idx_investment_transactions_investment_id ON investment_transactions(investment_id);
+CREATE INDEX idx_investment_transactions_portfolio_id ON investment_transactions(portfolio_id);
+CREATE INDEX idx_investment_transactions_type ON investment_transactions(type);
+CREATE INDEX idx_investment_transactions_date ON investment_transactions(transaction_date);
+CREATE INDEX idx_investment_transactions_user_date ON investment_transactions(user_id, transaction_date);
+CREATE INDEX idx_investment_transactions_recurring ON investment_transactions(recurring_investment_id);
+
+-- Investment Templates indexes
+CREATE INDEX idx_investment_templates_user_id ON investment_templates(user_id);
+CREATE INDEX idx_investment_templates_portfolio_id ON investment_templates(portfolio_id);
+CREATE INDEX idx_investment_templates_active ON investment_templates(is_active);
+CREATE INDEX idx_investment_templates_next_execution ON investment_templates(next_execution);
+CREATE INDEX idx_investment_templates_global ON investment_templates(is_global);
+CREATE INDEX idx_investment_templates_auto_execute ON investment_templates(auto_execute, is_active);
+CREATE INDEX idx_investment_templates_user_active ON investment_templates(user_id, is_active);
+
+-- Investment Price History indexes
+CREATE INDEX idx_investment_price_history_investment_id ON investment_price_history(investment_id);
+CREATE INDEX idx_investment_price_history_symbol ON investment_price_history(symbol);
+CREATE INDEX idx_investment_price_history_date ON investment_price_history(date);
+CREATE INDEX idx_investment_price_history_symbol_date ON investment_price_history(symbol, date);
+
+-- Investment Performance Snapshots indexes
+CREATE INDEX idx_investment_performance_user_id ON investment_performance_snapshots(user_id);
+CREATE INDEX idx_investment_performance_portfolio_id ON investment_performance_snapshots(portfolio_id);
+CREATE INDEX idx_investment_performance_investment_id ON investment_performance_snapshots(investment_id);
+CREATE INDEX idx_investment_performance_date ON investment_performance_snapshots(snapshot_date);
+CREATE INDEX idx_investment_performance_type ON investment_performance_snapshots(snapshot_type);
 
 CREATE INDEX idx_loans_user_id ON loans(user_id);
 CREATE INDEX idx_loans_status ON loans(status);
@@ -608,7 +908,13 @@ ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budget_templates ENABLE ROW LEVEL SECURITY;
+-- Investment system tables
+ALTER TABLE investment_portfolios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE investments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE investment_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE investment_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE investment_price_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE investment_performance_snapshots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lending ENABLE ROW LEVEL SECURITY;
 ALTER TABLE emi_payments ENABLE ROW LEVEL SECURITY;
@@ -656,7 +962,17 @@ CREATE POLICY "Admins can manage global templates" ON budget_templates FOR ALL U
         AND pe.name IN ('admin:all', 'templates:manage_global')
     )
 );
+-- Investment system policies  
+CREATE POLICY "Users can manage own investment portfolios" ON investment_portfolios FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own investments" ON investments FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own investment transactions" ON investment_transactions FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own investment templates" ON investment_templates FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can read global investment templates" ON investment_templates FOR SELECT USING (is_global = true);
+CREATE POLICY "Users can read investment price history" ON investment_price_history FOR SELECT USING (
+    EXISTS (SELECT 1 FROM investments i WHERE i.id = investment_price_history.investment_id AND i.user_id = auth.uid())
+);
+CREATE POLICY "System can manage investment price history" ON investment_price_history FOR ALL USING (true);
+CREATE POLICY "Users can manage own investment performance" ON investment_performance_snapshots FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own loans" ON loans FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own lending" ON lending FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own emi payments" ON emi_payments FOR ALL USING (auth.uid() = user_id);
@@ -1661,6 +1977,207 @@ AND CAST(recurring_pattern->>'recurring_id' AS UUID) IN (
 -- SELECT cron.schedule('execute-recurring-transactions', '0 2 * * *', 'SELECT execute_pending_recurring_transactions();');
 
 -- =============================================
+-- INVESTMENT SYSTEM FUNCTIONS
+-- =============================================
+
+-- Function to update investment calculated fields
+CREATE OR REPLACE FUNCTION update_investment_calculated_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Calculate current value
+    NEW.current_value = NEW.total_units * NEW.current_price;
+    
+    -- Calculate gain/loss
+    NEW.gain_loss = NEW.current_value - NEW.total_invested;
+    
+    -- Calculate gain/loss percentage
+    IF NEW.total_invested > 0 THEN
+        NEW.gain_loss_percentage = (NEW.gain_loss / NEW.total_invested) * 100;
+    ELSE
+        NEW.gain_loss_percentage = 0;
+    END IF;
+    
+    -- Update timestamp
+    NEW.updated_at = NOW();
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+-- Function to update investment from transactions
+CREATE OR REPLACE FUNCTION update_investment_from_transactions()
+RETURNS TRIGGER AS $$
+DECLARE
+    investment_record RECORD;
+    total_buy_units DECIMAL(15,4) := 0;
+    total_buy_amount DECIMAL(15,2) := 0;
+    total_sell_units DECIMAL(15,4) := 0;
+    avg_cost DECIMAL(15,2) := 0;
+    total_dividend DECIMAL(15,2) := 0;
+BEGIN
+    -- Get investment record
+    SELECT * INTO investment_record FROM investments WHERE id = COALESCE(NEW.investment_id, OLD.investment_id);
+    
+    IF NOT FOUND THEN
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+    
+    -- Recalculate totals from all transactions
+    SELECT 
+        COALESCE(SUM(CASE WHEN type = 'buy' THEN units ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN type = 'buy' THEN net_amount ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN type = 'sell' THEN units ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN type = 'dividend' THEN net_amount ELSE 0 END), 0)
+    INTO total_buy_units, total_buy_amount, total_sell_units, total_dividend
+    FROM investment_transactions 
+    WHERE investment_id = investment_record.id;
+    
+    -- Calculate average cost
+    IF total_buy_units > 0 THEN
+        avg_cost = total_buy_amount / total_buy_units;
+    END IF;
+    
+    -- Update investment record
+    UPDATE investments SET
+        total_units = total_buy_units - total_sell_units,
+        total_invested = total_buy_amount,
+        average_cost = COALESCE(avg_cost, average_cost), -- Keep existing if no buy transactions
+        dividend_earned = total_dividend,
+        updated_at = NOW()
+    WHERE id = investment_record.id;
+    
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE 'plpgsql';
+
+-- Function to execute pending investment templates
+CREATE OR REPLACE FUNCTION execute_pending_investment_templates()
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    template RECORD;
+    new_transaction_id UUID;
+    executed_count INTEGER := 0;
+BEGIN
+    -- Find all active investment templates that need execution
+    FOR template IN 
+        SELECT it.* 
+        FROM investment_templates it
+        WHERE it.is_active = true 
+        AND it.auto_execute = true
+        AND it.next_execution <= CURRENT_DATE
+        AND (it.end_date IS NULL OR it.next_execution <= it.end_date)
+        AND (it.target_amount IS NULL OR it.total_invested < it.target_amount)
+    LOOP
+        -- Create investment transaction from template
+        INSERT INTO investment_transactions (
+            user_id,
+            investment_id,
+            portfolio_id,
+            type,
+            units,
+            price_per_unit,
+            total_amount,
+            net_amount,
+            transaction_date,
+            platform,
+            account_number,
+            currency,
+            recurring_investment_id,
+            is_recurring,
+            notes,
+            created_at,
+            updated_at
+        ) VALUES (
+            template.user_id,
+            -- Find or create investment record for this template
+            (SELECT id FROM investments WHERE user_id = template.user_id AND symbol = template.symbol AND type = template.investment_type LIMIT 1),
+            template.portfolio_id,
+            'buy',
+            1, -- Placeholder - will be calculated based on amount and current price
+            template.amount_per_investment, -- Placeholder - for SIP this will be amount, for unit-based this will be price
+            template.amount_per_investment,
+            template.amount_per_investment,
+            CURRENT_DATE,
+            template.platform,
+            template.account_number,
+            template.currency,
+            template.id,
+            true,
+            'Automated investment from template: ' || template.name,
+            NOW(),
+            NOW()
+        ) RETURNING id INTO new_transaction_id;
+        
+        -- Update investment template
+        UPDATE investment_templates 
+        SET 
+            last_executed = CURRENT_DATE,
+            next_execution = CASE 
+                WHEN frequency = 'daily' THEN CURRENT_DATE + INTERVAL '1 day' * interval_value
+                WHEN frequency = 'weekly' THEN CURRENT_DATE + INTERVAL '1 week' * interval_value
+                WHEN frequency = 'biweekly' THEN CURRENT_DATE + INTERVAL '2 weeks' * interval_value
+                WHEN frequency = 'monthly' THEN CURRENT_DATE + INTERVAL '1 month' * interval_value
+                WHEN frequency = 'quarterly' THEN CURRENT_DATE + INTERVAL '3 months' * interval_value
+                WHEN frequency = 'yearly' THEN CURRENT_DATE + INTERVAL '1 year' * interval_value
+                ELSE CURRENT_DATE + INTERVAL '1 month' -- default fallback
+            END,
+            total_executed = total_executed + 1,
+            total_invested = total_invested + template.amount_per_investment,
+            updated_at = NOW()
+        WHERE id = template.id;
+        
+        executed_count := executed_count + 1;
+    END LOOP;
+    
+    RETURN executed_count;
+END;
+$$;
+
+-- Function to increment investment template usage count
+CREATE OR REPLACE FUNCTION increment_investment_template_usage(template_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    UPDATE investment_templates 
+    SET usage_count = usage_count + 1,
+        updated_at = NOW()
+    WHERE id = template_id;
+END;
+$$;
+
+-- =============================================
+-- INVESTMENT SYSTEM TRIGGERS
+-- =============================================
+
+-- Trigger for investment calculated fields
+CREATE TRIGGER trigger_update_investment_calculated_fields
+    BEFORE INSERT OR UPDATE ON investments
+    FOR EACH ROW EXECUTE FUNCTION update_investment_calculated_fields();
+
+-- Trigger for updating investment from transactions
+CREATE TRIGGER trigger_update_investment_from_transactions
+    AFTER INSERT OR UPDATE OR DELETE ON investment_transactions
+    FOR EACH ROW EXECUTE FUNCTION update_investment_from_transactions();
+
+-- Triggers for investment system updated_at columns
+CREATE TRIGGER update_investment_portfolios_updated_at BEFORE UPDATE ON investment_portfolios
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_investment_transactions_updated_at BEFORE UPDATE ON investment_transactions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_investment_templates_updated_at BEFORE UPDATE ON investment_templates
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Schedule investment template execution (uncomment after enabling pg_cron)
+-- SELECT cron.schedule('execute-investment-templates', '0 3 * * *', 'SELECT execute_pending_investment_templates();');
+
+-- =============================================
 -- GRANT PERMISSIONS
 -- =============================================
 GRANT USAGE ON SCHEMA public TO authenticated;
@@ -1678,7 +2195,9 @@ FROM information_schema.tables
 WHERE table_schema = 'public' 
 AND table_name IN (
     'roles', 'permissions', 'role_permissions', 'profiles', 'user_permissions',
-    'categories', 'subcategories', 'accounts', 'transactions', 'budgets', 'investments',
+    'categories', 'subcategories', 'accounts', 'transactions', 'budgets', 'budget_templates',
+    'investment_portfolios', 'investments', 'investment_transactions', 'investment_templates', 
+    'investment_price_history', 'investment_performance_snapshots',
     'loans', 'lending', 'emi_payments', 'recurring_transactions',
     'notifications', 'ai_insights', 'user_sessions', 'admin_audit_logs'
 );

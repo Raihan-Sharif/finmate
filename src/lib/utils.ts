@@ -9,13 +9,25 @@ export function cn(...inputs: ClassValue[]) {
 export function formatCurrency(
   amount: number,
   currency: string = 'USD',
-  locale: string = 'en-US'
+  locale: string = 'en-US',
+  compact: boolean = false
 ): string {
+  // Handle BDT currency specially with Taka symbol
+  if (currency === 'BDT') {
+    const formatter = new Intl.NumberFormat('en-BD', {
+      minimumFractionDigits: compact ? 0 : 2,
+      maximumFractionDigits: compact ? 1 : 2,
+      notation: compact ? 'compact' : 'standard'
+    });
+    return `৳${formatter.format(amount)}`;
+  }
+
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: compact ? 0 : 2,
+    maximumFractionDigits: compact ? 1 : 2,
+    notation: compact ? 'compact' : 'standard'
   }).format(amount);
 }
 

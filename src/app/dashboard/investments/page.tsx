@@ -1,0 +1,560 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import {
+  Plus,
+  TrendingUp,
+  Briefcase,
+  Zap,
+  PieChart,
+  BarChart3,
+  Filter,
+  Search,
+  RefreshCw,
+  Download,
+  Settings,
+  Eye,
+  Target,
+  Activity
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useUserCurrency } from '@/lib/currency';
+import { useTheme } from 'next-themes';
+
+// Investment components
+import { InvestmentDashboardStats } from '@/components/investments/InvestmentDashboardStats';
+import { PortfolioCard } from '@/components/investments/PortfolioCard';
+import { InvestmentCard } from '@/components/investments/InvestmentCard';
+import { SIPTemplateCard } from '@/components/investments/SIPTemplateCard';
+import { InvestmentTransactionList } from '@/components/investments/InvestmentTransactionList';
+import { InvestmentChart } from '@/components/investments/InvestmentChart';
+import { CreateInvestmentForm } from '@/components/investments/CreateInvestmentForm';
+import { CreatePortfolioForm } from '@/components/investments/CreatePortfolioForm';
+import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
+
+// Hooks
+import { useInvestmentDashboard } from '@/hooks/useInvestmentAnalytics';
+import { useInvestmentPortfolios } from '@/hooks/useInvestmentPortfolios';
+import { useInvestments } from '@/hooks/useInvestments';
+import { useSIPTemplates } from '@/hooks/useInvestmentTemplates';
+import { useInvestmentTransactions } from '@/hooks/useInvestmentTransactions';
+
+export default function InvestmentDashboardPage() {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showCreateForm, setShowCreateForm] = useState<'investment' | 'portfolio' | 'sip' | false>(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const userCurrency = useUserCurrency();
+  const { theme } = useTheme();
+
+  // Data hooks
+  const dashboard = useInvestmentDashboard();
+  const { data: portfolios = [], isLoading: portfoliosLoading } = useInvestmentPortfolios();
+  const { data: investments = [], isLoading: investmentsLoading } = useInvestments();
+  const { data: sipTemplates = [], isLoading: sipsLoading } = useSIPTemplates();
+  const { data: transactions = [], isLoading: transactionsLoading } = useInvestmentTransactions();
+
+  // Mock data for charts (replace with real data from hooks)
+  const mockPerformanceData = [
+    { date: '2024-01', value: 50000, invested: 45000, gain_loss: 5000 },
+    { date: '2024-02', value: 52000, invested: 47000, gain_loss: 5000 },
+    { date: '2024-03', value: 48000, invested: 49000, gain_loss: -1000 },
+    { date: '2024-04', value: 55000, invested: 51000, gain_loss: 4000 },
+    { date: '2024-05', value: 58000, invested: 53000, gain_loss: 5000 },
+    { date: '2024-06', value: 62000, invested: 55000, gain_loss: 7000 }
+  ];
+
+  const mockAssetAllocation = [
+    { name: 'Stocks', value: 35000, percentage: 56.5, color: '#3B82F6', type: 'equity' },
+    { name: 'Bonds', value: 15000, percentage: 24.2, color: '#10B981', type: 'fixed_income' },
+    { name: 'Real Estate', value: 8000, percentage: 12.9, color: '#F59E0B', type: 'real_estate' },
+    { name: 'Gold', value: 4000, percentage: 6.4, color: '#EF4444', type: 'commodity' }
+  ];
+
+  const mockMonthlyTrend = [
+    { month: 'Jan', invested: 45000, current_value: 50000, gain_loss: 5000, return_percentage: 11.1 },
+    { month: 'Feb', invested: 47000, current_value: 52000, gain_loss: 5000, return_percentage: 10.6 },
+    { month: 'Mar', invested: 49000, current_value: 48000, gain_loss: -1000, return_percentage: -2.0 },
+    { month: 'Apr', invested: 51000, current_value: 55000, gain_loss: 4000, return_percentage: 7.8 },
+    { month: 'May', invested: 53000, current_value: 58000, gain_loss: 5000, return_percentage: 9.4 },
+    { month: 'Jun', invested: 55000, current_value: 62000, gain_loss: 7000, return_percentage: 12.7 }
+  ];
+
+  // Mock dashboard stats
+  const mockDashboardStats = {
+    total_portfolios: 3,
+    total_investments: 8,
+    total_invested: 55000,
+    total_current_value: 62000,
+    total_gain_loss: 7000,
+    total_return_percentage: 12.73,
+    dividend_income: 2500,
+    active_sips: 4,
+    monthly_sip_amount: 8000,
+    top_performing_investment: {
+      name: 'IFIC Bank Share',
+      current_value: 15000,
+      gain_loss_percentage: 18.5
+    },
+    worst_performing_investment: {
+      name: 'AB Bank Bond',
+      current_value: 8000,
+      gain_loss_percentage: -3.2
+    },
+    upcoming_executions: []
+  };
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+    // Trigger refetch of all queries
+  };
+
+  const QuickActions = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.1 }}
+      className="flex flex-wrap gap-3"
+    >
+      <Button
+        onClick={() => setShowCreateForm('investment')}
+        className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        New Investment
+      </Button>
+      <Button 
+        variant="outline" 
+        className="hover:bg-white/70"
+        onClick={() => setShowCreateForm('portfolio')}
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Create Portfolio
+      </Button>
+      <Button 
+        variant="outline" 
+        className="hover:bg-white/70"
+        onClick={() => setShowCreateForm('sip')}
+      >
+        <Zap className="h-4 w-4 mr-2" />
+        Setup SIP
+      </Button>
+      <Button variant="ghost" onClick={handleRefresh}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
+      <Button variant="ghost">
+        <Download className="h-4 w-4 mr-2" />
+        Export
+      </Button>
+    </motion.div>
+  );
+
+  if (showCreateForm === 'investment') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <CreateInvestmentForm
+          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
+          onSubmit={async (data) => {
+            // Handle investment creation
+            console.log('Creating investment:', data);
+            setShowCreateForm(false);
+          }}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      </div>
+    );
+  }
+
+  if (showCreateForm === 'portfolio') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <CreatePortfolioForm
+          onSubmit={async (data) => {
+            // Handle portfolio creation
+            console.log('Creating portfolio:', data);
+            setShowCreateForm(false);
+          }}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      </div>
+    );
+  }
+
+  if (showCreateForm === 'sip') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <CreateSIPForm
+          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
+          onSubmit={async (data) => {
+            // Handle SIP creation
+            console.log('Creating SIP:', data);
+            setShowCreateForm(false);
+          }}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
+        <div>
+          <h1 className={cn(
+            "text-3xl font-bold mb-2",
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          )}>Investment Dashboard</h1>
+          <p className={cn(
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          )}>Track and manage your investment portfolio</p>
+        </div>
+        <QuickActions />
+      </motion.div>
+
+      {/* Dashboard Stats */}
+      <InvestmentDashboardStats
+        stats={mockDashboardStats}
+        currency={userCurrency}
+        isLoading={dashboard.isLoading}
+      />
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <TabsList className={cn(
+            "grid w-full grid-cols-5 backdrop-blur-sm border",
+            theme === 'dark'
+              ? 'bg-gray-800/50 border-gray-700'
+              : 'bg-white/50 border-gray-200'
+          )}>
+            <TabsTrigger 
+              value="overview" 
+              className={cn(
+                "transition-colors",
+                theme === 'dark'
+                  ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-white'
+                  : 'data-[state=active]:bg-white data-[state=active]:shadow-md'
+              )}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="portfolios" 
+              className={cn(
+                "transition-colors",
+                theme === 'dark'
+                  ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-white'
+                  : 'data-[state=active]:bg-white data-[state=active]:shadow-md'
+              )}
+            >
+              <Briefcase className="h-4 w-4 mr-2" />
+              Portfolios
+            </TabsTrigger>
+            <TabsTrigger 
+              value="investments" 
+              className={cn(
+                "transition-colors",
+                theme === 'dark'
+                  ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-white'
+                  : 'data-[state=active]:bg-white data-[state=active]:shadow-md'
+              )}
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Investments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="sips" 
+              className={cn(
+                "transition-colors",
+                theme === 'dark'
+                  ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-white'
+                  : 'data-[state=active]:bg-white data-[state=active]:shadow-md'
+              )}
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              SIPs
+            </TabsTrigger>
+            <TabsTrigger 
+              value="transactions" 
+              className={cn(
+                "transition-colors",
+                theme === 'dark'
+                  ? 'data-[state=active]:bg-gray-700 data-[state=active]:shadow-md data-[state=active]:text-white'
+                  : 'data-[state=active]:bg-white data-[state=active]:shadow-md'
+              )}
+            >
+              <Activity className="h-4 w-4 mr-2" />
+              Transactions
+            </TabsTrigger>
+          </TabsList>
+        </motion.div>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-8 mt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Performance Chart */}
+            <InvestmentChart
+              chartType="performance"
+              performanceData={mockPerformanceData}
+              currency={userCurrency}
+              height={350}
+            />
+            
+            {/* Asset Allocation Chart */}
+            <InvestmentChart
+              chartType="allocation"
+              assetAllocation={mockAssetAllocation}
+              currency={userCurrency}
+              height={350}
+            />
+          </div>
+
+          {/* Monthly Trend */}
+          <InvestmentChart
+            chartType="trend"
+            monthlyTrend={mockMonthlyTrend}
+            currency={userCurrency}
+            height={300}
+          />
+
+          {/* Recent Activity */}
+          <Card className={cn(
+            "border-0 backdrop-blur-md shadow-lg",
+            theme === 'dark'
+              ? 'bg-gradient-to-br from-gray-800 via-gray-800/95 to-gray-900/90'
+              : 'bg-gradient-to-br from-white via-white/95 to-white/90'
+          )}>
+            <CardHeader>
+              <CardTitle className={cn(
+                "flex items-center space-x-2",
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              )}>
+                <Activity className="h-5 w-5" />
+                <span>Recent Activity</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {transactions.slice(0, 5).map((transaction, index) => (
+                  <motion.div
+                    key={transaction.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={cn(
+                      "flex items-center justify-between p-4 rounded-lg",
+                      theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50/50'
+                    )}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center",
+                        theme === 'dark' ? 'bg-blue-900/50' : 'bg-blue-100'
+                      )}>
+                        <TrendingUp className={cn(
+                          "h-4 w-4",
+                          theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                        )} />
+                      </div>
+                      <div>
+                        <p className={cn(
+                          "font-medium",
+                          theme === 'dark' ? 'text-white' : 'text-gray-900'
+                        )}>{transaction.investment_name}</p>
+                        <p className={cn(
+                          "text-sm",
+                          theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                        )}>
+                          {new Date(transaction.transaction_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={cn(
+                        "font-semibold",
+                        theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                      )}>
+                        +{transaction.amount} {transaction.currency}
+                      </p>
+                      <Badge variant="outline" className="text-xs">
+                        {transaction.transaction_type}
+                      </Badge>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Portfolios Tab */}
+        <TabsContent value="portfolios" className="space-y-6 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {portfolios.map((portfolio, index) => (
+              <motion.div
+                key={portfolio.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <PortfolioCard
+                  portfolio={portfolio}
+                  onView={(p) => console.log('View portfolio:', p)}
+                  onEdit={(p) => console.log('Edit portfolio:', p)}
+                  onDelete={(p) => console.log('Delete portfolio:', p)}
+                />
+              </motion.div>
+            ))}
+            
+            {portfolios.length === 0 && !portfoliosLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full text-center py-12"
+              >
+                <Briefcase className={cn(
+                  "h-12 w-12 mx-auto mb-4",
+                  theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                )} />
+                <h3 className={cn(
+                  "text-lg font-medium mb-2",
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                )}>No portfolios yet</h3>
+                <p className={cn(
+                  "mb-4",
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                )}>Create your first investment portfolio</p>
+                <Button className="bg-gradient-to-r from-blue-500 to-indigo-600">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Portfolio
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Investments Tab */}
+        <TabsContent value="investments" className="space-y-6 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {investments.map((investment, index) => (
+              <motion.div
+                key={investment.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <InvestmentCard
+                  investment={investment}
+                  onView={(i) => console.log('View investment:', i)}
+                  onEdit={(i) => console.log('Edit investment:', i)}
+                  onDelete={(i) => console.log('Delete investment:', i)}
+                />
+              </motion.div>
+            ))}
+            
+            {investments.length === 0 && !investmentsLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full text-center py-12"
+              >
+                <TrendingUp className={cn(
+                  "h-12 w-12 mx-auto mb-4",
+                  theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                )} />
+                <h3 className={cn(
+                  "text-lg font-medium mb-2",
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                )}>No investments yet</h3>
+                <p className={cn(
+                  "mb-4",
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                )}>Start your investment journey</p>
+                <Button 
+                  onClick={() => setShowCreateForm('investment')}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Investment
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* SIPs Tab */}
+        <TabsContent value="sips" className="space-y-6 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {sipTemplates.map((template, index) => (
+              <motion.div
+                key={template.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <SIPTemplateCard
+                  template={template}
+                  onView={(t) => console.log('View SIP:', t)}
+                  onEdit={(t) => console.log('Edit SIP:', t)}
+                  onDelete={(t) => console.log('Delete SIP:', t)}
+                  onToggleStatus={(t) => console.log('Toggle SIP:', t)}
+                />
+              </motion.div>
+            ))}
+            
+            {sipTemplates.length === 0 && !sipsLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full text-center py-12"
+              >
+                <Zap className={cn(
+                  "h-12 w-12 mx-auto mb-4",
+                  theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                )} />
+                <h3 className={cn(
+                  "text-lg font-medium mb-2",
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                )}>No SIP plans yet</h3>
+                <p className={cn(
+                  "mb-4",
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                )}>Set up systematic investment plans</p>
+                <Button className="bg-gradient-to-r from-green-500 to-emerald-600">
+                  <Zap className="h-4 w-4 mr-2" />
+                  Create SIP
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Transactions Tab */}
+        <TabsContent value="transactions" className="mt-8">
+          <InvestmentTransactionList
+            transactions={transactions}
+            onView={(t) => console.log('View transaction:', t)}
+            onEdit={(t) => console.log('Edit transaction:', t)}
+            onDelete={(t) => console.log('Delete transaction:', t)}
+            isLoading={transactionsLoading}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

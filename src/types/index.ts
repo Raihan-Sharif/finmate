@@ -1,5 +1,8 @@
 import { Database } from './database_professional'
 
+// Investment system types
+export * from './investments'
+
 // Database types
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
 export type Inserts<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
@@ -138,7 +141,7 @@ export type ColorString = string
 // Enums
 export type TransactionType = 'income' | 'expense' | 'transfer'
 export type AccountType = 'bank' | 'credit_card' | 'wallet' | 'investment' | 'other'
-export type InvestmentType = 'stock' | 'crypto' | 'mutual_fund' | 'bond' | 'other'
+// Legacy InvestmentType - use the new comprehensive InvestmentType from investments.ts instead
 export type LoanType = 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
 export type LendingType = 'lent' | 'borrowed'
 export type BudgetPeriod = 'monthly' | 'weekly' | 'yearly'
@@ -198,3 +201,10 @@ export const CURRENCY_NAMES: Record<CurrencyType, string> = {
   CAD: "Canadian Dollar",
   AUD: "Australian Dollar",
 };
+
+// Combined currency data for forms and displays
+export const CURRENCIES = Object.keys(CURRENCY_SYMBOLS).map((code) => ({
+  code: code as CurrencyType,
+  name: CURRENCY_NAMES[code as CurrencyType],
+  symbol: CURRENCY_SYMBOLS[code as CurrencyType],
+}));
