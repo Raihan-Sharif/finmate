@@ -35,7 +35,19 @@ import {
   Briefcase,
   AlertCircle,
   CheckCircle,
-  Sparkles
+  Sparkles,
+  PieChart,
+  Bitcoin,
+  Scroll,
+  Lock,
+  Repeat,
+  PiggyBank,
+  Award,
+  Calendar,
+  Crown,
+  Home,
+  UserCheck,
+  MoreHorizontal
 } from 'lucide-react';
 import { INVESTMENT_TYPES, RISK_LEVELS, CreateInvestmentRequest } from '@/types/investments';
 import { CURRENCIES } from '@/types';
@@ -90,12 +102,34 @@ export function CreateInvestmentForm({
   const selectedPortfolio = portfolios.find(p => p.id === form.watch('portfolio_id'));
   const selectedType = INVESTMENT_TYPES[form.watch('type')];
   const selectedRisk = RISK_LEVELS[form.watch('risk_level')];
+  
+  // Icon mapping for investment types
+  const getInvestmentTypeIcon = (iconName: string) => {
+    const iconMap: { [key: string]: any } = {
+      'trending-up': TrendingUp,
+      'pie-chart': PieChart,
+      'bitcoin': Bitcoin,
+      'scroll': Scroll,
+      'lock': Lock,
+      'repeat': Repeat,
+      'piggy-bank': PiggyBank,
+      'certificate': Award,
+      'calendar': Calendar,
+      'crown': Crown,
+      'home': Home,
+      'briefcase': Briefcase,
+      'user-check': UserCheck,
+      'more-horizontal': MoreHorizontal
+    };
+    return iconMap[iconName] || TrendingUp;
+  };
 
   const handleSubmit = async (data: InvestmentFormData) => {
     const tags = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
     
     const requestData: CreateInvestmentRequest = {
       ...data,
+      symbol: data.symbol || '',
       tags: tags.length > 0 ? tags : undefined,
       target_amount: data.target_amount || undefined,
       target_date: data.target_date || undefined
@@ -200,7 +234,12 @@ export function CreateInvestmentForm({
                       {Object.entries(INVESTMENT_TYPES).map(([key, type]) => (
                         <SelectItem key={key} value={key} className="text-base py-3">
                           <div className="flex items-center space-x-3">
-                            <span className="text-lg" role="img" aria-label={type.label}>{type.icon}</span>
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                              {(() => {
+                                const IconComponent = getInvestmentTypeIcon(type.icon);
+                                return <IconComponent className="h-4 w-4 text-white" />;
+                              })()}
+                            </div>
                             <div>
                               <p className="font-medium">{type.label}</p>
                               <p className={cn(
@@ -535,17 +574,27 @@ export function CreateInvestmentForm({
 
   return (
     <div className={cn("max-w-2xl mx-auto", className)}>
-      <Card className="border-0 bg-gradient-to-br from-white via-white/95 to-white/90 backdrop-blur-md shadow-xl">
+      <Card className={cn(
+        "border-0 backdrop-blur-md shadow-xl",
+        theme === 'dark'
+          ? 'bg-gradient-to-br from-gray-800 via-gray-800/95 to-gray-900/90'
+          : 'bg-gradient-to-br from-white via-white/95 to-white/90'
+      )}>
         <CardHeader className="text-center pb-6">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
+            <CardTitle className={cn(
+              "text-2xl font-bold mb-2",
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            )}>
               Create New Investment
             </CardTitle>
-            <p className="text-gray-600">
+            <p className={cn(
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            )}>
               Add a new investment to your portfolio
             </p>
           </motion.div>
@@ -570,6 +619,8 @@ export function CreateInvestmentForm({
                         ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg" 
                         : isCompleted
                         ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md"
+                        : theme === 'dark'
+                        ? "bg-gray-700 text-gray-400 hover:bg-gray-600"
                         : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                     )}
                     onClick={() => setStep(stepInfo.key as any)}
@@ -578,7 +629,11 @@ export function CreateInvestmentForm({
                   </motion.div>
                   <span className={cn(
                     "text-sm font-medium transition-colors",
-                    isCurrent ? "text-blue-600" : isCompleted ? "text-green-600" : "text-gray-500"
+                    isCurrent 
+                      ? "text-blue-600" 
+                      : isCompleted 
+                      ? "text-green-600" 
+                      : theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                   )}>
                     {stepInfo.label}
                   </span>
@@ -599,22 +654,40 @@ export function CreateInvestmentForm({
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100"
+                  className={cn(
+                    "p-6 rounded-xl border",
+                    theme === 'dark'
+                      ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border-blue-800/50'
+                      : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100'
+                  )}
                 >
                   <div className="flex items-center space-x-2 mb-3">
                     <Sparkles className="h-5 w-5 text-blue-500" />
-                    <h3 className="font-semibold text-blue-900">Investment Summary</h3>
+                    <h3 className={cn(
+                      "font-semibold",
+                      theme === 'dark' ? 'text-blue-300' : 'text-blue-900'
+                    )}>Investment Summary</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-blue-700 font-medium">{form.watch('name')}</p>
-                      <p className="text-blue-600">{selectedType?.label}</p>
+                      <p className={cn(
+                        "font-medium",
+                        theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+                      )}>{form.watch('name')}</p>
+                      <p className={cn(
+                        theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                      )}>{selectedType?.label}</p>
                     </div>
                     <div>
-                      <p className="text-blue-700 font-medium">
+                      <p className={cn(
+                        "font-medium",
+                        theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+                      )}>
                         {form.watch('initial_amount')} {form.watch('currency')}
                       </p>
-                      <p className="text-blue-600">{selectedRisk?.label} Risk</p>
+                      <p className={cn(
+                        theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                      )}>{selectedRisk?.label} Risk</p>
                     </div>
                   </div>
                 </motion.div>

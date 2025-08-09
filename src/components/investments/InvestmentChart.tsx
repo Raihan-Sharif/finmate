@@ -38,6 +38,7 @@ import {
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useTheme } from 'next-themes';
 
 // Chart data types
 interface PerformanceData {
@@ -76,18 +77,29 @@ interface InvestmentChartProps {
 }
 
 // Custom tooltip components
-const PerformanceTooltip = ({ active, payload, label, currency = 'BDT' }: any) => {
+const PerformanceTooltip = ({ active, payload, label, currency = 'BDT', theme }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white/95 backdrop-blur-md border border-gray-200 rounded-lg p-4 shadow-lg">
-        <p className="font-semibold text-gray-900 mb-2">{label}</p>
+      <div className={cn(
+        "backdrop-blur-md border rounded-lg p-4 shadow-lg",
+        theme === 'dark' 
+          ? 'bg-gray-800/95 border-gray-700' 
+          : 'bg-white/95 border-gray-200'
+      )}>
+        <p className={cn(
+          "font-semibold mb-2",
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        )}>{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center space-x-2 mb-1">
             <div 
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-sm text-gray-600">{entry.name}:</span>
+            <span className={cn(
+              "text-sm",
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            )}>{entry.name}:</span>
             <span className="font-semibold" style={{ color: entry.color }}>
               {formatCurrency(entry.value, currency)}
             </span>
@@ -99,23 +111,46 @@ const PerformanceTooltip = ({ active, payload, label, currency = 'BDT' }: any) =
   return null;
 };
 
-const AllocationTooltip = ({ active, payload, currency = 'BDT' }: any) => {
+const AllocationTooltip = ({ active, payload, currency = 'BDT', theme }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white/95 backdrop-blur-md border border-gray-200 rounded-lg p-4 shadow-lg">
-        <p className="font-semibold text-gray-900 mb-2">{data.name}</p>
+      <div className={cn(
+        "backdrop-blur-md border rounded-lg p-4 shadow-lg",
+        theme === 'dark' 
+          ? 'bg-gray-800/95 border-gray-700' 
+          : 'bg-white/95 border-gray-200'
+      )}>
+        <p className={cn(
+          "font-semibold mb-2",
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        )}>{data.name}</p>
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Value:</span>
-            <span className="font-semibold">{formatCurrency(data.value, currency)}</span>
+            <span className={cn(
+              "text-sm",
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            )}>Value:</span>
+            <span className={cn(
+              "font-semibold",
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            )}>{formatCurrency(data.value, currency)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Percentage:</span>
-            <span className="font-semibold">{data.percentage.toFixed(1)}%</span>
+            <span className={cn(
+              "text-sm",
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            )}>Percentage:</span>
+            <span className={cn(
+              "font-semibold",
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            )}>{data.percentage.toFixed(1)}%</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Type:</span>
+            <span className={cn(
+              "text-sm",
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            )}>Type:</span>
             <Badge variant="outline" className="text-xs">
               {data.type}
             </Badge>
@@ -131,11 +166,13 @@ const AllocationTooltip = ({ active, payload, currency = 'BDT' }: any) => {
 const PerformanceChart = ({ 
   data, 
   currency, 
-  height 
+  height,
+  theme 
 }: { 
   data: PerformanceData[], 
   currency: string, 
-  height: number 
+  height: number,
+  theme: string | undefined 
 }) => (
   <ResponsiveContainer width="100%" height={height}>
     <AreaChart data={data}>
@@ -149,20 +186,20 @@ const PerformanceChart = ({
           <stop offset="95%" stopColor="#10B981" stopOpacity={0.05}/>
         </linearGradient>
       </defs>
-      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+      <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#E5E7EB'} className="opacity-30" />
       <XAxis 
         dataKey="date" 
         axisLine={false}
         tickLine={false}
-        tick={{ fontSize: 12, fill: '#6B7280' }}
+        tick={{ fontSize: 12, fill: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
       />
       <YAxis 
         axisLine={false}
         tickLine={false}
-        tick={{ fontSize: 12, fill: '#6B7280' }}
+        tick={{ fontSize: 12, fill: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
         tickFormatter={(value) => formatCurrency(value, currency, true)}
       />
-      <Tooltip content={<PerformanceTooltip currency={currency} />} />
+      <Tooltip content={<PerformanceTooltip currency={currency} theme={theme} />} />
       <Area
         type="monotone"
         dataKey="invested"
@@ -186,11 +223,13 @@ const PerformanceChart = ({
 const AllocationChart = ({ 
   data, 
   currency, 
-  height 
+  height,
+  theme 
 }: { 
   data: AssetAllocation[], 
   currency: string, 
-  height: number 
+  height: number,
+  theme: string | undefined 
 }) => (
   <ResponsiveContainer width="100%" height={height}>
     <PieChart>
@@ -212,7 +251,7 @@ const AllocationChart = ({
           />
         ))}
       </Pie>
-      <Tooltip content={<AllocationTooltip currency={currency} />} />
+      <Tooltip content={<AllocationTooltip currency={currency} theme={theme} />} />
     </PieChart>
   </ResponsiveContainer>
 );
@@ -220,28 +259,30 @@ const AllocationChart = ({
 const TrendChart = ({ 
   data, 
   currency, 
-  height 
+  height,
+  theme 
 }: { 
   data: MonthlyTrend[], 
   currency: string, 
-  height: number 
+  height: number,
+  theme: string | undefined 
 }) => (
   <ResponsiveContainer width="100%" height={height}>
     <BarChart data={data}>
-      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+      <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#E5E7EB'} className="opacity-30" />
       <XAxis 
         dataKey="month" 
         axisLine={false}
         tickLine={false}
-        tick={{ fontSize: 12, fill: '#6B7280' }}
+        tick={{ fontSize: 12, fill: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
       />
       <YAxis 
         axisLine={false}
         tickLine={false}
-        tick={{ fontSize: 12, fill: '#6B7280' }}
+        tick={{ fontSize: 12, fill: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
         tickFormatter={(value) => formatCurrency(value, currency, true)}
       />
-      <Tooltip content={<PerformanceTooltip currency={currency} />} />
+      <Tooltip content={<PerformanceTooltip currency={currency} theme={theme} />} />
       <Bar 
         dataKey="invested" 
         fill="#10B981" 
@@ -271,14 +312,27 @@ export function InvestmentChart({
 }: InvestmentChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('6m');
   const [selectedMetric, setSelectedMetric] = useState('value');
+  const { theme } = useTheme();
 
   if (isLoading) {
     return (
-      <Card className={cn("border-0 bg-gradient-to-br from-white via-white/95 to-white/90 backdrop-blur-md shadow-lg", className)}>
+      <Card className={cn(
+        "border-0 backdrop-blur-md shadow-lg",
+        theme === 'dark'
+          ? 'bg-gradient-to-br from-gray-800 via-gray-800/95 to-gray-900/90'
+          : 'bg-gradient-to-br from-white via-white/95 to-white/90',
+        className
+      )}>
         <CardContent className="p-6">
           <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded mb-4 w-1/3" />
-            <div className="h-64 bg-gray-200 rounded" />
+            <div className={cn(
+              "h-6 rounded mb-4 w-1/3",
+              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+            )} />
+            <div className={cn(
+              "h-64 rounded",
+              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+            )} />
           </div>
         </CardContent>
       </Card>
@@ -308,12 +362,12 @@ export function InvestmentChart({
   const renderChart = () => {
     switch (chartType) {
       case 'allocation':
-        return <AllocationChart data={assetAllocation} currency={currency} height={height} />;
+        return <AllocationChart data={assetAllocation} currency={currency} height={height} theme={theme} />;
       case 'trend':
-        return <TrendChart data={monthlyTrend} currency={currency} height={height} />;
+        return <TrendChart data={monthlyTrend} currency={currency} height={height} theme={theme} />;
       case 'performance':
       default:
-        return <PerformanceChart data={performanceData} currency={currency} height={height} />;
+        return <PerformanceChart data={performanceData} currency={currency} height={height} theme={theme} />;
     }
   };
 
@@ -328,7 +382,10 @@ export function InvestmentChart({
       return (
         <div className="flex items-center space-x-4">
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900">
+            <p className={cn(
+              "text-2xl font-bold",
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            )}>
               {formatCurrency(latest.value, currency)}
             </p>
             <div className="flex items-center space-x-1">
@@ -357,10 +414,16 @@ export function InvestmentChart({
 
       return (
         <div className="text-right">
-          <p className="text-2xl font-bold text-gray-900">
+          <p className={cn(
+            "text-2xl font-bold",
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          )}>
             {formatCurrency(totalValue, currency)}
           </p>
-          <p className="text-sm text-gray-600">
+          <p className={cn(
+            "text-sm",
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          )}>
             Top: {topAsset.name} ({topAsset.percentage.toFixed(1)}%)
           </p>
         </div>
@@ -373,7 +436,10 @@ export function InvestmentChart({
 
       return (
         <div className="text-right">
-          <p className="text-2xl font-bold text-gray-900">
+          <p className={cn(
+            "text-2xl font-bold",
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          )}>
             {formatCurrency(latest.current_value, currency)}
           </p>
           <div className="flex items-center space-x-1">
@@ -412,7 +478,10 @@ export function InvestmentChart({
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-sm text-gray-600 truncate">
+              <span className={cn(
+                "text-sm truncate",
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              )}>
                 {item.name} ({item.percentage.toFixed(1)}%)
               </span>
             </motion.div>
@@ -439,7 +508,12 @@ export function InvestmentChart({
       transition={{ duration: 0.3 }}
       className={className}
     >
-      <Card className="border-0 bg-gradient-to-br from-white via-white/95 to-white/90 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
+      <Card className={cn(
+        "border-0 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300",
+        theme === 'dark'
+          ? 'bg-gradient-to-br from-gray-800 via-gray-800/95 to-gray-900/90'
+          : 'bg-gradient-to-br from-white via-white/95 to-white/90'
+      )}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -450,7 +524,10 @@ export function InvestmentChart({
               >
                 {getChartIcon()}
               </motion.div>
-              <CardTitle className="text-xl font-bold text-gray-900">
+              <CardTitle className={cn(
+                "text-xl font-bold",
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              )}>
                 {getChartTitle()}
               </CardTitle>
             </div>
@@ -504,11 +581,19 @@ export function InvestmentChart({
           ) : (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                <div className={cn(
+                  "w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center",
+                  theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                )}>
                   {getChartIcon()}
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No data available</h3>
-                <p className="text-gray-500">
+                <h3 className={cn(
+                  "text-lg font-medium mb-2",
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                )}>No data available</h3>
+                <p className={cn(
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                )}>
                   Start investing to see your performance charts
                 </p>
               </div>

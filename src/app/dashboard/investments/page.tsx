@@ -39,7 +39,7 @@ import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
 
 // Hooks
 import { useInvestmentDashboard } from '@/hooks/useInvestmentAnalytics';
-import { useInvestmentPortfolios } from '@/hooks/useInvestmentPortfolios';
+import { useInvestmentPortfolios, useCreateInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
 import { useInvestments } from '@/hooks/useInvestments';
 import { useSIPTemplates } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentTransactions } from '@/hooks/useInvestmentTransactions';
@@ -57,6 +57,7 @@ export default function InvestmentDashboardPage() {
   const { data: investments = [], isLoading: investmentsLoading } = useInvestments();
   const { data: sipTemplates = [], isLoading: sipsLoading } = useSIPTemplates();
   const { data: transactions = [], isLoading: transactionsLoading } = useInvestmentTransactions();
+  const createPortfolioMutation = useCreateInvestmentPortfolio();
 
   // Mock data for charts (replace with real data from hooks)
   const mockPerformanceData = [
@@ -175,11 +176,24 @@ export default function InvestmentDashboardPage() {
       <div className="container mx-auto px-4 py-8">
         <CreatePortfolioForm
           onSubmit={async (data) => {
-            // Handle portfolio creation
-            console.log('Creating portfolio:', data);
-            setShowCreateForm(false);
+            try {
+              console.log('Submitting portfolio data:', data);
+              const result = await createPortfolioMutation.mutateAsync(data);
+              console.log('Portfolio creation result:', result);
+              setShowCreateForm(false);
+            } catch (error) {
+              console.error('Failed to create portfolio:', error);
+              console.error('Error details:', {
+                message: error?.message,
+                code: error?.code,
+                details: error?.details,
+                hint: error?.hint,
+                stack: error?.stack
+              });
+            }
           }}
           onCancel={() => setShowCreateForm(false)}
+          isLoading={createPortfolioMutation.isPending}
         />
       </div>
     );
@@ -439,7 +453,10 @@ export default function InvestmentDashboardPage() {
                   "mb-4",
                   theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                 )}>Create your first investment portfolio</p>
-                <Button className="bg-gradient-to-r from-blue-500 to-indigo-600">
+                <Button 
+                  onClick={() => setShowCreateForm('portfolio')}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Portfolio
                 </Button>
@@ -535,7 +552,10 @@ export default function InvestmentDashboardPage() {
                   "mb-4",
                   theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                 )}>Set up systematic investment plans</p>
-                <Button className="bg-gradient-to-r from-green-500 to-emerald-600">
+                <Button 
+                  onClick={() => setShowCreateForm('sip')}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600"
+                >
                   <Zap className="h-4 w-4 mr-2" />
                   Create SIP
                 </Button>

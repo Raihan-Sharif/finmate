@@ -95,10 +95,14 @@ export function CreatePortfolioForm({
   const form = useForm<PortfolioFormData>({
     resolver: zodResolver(portfolioSchema),
     defaultValues: {
+      name: '',
+      description: '',
       currency: 'BDT',
       risk_level: 'medium',
       color: '#3B82F6',
-      icon: 'briefcase'
+      icon: 'briefcase',
+      target_amount: undefined,
+      target_date: ''
     }
   });
 
@@ -109,6 +113,7 @@ export function CreatePortfolioForm({
   const handleSubmit = async (data: PortfolioFormData) => {
     const requestData: CreateInvestmentPortfolioInput = {
       ...data,
+      description: data.description || undefined,
       target_amount: data.target_amount || undefined,
       target_date: data.target_date || undefined
     };
@@ -370,7 +375,7 @@ export function CreatePortfolioForm({
                           "h-12 text-base pl-11",
                           theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
                         )}
-                        {...field}
+                        value={field.value || ''}
                         onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                       />
                     </div>
