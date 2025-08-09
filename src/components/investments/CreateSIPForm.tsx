@@ -36,7 +36,7 @@ import {
   Clock,
   Repeat
 } from 'lucide-react';
-import { INVESTMENT_TYPES, INVESTMENT_INVESTMENT_FREQUENCIES, CreateInvestmentTemplateInput } from '@/types/investments';
+import { INVESTMENT_TYPES, INVESTMENT_FREQUENCIES, CreateInvestmentTemplateInput } from '@/types/investments';
 import { CURRENCIES } from '@/types';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
@@ -90,7 +90,6 @@ export function CreateSIPForm({
       amount_per_investment: 0,
       currency: 'BDT',
       frequency: 'monthly',
-      interval_value: 1,
       start_date: '',
       end_date: '',
       target_amount: undefined,
@@ -106,14 +105,27 @@ export function CreateSIPForm({
   const selectedFrequency = INVESTMENT_FREQUENCIES[form.watch('frequency')];
 
   const handleSubmit = async (data: SIPFormData) => {
-    const requestData: CreateInvestmentTemplateInput = {
-      ...data,
+    const requestData: any = {
+      name: data.name,
+      investment_type: data.investment_type,
+      amount_per_investment: data.amount_per_investment,
+      currency: data.currency,
+      frequency: data.frequency,
+      start_date: data.start_date,
+      auto_execute: data.auto_execute,
+      market_order: data.market_order,
       template_type: 'user_sip',
-      end_date: data.end_date || undefined,
-      target_amount: data.target_amount || undefined,
-      limit_price: data.limit_price || undefined,
       interval_value: 1 // Default interval
     };
+
+    // Add optional fields only if they have values
+    if (data.portfolio_id) requestData.portfolio_id = data.portfolio_id;
+    if (data.description) requestData.description = data.description;
+    if (data.symbol) requestData.symbol = data.symbol.substring(0, 20);
+    if (data.end_date) requestData.end_date = data.end_date;
+    if (data.target_amount) requestData.target_amount = data.target_amount;
+    if (data.limit_price) requestData.limit_price = data.limit_price;
+    if (data.notes) requestData.notes = data.notes;
 
     await onSubmit(requestData);
   };

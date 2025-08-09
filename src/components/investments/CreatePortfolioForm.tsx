@@ -111,12 +111,18 @@ export function CreatePortfolioForm({
   const selectedIcon = form.watch('icon');
 
   const handleSubmit = async (data: PortfolioFormData) => {
-    const requestData: CreateInvestmentPortfolioInput = {
-      ...data,
-      description: data.description || undefined,
-      target_amount: data.target_amount || undefined,
-      target_date: data.target_date || undefined
+    const requestData: any = {
+      name: data.name,
+      risk_level: data.risk_level,
+      currency: data.currency,
+      color: data.color,
+      icon: data.icon
     };
+
+    // Add optional fields only if they have values
+    if (data.description) requestData.description = data.description;
+    if (data.target_amount) requestData.target_amount = data.target_amount;
+    if (data.target_date) requestData.target_date = data.target_date;
 
     await onSubmit(requestData);
   };

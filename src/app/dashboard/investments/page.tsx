@@ -98,16 +98,6 @@ export default function InvestmentDashboardPage() {
     dividend_income: 2500,
     active_sips: 4,
     monthly_sip_amount: 8000,
-    top_performing_investment: {
-      name: 'IFIC Bank Share',
-      current_value: 15000,
-      gain_loss_percentage: 18.5
-    },
-    worst_performing_investment: {
-      name: 'AB Bank Bond',
-      current_value: 8000,
-      gain_loss_percentage: -3.2
-    },
     upcoming_executions: []
   };
 
@@ -141,7 +131,11 @@ export default function InvestmentDashboardPage() {
       <Button 
         variant="outline" 
         className="hover:bg-white/70"
-        onClick={() => setShowCreateForm('sip')}
+        onClick={() => {
+          console.log('SIP button clicked, current state:', showCreateForm);
+          setShowCreateForm('sip');
+          console.log('SIP button clicked, new state should be: sip');
+        }}
       >
         <Zap className="h-4 w-4 mr-2" />
         Setup SIP
@@ -167,33 +161,27 @@ export default function InvestmentDashboardPage() {
               console.log('Submitting investment data:', data);
               
               // Transform CreateInvestmentRequest to CreateInvestmentInput
-              const investmentInput = {
+              const investmentInput: CreateInvestmentInput = {
                 portfolio_id: data.portfolio_id,
                 name: data.name,
-                symbol: data.symbol,
                 type: data.type,
                 total_units: data.initial_amount / data.current_price, // Calculate units from amount and price
                 average_cost: data.current_price,
                 current_price: data.current_price,
                 currency: data.currency,
-                tags: data.tags,
-                notes: data.notes,
                 purchase_date: new Date().toISOString().split('T')[0], // Today's date
-                // Additional fields can be added later
-                platform: undefined,
-                account_number: undefined,
-                folio_number: undefined,
-                maturity_date: data.target_date,
-                interest_rate: undefined,
-                exchange: undefined,
-                documents: undefined,
-                metadata: data.target_amount ? { target_amount: data.target_amount } : undefined
+                // Optional fields with defaults
+                symbol: data.symbol || '',
+                tags: data.tags || [],
+                notes: data.notes || '',
+                ...(data.target_date && { maturity_date: data.target_date }),
+                ...(data.target_amount && { metadata: { target_amount: data.target_amount } })
               };
               
               const result = await createInvestmentMutation.mutateAsync(investmentInput);
               console.log('Investment creation result:', result);
               setShowCreateForm(false);
-            } catch (error) {
+            } catch (error: any) {
               console.error('Failed to create investment:', error);
               console.error('Error details:', {
                 message: error?.message,
@@ -220,7 +208,7 @@ export default function InvestmentDashboardPage() {
               const result = await createPortfolioMutation.mutateAsync(data);
               console.log('Portfolio creation result:', result);
               setShowCreateForm(false);
-            } catch (error) {
+            } catch (error: any) {
               console.error('Failed to create portfolio:', error);
               console.error('Error details:', {
                 message: error?.message,
@@ -239,31 +227,45 @@ export default function InvestmentDashboardPage() {
   }
 
   if (showCreateForm === 'sip') {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <CreateSIPForm
-          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
-          onSubmit={async (data) => {
-            try {
-              console.log('Submitting SIP data:', data);
-              const result = await createSIPMutation.mutateAsync(data);
-              console.log('SIP creation result:', result);
-              setShowCreateForm(false);
-            } catch (error) {
-              console.error('Failed to create SIP:', error);
-              console.error('Error details:', {
-                message: error?.message,
-                code: error?.code,
-                details: error?.details,
-                hint: error?.hint
-              });
-            }
-          }}
-          onCancel={() => setShowCreateForm(false)}
-          isLoading={createSIPMutation.isPending}
-        />
-      </div>
-    );
+    console.log('Rendering SIP form, showCreateForm state:', showCreateForm);
+    try {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <CreateSIPForm
+            portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
+            onSubmit={async (data) => {
+              try {
+                console.log('Submitting SIP data:', data);
+                const result = await createSIPMutation.mutateAsync(data);
+                console.log('SIP creation result:', result);
+                setShowCreateForm(false);
+              } catch (error: any) {
+                console.error('Failed to create SIP:', error);
+                console.error('Error details:', {
+                  message: error?.message,
+                  code: error?.code,
+                  details: error?.details,
+                  hint: error?.hint
+                });
+              }
+            }}
+            onCancel={() => setShowCreateForm(false)}
+            isLoading={createSIPMutation.isPending}
+          />
+        </div>
+      );
+    } catch (error) {
+      console.error('Error rendering CreateSIPForm:', error);
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h2>Error Loading SIP Form</h2>
+            <p>There was an error loading the SIP creation form.</p>
+            <button onClick={() => setShowCreateForm(false)}>Go Back</button>
+          </div>
+        </div>
+      );
+    }
   }
 
   return (

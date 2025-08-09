@@ -57,7 +57,7 @@ import { useTheme } from 'next-themes';
 const investmentSchema = z.object({
   name: z.string().min(1, 'Investment name is required'),
   symbol: z.string().optional(),
-  type: z.enum(['sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension']),
+  type: z.enum(['stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension', 'other']),
   portfolio_id: z.string().min(1, 'Portfolio is required'),
   initial_amount: z.number().min(0.01, 'Initial amount must be greater than 0'),
   current_price: z.number().min(0.01, 'Current price must be greater than 0'),
@@ -134,17 +134,34 @@ export function CreateInvestmentForm({
   };
 
   const handleSubmit = async (data: InvestmentFormData) => {
-    const tags = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+    console.log('CreateInvestmentForm handleSubmit called with:', data);
     
-    const requestData: CreateInvestmentRequest = {
-      ...data,
-      symbol: data.symbol || '',
-      tags: tags.length > 0 ? tags : undefined,
-      target_amount: data.target_amount || undefined,
-      target_date: data.target_date || undefined
-    };
+    try {
+      const tags = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+      
+      const requestData: any = {
+        name: data.name,
+        type: data.type,
+        portfolio_id: data.portfolio_id,
+        initial_amount: data.initial_amount,
+        current_price: data.current_price,
+        currency: data.currency,
+        risk_level: data.risk_level
+      };
 
-    await onSubmit(requestData);
+      // Add optional fields only if they have values
+      if (data.symbol) requestData.symbol = data.symbol;
+      if (tags.length > 0) requestData.tags = tags;
+      if (data.target_amount) requestData.target_amount = data.target_amount;
+      if (data.target_date) requestData.target_date = data.target_date;
+      if (data.notes) requestData.notes = data.notes;
+
+      console.log('CreateInvestmentForm submitting request data:', requestData);
+      await onSubmit(requestData);
+    } catch (error) {
+      console.error('CreateInvestmentForm handleSubmit error:', error);
+      throw error;
+    }
   };
 
   const addTag = (tag: string) => {
@@ -730,9 +747,22 @@ export function CreateInvestmentForm({
                   {step !== 'targets' ? (
                     <Button
                       type="button"
-                      onClick={() => {
-                        if (step === 'basic') setStep('details');
-                        if (step === 'details') setStep('targets');
+                      onClick={async () => {
+                        // Validate current step before proceeding
+                        let fieldsToValidate: (keyof InvestmentFormData)[] = [];
+                        
+                        if (step === 'basic') {
+                          fieldsToValidate = ['name', 'type', 'portfolio_id'];
+                        } else if (step === 'details') {
+                          fieldsToValidate = ['initial_amount', 'current_price', 'currency', 'risk_level'];
+                        }
+
+                        const isValid = await form.trigger(fieldsToValidate);
+                        
+                        if (isValid) {
+                          if (step === 'basic') setStep('details');
+                          if (step === 'details') setStep('targets');
+                        }
                       }}
                       className="px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                     >

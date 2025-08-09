@@ -267,7 +267,7 @@ export function InvestmentTransactionList({
   const filteredTransactions = transactions.filter(transaction => {
     const matchesType = filters.type === 'all' || transaction.transaction_type === filters.type;
     const matchesSearch = searchTerm === '' || 
-      transaction.investment_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.investment_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.portfolio_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Period filter
@@ -424,9 +424,9 @@ export function InvestmentTransactionList({
               <TransactionRow
                 key={transaction.id}
                 transaction={transaction}
-                onView={onView}
-                onEdit={onEdit}
-                onDelete={onDelete}
+                onView={onView || (() => {})}
+                onEdit={onEdit || (() => {})}
+                onDelete={onDelete || (() => {})}
                 index={index}
               />
             ))

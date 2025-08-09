@@ -197,7 +197,7 @@ const PerformanceChart = ({
         axisLine={false}
         tickLine={false}
         tick={{ fontSize: 12, fill: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
-        tickFormatter={(value) => formatCurrency(value, currency, true)}
+        tickFormatter={(value) => formatCurrency(value, currency, 'en-US', true)}
       />
       <Tooltip content={<PerformanceTooltip currency={currency} theme={theme} />} />
       <Area
@@ -280,7 +280,7 @@ const TrendChart = ({
         axisLine={false}
         tickLine={false}
         tick={{ fontSize: 12, fill: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
-        tickFormatter={(value) => formatCurrency(value, currency, true)}
+        tickFormatter={(value) => formatCurrency(value, currency, 'en-US', true)}
       />
       <Tooltip content={<PerformanceTooltip currency={currency} theme={theme} />} />
       <Bar 
@@ -375,7 +375,7 @@ export function InvestmentChart({
     if (chartType === 'performance' && performanceData.length > 0) {
       const latest = performanceData[performanceData.length - 1];
       const firstValue = performanceData[0]?.value || 0;
-      const change = latest.value - firstValue;
+      const change = (latest?.value || 0) - firstValue;
       const changePercent = firstValue > 0 ? ((change / firstValue) * 100) : 0;
       const isPositive = change >= 0;
 
@@ -386,7 +386,7 @@ export function InvestmentChart({
               "text-2xl font-bold",
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             )}>
-              {formatCurrency(latest.value, currency)}
+              {formatCurrency(latest?.value || 0, currency, 'en-US')}
             </p>
             <div className="flex items-center space-x-1">
               {isPositive ? (
@@ -432,7 +432,7 @@ export function InvestmentChart({
 
     if (chartType === 'trend' && monthlyTrend.length > 0) {
       const latest = monthlyTrend[monthlyTrend.length - 1];
-      const isPositive = latest.gain_loss >= 0;
+      const isPositive = (latest?.gain_loss || 0) >= 0;
 
       return (
         <div className="text-right">
@@ -440,7 +440,7 @@ export function InvestmentChart({
             "text-2xl font-bold",
             theme === 'dark' ? 'text-white' : 'text-gray-900'
           )}>
-            {formatCurrency(latest.current_value, currency)}
+            {formatCurrency(latest?.current_value || 0, currency, 'en-US')}
           </p>
           <div className="flex items-center space-x-1">
             {isPositive ? (
@@ -452,7 +452,7 @@ export function InvestmentChart({
               "text-sm font-medium",
               isPositive ? "text-green-600" : "text-red-600"
             )}>
-              {isPositive ? '+' : ''}{latest.return_percentage.toFixed(2)}%
+              {isPositive ? '+' : ''}{(latest?.return_percentage || 0).toFixed(2)}%
             </span>
           </div>
         </div>

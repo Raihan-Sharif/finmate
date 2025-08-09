@@ -63,8 +63,9 @@ export function SIPTemplateCard({
   
   // Get frequency display
   const frequencyDisplay = {
+    daily: 'Daily',
     weekly: 'Weekly',
-    bi_weekly: 'Bi-weekly', 
+    biweekly: 'Bi-weekly', 
     monthly: 'Monthly',
     quarterly: 'Quarterly',
     yearly: 'Yearly'

@@ -241,7 +241,7 @@ export function InvestmentDashboardStats({
             key={stat.title}
             {...stat}
             delay={index * 0.1}
-            theme={theme}
+            theme={theme || 'light'}
           />
         ))}
       </div>
