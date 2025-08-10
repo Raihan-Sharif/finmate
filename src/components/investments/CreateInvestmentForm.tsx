@@ -754,7 +754,10 @@ export function CreateInvestmentForm({
                   {step !== 'targets' ? (
                     <Button
                       type="button"
-                      onClick={async () => {
+                      onClick={async (e) => {
+                        e.preventDefault(); // Prevent form submission
+                        e.stopPropagation(); // Stop event bubbling
+                        
                         // Validate current step before proceeding
                         let fieldsToValidate: (keyof InvestmentFormData)[] = [];
                         

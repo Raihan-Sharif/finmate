@@ -108,30 +108,62 @@ export function InvestmentCard({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="opacity-80 hover:opacity-100 group-hover:opacity-100 transition-opacity duration-300 relative z-10 hover:bg-gray-100/80 dark:hover:bg-gray-700/80"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('Dropdown trigger clicked for investment:', investment.name);
+                  }}
+                >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className={cn(
-                "backdrop-blur-md",
-                theme === 'dark' ? 'bg-gray-800/90' : 'bg-white/90'
-              )}>
+              <DropdownMenuContent 
+                align="end" 
+                className={cn(
+                  "backdrop-blur-md shadow-lg border z-50",
+                  theme === 'dark' 
+                    ? 'bg-gray-800/95 border-gray-700' 
+                    : 'bg-white/95 border-gray-200'
+                )}
+                sideOffset={5}
+              >
                 {onView && (
-                  <DropdownMenuItem onClick={() => onView(investment)}>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('View clicked for:', investment.name);
+                      onView(investment);
+                    }}
+                    className="cursor-pointer"
+                  >
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </DropdownMenuItem>
                 )}
                 {onEdit && (
-                  <DropdownMenuItem onClick={() => onEdit(investment)}>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Edit clicked for:', investment.name);
+                      onEdit(investment);
+                    }}
+                    className="cursor-pointer"
+                  >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
                   <DropdownMenuItem 
-                    onClick={() => onDelete(investment)}
-                    className="text-red-600 hover:text-red-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Delete clicked for:', investment.name);
+                      onDelete(investment);
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
