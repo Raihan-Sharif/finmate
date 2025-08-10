@@ -36,20 +36,26 @@ import {
   Clock,
   Repeat
 } from 'lucide-react';
-import { INVESTMENT_TYPES, INVESTMENT_FREQUENCIES, CreateInvestmentTemplateInput } from '@/types/investments';
+import { INVESTMENT_TYPES, INVESTMENT_FREQUENCIES, CreateInvestmentTemplateInput, InvestmentType } from '@/types/investments';
 import { CURRENCIES } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, getInvestmentIcon } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
 const sipSchema = z.object({
   name: z.string().min(1, 'SIP name is required'),
   description: z.string().optional(),
   portfolio_id: z.string().min(1, 'Portfolio is required'),
-  investment_type: z.enum(['sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension']),
+  investment_type: z.string().refine(
+    (value) => ['stock', 'mutual_fund', 'sip', 'dps', 'recurring_fd', 'pf', 'pension'].includes(value),
+    { message: "Selected investment type is not eligible for SIP" }
+  ),
   symbol: z.string().optional(),
   amount_per_investment: z.number().min(1, 'Investment amount must be greater than 0'),
   currency: z.string().min(1, 'Currency is required'),
-  frequency: z.enum(['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']),
+  frequency: z.string().refine(
+    (value) => ['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'].includes(value),
+    { message: "Frequency is required" }
+  ),
   start_date: z.string().min(1, 'Start date is required'),
   end_date: z.string().optional(),
   target_amount: z.number().optional(),
@@ -88,11 +94,11 @@ export function CreateSIPForm({
       name: '',
       description: '',
       portfolio_id: '',
-      investment_type: 'sip',
+      investment_type: '',
       symbol: '',
       amount_per_investment: 0,
-      currency: 'BDT',
-      frequency: 'monthly',
+      currency: '',
+      frequency: '',
       start_date: '',
       end_date: '',
       target_amount: undefined,
@@ -104,7 +110,7 @@ export function CreateSIPForm({
   });
 
   const selectedPortfolio = portfolios.find(p => p.id === form.watch('portfolio_id'));
-  const selectedType = INVESTMENT_TYPES[form.watch('investment_type')];
+  const selectedType = INVESTMENT_TYPES[form.watch('investment_type') as InvestmentType];
   const selectedFrequency = INVESTMENT_FREQUENCIES[form.watch('frequency')];
 
   const handleSubmit = async (data: SIPFormData) => {
@@ -189,7 +195,7 @@ export function CreateSIPForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-semibold">Portfolio</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className={cn(
                         "h-12 text-base",
@@ -226,7 +232,7 @@ export function CreateSIPForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-semibold">Investment Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className={cn(
                         "h-12 text-base",
@@ -236,22 +242,27 @@ export function CreateSIPForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white'}>
-                      {Object.entries(INVESTMENT_TYPES).map(([key, type]) => (
-                        <SelectItem key={key} value={key} className="text-base py-3">
-                          <div className="flex items-center space-x-3">
-                            <span className="text-lg">{type.icon}</span>
-                            <div>
-                              <p className="font-medium">{type.label}</p>
-                              <p className={cn(
-                                "text-sm",
-                                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                              )}>
-                                {type.description}
-                              </p>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
+                      {Object.entries(INVESTMENT_TYPES)
+                        .filter(([key]) => ['stock', 'mutual_fund', 'sip', 'dps', 'recurring_fd', 'pf', 'pension'].includes(key))
+                        .map(([key, type]) => {
+                          const IconComponent = getInvestmentIcon(type.icon);
+                          return (
+                            <SelectItem key={key} value={key} className="text-base py-3">
+                              <div className="flex items-center space-x-3">
+                                {IconComponent && <IconComponent className="h-5 w-5 text-blue-500" />}
+                                <div>
+                                  <p className="font-medium">{type.label}</p>
+                                  <p className={cn(
+                                    "text-sm",
+                                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                  )}>
+                                    {type.description}
+                                  </p>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -312,7 +323,17 @@ export function CreateSIPForm({
                           theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
                         )}
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            field.onChange(0);
+                          } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                              field.onChange(numValue);
+                            }
+                          }
+                        }}
                       />
                     </div>
                   </FormControl>
@@ -332,8 +353,10 @@ export function CreateSIPForm({
                 <FormItem>
                   <FormLabel className="text-base font-semibold">Currency</FormLabel>
                   <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={selectedPortfolio?.currency || field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                    }} 
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger className={cn(
@@ -366,7 +389,7 @@ export function CreateSIPForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-semibold">Frequency</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className={cn(
                         "h-12 text-base",
@@ -477,7 +500,17 @@ export function CreateSIPForm({
                           theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
                         )}
                         value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            field.onChange(undefined);
+                          } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                              field.onChange(numValue);
+                            }
+                          }
+                        }}
                       />
                     </div>
                   </FormControl>
@@ -674,15 +707,34 @@ export function CreateSIPForm({
                   {step !== 'settings' ? (
                     <Button
                       type="button"
-                      onClick={() => {
+                      onClick={async (e) => {
+                        e.preventDefault(); // Prevent form submission
+                        e.stopPropagation(); // Stop event bubbling
+                        
                         console.log('🔍 SIP FORM: Next button clicked, current step:', step);
+                        
+                        // Validate current step before proceeding
+                        let fieldsToValidate: (keyof SIPFormData)[] = [];
+                        
                         if (step === 'basic') {
-                          console.log('🔍 SIP FORM: Moving from basic to schedule');
-                          setStep('schedule');
+                          fieldsToValidate = ['name', 'portfolio_id', 'investment_type'];
+                        } else if (step === 'schedule') {
+                          fieldsToValidate = ['amount_per_investment', 'currency', 'frequency', 'start_date'];
                         }
-                        if (step === 'schedule') {
-                          console.log('🔍 SIP FORM: Moving from schedule to settings');
-                          setStep('settings');
+
+                        const isValid = await form.trigger(fieldsToValidate);
+                        
+                        if (isValid) {
+                          if (step === 'basic') {
+                            console.log('🔍 SIP FORM: Moving from basic to schedule');
+                            setStep('schedule');
+                          }
+                          if (step === 'schedule') {
+                            console.log('🔍 SIP FORM: Moving from schedule to settings');
+                            setStep('settings');
+                          }
+                        } else {
+                          console.log('🔍 SIP FORM: Validation failed for step:', step, 'Fields:', fieldsToValidate);
                         }
                       }}
                       className="px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"

@@ -51,7 +51,7 @@ import {
 } from 'lucide-react';
 import { INVESTMENT_TYPES, RISK_LEVELS, CreateInvestmentRequest } from '@/types/investments';
 import { CURRENCIES } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, getInvestmentIcon } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
 const investmentSchema = z.object({
@@ -62,7 +62,7 @@ const investmentSchema = z.object({
   initial_amount: z.number().min(0.01, 'Initial amount must be greater than 0'),
   current_price: z.number().min(0.01, 'Current price must be greater than 0'),
   currency: z.string().min(1, 'Currency is required'),
-  risk_level: z.enum(['low', 'medium', 'high']),
+  risk_level: z.string().min(1, 'Risk level is required'),
   platform: z.string().optional(),
   account_number: z.string().optional(),
   folio_number: z.string().optional(),
@@ -108,8 +108,8 @@ export function CreateInvestmentForm({
       portfolio_id: '',
       initial_amount: 0,
       current_price: 0,
-      currency: 'BDT',
-      risk_level: 'medium',
+      currency: '',
+      risk_level: '',
       platform: '',
       account_number: '',
       folio_number: '',
@@ -127,26 +127,6 @@ export function CreateInvestmentForm({
   const selectedType = INVESTMENT_TYPES[form.watch('type')];
   const selectedRisk = RISK_LEVELS[form.watch('risk_level')];
   
-  // Icon mapping for investment types
-  const getInvestmentTypeIcon = (iconName: string) => {
-    const iconMap: { [key: string]: any } = {
-      'trending-up': TrendingUp,
-      'pie-chart': PieChart,
-      'bitcoin': Bitcoin,
-      'scroll': Scroll,
-      'lock': Lock,
-      'repeat': Repeat,
-      'piggy-bank': PiggyBank,
-      'certificate': Award,
-      'calendar': Calendar,
-      'crown': Crown,
-      'home': Home,
-      'briefcase': Briefcase,
-      'user-check': UserCheck,
-      'more-horizontal': MoreHorizontal
-    };
-    return iconMap[iconName] || TrendingUp;
-  };
 
   const handleSubmit = async (data: InvestmentFormData) => {
     console.log('🔥 FORM: handleSubmit called with:', data);
@@ -275,7 +255,7 @@ export function CreateInvestmentForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-semibold">Investment Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-12 text-base">
                         <SelectValue placeholder="Select investment type" />
@@ -287,8 +267,8 @@ export function CreateInvestmentForm({
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                               {(() => {
-                                const IconComponent = getInvestmentTypeIcon(type.icon);
-                                return <IconComponent className="h-4 w-4 text-white" />;
+                                const IconComponent = getInvestmentIcon(type.icon);
+                                return IconComponent ? <IconComponent className="h-4 w-4 text-white" /> : <TrendingUp className="h-4 w-4 text-white" />;
                               })()}
                             </div>
                             <div>
@@ -317,7 +297,7 @@ export function CreateInvestmentForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-semibold">Portfolio</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-12 text-base">
                         <SelectValue placeholder="Select a portfolio" />
@@ -369,7 +349,17 @@ export function CreateInvestmentForm({
                         placeholder="10000"
                         className="h-12 text-base pl-11"
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            field.onChange(0);
+                          } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                              field.onChange(numValue);
+                            }
+                          }
+                        }}
                       />
                     </div>
                   </FormControl>
@@ -397,7 +387,17 @@ export function CreateInvestmentForm({
                         placeholder="100.00"
                         className="h-12 text-base pl-11"
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            field.onChange(0);
+                          } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                              field.onChange(numValue);
+                            }
+                          }
+                        }}
                       />
                     </div>
                   </FormControl>
@@ -417,8 +417,10 @@ export function CreateInvestmentForm({
                 <FormItem>
                   <FormLabel className="text-base font-semibold">Currency</FormLabel>
                   <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={selectedPortfolio?.currency || field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                    }} 
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger className="h-12 text-base">
@@ -445,7 +447,7 @@ export function CreateInvestmentForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-semibold">Risk Level</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-12 text-base">
                         <SelectValue placeholder="Select risk level" />
@@ -565,7 +567,17 @@ export function CreateInvestmentForm({
                         placeholder="5.5"
                         className="h-12 text-base"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            field.onChange(undefined);
+                          } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                              field.onChange(numValue);
+                            }
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
@@ -645,7 +657,17 @@ export function CreateInvestmentForm({
                         placeholder="100000"
                         className="h-12 text-base pl-11"
                         value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            field.onChange(undefined);
+                          } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                              field.onChange(numValue);
+                            }
+                          }
+                        }}
                       />
                     </div>
                   </FormControl>

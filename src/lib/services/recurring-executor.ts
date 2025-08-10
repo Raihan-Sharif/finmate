@@ -3,7 +3,7 @@ import { supabase, TABLES } from '@/lib/supabase/client';
 export class RecurringExecutorService {
   /**
    * Execute all pending recurring transactions
-   * This should be called by a cron job or background task
+   * This should be called by a cron job or background taskrecurring-executor.ts
    */
   static async executePendingRecurringTransactions(): Promise<{
     executed: number;

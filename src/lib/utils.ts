@@ -1,5 +1,22 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import React from 'react';
+import {
+  TrendingUp,
+  PieChart,
+  Bitcoin,
+  Scroll,
+  Lock,
+  Repeat,
+  PiggyBank,
+  Award,
+  Calendar,
+  Crown,
+  Home,
+  Briefcase,
+  UserCheck,
+  MoreHorizontal
+} from 'lucide-react';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -362,4 +379,26 @@ export function uniqueBy<T>(array: T[], key: keyof T): T[] {
     seen.add(value);
     return true;
   });
+}
+
+// Icon mapping utility
+const iconMap = {
+  'trending-up': TrendingUp,
+  'pie-chart': PieChart,
+  'bitcoin': Bitcoin,
+  'scroll': Scroll,
+  'lock': Lock,
+  'repeat': Repeat,
+  'piggy-bank': PiggyBank,
+  'certificate': Award,
+  'calendar': Calendar,
+  'crown': Crown,
+  'home': Home,
+  'briefcase': Briefcase,
+  'user-check': UserCheck,
+  'more-horizontal': MoreHorizontal
+};
+
+export function getInvestmentIcon(iconName: string): React.ComponentType<any> | null {
+  return iconMap[iconName as keyof typeof iconMap] || null;
 }
