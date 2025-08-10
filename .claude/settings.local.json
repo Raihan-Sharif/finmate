@@ -21,7 +21,10 @@
       "Bash(timeout 8s npm run dev)",
       "Bash(find:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(npx supabase db reset:*)"
+      "Bash(npx supabase db reset:*)",
+      "Bash(timeout 10s npm run type-check)",
+      "Bash(timeout 30s npm run dev)",
+      "Bash(timeout 15s npm run dev)"
     ],
     "deny": []
   }

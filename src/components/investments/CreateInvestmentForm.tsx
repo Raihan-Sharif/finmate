@@ -90,6 +90,9 @@ export function CreateInvestmentForm({
   const [step, setStep] = useState<'basic' | 'details' | 'targets'>('basic');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  // Debug step changes
+  console.log('🔥 FORM: Current step:', step);
+
   const form = useForm<InvestmentFormData>({
     resolver: zodResolver(investmentSchema),
     defaultValues: {
@@ -134,7 +137,8 @@ export function CreateInvestmentForm({
   };
 
   const handleSubmit = async (data: InvestmentFormData) => {
-    console.log('CreateInvestmentForm handleSubmit called with:', data);
+    console.log('🔥 FORM: handleSubmit called with:', data);
+    console.log('🔥 FORM: Current step when submitting:', step);
     
     try {
       const tags = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
@@ -763,8 +767,16 @@ export function CreateInvestmentForm({
                         const isValid = await form.trigger(fieldsToValidate);
                         
                         if (isValid) {
-                          if (step === 'basic') setStep('details');
-                          if (step === 'details') setStep('targets');
+                          if (step === 'basic') {
+                            console.log('🔥 FORM: Moving from basic to details');
+                            setStep('details');
+                          }
+                          if (step === 'details') {
+                            console.log('🔥 FORM: Moving from details to targets');
+                            setStep('targets');
+                          }
+                        } else {
+                          console.log('🔥 FORM: Validation failed for step:', step, 'Fields:', fieldsToValidate);
                         }
                       }}
                       className="px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"

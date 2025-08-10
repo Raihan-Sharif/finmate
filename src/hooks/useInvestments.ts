@@ -163,9 +163,19 @@ export function useCreateInvestment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (investment: CreateInvestmentInput) => 
-      InvestmentService.createInvestment(investment, user?.id || ''),
+    mutationFn: async (investment: CreateInvestmentInput) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      console.log('🔥 HOOK: About to call InvestmentService.createInvestment');
+      console.log('🔥 HOOK: User ID:', user.id);
+      console.log('🔥 HOOK: Investment data:', investment);
+      
+      const result = await InvestmentService.createInvestment(investment, user.id);
+      console.log('🔥 HOOK: Service returned:', result);
+      return result;
+    },
     onSuccess: (newInvestment) => {
+      console.log('🔥 HOOK: Create investment SUCCESS:', newInvestment);
+      
       // Invalidate and refetch investments lists
       queryClient.invalidateQueries({ 
         queryKey: investmentKeys.lists() 
@@ -191,9 +201,10 @@ export function useCreateInvestment() {
         });
       }
 
-      toast.success('Investment created successfully');
+      toast.success(`Investment "${newInvestment.name}" created successfully!`);
     },
     onError: (error: any) => {
+      console.error('🔥 HOOK: Create investment ERROR:', error);
       toast.error(error.message || 'Failed to create investment');
     },
   });
@@ -420,3 +431,4 @@ export function useInvestmentDashboard() {
     error: analytics.error || topPerformers.error || recent.error || stats.error
   };
 }
+

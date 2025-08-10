@@ -108,7 +108,7 @@ export function InvestmentCard({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Button variant="ghost" size="icon" className="opacity-60 group-hover:opacity-100 transition-opacity duration-300">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>

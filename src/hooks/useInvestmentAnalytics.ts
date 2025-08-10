@@ -32,6 +32,7 @@ export function useInvestmentDashboardStats() {
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes for live data
+    retry: false, // Don't retry on failure to avoid cascading errors
   });
 }
 
@@ -121,11 +122,46 @@ export function useTaxAnalysis() {
 
 // Combined hook for investment dashboard with all necessary data
 export function useInvestmentDashboard() {
+  const { user } = useAuth();
+  
+  // Only execute hooks if user is available to prevent QueryClient errors
   const dashboardStats = useInvestmentDashboardStats();
   const analytics = useInvestmentAnalytics();
   const monthlyTrend = useMonthlyInvestmentTrend(6); // Last 6 months
   const performanceMetrics = usePerformanceMetrics();
   const sipAnalysis = useSIPAnalysis();
+
+  // Early return if user is not available
+  if (!user) {
+    return {
+      totalPortfolios: 0,
+      totalInvestments: 0,
+      totalInvested: 0,
+      totalCurrentValue: 0,
+      totalGainLoss: 0,
+      totalReturnPercentage: 0,
+      dividendIncome: 0,
+      activeSIPs: 0,
+      monthlySIPAmount: 0,
+      topPerformer: null,
+      worstPerformer: null,
+      upcomingExecutions: [],
+      monthlyTrend: [],
+      assetAllocation: [],
+      portfolioPerformance: [],
+      sipAnalysis: null,
+      performanceMetrics: null,
+      isLoading: false,
+      error: null,
+      loadingStates: {
+        stats: false,
+        analytics: false,
+        trend: false,
+        performance: false,
+        sip: false,
+      }
+    };
+  }
 
   const dashboardData = {
     // Basic stats

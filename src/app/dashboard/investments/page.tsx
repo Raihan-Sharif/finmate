@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import {
   Plus,
   TrendingUp,
@@ -38,18 +39,19 @@ import { CreatePortfolioForm } from '@/components/investments/CreatePortfolioFor
 import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
 
 // Types
-import { CreateInvestmentInput } from '@/types/investments';
+import { CreateInvestmentInput, Investment, UpdateInvestmentInput } from '@/types/investments';
 
 // Hooks
 import { useInvestmentDashboard } from '@/hooks/useInvestmentAnalytics';
 import { useInvestmentPortfolios, useCreateInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
-import { useInvestments, useCreateInvestment } from '@/hooks/useInvestments';
+import { useInvestments, useCreateInvestment, useUpdateInvestment, useDeleteInvestment } from '@/hooks/useInvestments';
 import { useSIPTemplates, useCreateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentTransactions } from '@/hooks/useInvestmentTransactions';
 
 export default function InvestmentDashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateForm, setShowCreateForm] = useState<'investment' | 'portfolio' | 'sip' | false>(false);
+  const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const userCurrency = useUserCurrency();
   const { theme } = useTheme();
@@ -62,6 +64,8 @@ export default function InvestmentDashboardPage() {
   const { data: transactions = [], isLoading: transactionsLoading } = useInvestmentTransactions();
   const createPortfolioMutation = useCreateInvestmentPortfolio();
   const createInvestmentMutation = useCreateInvestment();
+  const updateInvestmentMutation = useUpdateInvestment();
+  const deleteInvestmentMutation = useDeleteInvestment();
   const createSIPMutation = useCreateInvestmentTemplate();
 
   // Mock data for charts (replace with real data from hooks)
@@ -107,6 +111,20 @@ export default function InvestmentDashboardPage() {
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
     // Trigger refetch of all queries
+  };
+
+  const handleEditInvestment = (investment: Investment) => {
+    setEditingInvestment(investment);
+  };
+
+  const handleDeleteInvestment = async (investment: Investment) => {
+    if (window.confirm(`Are you sure you want to delete "${investment.name}"?`)) {
+      try {
+        await deleteInvestmentMutation.mutateAsync(investment.id);
+      } catch (error) {
+        console.error('Failed to delete investment:', error);
+      }
+    }
   };
 
   const QuickActions = () => (
@@ -305,6 +323,122 @@ export default function InvestmentDashboardPage() {
         </div>
       );
     }
+  }
+
+  // Edit Investment Form
+  if (editingInvestment) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <Card className={cn(
+            "border-0 backdrop-blur-md shadow-lg",
+            theme === 'dark'
+              ? 'bg-gradient-to-br from-gray-800 via-gray-800/95 to-gray-900/90'
+              : 'bg-gradient-to-br from-white via-white/95 to-white/90'
+          )}>
+            <CardHeader>
+              <CardTitle className={cn(
+                "text-2xl font-bold",
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              )}>
+                Edit Investment: {editingInvestment.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Investment Name</Label>
+                  <input
+                    id="name"
+                    type="text"
+                    defaultValue={editingInvestment.name}
+                    className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="symbol">Symbol</Label>
+                  <input
+                    id="symbol"
+                    type="text"
+                    defaultValue={editingInvestment.symbol || ''}
+                    className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="current_price">Current Price</Label>
+                  <input
+                    id="current_price"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editingInvestment.current_price}
+                    className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="total_units">Total Units</Label>
+                  <input
+                    id="total_units"
+                    type="number"
+                    step="0.0001"
+                    defaultValue={editingInvestment.total_units}
+                    disabled
+                    className="w-full p-3 rounded-lg border border-gray-200 bg-gray-100 text-gray-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <textarea
+                  id="notes"
+                  rows={3}
+                  defaultValue={editingInvestment.notes || ''}
+                  className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingInvestment(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const nameInput = document.getElementById('name') as HTMLInputElement;
+                    const symbolInput = document.getElementById('symbol') as HTMLInputElement;
+                    const priceInput = document.getElementById('current_price') as HTMLInputElement;
+                    const notesInput = document.getElementById('notes') as HTMLTextAreaElement;
+
+                    const updates: UpdateInvestmentInput = {
+                      name: nameInput.value,
+                      symbol: symbolInput.value || undefined,
+                      current_price: parseFloat(priceInput.value),
+                      notes: notesInput.value || undefined,
+                    };
+
+                    try {
+                      await updateInvestmentMutation.mutateAsync({
+                        id: editingInvestment.id,
+                        updates
+                      });
+                      setEditingInvestment(null);
+                    } catch (error) {
+                      console.error('Failed to update investment:', error);
+                    }
+                  }}
+                  disabled={updateInvestmentMutation.isPending}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600"
+                >
+                  {updateInvestmentMutation.isPending ? 'Updating...' : 'Update Investment'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -570,8 +704,8 @@ export default function InvestmentDashboardPage() {
                 <InvestmentCard
                   investment={investment}
                   onView={(i) => console.log('View investment:', i)}
-                  onEdit={(i) => console.log('Edit investment:', i)}
-                  onDelete={(i) => console.log('Delete investment:', i)}
+                  onEdit={handleEditInvestment}
+                  onDelete={handleDeleteInvestment}
                 />
               </motion.div>
             ))}

@@ -58,8 +58,9 @@ const TransactionRow = ({
   onDelete?: (transaction: InvestmentTransaction) => void;
   index: number;
 }) => {
-  const isBuy = transaction.transaction_type === 'buy';
-  const isDividend = transaction.transaction_type === 'dividend';
+  const transactionType = transaction.transaction_type || transaction.type;
+  const isBuy = transactionType === 'buy';
+  const isDividend = transactionType === 'dividend';
   const investmentType = INVESTMENT_TYPES[transaction.investment_type || 'sip'];
   
   return (
@@ -119,7 +120,7 @@ const TransactionRow = ({
                       "border-red-200 text-red-700 bg-red-50"
                     )}
                   >
-                    {transaction.transaction_type.toUpperCase()}
+                    {(transactionType || 'UNKNOWN').toUpperCase()}
                   </Badge>
                 </div>
                 
@@ -265,7 +266,8 @@ export function InvestmentTransactionList({
 
   // Filter transactions
   const filteredTransactions = transactions.filter(transaction => {
-    const matchesType = filters.type === 'all' || transaction.transaction_type === filters.type;
+    const transactionType = transaction.transaction_type || transaction.type;
+    const matchesType = filters.type === 'all' || transactionType === filters.type;
     const matchesSearch = searchTerm === '' || 
       transaction.investment_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.portfolio_name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -288,7 +290,8 @@ export function InvestmentTransactionList({
 
   // Calculate totals
   const totalAmount = filteredTransactions.reduce((sum, t) => {
-    return sum + (t.transaction_type === 'buy' ? -t.amount : t.amount);
+    const transactionType = t.transaction_type || t.type;
+    return sum + (transactionType === 'buy' ? -t.amount : t.amount);
   }, 0);
 
   if (isLoading) {

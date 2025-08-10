@@ -184,59 +184,78 @@ export class InvestmentService {
 
     console.log('🔥 SERVICE: About to insert to database...');
     
-    const { data, error } = await supabase
-      .from('investments')
-      .insert(insertData)
-      .select(`
-        *,
-        portfolio:investment_portfolios(
-          id,
-          name,
-          color,
-          icon
-        )
-      `)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('investments')
+        .insert(insertData)
+        .select(`
+          *,
+          portfolio:investment_portfolios(
+            id,
+            name,
+            color,
+            icon
+          )
+        `)
+        .single();
 
-    console.log('🔥 SERVICE: Database response received');
-    console.log('🔥 SERVICE: Error:', error);
-    console.log('🔥 SERVICE: Data:', data);
+      console.log('🔥 SERVICE: Database response received');
+      console.log('🔥 SERVICE: Error:', error);
+      console.log('🔥 SERVICE: Data:', data);
 
-    if (error) {
-      console.error('🔥 SERVICE: Database insert failed:', error);
+      if (error) {
+        console.error('🔥 SERVICE: Database insert failed:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(`Investment creation failed: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('Investment creation failed: No data returned from database');
+      }
+
+      // Create initial buy transaction
+      console.log('🔥 SERVICE: Creating initial transaction...');
+      const transactionResult = await supabase
+        .from('investment_transactions')
+        .insert({
+          user_id: userId,
+          investment_id: data.id,
+          portfolio_id: data.portfolio_id,
+          type: 'buy',
+          units: investment.total_units,
+          price_per_unit: investment.average_cost,
+          total_amount: total_invested,
+          net_amount: total_invested,
+          transaction_date: investment.purchase_date,
+          platform: investment.platform,
+          currency: investment.currency || 'BDT',
+          notes: 'Initial investment'
+        });
+        
+      console.log('🔥 SERVICE: Transaction result:', transactionResult);
+      console.log('🔥 SERVICE: Transaction error:', transactionResult.error);
+      
+      if (transactionResult.error) {
+        console.error('🔥 SERVICE: Transaction insert failed:', {
+          message: transactionResult.error.message,
+          details: transactionResult.error.details,
+          hint: transactionResult.error.hint,
+          code: transactionResult.error.code
+        });
+        // Don't throw here - investment was created successfully
+        console.warn('🔥 SERVICE: Investment created but initial transaction failed');
+      }
+
+      console.log('🔥 SERVICE: Investment creation completed successfully');
+      return data;
+    } catch (error) {
+      console.error('🔥 SERVICE: Unexpected error during investment creation:', error);
       throw error;
     }
-
-    // Create initial buy transaction
-    console.log('🔥 SERVICE: Creating initial transaction...');
-    const transactionResult = await supabase
-      .from('investment_transactions')
-      .insert({
-        user_id: userId,
-        investment_id: data.id,
-        portfolio_id: data.portfolio_id,
-        type: 'buy',
-        units: investment.total_units,
-        price_per_unit: investment.average_cost,
-        total_amount: total_invested,
-        net_amount: total_invested,
-        transaction_date: investment.purchase_date,
-        platform: investment.platform,
-        currency: investment.currency || 'BDT',
-        notes: 'Initial investment'
-      });
-      
-    console.log('🔥 SERVICE: Transaction result:', transactionResult);
-    console.log('🔥 SERVICE: Transaction error:', transactionResult.error);
-    
-    if (transactionResult.error) {
-      console.error('🔥 SERVICE: Transaction insert failed:', transactionResult.error);
-      // Don't throw here - investment was created successfully
-      console.warn('🔥 SERVICE: Investment created but initial transaction failed');
-    }
-
-    console.log('🔥 SERVICE: Investment creation completed successfully');
-    return data;
   }
 
   // Update investment
