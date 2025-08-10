@@ -18,18 +18,32 @@ import {
   Edit,
   Trash2,
   Eye,
-  DollarSign
+  DollarSign,
+  PieChart,
+  Bitcoin,
+  FileText,
+  Lock,
+  Repeat,
+  PiggyBank,
+  Award,
+  Calendar,
+  Crown,
+  Home,
+  Briefcase,
+  UserCheck
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useUserCurrency } from '@/lib/currency';
 import { useTheme } from 'next-themes';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface InvestmentCardProps {
   investment: Investment;
   onView?: (investment: Investment) => void;
   onEdit?: (investment: Investment) => void;
   onDelete?: (investment: Investment) => void;
+  onConfirmDelete?: (investment: Investment) => void;
   className?: string;
 }
 
@@ -38,6 +52,7 @@ export function InvestmentCard({
   onView,
   onEdit,
   onDelete,
+  onConfirmDelete,
   className
 }: InvestmentCardProps) {
   const userCurrency = useUserCurrency();
@@ -84,9 +99,33 @@ export function InvestmentCard({
                 "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300",
                 "bg-gradient-to-br from-blue-500 to-purple-600 group-hover:scale-110"
               )}>
-                <span className="text-white text-lg font-bold">
-                  {investmentType?.icon || investment.symbol?.charAt(0) || investment.name.charAt(0)}
-                </span>
+                {investmentType?.icon ? (
+                  (() => {
+                    // Map icon strings to actual icon components
+                    const iconMap: { [key: string]: any } = {
+                      'trending-up': TrendingUp,
+                      'pie-chart': PieChart,
+                      'bitcoin': Bitcoin,
+                      'scroll': FileText,
+                      'lock': Lock,
+                      'repeat': Repeat,
+                      'piggy-bank': PiggyBank,
+                      'certificate': Award,
+                      'calendar': Calendar,
+                      'crown': Crown,
+                      'home': Home,
+                      'briefcase': Briefcase,
+                      'user-check': UserCheck,
+                      'more-horizontal': MoreVertical
+                    };
+                    const IconComponent = iconMap[investmentType.icon] || TrendingUp;
+                    return <IconComponent className="h-6 w-6 text-white" />;
+                  })()
+                ) : (
+                  <span className="text-white text-lg font-bold">
+                    {investment.symbol?.charAt(0) || investment.name.charAt(0)}
+                  </span>
+                )}
               </div>
               <div>
                 <h3 className={cn(
@@ -156,18 +195,32 @@ export function InvestmentCard({
                     Edit
                   </DropdownMenuItem>
                 )}
-                {onDelete && (
-                  <DropdownMenuItem 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log('Delete clicked for:', investment.name);
-                      onDelete(investment);
+                {(onDelete || onConfirmDelete) && (
+                  <ConfirmationDialog
+                    title="Delete Investment"
+                    description={`Are you sure you want to delete "${investment.name}"? This action cannot be undone and will remove all associated data including transactions and performance history.`}
+                    confirmText="Delete Investment"
+                    cancelText="Keep Investment"
+                    variant="destructive"
+                    onConfirm={() => {
+                      console.log('Confirmed delete for:', investment.name);
+                      if (onConfirmDelete) {
+                        onConfirmDelete(investment);
+                      } else if (onDelete) {
+                        onDelete(investment);
+                      }
                     }}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onSelect={(e) => {
+                        e.preventDefault(); // Prevent dropdown from closing immediately
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </ConfirmationDialog>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
