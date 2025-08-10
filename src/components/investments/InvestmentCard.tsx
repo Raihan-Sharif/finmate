@@ -44,6 +44,7 @@ interface InvestmentCardProps {
   onEdit?: (investment: Investment) => void;
   onDelete?: (investment: Investment) => void;
   onConfirmDelete?: (investment: Investment) => void;
+  isDeleting?: boolean;
   className?: string;
 }
 
@@ -53,6 +54,7 @@ export function InvestmentCard({
   onEdit,
   onDelete,
   onConfirmDelete,
+  isDeleting = false,
   className
 }: InvestmentCardProps) {
   const userCurrency = useUserCurrency();
@@ -202,11 +204,14 @@ export function InvestmentCard({
                     confirmText="Delete Investment"
                     cancelText="Keep Investment"
                     variant="destructive"
+                    isLoading={isDeleting}
                     onConfirm={() => {
-                      console.log('Confirmed delete for:', investment.name);
+                      console.log('🗑️ ConfirmationDialog: Delete confirmed for:', investment.name);
                       if (onConfirmDelete) {
+                        console.log('🗑️ ConfirmationDialog: Calling onConfirmDelete');
                         onConfirmDelete(investment);
                       } else if (onDelete) {
+                        console.log('🗑️ ConfirmationDialog: Calling onDelete');
                         onDelete(investment);
                       }
                     }}

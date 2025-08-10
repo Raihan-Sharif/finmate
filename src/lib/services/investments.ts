@@ -313,9 +313,29 @@ export class InvestmentService {
     return updatedInvestment;
   }
 
-  // Delete investment (soft delete by setting status to closed)
+  // Delete investment (hard delete - removes from database)
   static async deleteInvestment(id: string, userId: string): Promise<void> {
-    await this.updateInvestment(id, { status: 'closed' }, userId);
+    console.log('🗑️ InvestmentService: Deleting investment', { id, userId });
+    
+    // First verify the investment belongs to the user
+    const investment = await this.getInvestmentById(id, userId);
+    if (!investment) {
+      throw new Error('Investment not found or you do not have permission to delete it');
+    }
+
+    // Hard delete the investment - related data will be cascade deleted
+    const { error } = await supabase
+      .from('investments')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId); // Double check user ownership
+
+    if (error) {
+      console.error('🗑️ InvestmentService: Delete error:', error);
+      throw new Error(`Failed to delete investment: ${error.message}`);
+    }
+
+    console.log('🗑️ InvestmentService: Investment deleted successfully');
   }
 
   // Get investment performance over time

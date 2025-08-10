@@ -63,6 +63,12 @@ const investmentSchema = z.object({
   current_price: z.number().min(0.01, 'Current price must be greater than 0'),
   currency: z.string().min(1, 'Currency is required'),
   risk_level: z.enum(['low', 'medium', 'high']),
+  platform: z.string().optional(),
+  account_number: z.string().optional(),
+  folio_number: z.string().optional(),
+  maturity_date: z.string().optional(),
+  interest_rate: z.number().optional(),
+  exchange: z.string().optional(),
   target_amount: z.number().optional(),
   target_date: z.string().optional(),
   notes: z.string().optional(),
@@ -104,6 +110,12 @@ export function CreateInvestmentForm({
       current_price: 0,
       currency: 'BDT',
       risk_level: 'medium',
+      platform: '',
+      account_number: '',
+      folio_number: '',
+      maturity_date: '',
+      interest_rate: undefined,
+      exchange: '',
       target_amount: undefined,
       target_date: '',
       notes: '',
@@ -156,6 +168,12 @@ export function CreateInvestmentForm({
       // Add optional fields only if they have values
       if (data.symbol) requestData.symbol = data.symbol;
       if (tags.length > 0) requestData.tags = tags;
+      if (data.platform) requestData.platform = data.platform;
+      if (data.account_number) requestData.account_number = data.account_number;
+      if (data.folio_number) requestData.folio_number = data.folio_number;
+      if (data.maturity_date) requestData.maturity_date = data.maturity_date;
+      if (data.interest_rate) requestData.interest_rate = data.interest_rate;
+      if (data.exchange) requestData.exchange = data.exchange;
       if (data.target_amount) requestData.target_amount = data.target_amount;
       if (data.target_date) requestData.target_date = data.target_date;
       if (data.notes) requestData.notes = data.notes;
@@ -450,6 +468,131 @@ export function CreateInvestmentForm({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Platform & Account Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FormField
+                control={form.control}
+                name="platform"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-semibold">Platform/Broker (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., IFIC Securities, Dhaka Stock Exchange"
+                        className="h-12 text-base"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="account_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-semibold">Account Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Your account number"
+                        className="h-12 text-base"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="folio_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-semibold">Folio Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Folio/certificate number"
+                        className="h-12 text-base"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="maturity_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-semibold">Maturity Date (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date"
+                        className="h-12 text-base"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      For fixed deposits, bonds, or time-bound investments
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="interest_rate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-semibold">Interest Rate % (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        step="0.01"
+                        placeholder="5.5"
+                        className="h-12 text-base"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Annual interest rate for fixed income investments
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="exchange"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base font-semibold">Exchange (Optional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g., DSE, CSE, NYSE, NASDAQ"
+                      className="h-12 text-base"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Stock exchange where the investment is traded
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -764,6 +907,7 @@ export function CreateInvestmentForm({
                         if (step === 'basic') {
                           fieldsToValidate = ['name', 'type', 'portfolio_id'];
                         } else if (step === 'details') {
+                          // Only validate required fields in details step
                           fieldsToValidate = ['initial_amount', 'current_price', 'currency', 'risk_level'];
                         }
 

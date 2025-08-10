@@ -209,6 +209,15 @@ export default function InvestmentDashboardPage() {
                 symbol: data.symbol || '',
                 tags: data.tags || [],
                 notes: data.notes || '',
+                // Platform & Account Details
+                ...(data.platform && { platform: data.platform }),
+                ...(data.account_number && { account_number: data.account_number }),
+                ...(data.folio_number && { folio_number: data.folio_number }),
+                ...(data.exchange && { exchange: data.exchange }),
+                // Investment Specific Details  
+                ...(data.maturity_date && { maturity_date: data.maturity_date }),
+                ...(data.interest_rate && { interest_rate: data.interest_rate }),
+                // Target Information
                 ...(data.target_date && { maturity_date: data.target_date }),
                 ...(data.target_amount && { metadata: { target_amount: data.target_amount } })
               };
@@ -621,6 +630,7 @@ export default function InvestmentDashboardPage() {
                     console.log('Delete triggered for:', investment.name);
                   }}
                   onConfirmDelete={handleDeleteInvestment}
+                  isDeleting={deleteInvestmentMutation.isPending}
                 />
               </motion.div>
             ))}
