@@ -7,7 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 import {
   Plus,
   TrendingUp,
@@ -39,36 +48,41 @@ import { CreateInvestmentForm } from '@/components/investments/CreateInvestmentF
 import { EditInvestmentForm } from '@/components/investments/EditInvestmentForm';
 import { CreatePortfolioForm } from '@/components/investments/CreatePortfolioForm';
 import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
+import { EditSIPForm } from '@/components/investments/EditSIPForm';
 
 // Types
-import { CreateInvestmentInput, Investment, UpdateInvestmentInput } from '@/types/investments';
+import { CreateInvestmentInput, Investment, UpdateInvestmentInput, InvestmentTemplate } from '@/types/investments';
 
 // Hooks
 import { useInvestmentDashboard } from '@/hooks/useInvestmentAnalytics';
 import { useInvestmentPortfolios, useCreateInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
 import { useInvestments, useCreateInvestment, useUpdateInvestment, useDeleteInvestment } from '@/hooks/useInvestments';
-import { useSIPTemplates, useCreateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
+import { useSIPTemplates, useCreateInvestmentTemplate, useUpdateInvestmentTemplate, useDeleteInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentTransactions } from '@/hooks/useInvestmentTransactions';
 
 export default function InvestmentDashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateForm, setShowCreateForm] = useState<'investment' | 'portfolio' | 'sip' | false>(false);
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
+  const [editingSIPTemplate, setEditingSIPTemplate] = useState<InvestmentTemplate | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{type: 'investment' | 'sip' | null, item: any}>({type: null, item: null});
   const [refreshKey, setRefreshKey] = useState(0);
   const userCurrency = useUserCurrency();
   const { theme } = useTheme();
 
   // Data hooks
   const dashboard = useInvestmentDashboard();
-  const { data: portfolios = [], isLoading: portfoliosLoading } = useInvestmentPortfolios();
-  const { data: investments = [], isLoading: investmentsLoading } = useInvestments();
-  const { data: sipTemplates = [], isLoading: sipsLoading } = useSIPTemplates();
-  const { data: transactions = [], isLoading: transactionsLoading } = useInvestmentTransactions();
+  const { data: portfolios = [], isLoading: portfoliosLoading, refetch: refetchPortfolios } = useInvestmentPortfolios();
+  const { data: investments = [], isLoading: investmentsLoading, refetch: refetchInvestments } = useInvestments();
+  const { data: sipTemplates = [], isLoading: sipsLoading, refetch: refetchSIPs } = useSIPTemplates();
+  const { data: transactions = [], isLoading: transactionsLoading, refetch: refetchTransactions } = useInvestmentTransactions();
   const createPortfolioMutation = useCreateInvestmentPortfolio();
   const createInvestmentMutation = useCreateInvestment();
   const updateInvestmentMutation = useUpdateInvestment();
   const deleteInvestmentMutation = useDeleteInvestment();
   const createSIPMutation = useCreateInvestmentTemplate();
+  const updateSIPMutation = useUpdateInvestmentTemplate();
+  const deleteSIPMutation = useDeleteInvestmentTemplate();
 
   // Mock data for charts (replace with real data from hooks)
   const mockPerformanceData = [
@@ -110,9 +124,20 @@ export default function InvestmentDashboardPage() {
     upcoming_executions: []
   };
 
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-    // Trigger refetch of all queries
+  const handleRefresh = async () => {
+    try {
+      console.log('🔄 Refreshing all investment data...');
+      setRefreshKey(prev => prev + 1);
+      await Promise.all([
+        refetchPortfolios(),
+        refetchInvestments(),
+        refetchSIPs(),
+        refetchTransactions()
+      ]);
+      console.log('✅ All investment data refreshed successfully');
+    } catch (error) {
+      console.error('❌ Failed to refresh investment data:', error);
+    }
   };
 
   const handleEditInvestment = (investment: Investment) => {
@@ -167,8 +192,15 @@ export default function InvestmentDashboardPage() {
         <Zap className="h-4 w-4 mr-2" />
         Setup SIP
       </Button>
-      <Button variant="ghost" onClick={handleRefresh}>
-        <RefreshCw className="h-4 w-4 mr-2" />
+      <Button 
+        variant="ghost" 
+        onClick={handleRefresh}
+        disabled={portfoliosLoading || investmentsLoading || sipsLoading || transactionsLoading}
+      >
+        <RefreshCw className={cn(
+          "h-4 w-4 mr-2 transition-transform duration-300",
+          (portfoliosLoading || investmentsLoading || sipsLoading || transactionsLoading) && "animate-spin"
+        )} />
         Refresh
       </Button>
       <Button variant="ghost">
@@ -356,6 +388,33 @@ export default function InvestmentDashboardPage() {
           }}
           onCancel={() => setEditingInvestment(null)}
           isLoading={updateInvestmentMutation.isPending}
+        />
+      </div>
+    );
+  }
+
+  // Show edit SIP form if editing a SIP template
+  if (editingSIPTemplate) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <EditSIPForm
+          template={editingSIPTemplate}
+          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
+          onSubmit={async (data) => {
+            try {
+              console.log('Updating SIP template:', editingSIPTemplate.id, data);
+              await updateSIPMutation.mutateAsync({ 
+                id: editingSIPTemplate.id, 
+                updates: data 
+              });
+              console.log('SIP template updated successfully');
+              setEditingSIPTemplate(null);
+            } catch (error) {
+              console.error('Failed to update SIP template:', error);
+            }
+          }}
+          onCancel={() => setEditingSIPTemplate(null)}
+          isLoading={updateSIPMutation.isPending}
         />
       </div>
     );
@@ -626,8 +685,8 @@ export default function InvestmentDashboardPage() {
                   onView={(i) => console.log('View investment:', i)}
                   onEdit={handleEditInvestment}
                   onDelete={(investment) => {
-                    // This will be handled by the ConfirmationDialog in the InvestmentCard
                     console.log('Delete triggered for:', investment.name);
+                    setDeleteConfirmation({type: 'investment', item: investment});
                   }}
                   onConfirmDelete={handleDeleteInvestment}
                   isDeleting={deleteInvestmentMutation.isPending}
@@ -677,10 +736,29 @@ export default function InvestmentDashboardPage() {
               >
                 <SIPTemplateCard
                   template={template}
-                  onView={(t) => console.log('View SIP:', t)}
-                  onEdit={(t) => console.log('Edit SIP:', t)}
-                  onDelete={(t) => console.log('Delete SIP:', t)}
-                  onToggleStatus={(t) => console.log('Toggle SIP:', t)}
+                  onView={(t) => {
+                    console.log('View SIP:', t);
+                    // Navigate to SIP details view
+                  }}
+                  onEdit={(t) => {
+                    console.log('Edit SIP:', t);
+                    setEditingSIPTemplate(t);
+                  }}
+                  onDelete={(t) => {
+                    console.log('Delete SIP:', t);
+                    setDeleteConfirmation({type: 'sip', item: t});
+                  }}
+                  onToggleStatus={async (t) => {
+                    try {
+                      console.log('Toggle SIP status:', t);
+                      await updateSIPMutation.mutateAsync({ 
+                        id: t.id, 
+                        updates: { is_active: !t.is_active } 
+                      });
+                    } catch (error: any) {
+                      console.error('Failed to toggle SIP status:', error);
+                    }
+                  }}
                 />
               </motion.div>
             ))}
@@ -726,6 +804,63 @@ export default function InvestmentDashboardPage() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmation.type && (
+        <AlertDialog
+          open={deleteConfirmation.type !== null}
+          onOpenChange={() => setDeleteConfirmation({type: null, item: null})}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {deleteConfirmation.type === 'sip' 
+                  ? (deleteConfirmation.item?.is_active ? 'Pause SIP Plan?' : 'Remove SIP Plan?')
+                  : 'Delete Investment?'
+                }
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteConfirmation.type === 'sip'
+                  ? deleteConfirmation.item?.is_active 
+                    ? `Are you sure you want to pause "${deleteConfirmation.item?.name}"? You can resume it later.`
+                    : `Are you sure you want to remove "${deleteConfirmation.item?.name}"? This will make it inactive.`
+                  : `Are you sure you want to delete "${deleteConfirmation.item?.name}"? This action cannot be undone.`
+                }
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  try {
+                    if (deleteConfirmation.type === 'sip') {
+                      // For SIP, we pause it instead of deleting
+                      await updateSIPMutation.mutateAsync({ 
+                        id: deleteConfirmation.item.id, 
+                        updates: { is_active: false } 
+                      });
+                      console.log('SIP template paused successfully');
+                    } else if (deleteConfirmation.type === 'investment') {
+                      await deleteInvestmentMutation.mutateAsync(deleteConfirmation.item.id);
+                      console.log('Investment deleted successfully');
+                    }
+                    setDeleteConfirmation({type: null, item: null});
+                  } catch (error) {
+                    console.error(`Failed to ${deleteConfirmation.type === 'sip' ? 'pause' : 'delete'} ${deleteConfirmation.type}:`, error);
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+                disabled={updateSIPMutation.isPending || deleteInvestmentMutation.isPending}
+              >
+                {updateSIPMutation.isPending || deleteInvestmentMutation.isPending 
+                  ? (deleteConfirmation.type === 'sip' ? 'Pausing...' : 'Deleting...') 
+                  : (deleteConfirmation.type === 'sip' ? 'Pause' : 'Delete')
+                }
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

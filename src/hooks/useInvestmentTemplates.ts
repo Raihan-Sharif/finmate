@@ -37,7 +37,8 @@ export function useInvestmentTemplates() {
     queryKey: investmentTemplateKeys.list(user?.id || ''),
     queryFn: () => InvestmentTemplateService.getTemplates(user?.id || ''),
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute for faster updates
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 }
 
@@ -98,7 +99,8 @@ export function useSIPTemplates() {
     queryKey: investmentTemplateKeys.sip(user?.id || ''),
     queryFn: () => InvestmentTemplateService.getSIPTemplates(user?.id || ''),
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute for more frequent updates
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 }
 
@@ -157,14 +159,15 @@ export function useCreateInvestmentTemplate() {
     mutationFn: (template: CreateInvestmentTemplateInput) => 
       InvestmentTemplateService.createTemplate(template, user?.id || ''),
     onSuccess: (newTemplate) => {
-      // Invalidate and refetch templates list
+      // Invalidate and refetch all relevant queries for real-time updates
       queryClient.invalidateQueries({ 
         queryKey: investmentTemplateKeys.lists() 
       });
-      
-      // Invalidate stats
       queryClient.invalidateQueries({ 
         queryKey: investmentTemplateKeys.stats(user?.id || '') 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: investmentTemplateKeys.sip(user?.id || '') 
       });
       
       // Add new template to cache
@@ -173,9 +176,17 @@ export function useCreateInvestmentTemplate() {
         newTemplate
       );
 
-      // Invalidate upcoming executions
+      // Invalidate execution-related queries
       queryClient.invalidateQueries({ 
         queryKey: [...investmentTemplateKeys.all, 'upcoming'] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: investmentTemplateKeys.forExecution() 
+      });
+
+      // Invalidate by type queries (SIP specifically)
+      queryClient.invalidateQueries({ 
+        queryKey: investmentTemplateKeys.byType(user?.id || '', 'sip') 
       });
 
       toast.success('Investment template created successfully');
@@ -201,12 +212,15 @@ export function useUpdateInvestmentTemplate() {
         updatedTemplate
       );
       
-      // Invalidate related queries
+      // Invalidate all related queries aggressively for real-time updates
       queryClient.invalidateQueries({ 
         queryKey: investmentTemplateKeys.lists() 
       });
       queryClient.invalidateQueries({ 
         queryKey: investmentTemplateKeys.stats(user?.id || '') 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: investmentTemplateKeys.sip(user?.id || '') 
       });
       
       // Invalidate execution-related queries
@@ -215,6 +229,14 @@ export function useUpdateInvestmentTemplate() {
       });
       queryClient.invalidateQueries({ 
         queryKey: [...investmentTemplateKeys.all, 'upcoming'] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: [...investmentTemplateKeys.all, 'overdue'] 
+      });
+
+      // Invalidate by type queries (SIP specifically)
+      queryClient.invalidateQueries({ 
+        queryKey: investmentTemplateKeys.byType(user?.id || '', 'sip') 
       });
 
       toast.success('Template updated successfully');
@@ -322,17 +344,28 @@ export function useToggleInvestmentTemplate() {
         updatedTemplate
       );
       
-      // Invalidate related queries
+      // Invalidate all related queries for immediate UI updates
       queryClient.invalidateQueries({ 
         queryKey: investmentTemplateKeys.lists() 
       });
       queryClient.invalidateQueries({ 
         queryKey: investmentTemplateKeys.stats(user?.id || '') 
       });
+      queryClient.invalidateQueries({ 
+        queryKey: investmentTemplateKeys.sip(user?.id || '') 
+      });
       
       // Invalidate execution queries
       queryClient.invalidateQueries({ 
         queryKey: investmentTemplateKeys.forExecution() 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: [...investmentTemplateKeys.all, 'upcoming'] 
+      });
+
+      // Invalidate by type queries (SIP specifically)
+      queryClient.invalidateQueries({ 
+        queryKey: investmentTemplateKeys.byType(user?.id || '', 'sip') 
       });
 
       const action = updatedTemplate.is_active ? 'activated' : 'paused';

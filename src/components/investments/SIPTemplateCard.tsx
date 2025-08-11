@@ -24,7 +24,11 @@ import {
   Zap,
   TrendingUp,
   ArrowUpRight,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  Hash,
+  Target,
+  Settings
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -58,8 +62,10 @@ export function SIPTemplateCard({
     ? Math.ceil((nextExecution.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
-  // Calculate total invested so far
-  const totalInvested = (template.executed_count || 0) * template.amount;
+  // Calculate total invested so far - handle NaN values
+  const amount = template.amount_per_investment || template.amount || 0;
+  const executedCount = template.executed_count || 0;
+  const totalInvested = isNaN(amount) || isNaN(executedCount) ? 0 : executedCount * amount;
   
   // Get frequency display
   const frequencyDisplay = {
@@ -210,10 +216,10 @@ export function SIPTemplateCard({
                 {onDelete && (
                   <DropdownMenuItem 
                     onClick={() => onDelete(template)}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-orange-600 hover:text-orange-700"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                    <Pause className="h-4 w-4 mr-2" />
+                    {isActive ? 'Pause SIP' : 'Remove SIP'}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -233,7 +239,7 @@ export function SIPTemplateCard({
                 Investment Amount
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(template.amount, template.currency)}
+                {formatCurrency(amount, template.currency)}
               </p>
               <p className="text-xs text-gray-600">
                 Per {template.frequency}
@@ -249,7 +255,7 @@ export function SIPTemplateCard({
                 Total Invested
               </p>
               <p className="text-2xl font-bold text-blue-600">
-                {formatCurrency(totalInvested, template.currency)}
+                {totalInvested > 0 ? formatCurrency(totalInvested, template.currency) : formatCurrency(0, template.currency)}
               </p>
               <p className="text-xs text-gray-600">
                 {template.executed_count || 0} executions
@@ -287,14 +293,44 @@ export function SIPTemplateCard({
                 </span>
                 <div className="flex items-center space-x-1 text-sm text-blue-600">
                   <ArrowUpRight className="h-4 w-4" />
-                  <span>{formatCurrency(template.amount, template.currency)}</span>
+                  <span>{formatCurrency(amount, template.currency)}</span>
                 </div>
               </div>
             </motion.div>
           )}
 
+          {/* Advanced Options Display */}
+          {(template.interval_value && template.interval_value > 1) && (
+            <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100/50 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Repeat className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm font-medium text-purple-700">Custom Interval</span>
+                </div>
+                <span className="text-sm font-semibold text-purple-900">
+                  Every {template.interval_value} {frequencyDisplay.toLowerCase()}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Limit Price Info */}
+          {!template.market_order && template.limit_price && (
+            <div className="p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-100/50 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Target className="h-4 w-4 text-yellow-600" />
+                  <span className="text-sm font-medium text-yellow-700">Limit Price</span>
+                </div>
+                <span className="text-sm font-semibold text-yellow-900">
+                  {formatCurrency(template.limit_price, template.currency)}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Execution Limits */}
-          {(template.max_executions || template.end_date) && (
+          {(template.max_executions || template.end_date || template.target_amount) && (
             <motion.div 
               className="space-y-3"
               whileHover={{ scale: 1.01 }}
@@ -302,48 +338,133 @@ export function SIPTemplateCard({
             >
               <h4 className="text-sm font-medium text-gray-700 flex items-center space-x-2">
                 <AlertCircle className="h-4 w-4" />
-                <span>SIP Limits</span>
+                <span>SIP Limits & Targets</span>
               </h4>
               
               <div className="grid grid-cols-1 gap-3">
+                {template.target_amount && (
+                  <div className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Target className="h-4 w-4 text-green-500" />
+                      <span className="text-sm text-gray-600">Target Amount</span>
+                    </div>
+                    <span className="font-semibold text-green-700">
+                      {formatCurrency(template.target_amount, template.currency)}
+                    </span>
+                  </div>
+                )}
+                
                 {template.max_executions && (
-                  <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg">
-                    <span className="text-sm text-gray-600">Max Executions</span>
-                    <span className="font-semibold text-gray-900">
+                  <div className="flex items-center justify-between p-3 bg-orange-50/50 rounded-lg">
+                    <span className="text-sm text-orange-600">Max Executions</span>
+                    <span className="font-semibold text-orange-700">
                       {template.executed_count || 0} / {template.max_executions}
                     </span>
                   </div>
                 )}
                 
                 {template.end_date && (
-                  <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg">
-                    <span className="text-sm text-gray-600">End Date</span>
+                  <div className="flex items-center justify-between p-3 bg-red-50/50 rounded-lg">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="h-3 w-3 text-gray-500" />
-                      <span className="font-semibold text-gray-900">
-                        {new Date(template.end_date).toLocaleDateString()}
-                      </span>
+                      <Calendar className="h-4 w-4 text-red-500" />
+                      <span className="text-sm text-red-600">End Date</span>
                     </div>
+                    <span className="font-semibold text-red-700">
+                      {new Date(template.end_date).toLocaleDateString()}
+                    </span>
                   </div>
                 )}
               </div>
             </motion.div>
           )}
 
-          {/* Investment Target */}
-          {template.investment_name && (
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center justify-between">
+          {/* Additional Information */}
+          <div className="pt-4 border-t border-gray-100 space-y-3">
+            {/* Platform & Account Info */}
+            {(template.platform || template.account_number) && (
+              <div className="grid grid-cols-1 gap-3">
+                {template.platform && (
+                  <div className="flex items-center justify-between p-2 bg-blue-50/50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Building2 className="h-4 w-4 text-blue-500" />
+                      <span className="text-sm font-medium text-gray-700">Platform</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">{template.platform}</span>
+                  </div>
+                )}
+                {template.account_number && (
+                  <div className="flex items-center justify-between p-2 bg-green-50/50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Hash className="h-4 w-4 text-green-500" />
+                      <span className="text-sm font-medium text-gray-700">Account</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">{template.account_number}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Symbol Info */}
+            {template.symbol && (
+              <div className="flex items-center justify-between p-2 bg-purple-50/50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Hash className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm font-medium text-gray-700">Symbol/Code</span>
+                </div>
+                <Badge variant="outline" className="font-mono text-xs">
+                  {template.symbol}
+                </Badge>
+              </div>
+            )}
+
+            {/* Settings Info */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center justify-between p-2 bg-gray-50/50 rounded-lg">
+                <div className="flex items-center space-x-1">
+                  <Settings className="h-3 w-3 text-gray-500" />
+                  <span className="text-xs font-medium text-gray-600">Auto Execute</span>
+                </div>
+                <Badge variant={template.auto_execute ? "default" : "outline"} className="text-xs px-2 py-0">
+                  {template.auto_execute ? "ON" : "OFF"}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-gray-50/50 rounded-lg">
+                <div className="flex items-center space-x-1">
+                  <Target className="h-3 w-3 text-gray-500" />
+                  <span className="text-xs font-medium text-gray-600">Market Order</span>
+                </div>
+                <Badge variant={template.market_order ? "default" : "outline"} className="text-xs px-2 py-0">
+                  {template.market_order ? "YES" : "NO"}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Investment Target */}
+            {template.investment_name && (
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
                 <div>
                   <p className="text-sm font-medium text-gray-700">Target Investment</p>
-                  <p className="text-lg font-bold text-gray-900">{template.investment_name}</p>
+                  <p className="text-base font-bold text-gray-900">{template.investment_name}</p>
                 </div>
                 <Badge variant="outline" className="text-xs font-medium">
                   {template.portfolio_name}
                 </Badge>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Notes Display */}
+            {template.notes && (
+              <div className="p-3 bg-gray-50/50 rounded-lg">
+                <p className="text-xs font-medium text-gray-500 mb-1">Notes</p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {template.notes.length > 80 
+                    ? `${template.notes.substring(0, 80)}...` 
+                    : template.notes
+                  }
+                </p>
+              </div>
+            )}
+          </div>
         </CardContent>
 
         {/* Decorative elements */}

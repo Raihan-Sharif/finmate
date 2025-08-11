@@ -37,8 +37,10 @@ import {
 import { cn } from '@/lib/utils';
 import { SIPTemplateCard } from '@/components/investments/SIPTemplateCard';
 import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
-import { useSIPTemplates, useCreateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
+import { EditSIPForm } from '@/components/investments/EditSIPForm';
+import { useSIPTemplates, useCreateInvestmentTemplate, useUpdateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentPortfolios } from '@/hooks/useInvestmentPortfolios';
+import { InvestmentTemplate } from '@/types/investments';
 import { formatCurrency } from '@/lib/utils';
 
 export default function SIPManagementPage() {
@@ -46,10 +48,12 @@ export default function SIPManagementPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<InvestmentTemplate | null>(null);
 
-  const { data: sipTemplates = [], isLoading } = useSIPTemplates();
-  const { data: portfolios = [], isLoading: portfoliosLoading } = useInvestmentPortfolios();
+  const { data: sipTemplates = [], isLoading, refetch: refetchSIPs } = useSIPTemplates();
+  const { data: portfolios = [], isLoading: portfoliosLoading, refetch: refetchPortfolios } = useInvestmentPortfolios();
   const createSIPMutation = useCreateInvestmentTemplate();
+  const updateSIPMutation = useUpdateInvestmentTemplate();
 
   // Filter SIPs based on search and status
   const filteredSIPs = sipTemplates.filter(template => {
@@ -62,15 +66,52 @@ export default function SIPManagementPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate SIP statistics
+  // Calculate SIP statistics with proper NaN handling
   const stats = {
     totalSIPs: sipTemplates.length,
     activeSIPs: sipTemplates.filter(s => s.is_active).length,
     pausedSIPs: sipTemplates.filter(s => !s.is_active).length,
     monthlyAmount: sipTemplates
-      .filter(s => s.is_active && s.frequency === 'monthly')
-      .reduce((sum, s) => sum + s.amount, 0),
-    totalInvested: sipTemplates.reduce((sum, s) => sum + (s.executed_count || 0) * s.amount, 0),
+      .filter(s => s.is_active)
+      .reduce((sum, s) => {
+        const amount = s.amount_per_investment || s.amount || 0;
+        if (isNaN(amount)) return sum;
+        
+        // Convert all frequencies to monthly equivalent
+        let monthlyEquivalent = 0;
+        const intervalValue = s.interval_value || 1;
+        
+        switch (s.frequency) {
+          case 'daily':
+            monthlyEquivalent = amount * 30 / intervalValue;
+            break;
+          case 'weekly':
+            monthlyEquivalent = amount * 4.33 / intervalValue;
+            break;
+          case 'biweekly':
+            monthlyEquivalent = amount * 2.17 / intervalValue;
+            break;
+          case 'monthly':
+            monthlyEquivalent = amount / intervalValue;
+            break;
+          case 'quarterly':
+            monthlyEquivalent = amount / (3 * intervalValue);
+            break;
+          case 'yearly':
+            monthlyEquivalent = amount / (12 * intervalValue);
+            break;
+          default:
+            monthlyEquivalent = amount; // fallback to monthly
+        }
+        
+        return sum + (isNaN(monthlyEquivalent) ? 0 : monthlyEquivalent);
+      }, 0),
+    totalInvested: sipTemplates.reduce((sum, s) => {
+      const amount = s.amount_per_investment || s.amount || 0;
+      const executed = s.executed_count || 0;
+      const invested = executed * amount;
+      return sum + (isNaN(invested) ? 0 : invested);
+    }, 0),
     upcomingExecutions: sipTemplates
       .filter(s => s.is_active && s.next_execution_date)
       .filter(s => {
@@ -156,6 +197,39 @@ export default function SIPManagementPage() {
     );
   }
 
+  // Show edit form if requested
+  if (editingTemplate) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <EditSIPForm
+          template={editingTemplate}
+          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
+          onSubmit={async (data) => {
+            try {
+              console.log('SIP Management: Updating SIP data:', data);
+              const result = await updateSIPMutation.mutateAsync({ 
+                id: editingTemplate.id, 
+                updates: data 
+              });
+              console.log('SIP Management: SIP update result:', result);
+              setEditingTemplate(null);
+            } catch (error: any) {
+              console.error('SIP Management: Failed to update SIP:', error);
+              console.error('SIP Management: Error details:', {
+                message: error?.message,
+                code: error?.code,
+                details: error?.details,
+                hint: error?.hint
+              });
+            }
+          }}
+          onCancel={() => setEditingTemplate(null)}
+          isLoading={updateSIPMutation.isPending}
+        />
+      </div>
+    );
+  }
+
   const QuickActions = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -173,16 +247,70 @@ export default function SIPManagementPage() {
         <Plus className="h-4 w-4 mr-2" />
         Create SIP
       </Button>
-      <Button variant="outline" className="hover:bg-white/70">
+      <Button 
+        variant="outline" 
+        className="hover:bg-white/70"
+        onClick={async () => {
+          try {
+            // Resume all paused SIPs
+            const pausedSIPs = sipTemplates.filter(s => !s.is_active);
+            for (const sip of pausedSIPs) {
+              await updateSIPMutation.mutateAsync({ 
+                id: sip.id, 
+                updates: { is_active: true } 
+              });
+            }
+          } catch (error) {
+            console.error('Failed to bulk resume SIPs:', error);
+          }
+        }}
+        disabled={updateSIPMutation.isPending}
+      >
         <Play className="h-4 w-4 mr-2" />
         Bulk Resume
       </Button>
-      <Button variant="outline" className="hover:bg-white/70">
+      <Button 
+        variant="outline" 
+        className="hover:bg-white/70"
+        onClick={async () => {
+          try {
+            // Pause all active SIPs
+            const activeSIPs = sipTemplates.filter(s => s.is_active);
+            for (const sip of activeSIPs) {
+              await updateSIPMutation.mutateAsync({ 
+                id: sip.id, 
+                updates: { is_active: false } 
+              });
+            }
+          } catch (error) {
+            console.error('Failed to bulk pause SIPs:', error);
+          }
+        }}
+        disabled={updateSIPMutation.isPending}
+      >
         <Pause className="h-4 w-4 mr-2" />
         Bulk Pause
       </Button>
-      <Button variant="ghost">
-        <RefreshCw className="h-4 w-4 mr-2" />
+      <Button 
+        variant="ghost"
+        onClick={async () => {
+          try {
+            console.log('🔄 Refreshing SIP data...');
+            await Promise.all([
+              refetchSIPs(),
+              refetchPortfolios()
+            ]);
+            console.log('✅ SIP data refreshed successfully');
+          } catch (error) {
+            console.error('❌ Failed to refresh SIP data:', error);
+          }
+        }}
+        disabled={isLoading || portfoliosLoading}
+      >
+        <RefreshCw className={cn(
+          "h-4 w-4 mr-2 transition-transform duration-300",
+          (isLoading || portfoliosLoading) && "animate-spin"
+        )} />
         Refresh
       </Button>
     </motion.div>
@@ -318,9 +446,22 @@ export default function SIPManagementPage() {
                   <SIPTemplateCard
                     template={template}
                     onView={(t) => console.log('View SIP:', t)}
-                    onEdit={(t) => console.log('Edit SIP:', t)}
+                    onEdit={(t) => {
+                      console.log('Edit SIP:', t);
+                      setEditingTemplate(t);
+                    }}
                     onDelete={(t) => console.log('Delete SIP:', t)}
-                    onToggleStatus={(t) => console.log('Toggle SIP:', t)}
+                    onToggleStatus={async (t) => {
+                      try {
+                        console.log('Toggle SIP status:', t);
+                        await updateSIPMutation.mutateAsync({ 
+                          id: t.id, 
+                          updates: { is_active: !t.is_active } 
+                        });
+                      } catch (error: any) {
+                        console.error('Failed to toggle SIP status:', error);
+                      }
+                    }}
                   />
                 </motion.div>
               ))
@@ -366,9 +507,22 @@ export default function SIPManagementPage() {
                   <SIPTemplateCard
                     template={template}
                     onView={(t) => console.log('View SIP:', t)}
-                    onEdit={(t) => console.log('Edit SIP:', t)}
+                    onEdit={(t) => {
+                      console.log('Edit SIP:', t);
+                      setEditingTemplate(t);
+                    }}
                     onDelete={(t) => console.log('Delete SIP:', t)}
-                    onToggleStatus={(t) => console.log('Toggle SIP:', t)}
+                    onToggleStatus={async (t) => {
+                      try {
+                        console.log('Toggle SIP status:', t);
+                        await updateSIPMutation.mutateAsync({ 
+                          id: t.id, 
+                          updates: { is_active: !t.is_active } 
+                        });
+                      } catch (error: any) {
+                        console.error('Failed to toggle SIP status:', error);
+                      }
+                    }}
                   />
                 </motion.div>
               ))}
@@ -389,9 +543,22 @@ export default function SIPManagementPage() {
                   <SIPTemplateCard
                     template={template}
                     onView={(t) => console.log('View SIP:', t)}
-                    onEdit={(t) => console.log('Edit SIP:', t)}
+                    onEdit={(t) => {
+                      console.log('Edit SIP:', t);
+                      setEditingTemplate(t);
+                    }}
                     onDelete={(t) => console.log('Delete SIP:', t)}
-                    onToggleStatus={(t) => console.log('Toggle SIP:', t)}
+                    onToggleStatus={async (t) => {
+                      try {
+                        console.log('Toggle SIP status:', t);
+                        await updateSIPMutation.mutateAsync({ 
+                          id: t.id, 
+                          updates: { is_active: !t.is_active } 
+                        });
+                      } catch (error: any) {
+                        console.error('Failed to toggle SIP status:', error);
+                      }
+                    }}
                   />
                 </motion.div>
               ))}
