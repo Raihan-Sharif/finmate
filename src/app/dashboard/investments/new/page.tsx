@@ -15,31 +15,23 @@ export default function NewInvestmentPage() {
     try {
       console.log('🔥 NEW PAGE: Raw form data:', data);
       
-      // Validate required fields
-      if (!data.initial_amount || data.initial_amount <= 0) {
-        throw new Error('Initial amount must be greater than 0');
+      // Validate required fields that are now part of the schema-compliant data
+      if (!data.total_units || data.total_units <= 0) {
+        throw new Error('Total units must be greater than 0');
+      }
+      if (!data.average_cost || data.average_cost <= 0) {
+        throw new Error('Average cost must be greater than 0');
       }
       if (!data.current_price || data.current_price <= 0) {
         throw new Error('Current price must be greater than 0');
       }
+      if (!data.purchase_date) {
+        throw new Error('Purchase date is required');
+      }
 
-      // Transform CreateInvestmentRequest to CreateInvestmentInput  
-      const investmentInput = {
-        portfolio_id: data.portfolio_id,
-        name: data.name,
-        type: data.type,
-        total_units: Number((data.initial_amount / data.current_price).toFixed(4)), // Calculate units from amount and price
-        average_cost: Number(data.current_price.toFixed(2)),
-        current_price: Number(data.current_price.toFixed(2)),
-        currency: data.currency || 'BDT',
-        purchase_date: new Date().toISOString().split('T')[0], // Today's date
-        // Optional fields with defaults
-        symbol: data.symbol || '',
-        tags: data.tags || [],
-        notes: data.notes || '',
-        ...(data.target_date && { maturity_date: data.target_date }),
-        ...(data.target_amount && { metadata: { target_amount: data.target_amount } })
-      };
+      // The form now sends properly formatted CreateInvestmentInput data
+      // No transformation needed as the form handles it
+      const investmentInput = data;
       
       console.log('🔥 NEW PAGE: Transformed investment input:', investmentInput);
       

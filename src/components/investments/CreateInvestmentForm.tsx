@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,12 +49,12 @@ import {
   UserCheck,
   MoreHorizontal
 } from 'lucide-react';
-import { INVESTMENT_TYPES, RISK_LEVELS, CreateInvestmentRequest } from '@/types/investments';
+import { INVESTMENT_TYPES, RISK_LEVELS, CreateInvestmentRequest, RiskLevel } from '@/types/investments';
 import { CURRENCIES } from '@/types';
 import { cn, getInvestmentIcon } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
-const investmentSchema = z.object({
+const investmentFormSchema = z.object({
   name: z.string().min(1, 'Investment name is required'),
   symbol: z.string().optional(),
   type: z.enum(['stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension', 'other']),
@@ -63,6 +63,7 @@ const investmentSchema = z.object({
   current_price: z.number().min(0.01, 'Current price must be greater than 0'),
   currency: z.string().min(1, 'Currency is required'),
   risk_level: z.string().min(1, 'Risk level is required'),
+  purchase_date: z.string().min(1, 'Purchase date is required'),
   platform: z.string().optional(),
   account_number: z.string().optional(),
   folio_number: z.string().optional(),
@@ -75,7 +76,7 @@ const investmentSchema = z.object({
   tags: z.string().optional()
 });
 
-type InvestmentFormData = z.infer<typeof investmentSchema>;
+type InvestmentFormData = z.infer<typeof investmentFormSchema>;
 
 interface CreateInvestmentFormProps {
   portfolios: { id: string; name: string; currency: string }[];
@@ -100,7 +101,8 @@ export function CreateInvestmentForm({
   console.log('🔥 FORM: Current step:', step);
 
   const form = useForm<InvestmentFormData>({
-    resolver: zodResolver(investmentSchema),
+    resolver: zodResolver(investmentFormSchema),
+    mode: 'onChange', // Enable real-time validation
     defaultValues: {
       name: '',
       symbol: '',
@@ -108,8 +110,9 @@ export function CreateInvestmentForm({
       portfolio_id: '',
       initial_amount: 0,
       current_price: 0,
-      currency: '',
+      currency: 'BDT', // Default to BDT
       risk_level: '',
+      purchase_date: new Date().toISOString().split('T')[0] as string, // Default to today
       platform: '',
       account_number: '',
       folio_number: '',
@@ -125,7 +128,14 @@ export function CreateInvestmentForm({
 
   const selectedPortfolio = portfolios.find(p => p.id === form.watch('portfolio_id'));
   const selectedType = INVESTMENT_TYPES[form.watch('type')];
-  const selectedRisk = RISK_LEVELS[form.watch('risk_level')];
+  const selectedRisk = form.watch('risk_level') ? RISK_LEVELS[form.watch('risk_level') as RiskLevel] : null;
+  
+  // Auto-fill currency from selected portfolio
+  useEffect(() => {
+    if (selectedPortfolio && (!form.getValues('currency') || form.getValues('currency') === 'BDT')) {
+      form.setValue('currency', selectedPortfolio.currency);
+    }
+  }, [selectedPortfolio, form]);
   
 
   const handleSubmit = async (data: InvestmentFormData) => {
@@ -135,14 +145,18 @@ export function CreateInvestmentForm({
     try {
       const tags = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
       
+      // Calculate total units from initial amount and current price
+      const total_units = Number((data.initial_amount / data.current_price).toFixed(4));
+      
       const requestData: any = {
         name: data.name,
         type: data.type,
         portfolio_id: data.portfolio_id,
-        initial_amount: data.initial_amount,
-        current_price: data.current_price,
-        currency: data.currency,
-        risk_level: data.risk_level
+        total_units: total_units,
+        average_cost: Number(data.current_price.toFixed(2)),
+        current_price: Number(data.current_price.toFixed(2)),
+        currency: data.currency || 'BDT',
+        purchase_date: data.purchase_date
       };
 
       // Add optional fields only if they have values
@@ -152,11 +166,19 @@ export function CreateInvestmentForm({
       if (data.account_number) requestData.account_number = data.account_number;
       if (data.folio_number) requestData.folio_number = data.folio_number;
       if (data.maturity_date) requestData.maturity_date = data.maturity_date;
-      if (data.interest_rate) requestData.interest_rate = data.interest_rate;
+      if (data.interest_rate !== undefined) requestData.interest_rate = data.interest_rate;
       if (data.exchange) requestData.exchange = data.exchange;
-      if (data.target_amount) requestData.target_amount = data.target_amount;
-      if (data.target_date) requestData.target_date = data.target_date;
       if (data.notes) requestData.notes = data.notes;
+      
+      // Add metadata for target information
+      const metadata: any = {};
+      if (data.target_amount !== undefined) metadata.target_amount = data.target_amount;
+      if (data.target_date) metadata.target_date = data.target_date;
+      if (data.risk_level) metadata.risk_level = data.risk_level;
+      
+      if (Object.keys(metadata).length > 0) {
+        requestData.metadata = metadata;
+      }
 
       console.log('🔥 FORM: Raw form data:', data);
       console.log('🔥 FORM: Request data being sent:', requestData);
@@ -403,6 +425,28 @@ export function CreateInvestmentForm({
                   </FormControl>
                   <FormDescription>
                     Current market price per unit/share
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Purchase Date - Critical Required Field */}
+            <FormField
+              control={form.control}
+              name="purchase_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base font-semibold">Purchase Date *</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="date"
+                      className="h-12 text-base"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Date when you purchased this investment
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -930,7 +974,7 @@ export function CreateInvestmentForm({
                           fieldsToValidate = ['name', 'type', 'portfolio_id'];
                         } else if (step === 'details') {
                           // Only validate required fields in details step
-                          fieldsToValidate = ['initial_amount', 'current_price', 'currency', 'risk_level'];
+                          fieldsToValidate = ['initial_amount', 'current_price', 'currency', 'risk_level', 'purchase_date'];
                         }
 
                         const isValid = await form.trigger(fieldsToValidate);

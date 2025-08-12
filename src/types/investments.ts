@@ -312,14 +312,22 @@ export interface CreateInvestmentRequest {
   symbol?: string;
   type: InvestmentType;
   portfolio_id: string;
-  initial_amount: number;
+  total_units: number;
+  average_cost: number;
   current_price: number;
   currency: string;
-  risk_level: RiskLevel;
+  purchase_date: string;
+  platform?: string;
+  account_number?: string;
+  folio_number?: string;
+  maturity_date?: string;
+  interest_rate?: number;
+  exchange?: string;
   target_amount?: number;
   target_date?: string;
   notes?: string;
   tags?: string[];
+  metadata?: Record<string, any>;
 }
 
 export interface CreateInvestmentInput {
