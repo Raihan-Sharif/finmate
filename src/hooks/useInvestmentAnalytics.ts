@@ -3,7 +3,12 @@ import {
   InvestmentAnalytics,
   InvestmentDashboardStats
 } from '@/types/investments';
-import { InvestmentAnalyticsService } from '@/lib/services/investment-analytics';
+import { 
+  InvestmentAnalyticsService,
+  ChartPerformanceData,
+  ChartAssetAllocation,
+  ChartMonthlyTrend
+} from '@/lib/services/investment-analytics';
 import { useAuth } from '@/hooks/useAuth';
 
 // Query keys for investment analytics
@@ -20,7 +25,148 @@ export const investmentAnalyticsKeys = {
     [...investmentAnalyticsKeys.all, 'comparison', userId, investmentIds] as const,
   riskAnalysis: (userId: string) => [...investmentAnalyticsKeys.all, 'riskAnalysis', userId] as const,
   taxAnalysis: (userId: string) => [...investmentAnalyticsKeys.all, 'taxAnalysis', userId] as const,
+  // New database-driven chart keys
+  portfolioPerformance: (userId: string, period: string) => 
+    [...investmentAnalyticsKeys.all, 'portfolioPerformance', userId, period] as const,
+  assetAllocation: (userId: string, currency: string) => 
+    [...investmentAnalyticsKeys.all, 'assetAllocation', userId, currency] as const,
+  allAnalytics: (userId: string, currency: string, period: string) => 
+    [...investmentAnalyticsKeys.all, 'allAnalytics', userId, currency, period] as const,
 };
+
+// =============================================
+// NEW DATABASE-DRIVEN CHART HOOKS
+// =============================================
+
+/**
+ * Hook for portfolio performance chart data using optimized database function
+ */
+export function usePortfolioPerformanceData(
+  period: '1m' | '3m' | '6m' | '1y' | 'all' = '6m',
+  enabled: boolean = true
+) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: investmentAnalyticsKeys.portfolioPerformance(user?.id || '', period),
+    queryFn: () => InvestmentAnalyticsService.getPortfolioPerformanceData(user!.id, period),
+    enabled: enabled && !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 2
+  });
+}
+
+/**
+ * Hook for asset allocation pie chart data using optimized database function
+ */
+export function useAssetAllocationData(
+  currency: string = 'BDT',
+  enabled: boolean = true
+) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: investmentAnalyticsKeys.assetAllocation(user?.id || '', currency),
+    queryFn: () => InvestmentAnalyticsService.getAssetAllocationData(user!.id, currency),
+    enabled: enabled && !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 2
+  });
+}
+
+/**
+ * Hook for all analytics data in single optimized call
+ */
+export function useAllAnalyticsData(
+  currency: string = 'BDT',
+  performancePeriod: '1m' | '3m' | '6m' | '1y' | 'all' = '6m',
+  enabled: boolean = true
+) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: investmentAnalyticsKeys.allAnalytics(user?.id || '', currency, performancePeriod),
+    queryFn: () => InvestmentAnalyticsService.getAllAnalyticsData(user!.id, currency, performancePeriod),
+    enabled: enabled && !!user?.id,
+    staleTime: 3 * 60 * 1000, // 3 minutes (more frequent for combined data)
+    cacheTime: 8 * 60 * 1000, // 8 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
+    select: (data) => {
+      // Transform data and add loading states
+      return {
+        ...data,
+        hasPerformanceData: data.performance.length > 0,
+        hasAllocationData: data.assetAllocation.length > 0,
+        hasTrendData: data.monthlyTrend.length > 0,
+        isEmpty: data.performance.length === 0 && 
+                 data.assetAllocation.length === 0 && 
+                 data.monthlyTrend.length === 0
+      };
+    }
+  });
+}
+
+/**
+ * Combined hook for investment overview page with optimized data fetching
+ * This provides all the data needed for the overview tab charts
+ */
+export function useInvestmentOverview(
+  currency: string = 'BDT',
+  performancePeriod: '1m' | '3m' | '6m' | '1y' | 'all' = '6m',
+  enabled: boolean = true
+) {
+  const { user } = useAuth();
+
+  // Use the combined analytics data hook for better performance
+  const analyticsQuery = useAllAnalyticsData(currency, performancePeriod, enabled);
+  const dashboardQuery = useInvestmentDashboardStats();
+
+  return {
+    // Analytics data
+    performance: analyticsQuery.data?.performance || [],
+    assetAllocation: analyticsQuery.data?.assetAllocation || [],
+    monthlyTrend: analyticsQuery.data?.monthlyTrend || [],
+    
+    // Dashboard stats
+    dashboardStats: dashboardQuery.data,
+    
+    // Loading states
+    isLoadingAnalytics: analyticsQuery.isLoading,
+    isLoadingDashboard: dashboardQuery.isLoading,
+    isLoading: analyticsQuery.isLoading || dashboardQuery.isLoading,
+    
+    // Error states
+    analyticsError: analyticsQuery.error,
+    dashboardError: dashboardQuery.error,
+    hasErrors: !!analyticsQuery.error || !!dashboardQuery.error,
+    
+    // Data availability
+    hasData: analyticsQuery.data?.hasData || false,
+    isEmpty: analyticsQuery.data?.isEmpty || false,
+    hasPerformanceData: analyticsQuery.data?.hasPerformanceData || false,
+    hasAllocationData: analyticsQuery.data?.hasAllocationData || false,
+    hasTrendData: analyticsQuery.data?.hasTrendData || false,
+    
+    // Refetch functions
+    refetchAnalytics: analyticsQuery.refetch,
+    refetchDashboard: dashboardQuery.refetch,
+    refetchAll: async () => {
+      await Promise.all([
+        analyticsQuery.refetch(),
+        dashboardQuery.refetch()
+      ]);
+    }
+  };
+}
+
+// =============================================
+// EXISTING HOOKS (UPDATED TO USE NEW FUNCTIONS)
+// =============================================
 
 // Hook to get comprehensive dashboard statistics
 export function useInvestmentDashboardStats() {

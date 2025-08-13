@@ -34,7 +34,8 @@ import {
   Eye,
   Target,
   Activity,
-  DollarSign
+  DollarSign,
+  RotateCcw
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useUserCurrency } from '@/lib/currency';
@@ -57,7 +58,11 @@ import { EditSIPForm } from '@/components/investments/EditSIPForm';
 import { CreateInvestmentInput, Investment, UpdateInvestmentInput, InvestmentTemplate, InvestmentPortfolio } from '@/types/investments';
 
 // Hooks
-import { useInvestmentDashboard } from '@/hooks/useInvestmentAnalytics';
+import { 
+  useInvestmentDashboard, 
+  useInvestmentOverview,
+  useInvestmentDashboardStats 
+} from '@/hooks/useInvestmentAnalytics';
 import { useInvestmentPortfolios, useCreateInvestmentPortfolio, useUpdateInvestmentPortfolio, useDeleteInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
 import { useInvestments, useCreateInvestment, useUpdateInvestment, useDeleteInvestment } from '@/hooks/useInvestments';
 import { useSIPTemplates, useCreateInvestmentTemplate, useUpdateInvestmentTemplate, useDeleteInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
@@ -76,6 +81,18 @@ export default function InvestmentDashboardPage() {
 
   // Optimized data hooks - use individual hooks only when needed to prevent multiple renders
   const dashboard = useInvestmentDashboard();
+  
+  // Use the new optimized overview hook for charts data
+  const overview = useInvestmentOverview(userCurrency, '6m');
+  
+  console.log('🔥 INVESTMENTS: Overview data:', {
+    hasData: overview.hasData,
+    isEmpty: overview.isEmpty,
+    performanceCount: overview.performance?.length || 0,
+    allocationCount: overview.assetAllocation?.length || 0,
+    trendCount: overview.monthlyTrend?.length || 0,
+    isLoading: overview.isLoading
+  });
   
   // Conditionally load data based on active tab to optimize performance  
   const portfoliosQuery = useInvestmentPortfolios();
@@ -116,42 +133,23 @@ export default function InvestmentDashboardPage() {
   const deleteSIPMutation = useDeleteInvestmentTemplate();
 
   // Mock data for charts (replace with real data from hooks)
-  const mockPerformanceData = [
-    { date: '2024-01', value: 50000, invested: 45000, gain_loss: 5000 },
-    { date: '2024-02', value: 52000, invested: 47000, gain_loss: 5000 },
-    { date: '2024-03', value: 48000, invested: 49000, gain_loss: -1000 },
-    { date: '2024-04', value: 55000, invested: 51000, gain_loss: 4000 },
-    { date: '2024-05', value: 58000, invested: 53000, gain_loss: 5000 },
-    { date: '2024-06', value: 62000, invested: 55000, gain_loss: 7000 }
-  ];
-
-  const mockAssetAllocation = [
-    { name: 'Stocks', value: 35000, percentage: 56.5, color: '#3B82F6', type: 'equity' },
-    { name: 'Bonds', value: 15000, percentage: 24.2, color: '#10B981', type: 'fixed_income' },
-    { name: 'Real Estate', value: 8000, percentage: 12.9, color: '#F59E0B', type: 'real_estate' },
-    { name: 'Gold', value: 4000, percentage: 6.4, color: '#EF4444', type: 'commodity' }
-  ];
-
-  const mockMonthlyTrend = [
-    { month: 'Jan', invested: 45000, current_value: 50000, gain_loss: 5000, return_percentage: 11.1 },
-    { month: 'Feb', invested: 47000, current_value: 52000, gain_loss: 5000, return_percentage: 10.6 },
-    { month: 'Mar', invested: 49000, current_value: 48000, gain_loss: -1000, return_percentage: -2.0 },
-    { month: 'Apr', invested: 51000, current_value: 55000, gain_loss: 4000, return_percentage: 7.8 },
-    { month: 'May', invested: 53000, current_value: 58000, gain_loss: 5000, return_percentage: 9.4 },
-    { month: 'Jun', invested: 55000, current_value: 62000, gain_loss: 7000, return_percentage: 12.7 }
-  ];
+  // Real data from database functions (replacing mock data)
+  console.log('✅ INVESTMENTS: Using real analytics data from database functions');
 
   // Mock dashboard stats
-  const mockDashboardStats = {
-    total_portfolios: 3,
-    total_investments: 8,
-    total_invested: 55000,
-    total_current_value: 62000,
-    total_gain_loss: 7000,
-    total_return_percentage: 12.73,
-    dividend_income: 2500,
-    active_sips: 4,
-    monthly_sip_amount: 8000,
+  // Get real dashboard stats from overview hook or fallback
+  const dashboardStatsForDisplay = overview.dashboardStats || {
+    total_portfolios: memoizedPortfolios?.length || 0,
+    total_investments: memoizedInvestments?.length || 0,
+    total_invested: 0,
+    total_current_value: 0,
+    total_gain_loss: 0,
+    total_return_percentage: 0,
+    dividend_income: 0,
+    active_sips: memoizedSipTemplates?.filter(t => t.is_active).length || 0,
+    monthly_sip_amount: memoizedSipTemplates
+      ?.filter(t => t.is_active)
+      .reduce((sum, t) => sum + t.amount_per_investment, 0) || 0,
     upcoming_executions: []
   };
 
@@ -452,11 +450,11 @@ export default function InvestmentDashboardPage() {
         <QuickActions />
       </motion.div>
 
-      {/* Dashboard Stats */}
+      {/* Dashboard Stats with Real Data */}
       <InvestmentDashboardStats
-        stats={mockDashboardStats}
+        stats={dashboardStatsForDisplay}
         currency={userCurrency}
-        isLoading={dashboard.isLoading}
+        isLoading={overview.isLoadingDashboard || dashboard.isLoading}
       />
 
       {/* Main Content Tabs */}
@@ -535,33 +533,78 @@ export default function InvestmentDashboardPage() {
           </TabsList>
         </motion.div>
 
-        {/* Overview Tab */}
+        {/* Overview Tab with Real Database-Driven Charts */}
         <TabsContent value="overview" className="space-y-8 mt-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Performance Chart */}
-            <InvestmentChart
-              chartType="performance"
-              performanceData={mockPerformanceData}
-              currency={userCurrency}
-              height={350}
-            />
-            
-            {/* Asset Allocation Chart */}
-            <InvestmentChart
-              chartType="allocation"
-              assetAllocation={mockAssetAllocation}
-              currency={userCurrency}
-              height={350}
-            />
-          </div>
+          {overview.isLoading ? (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className={cn(
+                  "h-[350px] animate-pulse rounded-lg",
+                  theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+                )} />
+                <div className={cn(
+                  "h-[350px] animate-pulse rounded-lg", 
+                  theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+                )} />
+              </div>
+              <div className={cn(
+                "h-[300px] animate-pulse rounded-lg",
+                theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+              )} />
+            </div>
+          ) : overview.hasErrors ? (
+            <div className="text-center py-12">
+              <div className={cn(
+                "w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center",
+                theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+              )}>
+                <TrendingUp className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className={cn(
+                "text-lg font-medium mb-2",
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              )}>Failed to load analytics data</h3>
+              <p className={cn(
+                "mb-4",
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              )}>There was an error loading your investment analytics. Please try again.</p>
+              <Button onClick={() => overview.refetchAll()} variant="outline">
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Performance Chart with Real Data */}
+                <InvestmentChart
+                  chartType="performance"
+                  performanceData={overview.performance}
+                  currency={userCurrency}
+                  height={350}
+                  isLoading={overview.isLoadingAnalytics}
+                />
+                
+                {/* Asset Allocation Chart with Real Data */}
+                <InvestmentChart
+                  chartType="allocation"
+                  assetAllocation={overview.assetAllocation}
+                  currency={userCurrency}
+                  height={350}
+                  isLoading={overview.isLoadingAnalytics}
+                />
+              </div>
 
-          {/* Monthly Trend */}
-          <InvestmentChart
-            chartType="trend"
-            monthlyTrend={mockMonthlyTrend}
-            currency={userCurrency}
-            height={300}
-          />
+              {/* Monthly Trend with Real Data */}
+              <InvestmentChart
+                chartType="trend"
+                monthlyTrend={overview.monthlyTrend}
+                currency={userCurrency}
+                height={300}
+                isLoading={overview.isLoadingAnalytics}
+              />
+            </div>
+          )}
 
           {/* Recent Activity */}
           <Card className={cn(

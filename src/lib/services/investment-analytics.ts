@@ -9,56 +9,345 @@ import { InvestmentService } from './investments';
 import { InvestmentTransactionService } from './investment-transactions';
 import { InvestmentTemplateService } from './investment-templates';
 
+// =============================================
+// CHART DATA TYPES FOR COMPONENTS
+// =============================================
+
+export interface ChartPerformanceData {
+  date: string;
+  value: number;
+  invested: number;
+  gain_loss: number;
+}
+
+export interface ChartAssetAllocation {
+  name: string;
+  value: number;
+  percentage: number;
+  color: string;
+  type: string;
+}
+
+export interface ChartMonthlyTrend {
+  month: string;
+  invested: number;
+  current_value: number;
+  gain_loss: number;
+  return_percentage: number;
+}
+
 export class InvestmentAnalyticsService {
-  // Get comprehensive dashboard statistics
+  // =============================================
+  // NEW DATABASE-DRIVEN CHART FUNCTIONS
+  // =============================================
+
+  /**
+   * Get portfolio performance data for charts using database function
+   * @param userId - User ID
+   * @param period - Time period ('1m', '3m', '6m', '1y', 'all')
+   * @returns Performance data for line/area charts
+   */
+  static async getPortfolioPerformanceData(
+    userId: string,
+    period: '1m' | '3m' | '6m' | '1y' | 'all' = '6m'
+  ): Promise<ChartPerformanceData[]> {
+    try {
+      console.log('🔥 ANALYTICS: Fetching portfolio performance data for period:', period);
+      
+      const { data, error } = await supabase.rpc('get_portfolio_performance_data', {
+        p_user_id: userId,
+        p_period: period
+      });
+
+      if (error) {
+        console.error('❌ ANALYTICS: Error fetching portfolio performance data:', {
+          message: error.message,
+          code: error.code,
+          details: error.details
+        });
+        throw error;
+      }
+
+      console.log('✅ ANALYTICS: Portfolio performance data fetched:', data?.length || 0, 'records');
+      
+      // Transform data to match chart component expectations
+      return (data || []).map((item: any) => ({
+        date: item.date,
+        value: Number(item.current_value || 0),
+        invested: Number(item.total_invested || 0),
+        gain_loss: Number(item.gain_loss || 0)
+      }));
+    } catch (error) {
+      console.error('❌ ANALYTICS: Failed to fetch portfolio performance data:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get asset allocation data for pie charts using database function
+   * @param userId - User ID
+   * @param currency - Currency code (default: 'BDT')
+   * @returns Asset allocation breakdown
+   */
+  static async getAssetAllocationData(
+    userId: string,
+    currency: string = 'BDT'
+  ): Promise<ChartAssetAllocation[]> {
+    try {
+      console.log('🔥 ANALYTICS: Fetching asset allocation data for currency:', currency);
+      
+      const { data, error } = await supabase.rpc('get_asset_allocation_data', {
+        p_user_id: userId,
+        p_currency: currency
+      });
+
+      if (error) {
+        console.error('❌ ANALYTICS: Error fetching asset allocation data:', error);
+        throw error;
+      }
+
+      console.log('✅ ANALYTICS: Asset allocation data fetched:', data?.length || 0, 'types');
+      
+      // Transform data to match chart component expectations
+      return (data || []).map((item: any) => ({
+        name: item.name,
+        value: Number(item.value || 0),
+        percentage: Number(item.percentage || 0),
+        color: item.color,
+        type: item.investment_type
+      }));
+    } catch (error) {
+      console.error('❌ ANALYTICS: Failed to fetch asset allocation data:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get monthly trend data for bar/line charts using database function
+   * @param userId - User ID
+   * @param currency - Currency code (default: 'BDT')
+   * @param monthsBack - Number of months to look back (default: 12)
+   * @returns Monthly trend data
+   */
+  static async getMonthlyTrendData(
+    userId: string,
+    currency: string = 'BDT',
+    monthsBack: number = 12
+  ): Promise<ChartMonthlyTrend[]> {
+    try {
+      console.log('🔥 ANALYTICS: Fetching monthly trend data for', monthsBack, 'months back');
+      
+      const { data, error } = await supabase.rpc('get_monthly_trend_data', {
+        p_user_id: userId,
+        p_currency: currency,
+        p_months_back: monthsBack
+      });
+
+      if (error) {
+        console.error('❌ ANALYTICS: Error fetching monthly trend data:', error);
+        throw error;
+      }
+
+      console.log('✅ ANALYTICS: Monthly trend data fetched:', data?.length || 0, 'months');
+      
+      // Transform data to match chart component expectations
+      return (data || []).map((item: any) => ({
+        month: item.month_name,
+        invested: Number(item.invested || 0),
+        current_value: Number(item.current_value || 0),
+        gain_loss: Number(item.gain_loss || 0),
+        return_percentage: Number(item.return_percentage || 0)
+      }));
+    } catch (error) {
+      console.error('❌ ANALYTICS: Failed to fetch monthly trend data:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all analytics data for dashboard in single optimized call
+   * @param userId - User ID
+   * @param currency - Currency code
+   * @param performancePeriod - Performance chart period
+   * @returns Combined analytics data
+   */
+  static async getAllAnalyticsData(
+    userId: string,
+    currency: string = 'BDT',
+    performancePeriod: '1m' | '3m' | '6m' | '1y' | 'all' = '6m'
+  ) {
+    try {
+      console.log('🔥 ANALYTICS: Fetching all analytics data for user:', userId);
+      
+      // Fetch all data in parallel for better performance
+      const [performanceData, assetAllocationData, monthlyTrendData] = await Promise.all([
+        this.getPortfolioPerformanceData(userId, performancePeriod),
+        this.getAssetAllocationData(userId, currency),
+        this.getMonthlyTrendData(userId, currency, 12)
+      ]);
+
+      console.log('✅ ANALYTICS: All analytics data fetched successfully');
+      
+      return {
+        performance: performanceData,
+        assetAllocation: assetAllocationData,
+        monthlyTrend: monthlyTrendData,
+        isLoading: false,
+        hasData: performanceData.length > 0 || assetAllocationData.length > 0
+      };
+    } catch (error) {
+      console.error('❌ ANALYTICS: Failed to fetch analytics data:', error);
+      return {
+        performance: [],
+        assetAllocation: [],
+        monthlyTrend: [],
+        isLoading: false,
+        hasData: false,
+        error: 'Failed to load analytics data'
+      };
+    }
+  }
+
+  // =============================================
+  // EXISTING FUNCTIONS (UPDATED TO USE NEW DATA)
+  // =============================================
+  // Get comprehensive dashboard statistics using optimized database function
   static async getDashboardStats(userId: string): Promise<InvestmentDashboardStats> {
-    // Get all investments and portfolios data in parallel
-    const [
-      investments,
-      portfolios,
-      transactions,
-      templates
-    ] = await Promise.all([
-      InvestmentService.getInvestments(userId),
-      InvestmentPortfolioService.getPortfolios(userId),
-      InvestmentTransactionService.getTransactionAnalytics(userId),
-      InvestmentTemplateService.getTemplateStats(userId)
-    ]);
+    try {
+      console.log('🔥 ANALYTICS: Fetching dashboard stats for user:', userId);
+      
+      // Use the new database function for optimized data fetching
+      const { data, error } = await supabase.rpc('get_investment_analytics_summary', {
+        p_user_id: userId
+      });
 
-    // Calculate basic metrics
-    const total_invested = investments.reduce((sum, inv) => sum + inv.total_invested, 0);
-    const total_current_value = investments.reduce((sum, inv) => sum + inv.current_value, 0);
-    const total_gain_loss = total_current_value - total_invested;
-    const total_return_percentage = total_invested > 0 ? (total_gain_loss / total_invested) * 100 : 0;
+      if (error) {
+        console.error('❌ ANALYTICS: Database function error details:', {
+          message: error.message || 'No message',
+          details: error.details || 'No details', 
+          hint: error.hint || 'No hint',
+          code: error.code || 'No code',
+          fullError: error
+        });
+        
+        // Check if function doesn't exist or has permission issues
+        if (error.code === '42883' || error.message?.includes('does not exist')) {
+          console.log('⚠️ ANALYTICS: Database function not found, using legacy method');
+        } else if (error.code === '42501' || error.message?.includes('permission')) {
+          console.log('⚠️ ANALYTICS: Permission denied on database function, using legacy method');
+        } else {
+          console.log('⚠️ ANALYTICS: Database function failed with unknown error, using legacy method');
+        }
+        
+        // Try legacy method first, fallback to defaults if that fails too
+        try {
+          return await this.getDashboardStatsLegacy(userId);
+        } catch (legacyError) {
+          console.error('❌ ANALYTICS: Legacy method also failed:', legacyError);
+          return this.getDefaultDashboardStats();
+        }
+      }
 
-    // Get dividend income
-    const dividend_income = investments.reduce((sum, inv) => sum + inv.dividend_earned, 0);
+      if (!data || data.length === 0) {
+        console.log('⚠️  ANALYTICS: No dashboard data found, using legacy method instead');
+        console.log('🔍 ANALYTICS: Data response was:', data);
+        return this.getDefaultDashboardStats();
+      }
 
-    // Find top and worst performing investments
-    const activeInvestments = investments.filter(inv => inv.status === 'active');
-    const top_performing_investment = activeInvestments.sort(
-      (a, b) => b.gain_loss_percentage - a.gain_loss_percentage
-    )[0];
-    const worst_performing_investment = activeInvestments.sort(
-      (a, b) => a.gain_loss_percentage - b.gain_loss_percentage
-    )[0];
+      const summary = data[0];
+      console.log('✅ ANALYTICS: Dashboard stats fetched successfully from database function');
+      console.log('📊 ANALYTICS: Raw summary data:', summary);
+      
+      return {
+        total_portfolios: Number(summary.total_portfolios || 0),
+        total_investments: Number(summary.total_investments || 0),
+        total_invested: Number(summary.total_invested || 0),
+        total_current_value: Number(summary.current_value || 0),
+        total_gain_loss: Number(summary.total_gain_loss || 0),
+        total_return_percentage: Number(summary.total_return_percentage || 0),
+        dividend_income: 0, // Could be added to the database function later
+        active_sips: Number(summary.active_sips || 0),
+        monthly_sip_amount: Number(summary.monthly_sip_amount || 0),
+        top_performing_investment: summary.best_performing_investment || undefined,
+        worst_performing_investment: summary.worst_performing_investment || undefined,
+        upcoming_executions: summary.recent_transactions?.slice(0, 5) || []
+      };
+    } catch (error) {
+      console.error('❌ ANALYTICS: Failed to fetch dashboard stats:', error);
+      return this.getDefaultDashboardStats();
+    }
+  }
 
-    // Get upcoming template executions
-    const upcoming_executions = await InvestmentTemplateService.getUpcomingExecutions(userId, 30);
+  // Legacy dashboard stats method as fallback
+  private static async getDashboardStatsLegacy(userId: string): Promise<InvestmentDashboardStats> {
+    try {
+      console.log('🔄 ANALYTICS: Using legacy dashboard stats method');
+      
+      // Get all investments and portfolios data in parallel
+      const [
+        investments,
+        portfolios,
+        templates
+      ] = await Promise.all([
+        InvestmentService.getInvestments(userId),
+        InvestmentPortfolioService.getPortfolios(userId),
+        InvestmentTemplateService.getTemplateStats(userId)
+      ]);
 
+      // Calculate basic metrics
+      const total_invested = investments.reduce((sum, inv) => sum + inv.total_invested, 0);
+      const total_current_value = investments.reduce((sum, inv) => sum + inv.current_value, 0);
+      const total_gain_loss = total_current_value - total_invested;
+      const total_return_percentage = total_invested > 0 ? (total_gain_loss / total_invested) * 100 : 0;
+
+      // Get dividend income
+      const dividend_income = investments.reduce((sum, inv) => sum + inv.dividend_earned, 0);
+
+      // Find top and worst performing investments
+      const activeInvestments = investments.filter(inv => inv.status === 'active');
+      const top_performing_investment = activeInvestments.sort(
+        (a, b) => b.gain_loss_percentage - a.gain_loss_percentage
+      )[0];
+      const worst_performing_investment = activeInvestments.sort(
+        (a, b) => a.gain_loss_percentage - b.gain_loss_percentage
+      )[0];
+
+      // Get upcoming template executions
+      const upcoming_executions = await InvestmentTemplateService.getUpcomingExecutions(userId, 30);
+
+      return {
+        total_portfolios: portfolios.length,
+        total_investments: investments.length,
+        total_invested,
+        total_current_value,
+        total_gain_loss,
+        total_return_percentage,
+        dividend_income,
+        active_sips: templates?.active_templates || 0,
+        monthly_sip_amount: templates?.total_monthly_investment || 0,
+        top_performing_investment,
+        worst_performing_investment,
+        upcoming_executions: upcoming_executions.slice(0, 5)
+      };
+    } catch (error) {
+      console.error('❌ ANALYTICS: Legacy dashboard stats failed:', error);
+      return this.getDefaultDashboardStats();
+    }
+  }
+
+  // Default dashboard stats for when no data is available
+  private static getDefaultDashboardStats(): InvestmentDashboardStats {
     return {
-      total_portfolios: portfolios.length,
-      total_investments: investments.length,
-      total_invested,
-      total_current_value,
-      total_gain_loss,
-      total_return_percentage,
-      dividend_income,
-      active_sips: templates.active_templates,
-      monthly_sip_amount: templates.total_monthly_investment,
-      top_performing_investment,
-      worst_performing_investment,
-      upcoming_executions: upcoming_executions.slice(0, 5)
+      total_portfolios: 0,
+      total_investments: 0,
+      total_invested: 0,
+      total_current_value: 0,
+      total_gain_loss: 0,
+      total_return_percentage: 0,
+      dividend_income: 0,
+      active_sips: 0,
+      monthly_sip_amount: 0,
+      upcoming_executions: []
     };
   }
 
