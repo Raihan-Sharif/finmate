@@ -21,6 +21,7 @@ import {
 import {
   Plus,
   TrendingUp,
+  TrendingDown,
   Briefcase,
   Zap,
   PieChart,
@@ -32,9 +33,10 @@ import {
   Settings,
   Eye,
   Target,
-  Activity
+  Activity,
+  DollarSign
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useUserCurrency } from '@/lib/currency';
 import { useTheme } from 'next-themes';
 
@@ -579,53 +581,146 @@ export default function InvestmentDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {memoizedTransactions.slice(0, 5).map((transaction, index) => (
-                  <motion.div
-                    key={transaction.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={cn(
-                      "flex items-center justify-between p-4 rounded-lg",
-                      theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50/50'
-                    )}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center",
-                        theme === 'dark' ? 'bg-blue-900/50' : 'bg-blue-100'
-                      )}>
-                        <TrendingUp className={cn(
-                          "h-4 w-4",
-                          theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                        )} />
-                      </div>
-                      <div>
-                        <p className={cn(
-                          "font-medium",
-                          theme === 'dark' ? 'text-white' : 'text-gray-900'
-                        )}>{transaction.investment_name}</p>
-                        <p className={cn(
-                          "text-sm",
-                          theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                        )}>
-                          {new Date(transaction.transaction_date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={cn(
-                        "font-semibold",
-                        theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                      )}>
-                        +{transaction.amount} {transaction.currency}
-                      </p>
-                      <Badge variant="outline" className="text-xs">
-                        {transaction.transaction_type}
-                      </Badge>
-                    </div>
-                  </motion.div>
-                ))}
+                {memoizedTransactions.length > 0 ? (
+                  memoizedTransactions.slice(0, 5).map((transaction, index) => {
+                    const transactionType = transaction.transaction_type || transaction.type || 'buy';
+                    const isBuy = transactionType === 'buy';
+                    const isDividend = transactionType === 'dividend';
+                    const isSell = transactionType === 'sell';
+                    const displayAmount = transaction.net_amount || transaction.total_amount || transaction.amount || 0;
+                    const investmentName = transaction.investment_name || 'Investment Transaction';
+                    const transactionDate = transaction.transaction_date || transaction.created_at;
+                    
+                    return (
+                      <motion.div
+                        key={transaction.id || index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={cn(
+                          "flex items-center justify-between p-4 rounded-lg border transition-all duration-300 hover:shadow-md",
+                          theme === 'dark' 
+                            ? 'bg-gray-800/50 border-gray-700/50 hover:bg-gray-800/70' 
+                            : 'bg-gray-50/50 border-gray-100/50 hover:bg-white/70'
+                        )}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center shadow-sm",
+                            isDividend 
+                              ? theme === 'dark' ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-100 text-blue-600'
+                              : isBuy
+                              ? theme === 'dark' ? 'bg-green-900/50 text-green-400' : 'bg-green-100 text-green-600'
+                              : theme === 'dark' ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-600'
+                          )}>
+                            {isDividend ? (
+                              <DollarSign className="h-4 w-4" />
+                            ) : isBuy ? (
+                              <TrendingUp className="h-4 w-4" />
+                            ) : (
+                              <TrendingDown className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div>
+                            <p className={cn(
+                              "font-medium text-sm",
+                              theme === 'dark' ? 'text-white' : 'text-gray-900'
+                            )}>{investmentName}</p>
+                            <div className="flex flex-col space-y-1">
+                              <div className="flex items-center space-x-2">
+                                <p className={cn(
+                                  "text-xs",
+                                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                )}>
+                                  {transactionDate ? new Date(transactionDate).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric', 
+                                    year: 'numeric'
+                                  }) : 'No date'}
+                                </p>
+                                {transaction.portfolio_name && (
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "text-xs px-2 py-0.5",
+                                      theme === 'dark' 
+                                        ? 'bg-purple-900/30 text-purple-300 border-purple-600' 
+                                        : 'bg-purple-100 text-purple-700 border-purple-300'
+                                    )}
+                                  >
+                                    {transaction.portfolio_name}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {transaction.units && !isNaN(transaction.units) && (
+                                  <p className={cn(
+                                    "text-xs",
+                                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                  )}>
+                                    {Number(transaction.units).toFixed(2)} units
+                                  </p>
+                                )}
+                                {transaction.price_per_unit && !isNaN(transaction.price_per_unit) && (
+                                  <p className={cn(
+                                    "text-xs",
+                                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                  )}>
+                                    @ {formatCurrency(transaction.price_per_unit, transaction.currency || userCurrency)}
+                                  </p>
+                                )}
+                                {transaction.platform && (
+                                  <p className={cn(
+                                    "text-xs px-2 py-0.5 rounded",
+                                    theme === 'dark' 
+                                      ? 'bg-gray-700 text-gray-300' 
+                                      : 'bg-gray-200 text-gray-600'
+                                  )}>
+                                    {transaction.platform}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={cn(
+                            "font-semibold text-sm",
+                            isDividend 
+                              ? theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                              : isBuy
+                              ? theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                              : theme === 'dark' ? 'text-red-400' : 'text-red-600'
+                          )}>
+                            {formatCurrency(Math.abs(displayAmount), transaction.currency || userCurrency)}
+                          </p>
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-xs border-current",
+                              isDividend 
+                                ? "text-blue-600 border-blue-200"
+                                : isBuy
+                                ? "text-green-600 border-green-200"
+                                : "text-red-600 border-red-200"
+                            )}
+                          >
+                            {transactionType.charAt(0).toUpperCase() + transactionType.slice(1)}
+                          </Badge>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                ) : (
+                  <div className={cn(
+                    "text-center py-8",
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  )}>
+                    <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No recent investment transactions</p>
+                    <p className="text-xs mt-1">Start investing to see activity here</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
