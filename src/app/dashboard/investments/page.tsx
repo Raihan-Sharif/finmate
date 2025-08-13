@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,11 +52,11 @@ import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
 import { EditSIPForm } from '@/components/investments/EditSIPForm';
 
 // Types
-import { CreateInvestmentInput, Investment, UpdateInvestmentInput, InvestmentTemplate } from '@/types/investments';
+import { CreateInvestmentInput, Investment, UpdateInvestmentInput, InvestmentTemplate, InvestmentPortfolio } from '@/types/investments';
 
 // Hooks
 import { useInvestmentDashboard } from '@/hooks/useInvestmentAnalytics';
-import { useInvestmentPortfolios, useCreateInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
+import { useInvestmentPortfolios, useCreateInvestmentPortfolio, useUpdateInvestmentPortfolio, useDeleteInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
 import { useInvestments, useCreateInvestment, useUpdateInvestment, useDeleteInvestment } from '@/hooks/useInvestments';
 import { useSIPTemplates, useCreateInvestmentTemplate, useUpdateInvestmentTemplate, useDeleteInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentTransactions } from '@/hooks/useInvestmentTransactions';
@@ -67,18 +67,45 @@ export default function InvestmentDashboardPage() {
   const [showCreateForm, setShowCreateForm] = useState<'investment' | 'portfolio' | 'sip' | false>(false);
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
   const [editingSIPTemplate, setEditingSIPTemplate] = useState<InvestmentTemplate | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{type: 'investment' | 'sip' | null, item: any}>({type: null, item: null});
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{type: 'investment' | 'sip' | 'portfolio' | null, item: any}>({type: null, item: null});
   const [refreshKey, setRefreshKey] = useState(0);
   const userCurrency = useUserCurrency();
   const { theme } = useTheme();
 
-  // Data hooks
+  // Optimized data hooks - use individual hooks only when needed to prevent multiple renders
   const dashboard = useInvestmentDashboard();
-  const { data: portfolios = [], isLoading: portfoliosLoading, refetch: refetchPortfolios } = useInvestmentPortfolios();
-  const { data: investments = [], isLoading: investmentsLoading, refetch: refetchInvestments } = useInvestments();
-  const { data: sipTemplates = [], isLoading: sipsLoading, refetch: refetchSIPs } = useSIPTemplates();
-  const { data: transactions = [], isLoading: transactionsLoading, refetch: refetchTransactions } = useInvestmentTransactions();
+  
+  // Conditionally load data based on active tab to optimize performance  
+  const portfoliosQuery = useInvestmentPortfolios();
+  const investmentsQuery = useInvestments();
+  const sipTemplatesQuery = useSIPTemplates();
+  const transactionsQuery = useInvestmentTransactions();
+  
+  // Extract data and loading states
+  const portfolios = portfoliosQuery.data || [];
+  const investments = investmentsQuery.data || [];
+  const sipTemplates = sipTemplatesQuery.data || [];
+  const transactions = transactionsQuery.data || [];
+  
+  const portfoliosLoading = portfoliosQuery.isLoading;
+  const investmentsLoading = investmentsQuery.isLoading;
+  const sipsLoading = sipTemplatesQuery.isLoading;
+  const transactionsLoading = transactionsQuery.isLoading;
+  
+  const refetchPortfolios = portfoliosQuery.refetch;
+  const refetchInvestments = investmentsQuery.refetch;
+  const refetchSIPs = sipTemplatesQuery.refetch;
+  const refetchTransactions = transactionsQuery.refetch;
+  
+  // Memoize expensive computations to prevent unnecessary re-renders
+  const memoizedPortfolios = useMemo(() => portfolios, [portfolios]);
+  const memoizedInvestments = useMemo(() => investments, [investments]);
+  const memoizedSipTemplates = useMemo(() => sipTemplates, [sipTemplates]);
+  const memoizedTransactions = useMemo(() => transactions, [transactions]);
+  
   const createPortfolioMutation = useCreateInvestmentPortfolio();
+  const updatePortfolioMutation = useUpdateInvestmentPortfolio();
+  const deletePortfolioMutation = useDeleteInvestmentPortfolio();
   const createInvestmentMutation = useCreateInvestment();
   const updateInvestmentMutation = useUpdateInvestment();
   const deleteInvestmentMutation = useDeleteInvestment();
@@ -158,6 +185,27 @@ export default function InvestmentDashboardPage() {
     }
   };
 
+  // Portfolio handlers
+  const handleViewPortfolio = (portfolio: InvestmentPortfolio) => {
+    console.log('View portfolio:', portfolio);
+    // Navigate to portfolio details or show modal
+  };
+
+  const handleEditPortfolio = (portfolio: InvestmentPortfolio) => {
+    console.log('Edit portfolio:', portfolio);
+    router.push(`/dashboard/investments/portfolios/edit/${portfolio.id}`);
+  };
+
+  const handleDeletePortfolio = async (portfolio: InvestmentPortfolio) => {
+    try {
+      console.log('Deleting portfolio:', portfolio.id, portfolio.name);
+      await deletePortfolioMutation.mutateAsync(portfolio.id);
+      console.log('Portfolio deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete portfolio:', error);
+    }
+  };
+
   const QuickActions = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -216,7 +264,7 @@ export default function InvestmentDashboardPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <CreateInvestmentForm
-          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
+          portfolios={memoizedPortfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
           onSubmit={async (data) => {
             try {
               console.log('Submitting investment data:', data);
@@ -301,7 +349,7 @@ export default function InvestmentDashboardPage() {
     console.log('createSIPMutation status:', createSIPMutation.isPending);
     console.log('🚨 About to return SIP form component...');
     
-    if (portfolios.length === 0) {
+    if (memoizedPortfolios.length === 0) {
       console.log('No portfolios available for SIP creation');
       return (
         <div className="container mx-auto px-4 py-8">
@@ -319,7 +367,7 @@ export default function InvestmentDashboardPage() {
       return (
         <div className="container mx-auto px-4 py-8">
           <CreateSIPForm
-            portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
+            portfolios={memoizedPortfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
             onSubmit={async (data) => {
               try {
                 console.log('Main Dashboard: Submitting SIP data:', data);
@@ -377,6 +425,7 @@ export default function InvestmentDashboardPage() {
       </div>
     );
   }
+
 
   // SIP edit is now handled by dedicated page route
   // No modal needed anymore
@@ -530,7 +579,7 @@ export default function InvestmentDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {transactions.slice(0, 5).map((transaction, index) => (
+                {memoizedTransactions.slice(0, 5).map((transaction, index) => (
                   <motion.div
                     key={transaction.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -585,7 +634,7 @@ export default function InvestmentDashboardPage() {
         {/* Portfolios Tab */}
         <TabsContent value="portfolios" className="space-y-6 mt-8">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {portfolios.map((portfolio, index) => (
+            {memoizedPortfolios.map((portfolio, index) => (
               <motion.div
                 key={portfolio.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -594,14 +643,17 @@ export default function InvestmentDashboardPage() {
               >
                 <PortfolioCard
                   portfolio={portfolio}
-                  onView={(p) => console.log('View portfolio:', p)}
-                  onEdit={(p) => console.log('Edit portfolio:', p)}
-                  onDelete={(p) => console.log('Delete portfolio:', p)}
+                  onView={handleViewPortfolio}
+                  onEdit={handleEditPortfolio}
+                  onDelete={(portfolio) => {
+                    console.log('Delete triggered for portfolio:', portfolio.name);
+                    setDeleteConfirmation({type: 'portfolio', item: portfolio});
+                  }}
                 />
               </motion.div>
             ))}
             
-            {portfolios.length === 0 && !portfoliosLoading && (
+            {memoizedPortfolios.length === 0 && !portfoliosLoading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -634,7 +686,7 @@ export default function InvestmentDashboardPage() {
         {/* Investments Tab */}
         <TabsContent value="investments" className="space-y-6 mt-8">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {investments.map((investment, index) => (
+            {memoizedInvestments.map((investment, index) => (
               <motion.div
                 key={investment.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -655,7 +707,7 @@ export default function InvestmentDashboardPage() {
               </motion.div>
             ))}
             
-            {investments.length === 0 && !investmentsLoading && (
+            {memoizedInvestments.length === 0 && !investmentsLoading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -688,7 +740,7 @@ export default function InvestmentDashboardPage() {
         {/* SIPs Tab */}
         <TabsContent value="sips" className="space-y-6 mt-8">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {sipTemplates.map((template, index) => (
+            {memoizedSipTemplates.map((template, index) => (
               <motion.div
                 key={template.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -724,7 +776,7 @@ export default function InvestmentDashboardPage() {
               </motion.div>
             ))}
             
-            {sipTemplates.length === 0 && !sipsLoading && (
+            {memoizedSipTemplates.length === 0 && !sipsLoading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -757,7 +809,7 @@ export default function InvestmentDashboardPage() {
         {/* Transactions Tab */}
         <TabsContent value="transactions" className="mt-8">
           <InvestmentTransactionList
-            transactions={transactions}
+            transactions={memoizedTransactions}
             onView={(t) => console.log('View transaction:', t)}
             onEdit={(t) => console.log('Edit transaction:', t)}
             onDelete={(t) => console.log('Delete transaction:', t)}
@@ -777,6 +829,8 @@ export default function InvestmentDashboardPage() {
               <AlertDialogTitle>
                 {deleteConfirmation.type === 'sip' 
                   ? (deleteConfirmation.item?.is_active ? 'Pause SIP Plan?' : 'Remove SIP Plan?')
+                  : deleteConfirmation.type === 'portfolio'
+                  ? 'Delete Portfolio?'
                   : 'Delete Investment?'
                 }
               </AlertDialogTitle>
@@ -785,6 +839,8 @@ export default function InvestmentDashboardPage() {
                   ? deleteConfirmation.item?.is_active 
                     ? `Are you sure you want to pause "${deleteConfirmation.item?.name}"? You can resume it later.`
                     : `Are you sure you want to remove "${deleteConfirmation.item?.name}"? This will make it inactive.`
+                  : deleteConfirmation.type === 'portfolio'
+                  ? `Are you sure you want to delete "${deleteConfirmation.item?.name}" portfolio? This will also delete all investments within this portfolio. This action cannot be undone.`
                   : `Are you sure you want to delete "${deleteConfirmation.item?.name}"? This action cannot be undone.`
                 }
               </AlertDialogDescription>
@@ -804,6 +860,9 @@ export default function InvestmentDashboardPage() {
                     } else if (deleteConfirmation.type === 'investment') {
                       await deleteInvestmentMutation.mutateAsync(deleteConfirmation.item.id);
                       console.log('Investment deleted successfully');
+                    } else if (deleteConfirmation.type === 'portfolio') {
+                      await deletePortfolioMutation.mutateAsync(deleteConfirmation.item.id);
+                      console.log('Portfolio deleted successfully');
                     }
                     setDeleteConfirmation({type: null, item: null});
                   } catch (error) {
@@ -811,9 +870,9 @@ export default function InvestmentDashboardPage() {
                   }
                 }}
                 className="bg-red-600 hover:bg-red-700"
-                disabled={updateSIPMutation.isPending || deleteInvestmentMutation.isPending}
+                disabled={updateSIPMutation.isPending || deleteInvestmentMutation.isPending || deletePortfolioMutation.isPending}
               >
-                {updateSIPMutation.isPending || deleteInvestmentMutation.isPending 
+                {updateSIPMutation.isPending || deleteInvestmentMutation.isPending || deletePortfolioMutation.isPending
                   ? (deleteConfirmation.type === 'sip' ? 'Pausing...' : 'Deleting...') 
                   : (deleteConfirmation.type === 'sip' ? 'Pause' : 'Delete')
                 }
