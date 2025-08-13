@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,13 +38,14 @@ import {
 import { cn } from '@/lib/utils';
 import { SIPTemplateCard } from '@/components/investments/SIPTemplateCard';
 import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
-import { EditSIPForm } from '@/components/investments/EditSIPForm';
+// EditSIPForm now handled by dedicated page
 import { useSIPTemplates, useCreateInvestmentTemplate, useUpdateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentPortfolios } from '@/hooks/useInvestmentPortfolios';
 import { InvestmentTemplate } from '@/types/investments';
 import { formatCurrency } from '@/lib/utils';
 
 export default function SIPManagementPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
   const [activeTab, setActiveTab] = useState('overview');
@@ -448,7 +450,7 @@ export default function SIPManagementPage() {
                     onView={(t) => console.log('View SIP:', t)}
                     onEdit={(t) => {
                       console.log('Edit SIP:', t);
-                      setEditingTemplate(t);
+                      router.push(`/dashboard/investments/sips/edit/${t.id}`);
                     }}
                     onDelete={(t) => console.log('Delete SIP:', t)}
                     onToggleStatus={async (t) => {
@@ -509,7 +511,7 @@ export default function SIPManagementPage() {
                     onView={(t) => console.log('View SIP:', t)}
                     onEdit={(t) => {
                       console.log('Edit SIP:', t);
-                      setEditingTemplate(t);
+                      router.push(`/dashboard/investments/sips/edit/${t.id}`);
                     }}
                     onDelete={(t) => console.log('Delete SIP:', t)}
                     onToggleStatus={async (t) => {
@@ -545,7 +547,7 @@ export default function SIPManagementPage() {
                     onView={(t) => console.log('View SIP:', t)}
                     onEdit={(t) => {
                       console.log('Edit SIP:', t);
-                      setEditingTemplate(t);
+                      router.push(`/dashboard/investments/sips/edit/${t.id}`);
                     }}
                     onDelete={(t) => console.log('Delete SIP:', t)}
                     onToggleStatus={async (t) => {

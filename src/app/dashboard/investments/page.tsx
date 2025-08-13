@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -61,6 +62,7 @@ import { useSIPTemplates, useCreateInvestmentTemplate, useUpdateInvestmentTempla
 import { useInvestmentTransactions } from '@/hooks/useInvestmentTransactions';
 
 export default function InvestmentDashboardPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateForm, setShowCreateForm] = useState<'investment' | 'portfolio' | 'sip' | false>(false);
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
@@ -376,32 +378,8 @@ export default function InvestmentDashboardPage() {
     );
   }
 
-  // Show edit SIP form if editing a SIP template
-  if (editingSIPTemplate) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <EditSIPForm
-          template={editingSIPTemplate}
-          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
-          onSubmit={async (data) => {
-            try {
-              console.log('Updating SIP template:', editingSIPTemplate.id, data);
-              await updateSIPMutation.mutateAsync({ 
-                id: editingSIPTemplate.id, 
-                updates: data 
-              });
-              console.log('SIP template updated successfully');
-              setEditingSIPTemplate(null);
-            } catch (error) {
-              console.error('Failed to update SIP template:', error);
-            }
-          }}
-          onCancel={() => setEditingSIPTemplate(null)}
-          isLoading={updateSIPMutation.isPending}
-        />
-      </div>
-    );
-  }
+  // SIP edit is now handled by dedicated page route
+  // No modal needed anymore
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -725,7 +703,7 @@ export default function InvestmentDashboardPage() {
                   }}
                   onEdit={(t) => {
                     console.log('Edit SIP:', t);
-                    setEditingSIPTemplate(t);
+                    router.push(`/dashboard/investments/sips/edit/${t.id}`);
                   }}
                   onDelete={(t) => {
                     console.log('Delete SIP:', t);

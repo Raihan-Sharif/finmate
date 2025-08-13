@@ -125,11 +125,25 @@ export function EditSIPForm({
     }
   });
 
+  // Load persisted form data when component mounts
+  useEffect(() => {
+    if (formData && Object.keys(formData).some(key => formData[key as keyof typeof formData])) {
+      // If we have persisted data, load it into the form
+      const { investment_type, ...editFormData } = formData;
+      form.reset(editFormData as any);
+    }
+  }, [formData, form]);
+
   // Update step handler with persistence
   const handleStepChange = (newStep: 'basic' | 'schedule' | 'advanced') => {
     // Save current form data before changing step
     const currentFormData = form.getValues();
-    updateFormData(currentFormData);
+    // Add investment_type for store compatibility
+    const storeData = {
+      ...currentFormData,
+      investment_type: template?.investment_type || 'sip'
+    };
+    updateFormData(storeData as any);
     
     setStep(newStep);
     setCurrentStep(newStep);
@@ -142,6 +156,7 @@ export function EditSIPForm({
         name: template.name || '',
         description: template.description || '',
         portfolio_id: template.portfolio_id || '',
+        investment_type: template.investment_type || 'sip', // This is needed for the store
         amount_per_investment: template.amount_per_investment || 0,
         currency: template.currency || 'BDT',
         platform: template.platform || '',
@@ -158,11 +173,12 @@ export function EditSIPForm({
         notes: template.notes || ''
       };
       
-      // Load data into Zustand store
-      loadExistingData(templateData);
+      // Load data into Zustand store (needs investment_type field)
+      loadExistingData(templateData as any);
       
-      // Reset form with template data
-      form.reset(templateData);
+      // Reset form with template data (without investment_type as it's not editable)
+      const { investment_type, ...formData } = templateData;
+      form.reset(formData);
     }
   }, [template, form, loadExistingData]);
   
@@ -173,17 +189,26 @@ export function EditSIPForm({
   };
 
   const selectedPortfolio = portfolios.find(p => p.id === form.watch('portfolio_id'));
-  const selectedType = INVESTMENT_TYPES[form.watch('investment_type') as InvestmentType];
+  const selectedType = template?.investment_type ? INVESTMENT_TYPES[template.investment_type as InvestmentType] : null;
   const selectedFrequency = INVESTMENT_FREQUENCIES[form.watch('frequency') as InvestmentFrequency];
   const isActive = form.watch('is_active');
 
+  // Auto-fill currency from selected portfolio
+  useEffect(() => {
+    if (selectedPortfolio && (!form.getValues('currency') || form.getValues('currency') === 'BDT')) {
+      form.setValue('currency', selectedPortfolio.currency);
+    }
+  }, [selectedPortfolio, form]);
+
   const handleSubmit = async (data: EditSIPFormData) => {
+    console.log('🔥 SIP EDIT: Form submission data:', data);
+    
     const requestData: any = {
       name: data.name,
-      amount_per_investment: data.amount_per_investment,
+      amount_per_investment: Number(data.amount_per_investment),
       currency: data.currency,
       frequency: data.frequency as any,
-      interval_value: data.interval_value,
+      interval_value: Number(data.interval_value),
       start_date: data.start_date,
       auto_execute: data.auto_execute,
       market_order: data.market_order,
@@ -207,16 +232,25 @@ export function EditSIPForm({
       requestData.end_date = data.end_date;
     }
     if (data.target_amount && data.target_amount > 0) {
-      requestData.target_amount = data.target_amount;
+      requestData.target_amount = Number(data.target_amount);
     }
     if (data.limit_price && data.limit_price > 0) {
-      requestData.limit_price = data.limit_price;
+      requestData.limit_price = Number(data.limit_price);
     }
     if (data.notes && data.notes.trim() !== '') {
       requestData.notes = data.notes;
     }
 
-    await onSubmit(requestData);
+    console.log('🔥 SIP EDIT: Sending update request:', requestData);
+    
+    try {
+      await onSubmit(requestData);
+      // Clear persisted data after successful submission
+      resetForm();
+    } catch (error) {
+      console.error('🔥 SIP EDIT: Update failed:', error);
+      throw error;
+    }
   };
 
   const renderStepContent = () => {
@@ -948,7 +982,7 @@ export function EditSIPForm({
                         let fieldsToValidate: (keyof EditSIPFormData)[] = [];
                         
                         if (step === 'basic') {
-                          fieldsToValidate = ['name', 'portfolio_id', 'investment_type'];
+                          fieldsToValidate = ['name', 'portfolio_id'];
                         } else if (step === 'schedule') {
                           fieldsToValidate = ['amount_per_investment', 'currency', 'frequency', 'start_date'];
                         }

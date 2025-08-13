@@ -24,7 +24,8 @@
       "Bash(npx supabase db reset:*)",
       "Bash(timeout 10s npm run type-check)",
       "Bash(timeout 30s npm run dev)",
-      "Bash(timeout 15s npm run dev)"
+      "Bash(timeout 15s npm run dev)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

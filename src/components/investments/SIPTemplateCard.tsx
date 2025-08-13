@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 
 interface SIPTemplateCardProps {
   template: InvestmentTemplate;
@@ -50,6 +51,7 @@ export function SIPTemplateCard({
   onToggleStatus,
   className
 }: SIPTemplateCardProps) {
+  const { theme } = useTheme();
   const investmentType = INVESTMENT_TYPES[template.investment_type];
   const isActive = template.is_active;
   
@@ -86,7 +88,12 @@ export function SIPTemplateCard({
       whileHover={{ y: -4 }}
       className={cn("group", className)}
     >
-      <Card className="relative h-full border-0 bg-gradient-to-br from-white via-white/95 to-white/85 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden">
+      <Card className={cn(
+        "relative h-full border-0 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden",
+        theme === 'dark' 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-900/95 to-gray-900/85 border-gray-800'
+          : 'bg-gradient-to-br from-white via-white/95 to-white/85'
+      )}>
         {/* Status indicator bar */}
         <div className={cn(
           "absolute top-0 left-0 w-full h-1 transition-all duration-300",
@@ -149,7 +156,10 @@ export function SIPTemplateCard({
               
               <div>
                 <div className="flex items-center space-x-2 mb-1">
-                  <h3 className="font-bold text-xl text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                  <h3 className={cn(
+                    "font-bold text-xl group-hover:text-blue-600 transition-colors duration-300",
+                    theme === 'dark' ? 'text-white' : 'text-gray-900'
+                  )}>
                     {template.name}
                   </h3>
                   <Badge 
@@ -164,7 +174,10 @@ export function SIPTemplateCard({
                     {isActive ? "Active" : "Paused"}
                   </Badge>
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <div className={cn(
+                  "flex items-center space-x-2 text-sm",
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                )}>
                   <span className="font-medium">{investmentType?.label}</span>
                   <span>•</span>
                   <div className="flex items-center space-x-1">
@@ -180,20 +193,49 @@ export function SIPTemplateCard({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/70"
+                  className={cn(
+                    "opacity-0 group-hover:opacity-100 transition-all duration-300",
+                    theme === 'dark' 
+                      ? 'hover:bg-gray-800/70' 
+                      : 'hover:bg-white/70'
+                  )}
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="backdrop-blur-md bg-white/95 border border-white/20">
+              <DropdownMenuContent 
+                align="end" 
+                className={cn(
+                  "backdrop-blur-md border shadow-lg",
+                  theme === 'dark' 
+                    ? 'bg-gray-900/95 border-gray-700 text-white' 
+                    : 'bg-white/95 border-gray-200'
+                )}
+              >
                 {onView && (
-                  <DropdownMenuItem onClick={() => onView(template)}>
+                  <DropdownMenuItem 
+                    onClick={() => onView(template)}
+                    className={cn(
+                      "cursor-pointer transition-colors",
+                      theme === 'dark' 
+                        ? 'hover:bg-gray-800 text-white' 
+                        : 'hover:bg-gray-100 text-gray-900'
+                    )}
+                  >
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </DropdownMenuItem>
                 )}
                 {onToggleStatus && (
-                  <DropdownMenuItem onClick={() => onToggleStatus(template)}>
+                  <DropdownMenuItem 
+                    onClick={() => onToggleStatus(template)}
+                    className={cn(
+                      "cursor-pointer transition-colors",
+                      theme === 'dark' 
+                        ? 'hover:bg-gray-800 text-white' 
+                        : 'hover:bg-gray-100 text-gray-900'
+                    )}
+                  >
                     {isActive ? (
                       <>
                         <Pause className="h-4 w-4 mr-2" />
@@ -208,7 +250,15 @@ export function SIPTemplateCard({
                   </DropdownMenuItem>
                 )}
                 {onEdit && (
-                  <DropdownMenuItem onClick={() => onEdit(template)}>
+                  <DropdownMenuItem 
+                    onClick={() => onEdit(template)}
+                    className={cn(
+                      "cursor-pointer transition-colors",
+                      theme === 'dark' 
+                        ? 'hover:bg-gray-800 text-white' 
+                        : 'hover:bg-gray-100 text-gray-900'
+                    )}
+                  >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
@@ -216,7 +266,12 @@ export function SIPTemplateCard({
                 {onDelete && (
                   <DropdownMenuItem 
                     onClick={() => onDelete(template)}
-                    className="text-orange-600 hover:text-orange-700"
+                    className={cn(
+                      "cursor-pointer transition-colors",
+                      theme === 'dark'
+                        ? 'hover:bg-orange-900/30 text-orange-400 hover:text-orange-300'
+                        : 'hover:bg-orange-50 text-orange-600 hover:text-orange-700'
+                    )}
                   >
                     <Pause className="h-4 w-4 mr-2" />
                     {isActive ? 'Pause SIP' : 'Remove SIP'}
@@ -235,13 +290,22 @@ export function SIPTemplateCard({
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
             >
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+              <p className={cn(
+                "text-xs font-medium uppercase tracking-wide",
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              )}>
                 Investment Amount
               </p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className={cn(
+                "text-2xl font-bold",
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              )}>
                 {formatCurrency(amount, template.currency)}
               </p>
-              <p className="text-xs text-gray-600">
+              <p className={cn(
+                "text-xs",
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              )}>
                 Per {template.frequency}
               </p>
             </motion.div>
@@ -251,13 +315,19 @@ export function SIPTemplateCard({
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
             >
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+              <p className={cn(
+                "text-xs font-medium uppercase tracking-wide",
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              )}>
                 Total Invested
               </p>
               <p className="text-2xl font-bold text-blue-600">
                 {totalInvested > 0 ? formatCurrency(totalInvested, template.currency) : formatCurrency(0, template.currency)}
               </p>
-              <p className="text-xs text-gray-600">
+              <p className={cn(
+                "text-xs",
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              )}>
                 {template.executed_count || 0} executions
               </p>
             </motion.div>
@@ -266,14 +336,22 @@ export function SIPTemplateCard({
           {/* Next Execution Info */}
           {isActive && nextExecution && (
             <motion.div 
-              className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100/50"
+              className={cn(
+                "p-4 rounded-xl border",
+                theme === 'dark' 
+                  ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border-blue-700/50'
+                  : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100/50'
+              )}
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.2 }}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm font-medium text-blue-700">Next Execution</span>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    theme === 'dark' ? 'text-blue-400' : 'text-blue-700'
+                  )}>Next Execution</span>
                 </div>
                 {daysUntilNext !== null && (
                   <Badge 
@@ -288,10 +366,16 @@ export function SIPTemplateCard({
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-blue-900">
+                <span className={cn(
+                  "text-lg font-bold",
+                  theme === 'dark' ? 'text-blue-300' : 'text-blue-900'
+                )}>
                   {nextExecution.toLocaleDateString()}
                 </span>
-                <div className="flex items-center space-x-1 text-sm text-blue-600">
+                <div className={cn(
+                  "flex items-center space-x-1 text-sm",
+                  theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                )}>
                   <ArrowUpRight className="h-4 w-4" />
                   <span>{formatCurrency(amount, template.currency)}</span>
                 </div>
@@ -301,13 +385,24 @@ export function SIPTemplateCard({
 
           {/* Advanced Options Display */}
           {(template.interval_value && template.interval_value > 1) && (
-            <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100/50 mb-4">
+            <div className={cn(
+              "p-3 rounded-lg border mb-4",
+              theme === 'dark'
+                ? 'bg-gradient-to-r from-purple-900/30 to-pink-900/30 border-purple-700/50'
+                : 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-100/50'
+            )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Repeat className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm font-medium text-purple-700">Custom Interval</span>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    theme === 'dark' ? 'text-purple-300' : 'text-purple-700'
+                  )}>Custom Interval</span>
                 </div>
-                <span className="text-sm font-semibold text-purple-900">
+                <span className={cn(
+                  "text-sm font-semibold",
+                  theme === 'dark' ? 'text-purple-200' : 'text-purple-900'
+                )}>
                   Every {template.interval_value} {frequencyDisplay.toLowerCase()}
                 </span>
               </div>
@@ -316,13 +411,27 @@ export function SIPTemplateCard({
 
           {/* Limit Price Info */}
           {!template.market_order && template.limit_price && (
-            <div className="p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-100/50 mb-4">
+            <div className={cn(
+              "p-3 rounded-lg border mb-4",
+              theme === 'dark'
+                ? 'bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border-yellow-700/50'
+                : 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-100/50'
+            )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Target className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm font-medium text-yellow-700">Limit Price</span>
+                  <Target className={cn(
+                    "h-4 w-4",
+                    theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
+                  )} />
+                  <span className={cn(
+                    "text-sm font-medium",
+                    theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'
+                  )}>Limit Price</span>
                 </div>
-                <span className="text-sm font-semibold text-yellow-900">
+                <span className={cn(
+                  "text-sm font-semibold",
+                  theme === 'dark' ? 'text-yellow-200' : 'text-yellow-900'
+                )}>
                   {formatCurrency(template.limit_price, template.currency)}
                 </span>
               </div>
@@ -336,40 +445,70 @@ export function SIPTemplateCard({
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.2 }}
             >
-              <h4 className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+              <h4 className={cn(
+                "text-sm font-medium flex items-center space-x-2",
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              )}>
                 <AlertCircle className="h-4 w-4" />
                 <span>SIP Limits & Targets</span>
               </h4>
               
               <div className="grid grid-cols-1 gap-3">
                 {template.target_amount && (
-                  <div className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg">
+                  <div className={cn(
+                    "flex items-center justify-between p-3 rounded-lg",
+                    theme === 'dark' ? 'bg-green-900/30' : 'bg-green-50/50'
+                  )}>
                     <div className="flex items-center space-x-2">
                       <Target className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-gray-600">Target Amount</span>
+                      <span className={cn(
+                        "text-sm",
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      )}>Target Amount</span>
                     </div>
-                    <span className="font-semibold text-green-700">
+                    <span className={cn(
+                      "font-semibold",
+                      theme === 'dark' ? 'text-green-400' : 'text-green-700'
+                    )}>
                       {formatCurrency(template.target_amount, template.currency)}
                     </span>
                   </div>
                 )}
                 
                 {template.max_executions && (
-                  <div className="flex items-center justify-between p-3 bg-orange-50/50 rounded-lg">
-                    <span className="text-sm text-orange-600">Max Executions</span>
-                    <span className="font-semibold text-orange-700">
+                  <div className={cn(
+                    "flex items-center justify-between p-3 rounded-lg",
+                    theme === 'dark' ? 'bg-orange-900/30' : 'bg-orange-50/50'
+                  )}>
+                    <span className={cn(
+                      "text-sm",
+                      theme === 'dark' ? 'text-orange-300' : 'text-orange-600'
+                    )}>Max Executions</span>
+                    <span className={cn(
+                      "font-semibold",
+                      theme === 'dark' ? 'text-orange-400' : 'text-orange-700'
+                    )}>
                       {template.executed_count || 0} / {template.max_executions}
                     </span>
                   </div>
                 )}
                 
                 {template.end_date && (
-                  <div className="flex items-center justify-between p-3 bg-red-50/50 rounded-lg">
+                  <div className={cn(
+                    "flex items-center justify-between p-3 rounded-lg",
+                    theme === 'dark' ? 'bg-red-900/30' : 'bg-red-50/50'
+                  )}>
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-red-500" />
-                      <span className="text-sm text-red-600">End Date</span>
+                      <span className={cn(
+                        "text-sm",
+                        theme === 'dark' ? 'text-red-300' : 'text-red-600'
+                      )}>End Date</span>
                     </div>
-                    <span className="font-semibold text-red-700">
+                    <span className={cn(
+                      "font-semibold",
+                      theme === 'dark' ? 'text-red-400' : 'text-red-700'
+                    )}>
                       {new Date(template.end_date).toLocaleDateString()}
                     </span>
                   </div>
@@ -379,26 +518,47 @@ export function SIPTemplateCard({
           )}
 
           {/* Additional Information */}
-          <div className="pt-4 border-t border-gray-100 space-y-3">
+          <div className={cn(
+            "pt-4 border-t space-y-3",
+            theme === 'dark' ? 'border-gray-700' : 'border-gray-100'
+          )}>
             {/* Platform & Account Info */}
             {(template.platform || template.account_number) && (
               <div className="grid grid-cols-1 gap-3">
                 {template.platform && (
-                  <div className="flex items-center justify-between p-2 bg-blue-50/50 rounded-lg">
+                  <div className={cn(
+                    "flex items-center justify-between p-2 rounded-lg",
+                    theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-50/50'
+                  )}>
                     <div className="flex items-center space-x-2">
                       <Building2 className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm font-medium text-gray-700">Platform</span>
+                      <span className={cn(
+                        "text-sm font-medium",
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      )}>Platform</span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900">{template.platform}</span>
+                    <span className={cn(
+                      "text-sm font-semibold",
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    )}>{template.platform}</span>
                   </div>
                 )}
                 {template.account_number && (
-                  <div className="flex items-center justify-between p-2 bg-green-50/50 rounded-lg">
+                  <div className={cn(
+                    "flex items-center justify-between p-2 rounded-lg",
+                    theme === 'dark' ? 'bg-green-900/30' : 'bg-green-50/50'
+                  )}>
                     <div className="flex items-center space-x-2">
                       <Hash className="h-4 w-4 text-green-500" />
-                      <span className="text-sm font-medium text-gray-700">Account</span>
+                      <span className={cn(
+                        "text-sm font-medium",
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      )}>Account</span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900">{template.account_number}</span>
+                    <span className={cn(
+                      "text-sm font-semibold",
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    )}>{template.account_number}</span>
                   </div>
                 )}
               </div>
@@ -406,10 +566,16 @@ export function SIPTemplateCard({
 
             {/* Symbol Info */}
             {template.symbol && (
-              <div className="flex items-center justify-between p-2 bg-purple-50/50 rounded-lg">
+              <div className={cn(
+                "flex items-center justify-between p-2 rounded-lg",
+                theme === 'dark' ? 'bg-purple-900/30' : 'bg-purple-50/50'
+              )}>
                 <div className="flex items-center space-x-2">
                   <Hash className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm font-medium text-gray-700">Symbol/Code</span>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  )}>Symbol/Code</span>
                 </div>
                 <Badge variant="outline" className="font-mono text-xs">
                   {template.symbol}
@@ -419,19 +585,37 @@ export function SIPTemplateCard({
 
             {/* Settings Info */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center justify-between p-2 bg-gray-50/50 rounded-lg">
+              <div className={cn(
+                "flex items-center justify-between p-2 rounded-lg",
+                theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-50/50'
+              )}>
                 <div className="flex items-center space-x-1">
-                  <Settings className="h-3 w-3 text-gray-500" />
-                  <span className="text-xs font-medium text-gray-600">Auto Execute</span>
+                  <Settings className={cn(
+                    "h-3 w-3",
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  )} />
+                  <span className={cn(
+                    "text-xs font-medium",
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                  )}>Auto Execute</span>
                 </div>
                 <Badge variant={template.auto_execute ? "default" : "outline"} className="text-xs px-2 py-0">
                   {template.auto_execute ? "ON" : "OFF"}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50/50 rounded-lg">
+              <div className={cn(
+                "flex items-center justify-between p-2 rounded-lg",
+                theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-50/50'
+              )}>
                 <div className="flex items-center space-x-1">
-                  <Target className="h-3 w-3 text-gray-500" />
-                  <span className="text-xs font-medium text-gray-600">Market Order</span>
+                  <Target className={cn(
+                    "h-3 w-3",
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  )} />
+                  <span className={cn(
+                    "text-xs font-medium",
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                  )}>Market Order</span>
                 </div>
                 <Badge variant={template.market_order ? "default" : "outline"} className="text-xs px-2 py-0">
                   {template.market_order ? "YES" : "NO"}
@@ -441,10 +625,21 @@ export function SIPTemplateCard({
 
             {/* Investment Target */}
             {template.investment_name && (
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+              <div className={cn(
+                "flex items-center justify-between p-3 rounded-lg",
+                theme === 'dark'
+                  ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30'
+                  : 'bg-gradient-to-r from-blue-50 to-indigo-50'
+              )}>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Target Investment</p>
-                  <p className="text-base font-bold text-gray-900">{template.investment_name}</p>
+                  <p className={cn(
+                    "text-sm font-medium",
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  )}>Target Investment</p>
+                  <p className={cn(
+                    "text-base font-bold",
+                    theme === 'dark' ? 'text-white' : 'text-gray-900'
+                  )}>{template.investment_name}</p>
                 </div>
                 <Badge variant="outline" className="text-xs font-medium">
                   {template.portfolio_name}
@@ -454,9 +649,18 @@ export function SIPTemplateCard({
 
             {/* Notes Display */}
             {template.notes && (
-              <div className="p-3 bg-gray-50/50 rounded-lg">
-                <p className="text-xs font-medium text-gray-500 mb-1">Notes</p>
-                <p className="text-sm text-gray-700 leading-relaxed">
+              <div className={cn(
+                "p-3 rounded-lg",
+                theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-50/50'
+              )}>
+                <p className={cn(
+                  "text-xs font-medium mb-1",
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                )}>Notes</p>
+                <p className={cn(
+                  "text-sm leading-relaxed",
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                )}>
                   {template.notes.length > 80 
                     ? `${template.notes.substring(0, 80)}...` 
                     : template.notes
