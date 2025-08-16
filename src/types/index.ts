@@ -3,6 +3,9 @@ import { Database } from './database_professional'
 // Investment system types
 export * from './investments'
 
+// EMI and Lending system types
+export * from './emi'
+
 // Database types
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
 export type Inserts<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']

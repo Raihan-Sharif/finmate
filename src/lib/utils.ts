@@ -22,30 +22,44 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Format currency
+// Format currency - Default version for non-component usage
 export function formatCurrency(
   amount: number,
-  currency: string = 'USD',
+  currency: string = 'BDT',
   locale: string = 'en-US',
   compact: boolean = false
 ): string {
-  // Handle BDT currency specially with Taka symbol
-  if (currency === 'BDT') {
-    const formatter = new Intl.NumberFormat('en-BD', {
-      minimumFractionDigits: compact ? 0 : 2,
-      maximumFractionDigits: compact ? 1 : 2,
-      notation: compact ? 'compact' : 'standard'
-    });
-    return `৳${formatter.format(amount)}`;
-  }
+  // Currency symbol mapping
+  const currencySymbols: Record<string, string> = {
+    BDT: '৳',
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    INR: '₹',
+    JPY: '¥',
+    CAD: 'C$',
+    AUD: 'A$'
+  };
 
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
+  const symbol = currencySymbols[currency] || currency;
+  
+  const formatter = new Intl.NumberFormat(locale, {
     minimumFractionDigits: compact ? 0 : 2,
     maximumFractionDigits: compact ? 1 : 2,
     notation: compact ? 'compact' : 'standard'
-  }).format(amount);
+  });
+  
+  return `${symbol}${formatter.format(amount)}`;
+}
+
+// Hook-based currency formatter that uses Zustand store
+export function useCurrencyFormatter() {
+  // This will be used inside components to get user's preferred currency
+  return (amount: number, compact: boolean = false) => {
+    // For now, return the default format
+    // Components should use the Zustand store directly
+    return formatCurrency(amount, 'BDT', 'en-US', compact);
+  };
 }
 
 // Format number with thousands separator

@@ -90,7 +90,7 @@ CREATE TYPE account_type AS ENUM ('bank', 'credit_card', 'wallet', 'investment',
 CREATE TYPE investment_type AS ENUM ('stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension', 'other');
 CREATE TYPE investment_status AS ENUM ('active', 'matured', 'sold', 'paused', 'closed');
 CREATE TYPE investment_frequency AS ENUM ('daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly');
-CREATE TYPE loan_type AS ENUM ('personal', 'home', 'car', 'education', 'business', 'other');
+CREATE TYPE loan_type AS ENUM ('personal', 'home', 'car', 'education', 'business', 'purchase_emi', 'credit_card', 'other');
 CREATE TYPE loan_status AS ENUM ('active', 'closed', 'defaulted');
 CREATE TYPE lending_type AS ENUM ('lent', 'borrowed');
 CREATE TYPE lending_status AS ENUM ('pending', 'partial', 'paid', 'overdue');
@@ -98,6 +98,21 @@ CREATE TYPE budget_period AS ENUM ('weekly', 'monthly', 'quarterly', 'yearly');
 CREATE TYPE notification_type AS ENUM ('info', 'warning', 'error', 'success');
 CREATE TYPE theme_type AS ENUM ('light', 'dark', 'system');
 CREATE TYPE user_role AS ENUM ('super_admin', 'admin', 'paid_user', 'user');
+
+-- Purchase EMI specific types
+CREATE TYPE purchase_emi_category AS ENUM (
+    'electronics',
+    'furniture', 
+    'appliances',
+    'jewelry',
+    'gadgets',
+    'clothing',
+    'sports',
+    'travel',
+    'other'
+);
+
+CREATE TYPE item_condition AS ENUM ('new', 'refurbished', 'used');
 CREATE TYPE permission_action AS ENUM ('create', 'read', 'update', 'delete', 'manage');
 CREATE TYPE audit_action AS ENUM ('create', 'update', 'delete', 'login', 'logout', 'role_change');
 
@@ -590,7 +605,7 @@ CREATE TABLE investment_performance_snapshots (
     )
 );
 
--- Loans Table
+-- Enhanced Loans Table
 CREATE TABLE loans (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -601,10 +616,18 @@ CREATE TABLE loans (
     emi_amount DECIMAL(15,2) NOT NULL,
     tenure_months INTEGER NOT NULL,
     start_date DATE NOT NULL,
-    next_due_date DATE NOT NULL,
-    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+    next_due_date DATE,
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
     type loan_type DEFAULT 'personal' NOT NULL,
     status loan_status DEFAULT 'active' NOT NULL,
+    account_id UUID REFERENCES accounts(id),
+    category_id UUID REFERENCES categories(id),
+    auto_debit BOOLEAN DEFAULT false,
+    reminder_days INTEGER DEFAULT 3,
+    prepayment_amount DECIMAL(15,2) DEFAULT 0,
+    last_payment_date DATE,
+    payment_day INTEGER DEFAULT 1,
+    notes TEXT,
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -616,31 +639,36 @@ CREATE TABLE loans (
     CONSTRAINT loans_tenure_positive CHECK (tenure_months > 0)
 );
 
--- Lending Table
+-- Enhanced Lending Table
 CREATE TABLE lending (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     person_name VARCHAR(100) NOT NULL,
-    person_contact VARCHAR(100),
     amount DECIMAL(15,2) NOT NULL,
-    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
-    type lending_type NOT NULL,
+    pending_amount DECIMAL(15,2) NOT NULL,
+    interest_rate DECIMAL(5,2) DEFAULT 0,
     date DATE NOT NULL,
     due_date DATE,
-    interest_rate DECIMAL(5,2) DEFAULT 0,
+    currency VARCHAR(3) DEFAULT 'BDT' NOT NULL,
+    type lending_type NOT NULL,
     status lending_status DEFAULT 'pending' NOT NULL,
-    description TEXT,
-    paid_amount DECIMAL(15,2) DEFAULT 0 NOT NULL,
+    account_id UUID REFERENCES accounts(id),
+    category_id UUID REFERENCES categories(id),
+    reminder_days INTEGER DEFAULT 7,
+    contact_info JSONB,
+    payment_history JSONB DEFAULT '[]',
+    notes TEXT,
+    metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     
     CONSTRAINT lending_amount_positive CHECK (amount > 0),
-    CONSTRAINT lending_paid_amount_non_negative CHECK (paid_amount >= 0),
-    CONSTRAINT lending_paid_amount_not_exceeds CHECK (paid_amount <= amount),
+    CONSTRAINT lending_pending_amount_non_negative CHECK (pending_amount >= 0),
+    CONSTRAINT lending_pending_amount_not_exceeds CHECK (pending_amount <= amount),
     CONSTRAINT lending_interest_rate_valid CHECK (interest_rate >= 0 AND interest_rate <= 100)
 );
 
--- EMI Payments Table
+-- Enhanced EMI Payments Table
 CREATE TABLE emi_payments (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -650,11 +678,13 @@ CREATE TABLE emi_payments (
     principal_amount DECIMAL(15,2) NOT NULL,
     interest_amount DECIMAL(15,2) NOT NULL,
     outstanding_balance DECIMAL(15,2) NOT NULL,
-    is_paid BOOLEAN DEFAULT false NOT NULL,
-    paid_date TIMESTAMP WITH TIME ZONE,
+    is_paid BOOLEAN DEFAULT true NOT NULL,
+    transaction_id UUID REFERENCES transactions(id),
     payment_method VARCHAR(50),
-    transaction_reference VARCHAR(100),
+    late_fee DECIMAL(15,2) DEFAULT 0,
+    is_prepayment BOOLEAN DEFAULT false,
     notes TEXT,
+    metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     
@@ -662,6 +692,64 @@ CREATE TABLE emi_payments (
     CONSTRAINT emi_payments_principal_positive CHECK (principal_amount > 0),
     CONSTRAINT emi_payments_interest_non_negative CHECK (interest_amount >= 0),
     CONSTRAINT emi_payments_outstanding_non_negative CHECK (outstanding_balance >= 0)
+);
+
+-- EMI Schedules Table for better payment tracking
+CREATE TABLE emi_schedules (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    loan_id UUID REFERENCES loans(id) ON DELETE CASCADE NOT NULL,
+    installment_number INTEGER NOT NULL,
+    due_date DATE NOT NULL,
+    emi_amount DECIMAL(15,2) NOT NULL,
+    principal_amount DECIMAL(15,2) NOT NULL,
+    interest_amount DECIMAL(15,2) NOT NULL,
+    outstanding_balance DECIMAL(15,2) NOT NULL,
+    is_paid BOOLEAN DEFAULT false,
+    payment_date DATE,
+    actual_payment_amount DECIMAL(15,2),
+    late_fee DECIMAL(15,2) DEFAULT 0,
+    payment_id UUID REFERENCES emi_payments(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT emi_schedules_emi_positive CHECK (emi_amount > 0),
+    CONSTRAINT emi_schedules_principal_positive CHECK (principal_amount > 0),
+    CONSTRAINT emi_schedules_interest_non_negative CHECK (interest_amount >= 0),
+    CONSTRAINT emi_schedules_outstanding_non_negative CHECK (outstanding_balance >= 0),
+    CONSTRAINT emi_schedules_installment_positive CHECK (installment_number > 0),
+    UNIQUE(loan_id, installment_number)
+);
+
+-- Lending Payments Table for tracking personal lending payments
+CREATE TABLE lending_payments (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    lending_id UUID REFERENCES lending(id) ON DELETE CASCADE NOT NULL,
+    payment_date DATE NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    payment_method VARCHAR(50),
+    transaction_id UUID REFERENCES transactions(id),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    CONSTRAINT lending_payments_amount_positive CHECK (amount > 0)
+);
+
+-- EMI Templates Table for quick loan setup
+CREATE TABLE emi_templates (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    loan_type loan_type NOT NULL,
+    default_interest_rate DECIMAL(5,2),
+    default_tenure_months INTEGER,
+    is_active BOOLEAN DEFAULT true,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- Recurring Transactions Table
@@ -886,16 +974,32 @@ CREATE INDEX idx_investment_performance_type ON investment_performance_snapshots
 CREATE INDEX idx_loans_user_id ON loans(user_id);
 CREATE INDEX idx_loans_status ON loans(status);
 CREATE INDEX idx_loans_next_due_date ON loans(next_due_date);
+CREATE INDEX idx_loans_account_id ON loans(account_id);
+CREATE INDEX idx_loans_category_id ON loans(category_id);
+CREATE INDEX idx_loans_payment_day ON loans(payment_day);
 
 CREATE INDEX idx_lending_user_id ON lending(user_id);
 CREATE INDEX idx_lending_type ON lending(type);
 CREATE INDEX idx_lending_status ON lending(status);
 CREATE INDEX idx_lending_due_date ON lending(due_date);
+CREATE INDEX idx_lending_account_id ON lending(account_id);
+CREATE INDEX idx_lending_category_id ON lending(category_id);
 
 CREATE INDEX idx_emi_payments_user_id ON emi_payments(user_id);
 CREATE INDEX idx_emi_payments_loan_id ON emi_payments(loan_id);
 CREATE INDEX idx_emi_payments_payment_date ON emi_payments(payment_date);
-CREATE INDEX idx_emi_payments_is_paid ON emi_payments(is_paid);
+
+CREATE INDEX idx_emi_schedules_user_id ON emi_schedules(user_id);
+CREATE INDEX idx_emi_schedules_loan_id ON emi_schedules(loan_id);
+CREATE INDEX idx_emi_schedules_due_date ON emi_schedules(due_date);
+CREATE INDEX idx_emi_schedules_is_paid ON emi_schedules(is_paid);
+
+CREATE INDEX idx_lending_payments_user_id ON lending_payments(user_id);
+CREATE INDEX idx_lending_payments_lending_id ON lending_payments(lending_id);
+CREATE INDEX idx_lending_payments_payment_date ON lending_payments(payment_date);
+
+CREATE INDEX idx_emi_templates_user_id ON emi_templates(user_id);
+CREATE INDEX idx_emi_templates_is_active ON emi_templates(is_active);
 
 CREATE INDEX idx_recurring_transactions_user_id ON recurring_transactions(user_id);
 CREATE INDEX idx_recurring_transactions_next_execution ON recurring_transactions(next_execution);
@@ -945,6 +1049,9 @@ ALTER TABLE investment_performance_snapshots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lending ENABLE ROW LEVEL SECURITY;
 ALTER TABLE emi_payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE emi_schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lending_payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE emi_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recurring_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_insights ENABLE ROW LEVEL SECURITY;
@@ -1003,6 +1110,9 @@ CREATE POLICY "Users can manage own investment performance" ON investment_perfor
 CREATE POLICY "Users can manage own loans" ON loans FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own lending" ON lending FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own emi payments" ON emi_payments FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own emi schedules" ON emi_schedules FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own lending payments" ON lending_payments FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own emi templates" ON emi_templates FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own recurring transactions" ON recurring_transactions FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own notifications" ON notifications FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own ai insights" ON ai_insights FOR ALL USING (auth.uid() = user_id);
@@ -2421,6 +2531,655 @@ CREATE TRIGGER update_investment_templates_updated_at BEFORE UPDATE ON investmen
 
 -- Schedule investment template execution (uncomment after enabling pg_cron)
 -- SELECT cron.schedule('execute-investment-templates', '0 3 * * *', 'SELECT execute_pending_investment_templates();');
+
+-- =============================================
+-- EMI SYSTEM FUNCTIONS
+-- =============================================
+
+-- Function to generate EMI schedule for a loan
+CREATE OR REPLACE FUNCTION generate_emi_schedule(
+    p_loan_id UUID,
+    p_user_id UUID
+) RETURNS TABLE (
+    installment_number INTEGER,
+    due_date DATE,
+    emi_amount DECIMAL(15,2),
+    principal_amount DECIMAL(15,2),
+    interest_amount DECIMAL(15,2),
+    outstanding_balance DECIMAL(15,2)
+) AS $$
+DECLARE
+    loan_record RECORD;
+    monthly_rate DECIMAL;
+    remaining_balance DECIMAL;
+    due_date DATE;
+    i INTEGER;
+    interest_for_month DECIMAL;
+    principal_for_month DECIMAL;
+BEGIN
+    -- Get loan details
+    SELECT * INTO loan_record 
+    FROM loans 
+    WHERE id = p_loan_id AND user_id = p_user_id;
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Loan not found or access denied';
+    END IF;
+    
+    monthly_rate := loan_record.interest_rate / 12 / 100;
+    remaining_balance := loan_record.principal_amount;
+    due_date := loan_record.start_date;
+    
+    -- Generate schedule for each month
+    FOR i IN 1..loan_record.tenure_months LOOP
+        -- Calculate interest and principal for this month
+        interest_for_month := remaining_balance * monthly_rate;
+        principal_for_month := loan_record.emi_amount - interest_for_month;
+        remaining_balance := remaining_balance - principal_for_month;
+        
+        -- Ensure remaining balance doesn't go negative
+        IF remaining_balance < 0 THEN
+            principal_for_month := principal_for_month + remaining_balance;
+            remaining_balance := 0;
+        END IF;
+        
+        -- Set due date (use payment_day if set, otherwise use start_date day)
+        due_date := (due_date + INTERVAL '1 month')::DATE;
+        IF loan_record.payment_day IS NOT NULL THEN
+            due_date := DATE_TRUNC('month', due_date) + (loan_record.payment_day - 1) * INTERVAL '1 day';
+        END IF;
+        
+        RETURN QUERY SELECT 
+            i,
+            due_date,
+            loan_record.emi_amount,
+            principal_for_month,
+            interest_for_month,
+            remaining_balance;
+    END LOOP;
+END;
+$$ LANGUAGE 'plpgsql' SECURITY DEFINER;
+
+-- Function to create EMI schedule entries
+CREATE OR REPLACE FUNCTION create_emi_schedule_entries(
+    p_loan_id UUID,
+    p_user_id UUID
+) RETURNS INTEGER AS $$
+DECLARE
+    schedule_record RECORD;
+    entries_created INTEGER := 0;
+BEGIN
+    -- Delete existing schedule entries for this loan
+    DELETE FROM emi_schedules WHERE loan_id = p_loan_id AND user_id = p_user_id;
+    
+    -- Create new schedule entries
+    FOR schedule_record IN 
+        SELECT * FROM generate_emi_schedule(p_loan_id, p_user_id)
+    LOOP
+        INSERT INTO emi_schedules (
+            user_id,
+            loan_id,
+            installment_number,
+            due_date,
+            emi_amount,
+            principal_amount,
+            interest_amount,
+            outstanding_balance
+        ) VALUES (
+            p_user_id,
+            p_loan_id,
+            schedule_record.installment_number,
+            schedule_record.due_date,
+            schedule_record.emi_amount,
+            schedule_record.principal_amount,
+            schedule_record.interest_amount,
+            schedule_record.outstanding_balance
+        );
+        
+        entries_created := entries_created + 1;
+    END LOOP;
+    
+    RETURN entries_created;
+END;
+$$ LANGUAGE 'plpgsql' SECURITY DEFINER;
+
+-- Function to get EMI overview for a user
+CREATE OR REPLACE FUNCTION get_emi_overview(
+    p_user_id UUID,
+    p_currency VARCHAR(3) DEFAULT 'BDT'
+) RETURNS TABLE (
+    total_active_loans INTEGER,
+    total_outstanding_amount DECIMAL(15,2),
+    total_monthly_emi DECIMAL(15,2),
+    overdue_payments INTEGER,
+    overdue_amount DECIMAL(15,2),
+    next_payment_date DATE,
+    next_payment_amount DECIMAL(15,2),
+    total_paid_this_month DECIMAL(15,2),
+    total_pending_this_month DECIMAL(15,2)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        -- Loan summary
+        COALESCE((
+            SELECT COUNT(*)::INTEGER 
+            FROM loans 
+            WHERE user_id = p_user_id 
+            AND status = 'active' 
+            AND currency = p_currency
+        ), 0) as total_active_loans,
+        
+        COALESCE((
+            SELECT SUM(outstanding_amount)
+            FROM loans 
+            WHERE user_id = p_user_id 
+            AND status = 'active' 
+            AND currency = p_currency
+        ), 0) as total_outstanding_amount,
+        
+        COALESCE((
+            SELECT SUM(emi_amount)
+            FROM loans 
+            WHERE user_id = p_user_id 
+            AND status = 'active' 
+            AND currency = p_currency
+        ), 0) as total_monthly_emi,
+        
+        -- Overdue summary
+        COALESCE((
+            SELECT COUNT(*)::INTEGER
+            FROM emi_schedules es
+            JOIN loans l ON es.loan_id = l.id
+            WHERE es.user_id = p_user_id 
+            AND es.is_paid = false 
+            AND es.due_date < CURRENT_DATE
+            AND l.currency = p_currency
+            AND l.status = 'active'
+        ), 0) as overdue_payments,
+        
+        COALESCE((
+            SELECT SUM(es.emi_amount)
+            FROM emi_schedules es
+            JOIN loans l ON es.loan_id = l.id
+            WHERE es.user_id = p_user_id 
+            AND es.is_paid = false 
+            AND es.due_date < CURRENT_DATE
+            AND l.currency = p_currency
+            AND l.status = 'active'
+        ), 0) as overdue_amount,
+        
+        -- Next payment (using loans table if emi_schedules is empty)
+        COALESCE((
+            SELECT es.due_date
+            FROM emi_schedules es
+            JOIN loans l ON es.loan_id = l.id
+            WHERE es.user_id = p_user_id 
+            AND es.is_paid = false 
+            AND l.currency = p_currency
+            AND l.status = 'active'
+            ORDER BY es.due_date ASC
+            LIMIT 1
+        ), (
+            SELECT next_due_date
+            FROM loans
+            WHERE user_id = p_user_id 
+            AND status = 'active'
+            AND currency = p_currency
+            AND next_due_date IS NOT NULL
+            ORDER BY next_due_date ASC
+            LIMIT 1
+        )) as next_payment_date,
+        
+        COALESCE((
+            SELECT es.emi_amount
+            FROM emi_schedules es
+            JOIN loans l ON es.loan_id = l.id
+            WHERE es.user_id = p_user_id 
+            AND es.is_paid = false 
+            AND l.currency = p_currency
+            AND l.status = 'active'
+            ORDER BY es.due_date ASC
+            LIMIT 1
+        ), (
+            SELECT emi_amount
+            FROM loans
+            WHERE user_id = p_user_id 
+            AND status = 'active'
+            AND currency = p_currency
+            AND next_due_date IS NOT NULL
+            ORDER BY next_due_date ASC
+            LIMIT 1
+        )) as next_payment_amount,
+        
+        -- Monthly summary
+        COALESCE((
+            SELECT SUM(es.emi_amount)
+            FROM emi_schedules es
+            JOIN loans l ON es.loan_id = l.id
+            WHERE es.user_id = p_user_id 
+            AND es.is_paid = true
+            AND EXTRACT(MONTH FROM es.due_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+            AND EXTRACT(YEAR FROM es.due_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+            AND l.currency = p_currency
+            AND l.status = 'active'
+        ), 0) as total_paid_this_month,
+        
+        COALESCE((
+            SELECT SUM(es.emi_amount)
+            FROM emi_schedules es
+            JOIN loans l ON es.loan_id = l.id
+            WHERE es.user_id = p_user_id 
+            AND es.is_paid = false
+            AND EXTRACT(MONTH FROM es.due_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+            AND EXTRACT(YEAR FROM es.due_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+            AND l.currency = p_currency
+            AND l.status = 'active'
+        ), 0) as total_pending_this_month;
+END;
+$$ LANGUAGE 'plpgsql' SECURITY DEFINER;
+
+-- Function to get lending overview
+CREATE OR REPLACE FUNCTION get_lending_overview(
+    p_user_id UUID,
+    p_currency VARCHAR(3) DEFAULT 'BDT'
+) RETURNS TABLE (
+    total_lent_amount DECIMAL(15,2),
+    total_borrowed_amount DECIMAL(15,2),
+    total_lent_pending DECIMAL(15,2),
+    total_borrowed_pending DECIMAL(15,2),
+    overdue_lent_count INTEGER,
+    overdue_borrowed_count INTEGER,
+    overdue_lent_amount DECIMAL(15,2),
+    overdue_borrowed_amount DECIMAL(15,2)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        COALESCE((
+            SELECT SUM(amount) 
+            FROM lending 
+            WHERE user_id = p_user_id 
+            AND type = 'lent' 
+            AND currency = p_currency
+        ), 0) as total_lent_amount,
+        
+        COALESCE((
+            SELECT SUM(amount) 
+            FROM lending 
+            WHERE user_id = p_user_id 
+            AND type = 'borrowed' 
+            AND currency = p_currency
+        ), 0) as total_borrowed_amount,
+        
+        COALESCE((
+            SELECT SUM(pending_amount) 
+            FROM lending 
+            WHERE user_id = p_user_id 
+            AND type = 'lent' 
+            AND status IN ('pending', 'partial') 
+            AND currency = p_currency
+        ), 0) as total_lent_pending,
+        
+        COALESCE((
+            SELECT SUM(pending_amount) 
+            FROM lending 
+            WHERE user_id = p_user_id 
+            AND type = 'borrowed' 
+            AND status IN ('pending', 'partial') 
+            AND currency = p_currency
+        ), 0) as total_borrowed_pending,
+        
+        COALESCE((
+            SELECT COUNT(*)::INTEGER 
+            FROM lending 
+            WHERE user_id = p_user_id 
+            AND type = 'lent' 
+            AND status = 'overdue' 
+            AND currency = p_currency
+        ), 0) as overdue_lent_count,
+        
+        COALESCE((
+            SELECT COUNT(*)::INTEGER 
+            FROM lending 
+            WHERE user_id = p_user_id 
+            AND type = 'borrowed' 
+            AND status = 'overdue' 
+            AND currency = p_currency
+        ), 0) as overdue_borrowed_count,
+        
+        COALESCE((
+            SELECT SUM(pending_amount) 
+            FROM lending 
+            WHERE user_id = p_user_id 
+            AND type = 'lent' 
+            AND status = 'overdue' 
+            AND currency = p_currency
+        ), 0) as overdue_lent_amount,
+        
+        COALESCE((
+            SELECT SUM(pending_amount) 
+            FROM lending 
+            WHERE user_id = p_user_id 
+            AND type = 'borrowed' 
+            AND status = 'overdue' 
+            AND currency = p_currency
+        ), 0) as overdue_borrowed_amount;
+END;
+$$ LANGUAGE 'plpgsql' SECURITY DEFINER;
+
+-- Function to mark EMI payment as paid
+CREATE OR REPLACE FUNCTION mark_emi_payment_paid(
+    p_schedule_id UUID,
+    p_user_id UUID,
+    p_payment_amount DECIMAL(15,2),
+    p_payment_date DATE DEFAULT CURRENT_DATE,
+    p_payment_method VARCHAR(50) DEFAULT NULL,
+    p_late_fee DECIMAL(15,2) DEFAULT 0,
+    p_notes TEXT DEFAULT NULL
+) RETURNS UUID AS $$
+DECLARE
+    v_schedule_record RECORD;
+    v_payment_id UUID;
+    v_loan_record RECORD;
+BEGIN
+    -- Get schedule record
+    SELECT * INTO v_schedule_record 
+    FROM emi_schedules 
+    WHERE id = p_schedule_id AND user_id = p_user_id AND is_paid = false;
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'EMI schedule not found or already paid';
+    END IF;
+    
+    -- Get loan record
+    SELECT * INTO v_loan_record 
+    FROM loans 
+    WHERE id = v_schedule_record.loan_id AND user_id = p_user_id;
+    
+    -- Create EMI payment record
+    INSERT INTO emi_payments (
+        user_id,
+        loan_id,
+        payment_date,
+        amount,
+        principal_amount,
+        interest_amount,
+        outstanding_balance,
+        is_paid,
+        payment_method,
+        late_fee,
+        notes
+    ) VALUES (
+        p_user_id,
+        v_schedule_record.loan_id,
+        p_payment_date,
+        p_payment_amount,
+        v_schedule_record.principal_amount,
+        v_schedule_record.interest_amount,
+        v_schedule_record.outstanding_balance,
+        true,
+        p_payment_method,
+        p_late_fee,
+        p_notes
+    ) RETURNING id INTO v_payment_id;
+    
+    -- Update schedule as paid
+    UPDATE emi_schedules 
+    SET 
+        is_paid = true,
+        payment_date = p_payment_date,
+        actual_payment_amount = p_payment_amount,
+        late_fee = p_late_fee,
+        payment_id = v_payment_id,
+        updated_at = NOW()
+    WHERE id = p_schedule_id;
+    
+    -- Update loan outstanding amount and last payment date
+    UPDATE loans 
+    SET 
+        outstanding_amount = outstanding_amount - v_schedule_record.principal_amount,
+        last_payment_date = p_payment_date,
+        next_due_date = CASE 
+            WHEN outstanding_amount - v_schedule_record.principal_amount <= 0 THEN NULL
+            ELSE (
+                SELECT MIN(due_date) 
+                FROM emi_schedules 
+                WHERE loan_id = v_loan_record.id AND is_paid = false AND id != p_schedule_id
+            )
+        END,
+        status = CASE 
+            WHEN outstanding_amount - v_schedule_record.principal_amount <= 0 THEN 'closed'::loan_status
+            ELSE status
+        END,
+        updated_at = NOW()
+    WHERE id = v_schedule_record.loan_id;
+    
+    RETURN v_payment_id;
+END;
+$$ LANGUAGE 'plpgsql' SECURITY DEFINER;
+
+-- =============================================
+-- PURCHASE EMI FUNCTIONS
+-- =============================================
+
+-- Create a view for purchase EMIs for easier querying
+CREATE OR REPLACE VIEW purchase_emis AS
+SELECT 
+    l.*,
+    (l.metadata->>'item_name') as item_name,
+    (l.metadata->>'vendor_name') as vendor_name,
+    (l.metadata->>'purchase_category') as purchase_category_text,
+    (l.metadata->>'purchase_date')::date as purchase_date,
+    (l.metadata->>'item_condition') as item_condition_text,
+    (l.metadata->>'warranty_period')::integer as warranty_period_months,
+    (l.metadata->>'down_payment')::decimal(15,2) as down_payment
+FROM loans l
+WHERE l.type = 'purchase_emi';
+
+-- Function to create purchase EMI with proper validation
+CREATE OR REPLACE FUNCTION create_purchase_emi(
+    p_user_id UUID,
+    p_item_name TEXT,
+    p_vendor_name TEXT,
+    p_purchase_category TEXT,
+    p_principal_amount DECIMAL(15,2),
+    p_interest_rate DECIMAL(5,2),
+    p_tenure_months INTEGER,
+    p_purchase_date DATE,
+    p_down_payment DECIMAL(15,2) DEFAULT 0,
+    p_item_condition TEXT DEFAULT 'new',
+    p_warranty_period INTEGER DEFAULT NULL,
+    p_payment_day INTEGER DEFAULT 1,
+    p_account_id UUID DEFAULT NULL,
+    p_category_id UUID DEFAULT NULL,
+    p_notes TEXT DEFAULT NULL,
+    p_currency TEXT DEFAULT 'BDT'
+) RETURNS TABLE(
+    loan_id UUID,
+    emi_amount DECIMAL(15,2),
+    success BOOLEAN,
+    message TEXT
+) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_loan_id UUID;
+    v_emi_amount DECIMAL(15,2);
+    v_loan_amount DECIMAL(15,2);
+    v_monthly_rate DECIMAL(10,8);
+    v_next_due_date DATE;
+BEGIN
+    -- Validate inputs
+    IF p_principal_amount <= 0 THEN
+        RETURN QUERY SELECT NULL::UUID, 0::DECIMAL(15,2), FALSE, 'Principal amount must be greater than 0';
+        RETURN;
+    END IF;
+    
+    IF p_down_payment < 0 OR p_down_payment >= p_principal_amount THEN
+        RETURN QUERY SELECT NULL::UUID, 0::DECIMAL(15,2), FALSE, 'Down payment must be between 0 and principal amount';
+        RETURN;
+    END IF;
+    
+    IF p_tenure_months <= 0 OR p_tenure_months > 120 THEN
+        RETURN QUERY SELECT NULL::UUID, 0::DECIMAL(15,2), FALSE, 'Tenure must be between 1 and 120 months';
+        RETURN;
+    END IF;
+    
+    -- Calculate loan amount after down payment
+    v_loan_amount := p_principal_amount - COALESCE(p_down_payment, 0);
+    
+    -- Calculate EMI amount
+    IF p_interest_rate = 0 THEN
+        v_emi_amount := v_loan_amount / p_tenure_months;
+    ELSE
+        v_monthly_rate := p_interest_rate / 12.0 / 100.0;
+        v_emi_amount := (v_loan_amount * v_monthly_rate * POWER(1 + v_monthly_rate, p_tenure_months)) / 
+                       (POWER(1 + v_monthly_rate, p_tenure_months) - 1);
+    END IF;
+    
+    -- Round EMI to 2 decimal places
+    v_emi_amount := ROUND(v_emi_amount, 2);
+    
+    -- Calculate next due date
+    v_next_due_date := DATE_TRUNC('month', p_purchase_date) + INTERVAL '1 month' + (p_payment_day - 1) * INTERVAL '1 day';
+    
+    -- Insert loan record
+    INSERT INTO loans (
+        user_id,
+        lender,
+        principal_amount,
+        outstanding_amount,
+        interest_rate,
+        emi_amount,
+        tenure_months,
+        start_date,
+        next_due_date,
+        currency,
+        type,
+        status,
+        account_id,
+        category_id,
+        payment_day,
+        notes,
+        metadata
+    ) VALUES (
+        p_user_id,
+        p_vendor_name,
+        p_principal_amount,
+        v_loan_amount, -- Outstanding is loan amount after down payment
+        p_interest_rate,
+        v_emi_amount,
+        p_tenure_months,
+        p_purchase_date,
+        v_next_due_date,
+        p_currency,
+        'purchase_emi'::loan_type,
+        'active'::loan_status,
+        p_account_id,
+        p_category_id,
+        p_payment_day,
+        p_notes,
+        jsonb_build_object(
+            'item_name', p_item_name,
+            'vendor_name', p_vendor_name,
+            'purchase_category', p_purchase_category,
+            'purchase_date', p_purchase_date,
+            'item_condition', p_item_condition,
+            'warranty_period', p_warranty_period,
+            'down_payment', p_down_payment
+        )
+    ) RETURNING id INTO v_loan_id;
+    
+    -- Return success result
+    RETURN QUERY SELECT v_loan_id, v_emi_amount, TRUE, 'Purchase EMI created successfully';
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN QUERY SELECT NULL::UUID, 0::DECIMAL(15,2), FALSE, 'Error creating purchase EMI: ' || SQLERRM;
+END;
+$$;
+
+-- Function to get purchase EMI statistics
+CREATE OR REPLACE FUNCTION get_purchase_emi_overview(p_user_id UUID)
+RETURNS TABLE(
+    total_purchase_emis INTEGER,
+    total_outstanding_amount DECIMAL(15,2),
+    total_monthly_emi DECIMAL(15,2),
+    active_purchases INTEGER,
+    by_category JSONB
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    WITH purchase_stats AS (
+        SELECT 
+            COUNT(*)::INTEGER as total_count,
+            COALESCE(SUM(outstanding_amount), 0) as total_outstanding,
+            COALESCE(SUM(emi_amount), 0) as total_emi,
+            COUNT(CASE WHEN status = 'active' THEN 1 END)::INTEGER as active_count
+        FROM loans
+        WHERE user_id = p_user_id AND type = 'purchase_emi'
+    ),
+    category_stats AS (
+        SELECT COALESCE(
+            jsonb_object_agg(
+                COALESCE(metadata->>'purchase_category', 'other'),
+                jsonb_build_object(
+                    'count', cat_count,
+                    'total_amount', cat_total,
+                    'outstanding', cat_outstanding
+                )
+            ),
+            '{}'::jsonb
+        ) as categories
+        FROM (
+            SELECT 
+                COALESCE(metadata->>'purchase_category', 'other') as category,
+                COUNT(*) as cat_count,
+                COALESCE(SUM(principal_amount), 0) as cat_total,
+                COALESCE(SUM(outstanding_amount), 0) as cat_outstanding
+            FROM loans
+            WHERE user_id = p_user_id AND type = 'purchase_emi'
+            GROUP BY COALESCE(metadata->>'purchase_category', 'other')
+        ) cat_data
+    )
+    SELECT 
+        ps.total_count,
+        ps.total_outstanding,
+        ps.total_emi,
+        ps.active_count,
+        cs.categories
+    FROM purchase_stats ps
+    CROSS JOIN category_stats cs;
+END;
+$$;
+
+-- Function to get all user tables for permissions
+CREATE OR REPLACE FUNCTION get_user_tables(p_user_id UUID)
+RETURNS TABLE(table_name TEXT) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT unnest(ARRAY[
+        'profiles', 'categories', 'subcategories', 'accounts', 'transactions', 'budgets', 'budget_templates',
+        'investment_portfolios', 'investments', 'investment_transactions', 'investment_templates', 
+        'investment_price_history', 'investment_performance_snapshots',
+        'loans', 'lending', 'emi_payments', 'emi_schedules', 'lending_payments', 'emi_templates',
+        'recurring_transactions', 'notifications', 'ai_insights', 'user_sessions', 'admin_audit_logs'
+    ])::TEXT;
+END;
+$$ LANGUAGE 'plpgsql' SECURITY DEFINER;
+
+-- =============================================
+-- PURCHASE EMI INDEXES FOR PERFORMANCE
+-- =============================================
+
+-- Add indexes for better performance on purchase EMI queries
+CREATE INDEX IF NOT EXISTS idx_loans_type_purchase_emi ON loans(user_id, type) WHERE type = 'purchase_emi';
+CREATE INDEX IF NOT EXISTS idx_loans_metadata_purchase_category ON loans((metadata->>'purchase_category')) WHERE type = 'purchase_emi';
 
 -- =============================================
 -- GRANT PERMISSIONS

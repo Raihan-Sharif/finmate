@@ -174,11 +174,27 @@ const navigation: NavigationItem[] = [
     ],
   },
   {
-    name: 'EMI Calculator',
-    href: '/emi',
-    icon: Calculator,
+    name: 'EMI & Lending',
+    href: '/dashboard/emi',
+    icon: CreditCard,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
+    children: [
+      {
+        name: 'EMI Management',
+        href: '/dashboard/emi',
+        icon: CreditCard,
+        color: 'text-red-600',
+        bgColor: 'bg-red-50',
+      },
+      {
+        name: 'EMI Calculator',
+        href: '/emi',
+        icon: Calculator,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50',
+      },
+    ],
   },
   {
     name: 'Analytics',
