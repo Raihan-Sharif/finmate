@@ -431,6 +431,35 @@ npm run build          # Test production build
 - Tests added where appropriate
 - Documentation updated
 
+## Code Quality & Build Verification
+
+### **MANDATORY: Build Check After Implementation**
+**CRITICAL RULE**: After completing any code generation, modification, or implementation:
+
+1. **Always run build check**: `npm run build`
+2. **Verify no compilation errors**: All TypeScript and build errors must be resolved
+3. **Check linting**: `npm run lint` - All ESLint warnings must be resolved
+4. **Type checking**: `npm run type-check` - All type errors must be fixed
+5. **Test functionality**: Ensure new features work as expected
+6. **No broken builds**: Never leave the codebase in a broken state
+
+### Build Commands to Run:
+```bash
+npm run type-check  # Check TypeScript types
+npm run lint       # Check code quality
+npm run build      # Full production build
+```
+
+### Quality Standards:
+- ✅ Build must pass without errors
+- ✅ No TypeScript compilation errors
+- ✅ No ESLint warnings or errors
+- ✅ All new code follows project conventions
+- ✅ No broken functionality
+- ✅ Performance optimizations maintained
+
+**If build fails or has errors, immediately fix them before considering the task complete.**
+
 ---
 
 **This file serves as the primary context for Claude Code AI assistant when working on the FinMate project. Always refer to this document for project understanding, coding standards, and implementation patterns.**

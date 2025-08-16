@@ -29,6 +29,30 @@ export type RiskLevel = 'low' | 'medium' | 'high';
 export type SnapshotType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 
 // =============================================
+// INVESTMENT-TRANSACTION INTEGRATION TYPES
+// =============================================
+
+// Enhanced Transaction Types with Investment Integration
+export type EnhancedTransactionType = 
+  | 'income' 
+  | 'expense' 
+  | 'transfer' 
+  | 'investment_buy' 
+  | 'investment_sell' 
+  | 'investment_dividend' 
+  | 'investment_return';
+
+export type InvestmentAction = 
+  | 'buy' 
+  | 'sell' 
+  | 'dividend' 
+  | 'return' 
+  | 'fee' 
+  | 'split' 
+  | 'bonus' 
+  | 'merge';
+
+// =============================================
 // CORE INVESTMENT INTERFACES
 // =============================================
 
@@ -152,6 +176,9 @@ export interface InvestmentTransaction {
   recurring_investment_id?: string;
   is_recurring: boolean;
   
+  // Link to main transaction (NEW)
+  main_transaction_id?: string;
+  
   // Timestamps
   created_at: string;
   updated_at: string;
@@ -159,6 +186,242 @@ export interface InvestmentTransaction {
   // Related data
   investment?: Investment;
   portfolio?: InvestmentPortfolio;
+}
+
+// =============================================
+// ENHANCED INVESTMENT-TRANSACTION INTERFACES
+// =============================================
+
+// Enhanced Transaction with Investment Fields
+export interface EnhancedTransaction {
+  id: string;
+  user_id: string;
+  type: EnhancedTransactionType;
+  amount: number;
+  currency: string;
+  description: string;
+  notes?: string;
+  category_id?: string;
+  subcategory_id?: string;
+  account_id?: string;
+  transfer_to_account_id?: string;
+  date: string;
+  tags?: string[];
+  receipt_url?: string;
+  location?: string;
+  vendor?: string;
+  is_recurring: boolean;
+  recurring_pattern?: any;
+  recurring_template_id?: string;
+  metadata?: any;
+  
+  // Investment Integration Fields
+  investment_id?: string;
+  investment_transaction_id?: string;
+  is_investment_related: boolean;
+  investment_action?: InvestmentAction;
+  
+  created_at: string;
+  updated_at: string;
+}
+
+// Unified Transaction View Interface
+export interface UnifiedTransaction {
+  id: string;
+  user_id: string;
+  type: EnhancedTransactionType;
+  amount: number;
+  currency: string;
+  description: string;
+  notes?: string;
+  category_id?: string;
+  subcategory_id?: string;
+  account_id?: string;
+  date: string;
+  tags?: string[];
+  receipt_url?: string;
+  location?: string;
+  vendor?: string;
+  is_investment_related: boolean;
+  investment_action?: InvestmentAction;
+  investment_id?: string;
+  investment_transaction_id?: string;
+  
+  // Joined Investment Data
+  investment_name?: string;
+  investment_symbol?: string;
+  investment_type?: string;
+  investment_units?: number;
+  price_per_unit?: number;
+  brokerage_fee?: number;
+  tax_amount?: number;
+  other_charges?: number;
+  
+  // Joined Account Data
+  account_name?: string;
+  account_type?: string;
+  
+  // Joined Category Data
+  category_name?: string;
+  category_icon?: string;
+  
+  created_at: string;
+  updated_at: string;
+}
+
+// Investment Flow Operation Interface
+export interface InvestmentFlowOperation {
+  investment_id: string;
+  action: InvestmentAction;
+  units: number;
+  price_per_unit: number;
+  total_amount: number;
+  fees?: {
+    brokerage_fee?: number;
+    tax_amount?: number;
+    other_charges?: number;
+  };
+  account_id?: string;
+  transaction_date: string;
+  settlement_date?: string;
+  notes?: string;
+  exchange?: string;
+  order_id?: string;
+}
+
+// Investment Purchase Request
+export interface InvestmentPurchaseRequest {
+  investment_id: string;
+  units: number;
+  price_per_unit: number;
+  brokerage_fee?: number;
+  tax_amount?: number;
+  other_charges?: number;
+  account_id?: string;
+  transaction_date: string;
+  settlement_date?: string;
+  notes?: string;
+  exchange?: string;
+  order_id?: string;
+}
+
+// Investment Sale Request
+export interface InvestmentSaleRequest {
+  investment_id: string;
+  units: number;
+  price_per_unit: number;
+  brokerage_fee?: number;
+  tax_amount?: number;
+  other_charges?: number;
+  account_id?: string;
+  transaction_date: string;
+  settlement_date?: string;
+  notes?: string;
+  exchange?: string;
+  order_id?: string;
+}
+
+// Investment Dividend Request
+export interface InvestmentDividendRequest {
+  investment_id: string;
+  dividend_per_unit: number;
+  total_units?: number;
+  tax_amount?: number;
+  account_id?: string;
+  transaction_date: string;
+  notes?: string;
+}
+
+// Investment Summary with Transaction Breakdown
+export interface InvestmentSummaryWithTransactions {
+  investment: {
+    id: string;
+    name: string;
+    symbol?: string;
+    type: string;
+    status: string;
+    total_units: number;
+    average_cost: number;
+    current_price: number;
+    total_invested: number;
+    current_value: number;
+    unrealized_pnl: number;
+    unrealized_pnl_percentage: number;
+  };
+  transactions: {
+    total_purchases: number;
+    total_sales: number;
+    total_dividends: number;
+    total_fees: number;
+    net_invested: number;
+    realized_pnl: number;
+  };
+  recent_transactions: UnifiedTransaction[];
+}
+
+// Enhanced Portfolio Performance with Transaction Analysis
+export interface EnhancedPortfolioPerformance {
+  portfolio_id?: string;
+  total_invested: number;
+  current_value: number;
+  unrealized_pnl: number;
+  realized_pnl: number;
+  total_pnl: number;
+  total_pnl_percentage: number;
+  total_dividends: number;
+  total_fees: number;
+  investment_summaries: InvestmentSummaryWithTransactions[];
+  monthly_performance: {
+    month: string;
+    invested: number;
+    returns: number;
+    dividends: number;
+    net_flow: number;
+  }[];
+}
+
+// Service Response Types
+export interface InvestmentOperationError {
+  code: 'INSUFFICIENT_UNITS' | 'INVALID_PRICE' | 'ACCOUNT_NOT_FOUND' | 'INVESTMENT_NOT_FOUND' | 'TRANSACTION_FAILED';
+  message: string;
+  details?: any;
+}
+
+export interface InvestmentServiceResponse<T = any> {
+  data?: T;
+  error?: InvestmentOperationError;
+  success: boolean;
+}
+
+export type CreateInvestmentTransactionResponse = InvestmentServiceResponse<{
+  investment_transaction: InvestmentTransaction;
+  main_transaction: EnhancedTransaction;
+}>;
+
+export type GetUnifiedTransactionsResponse = InvestmentServiceResponse<{
+  transactions: UnifiedTransaction[];
+  total_count: number;
+  has_more: boolean;
+}>;
+
+// Filter Types for Unified Transactions
+export interface UnifiedTransactionFilters {
+  user_id: string;
+  type?: EnhancedTransactionType | EnhancedTransactionType[];
+  is_investment_related?: boolean;
+  investment_action?: InvestmentAction | InvestmentAction[];
+  investment_id?: string;
+  account_id?: string;
+  category_id?: string;
+  date_from?: string;
+  date_to?: string;
+  amount_min?: number;
+  amount_max?: number;
+  search?: string;
+  limit?: number;
+  offset?: number;
+  order_by?: 'date' | 'amount' | 'created_at';
+  order_direction?: 'asc' | 'desc';
 }
 
 export interface InvestmentTemplate {
@@ -567,6 +830,60 @@ export const RISK_LEVELS: Record<RiskLevel, { label: string; description: string
   low: { label: 'Low Risk', description: 'Low risk, stable returns', color: '#10B981' },
   medium: { label: 'Medium Risk', description: 'Medium risk, balanced approach', color: '#F59E0B' },
   high: { label: 'High Risk', description: 'High risk, high potential returns', color: '#EF4444' }
+};
+
+// =============================================
+// INVESTMENT-TRANSACTION INTEGRATION CONSTANTS
+// =============================================
+
+export const INVESTMENT_ACTIONS = {
+  BUY: 'buy' as const,
+  SELL: 'sell' as const,
+  DIVIDEND: 'dividend' as const,
+  RETURN: 'return' as const,
+  FEE: 'fee' as const,
+  SPLIT: 'split' as const,
+  BONUS: 'bonus' as const,
+  MERGE: 'merge' as const,
+} as const;
+
+export const ENHANCED_TRANSACTION_TYPES = {
+  INCOME: 'income' as const,
+  EXPENSE: 'expense' as const,
+  TRANSFER: 'transfer' as const,
+  INVESTMENT_BUY: 'investment_buy' as const,
+  INVESTMENT_SELL: 'investment_sell' as const,
+  INVESTMENT_DIVIDEND: 'investment_dividend' as const,
+  INVESTMENT_RETURN: 'investment_return' as const,
+} as const;
+
+export const INVESTMENT_CATEGORIES = {
+  INVESTMENT_PURCHASE: 'Investment Purchase',
+  INVESTMENT_SALE: 'Investment Sale',
+  DIVIDEND_INCOME: 'Dividend Income',
+  INVESTMENT_RETURN: 'Investment Return',
+  INVESTMENT_FEE: 'Investment Fee',
+} as const;
+
+export const INVESTMENT_TRANSACTION_TYPE_LABELS: Record<EnhancedTransactionType, string> = {
+  income: 'Income',
+  expense: 'Expense',
+  transfer: 'Transfer',
+  investment_buy: 'Investment Purchase',
+  investment_sell: 'Investment Sale',
+  investment_dividend: 'Dividend Income',
+  investment_return: 'Investment Return',
+};
+
+export const INVESTMENT_ACTION_LABELS: Record<InvestmentAction, string> = {
+  buy: 'Purchase',
+  sell: 'Sale',
+  dividend: 'Dividend',
+  return: 'Return',
+  fee: 'Fee',
+  split: 'Stock Split',
+  bonus: 'Bonus Shares',
+  merge: 'Merger',
 };
 
 // =============================================

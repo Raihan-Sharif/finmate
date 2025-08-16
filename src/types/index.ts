@@ -140,6 +140,8 @@ export type ColorString = string
 
 // Enums
 export type TransactionType = 'income' | 'expense' | 'transfer'
+// Enhanced transaction type with investment integration
+export type { EnhancedTransactionType } from './investments'
 export type AccountType = 'bank' | 'credit_card' | 'wallet' | 'investment' | 'other'
 // Legacy InvestmentType - use the new comprehensive InvestmentType from investments.ts instead
 export type LoanType = 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'

@@ -85,7 +85,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- =============================================
 -- CUSTOM TYPES
 -- =============================================
-CREATE TYPE transaction_type AS ENUM ('income', 'expense', 'transfer');
+CREATE TYPE transaction_type AS ENUM ('income', 'expense', 'transfer', 'investment_buy', 'investment_sell', 'investment_dividend', 'investment_return');
 CREATE TYPE account_type AS ENUM ('bank', 'credit_card', 'wallet', 'investment', 'savings', 'other');
 CREATE TYPE investment_type AS ENUM ('stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension', 'other');
 CREATE TYPE investment_status AS ENUM ('active', 'matured', 'sold', 'paused', 'closed');
@@ -238,7 +238,7 @@ CREATE TABLE accounts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- Transactions Table
+-- Transactions Table (Enhanced with Investment Integration)
 CREATE TABLE transactions (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -260,6 +260,13 @@ CREATE TABLE transactions (
     recurring_pattern JSONB,
     recurring_template_id UUID REFERENCES recurring_transactions(id) ON DELETE SET NULL,
     metadata JSONB,
+    
+    -- Investment Integration Fields
+    investment_id UUID REFERENCES investments(id) ON DELETE SET NULL,
+    investment_transaction_id UUID REFERENCES investment_transactions(id) ON DELETE SET NULL,
+    is_investment_related BOOLEAN DEFAULT false NOT NULL,
+    investment_action VARCHAR(50), -- 'buy', 'sell', 'dividend', 'return', 'fee', etc.
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     
@@ -268,6 +275,13 @@ CREATE TABLE transactions (
         account_id IS NULL OR transfer_to_account_id IS NULL OR account_id != transfer_to_account_id
     )
 );
+
+-- Comments for Investment-Transaction Integration
+COMMENT ON COLUMN transactions.investment_id IS 'Links transaction to an investment record';
+COMMENT ON COLUMN transactions.investment_transaction_id IS 'Links to detailed investment transaction record';
+COMMENT ON COLUMN transactions.is_investment_related IS 'Flag to easily identify investment-related transactions';
+COMMENT ON COLUMN transactions.investment_action IS 'Type of investment action: buy, sell, dividend, return, etc.';
+COMMENT ON COLUMN investment_transactions.main_transaction_id IS 'Links back to the main transaction record for cash flow tracking';
 
 -- Budgets Table
 CREATE TABLE budgets (
@@ -416,6 +430,9 @@ CREATE TABLE investment_transactions (
     -- Link to recurring investment (if applicable)
     recurring_investment_id UUID, -- Will be linked to investment_templates
     is_recurring BOOLEAN DEFAULT false NOT NULL,
+    
+    -- Link to main transaction (Investment-Transaction Integration)
+    main_transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
     
     -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -799,6 +816,15 @@ CREATE INDEX idx_transactions_user_date ON transactions(user_id, date);
 CREATE INDEX idx_transactions_user_type ON transactions(user_id, type);
 CREATE INDEX idx_transactions_recurring_template_id ON transactions(recurring_template_id);
 
+-- Investment-Transaction Integration Indexes
+CREATE INDEX idx_transactions_investment_id ON transactions(investment_id);
+CREATE INDEX idx_transactions_investment_transaction_id ON transactions(investment_transaction_id);
+CREATE INDEX idx_transactions_is_investment_related ON transactions(is_investment_related);
+CREATE INDEX idx_transactions_investment_action ON transactions(investment_action);
+CREATE INDEX idx_transactions_user_investment ON transactions(user_id, is_investment_related);
+CREATE INDEX idx_transactions_user_investment_action ON transactions(user_id, investment_action);
+CREATE INDEX idx_transactions_date_investment ON transactions(date, is_investment_related);
+
 CREATE INDEX idx_budgets_user_id ON budgets(user_id);
 CREATE INDEX idx_budgets_period ON budgets(period);
 CREATE INDEX idx_budgets_active ON budgets(is_active);
@@ -833,6 +859,7 @@ CREATE INDEX idx_investment_transactions_type ON investment_transactions(type);
 CREATE INDEX idx_investment_transactions_date ON investment_transactions(transaction_date);
 CREATE INDEX idx_investment_transactions_user_date ON investment_transactions(user_id, transaction_date);
 CREATE INDEX idx_investment_transactions_recurring ON investment_transactions(recurring_investment_id);
+CREATE INDEX idx_investment_transactions_main_transaction_id ON investment_transactions(main_transaction_id);
 
 -- Investment Templates indexes
 CREATE INDEX idx_investment_templates_user_id ON investment_templates(user_id);
@@ -1691,6 +1718,208 @@ BEGIN
     WHERE p.user_id = p_user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- INVESTMENT-TRANSACTION INTEGRATION FUNCTIONS
+-- =============================================
+
+-- Function to automatically create main transaction when investment transaction is created
+CREATE OR REPLACE FUNCTION create_investment_main_transaction()
+RETURNS TRIGGER AS $$
+DECLARE
+    transaction_type_val transaction_type;
+    account_id_val UUID;
+    description_val TEXT;
+    amount_val DECIMAL(15,2);
+    investment_name VARCHAR(100);
+BEGIN
+    -- Get investment details
+    SELECT name INTO investment_name 
+    FROM investments 
+    WHERE id = NEW.investment_id;
+    
+    -- Determine transaction type and account
+    CASE NEW.type
+        WHEN 'buy', 'sell' THEN
+            -- For buy/sell, determine if it's income or expense based on type
+            IF NEW.type = 'buy' THEN
+                transaction_type_val := 'investment_buy';
+                amount_val := NEW.net_amount; -- Money going out (expense)
+                description_val := 'Investment Purchase: ' || COALESCE(investment_name, 'Unknown');
+            ELSE
+                transaction_type_val := 'investment_sell';
+                amount_val := NEW.net_amount; -- Money coming in (income)
+                description_val := 'Investment Sale: ' || COALESCE(investment_name, 'Unknown');
+            END IF;
+            
+        WHEN 'dividend' THEN
+            transaction_type_val := 'investment_dividend';
+            amount_val := NEW.net_amount; -- Money coming in (income)
+            description_val := 'Dividend from: ' || COALESCE(investment_name, 'Unknown');
+            
+        ELSE
+            transaction_type_val := 'investment_return';
+            amount_val := NEW.net_amount;
+            description_val := 'Investment Return: ' || COALESCE(investment_name, 'Unknown');
+    END CASE;
+    
+    -- Find user's primary investment account or create default
+    SELECT id INTO account_id_val 
+    FROM accounts 
+    WHERE user_id = NEW.user_id 
+    AND type = 'investment' 
+    ORDER BY created_at ASC 
+    LIMIT 1;
+    
+    -- If no investment account exists, find primary bank account
+    IF account_id_val IS NULL THEN
+        SELECT id INTO account_id_val 
+        FROM accounts 
+        WHERE user_id = NEW.user_id 
+        AND type = 'bank' 
+        ORDER BY created_at ASC 
+        LIMIT 1;
+    END IF;
+    
+    -- Create the main transaction record
+    INSERT INTO transactions (
+        user_id,
+        type,
+        amount,
+        currency,
+        description,
+        account_id,
+        date,
+        investment_id,
+        investment_transaction_id,
+        is_investment_related,
+        investment_action,
+        created_at,
+        updated_at
+    ) VALUES (
+        NEW.user_id,
+        transaction_type_val,
+        amount_val,
+        NEW.currency,
+        description_val,
+        account_id_val,
+        NEW.transaction_date,
+        NEW.investment_id,
+        NEW.id,
+        true,
+        NEW.type,
+        NOW(),
+        NOW()
+    ) RETURNING id INTO NEW.main_transaction_id;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to update main transaction when investment transaction is updated
+CREATE OR REPLACE FUNCTION update_investment_main_transaction()
+RETURNS TRIGGER AS $$
+DECLARE
+    investment_name VARCHAR(100);
+    description_val TEXT;
+BEGIN
+    -- Only update if main_transaction_id exists
+    IF NEW.main_transaction_id IS NOT NULL THEN
+        -- Get investment details
+        SELECT name INTO investment_name 
+        FROM investments 
+        WHERE id = NEW.investment_id;
+        
+        -- Update description based on type
+        CASE NEW.type
+            WHEN 'buy' THEN
+                description_val := 'Investment Purchase: ' || COALESCE(investment_name, 'Unknown');
+            WHEN 'sell' THEN
+                description_val := 'Investment Sale: ' || COALESCE(investment_name, 'Unknown');
+            WHEN 'dividend' THEN
+                description_val := 'Dividend from: ' || COALESCE(investment_name, 'Unknown');
+            ELSE
+                description_val := 'Investment Return: ' || COALESCE(investment_name, 'Unknown');
+        END CASE;
+        
+        -- Update the main transaction
+        UPDATE transactions 
+        SET 
+            amount = NEW.net_amount,
+            description = description_val,
+            date = NEW.transaction_date,
+            updated_at = NOW()
+        WHERE id = NEW.main_transaction_id;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to delete main transaction when investment transaction is deleted
+CREATE OR REPLACE FUNCTION delete_investment_main_transaction()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Delete the associated main transaction
+    IF OLD.main_transaction_id IS NOT NULL THEN
+        DELETE FROM transactions 
+        WHERE id = OLD.main_transaction_id;
+    END IF;
+    
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =============================================
+-- UNIFIED TRANSACTION VIEW
+-- =============================================
+
+-- Create view for unified transaction view
+CREATE OR REPLACE VIEW unified_transactions AS
+SELECT 
+    t.id,
+    t.user_id,
+    t.type,
+    t.amount,
+    t.currency,
+    t.description,
+    t.notes,
+    t.category_id,
+    t.subcategory_id,
+    t.account_id,
+    t.date,
+    t.tags,
+    t.receipt_url,
+    t.location,
+    t.vendor,
+    t.is_investment_related,
+    t.investment_action,
+    t.investment_id,
+    t.investment_transaction_id,
+    i.name as investment_name,
+    i.symbol as investment_symbol,
+    i.type as investment_type,
+    it.units as investment_units,
+    it.price_per_unit,
+    it.brokerage_fee,
+    it.tax_amount,
+    it.other_charges,
+    a.name as account_name,
+    a.type as account_type,
+    c.name as category_name,
+    c.icon as category_icon,
+    t.created_at,
+    t.updated_at
+FROM transactions t
+LEFT JOIN investments i ON t.investment_id = i.id
+LEFT JOIN investment_transactions it ON t.investment_transaction_id = it.id
+LEFT JOIN accounts a ON t.account_id = a.id
+LEFT JOIN categories c ON t.category_id = c.id
+ORDER BY t.date DESC, t.created_at DESC;
+
+-- Grant permissions on the view
+GRANT SELECT ON unified_transactions TO authenticated;
+
 -- =============================================
 -- TRIGGERS
 -- =============================================
@@ -2163,6 +2392,22 @@ CREATE TRIGGER trigger_update_investment_calculated_fields
 CREATE TRIGGER trigger_update_investment_from_transactions
     AFTER INSERT OR UPDATE OR DELETE ON investment_transactions
     FOR EACH ROW EXECUTE FUNCTION update_investment_from_transactions();
+
+-- Investment-Transaction Integration Triggers
+CREATE TRIGGER trigger_create_investment_main_transaction
+    BEFORE INSERT ON investment_transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION create_investment_main_transaction();
+
+CREATE TRIGGER trigger_update_investment_main_transaction
+    AFTER UPDATE ON investment_transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_investment_main_transaction();
+
+CREATE TRIGGER trigger_delete_investment_main_transaction
+    AFTER DELETE ON investment_transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION delete_investment_main_transaction();
 
 -- Triggers for investment system updated_at columns
 CREATE TRIGGER update_investment_portfolios_updated_at BEFORE UPDATE ON investment_portfolios
