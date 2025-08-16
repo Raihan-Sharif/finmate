@@ -11,7 +11,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatRelativeDate } from "@/lib/utils";
-import { Notification } from "@/types";
+// import { Notification } from "@/types"; // Type commented out, using local interface
+
+// Local interface for notification data
+interface AppNotification {
+  id: string;
+  is_read: boolean;
+  action_url?: string;
+  type: "info" | "warning" | "error" | "success";
+  title: string;
+  message: string;
+  created_at: string;
+}
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -70,7 +81,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
     }
   };
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = async (notification: AppNotification) => {
     if (!notification.is_read) {
       await markAsRead(notification.id);
     }
@@ -167,7 +178,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               <AnimatePresence initial={false}>
-                {notifications.map((notification: any, index) => (
+                {notifications.map((notification: AppNotification, index) => (
                   <motion.div
                     key={notification.id}
                     initial={{ opacity: 0, y: -10 }}

@@ -50,7 +50,6 @@ export default function SIPManagementPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<InvestmentTemplate | null>(null);
 
   const { data: sipTemplates = [], isLoading, refetch: refetchSIPs } = useSIPTemplates();
   const { data: portfolios = [], isLoading: portfoliosLoading, refetch: refetchPortfolios } = useInvestmentPortfolios();
@@ -199,38 +198,6 @@ export default function SIPManagementPage() {
     );
   }
 
-  // Show edit form if requested
-  if (editingTemplate) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <EditSIPForm
-          template={editingTemplate}
-          portfolios={portfolios.map(p => ({ id: p.id, name: p.name, currency: p.currency }))}
-          onSubmit={async (data) => {
-            try {
-              console.log('SIP Management: Updating SIP data:', data);
-              const result = await updateSIPMutation.mutateAsync({ 
-                id: editingTemplate.id, 
-                updates: data 
-              });
-              console.log('SIP Management: SIP update result:', result);
-              setEditingTemplate(null);
-            } catch (error: any) {
-              console.error('SIP Management: Failed to update SIP:', error);
-              console.error('SIP Management: Error details:', {
-                message: error?.message,
-                code: error?.code,
-                details: error?.details,
-                hint: error?.hint
-              });
-            }
-          }}
-          onCancel={() => setEditingTemplate(null)}
-          isLoading={updateSIPMutation.isPending}
-        />
-      </div>
-    );
-  }
 
   const QuickActions = () => (
     <motion.div

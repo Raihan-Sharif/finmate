@@ -246,9 +246,9 @@ export class TransactionService {
     data?.forEach(transaction => {
       const month = new Date(transaction.date).getMonth();
       if (transaction.type === 'income') {
-        monthlyData[month].income += transaction.amount;
+        monthlyData[month]!.income += transaction.amount || 0;
       } else if (transaction.type === 'expense') {
-        monthlyData[month].expenses += transaction.amount;
+        monthlyData[month]!.expenses += transaction.amount || 0;
       }
     });
 
@@ -287,9 +287,10 @@ export class TransactionService {
     let totalExpenses = 0;
 
     data?.forEach(transaction => {
-      const categoryName = transaction.category?.name || 'Uncategorized';
-      const categoryColor = transaction.category?.color || '#6B7280';
-      const amount = transaction.amount;
+      const category = Array.isArray(transaction.category) ? transaction.category[0] : transaction.category;
+      const categoryName = category?.name || 'Uncategorized';
+      const categoryColor = category?.color || '#6B7280';
+      const amount = transaction.amount || 0;
 
       totalExpenses += amount;
 
@@ -333,15 +334,18 @@ export class TransactionService {
 
     if (error) throw error;
 
-    return data?.map(transaction => ({
-      id: transaction.id,
-      description: transaction.description,
-      amount: transaction.amount,
-      type: transaction.type,
-      category_name: transaction.category?.name,
-      transaction_date: transaction.date,
-      vendor: transaction.vendor
-    })) || [];
+    return data?.map(transaction => {
+      const category = Array.isArray(transaction.category) ? transaction.category[0] : transaction.category;
+      return {
+        id: transaction.id,
+        description: transaction.description,
+        amount: transaction.amount,
+        type: transaction.type,
+        category_name: category?.name,
+        transaction_date: transaction.date,
+        vendor: transaction.vendor
+      };
+    }) || [];
   }
 
   // Bulk import transactions

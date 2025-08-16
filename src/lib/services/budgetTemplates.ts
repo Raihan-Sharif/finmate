@@ -361,13 +361,13 @@ export class BudgetTemplateService {
     const duplicate: Omit<BudgetTemplate, 'id' | 'created_at' | 'updated_at' | 'usage_count'> = {
       user_id: userId,
       name: newName || `${original.name} (Copy)`,
-      description: original.description,
+      description: original.description || '',
       amount: original.amount,
-      currency: original.currency,
+      currency: original.currency || 'BDT',
       period: original.period,
-      category_ids: original.category_ids,
+      category_ids: original.category_ids || [],
       alert_percentage: original.alert_percentage,
-      alert_enabled: original.alert_enabled,
+      alert_enabled: original.alert_enabled || false,
       is_global: false // User copies are never global
     };
 

@@ -91,8 +91,8 @@ export class RecurringExecutorService {
 
       // Update recurring transaction's next execution and last executed
       const nextExecution = this.calculateNextExecution(
-        new Date().toISOString().split('T')[0],
-        recurring.frequency,
+        new Date().toISOString().split('T')[0]!,
+        recurring.frequency || 'monthly',
         recurring.interval_value || 1
       );
 
@@ -144,7 +144,7 @@ export class RecurringExecutorService {
         date.setMonth(date.getMonth() + intervalValue);
     }
     
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split('T')[0]!;
   }
 
   /**

@@ -159,7 +159,7 @@ export class RecurringTransactionService {
         throw new Error(`Unknown frequency: ${frequency}`);
     }
     
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split('T')[0]!;
   }
 
   // Execute a recurring transaction (create actual transaction and update next execution)
@@ -189,13 +189,12 @@ export class RecurringTransactionService {
     // Calculate next execution date
     const nextExecution = this.calculateNextExecution(
       recurring.next_execution, 
-      recurring.frequency, 
-      recurring.interval_value
+      recurring.frequency || 'monthly', 
+      recurring.interval_value || 1
     );
 
     // Update the recurring transaction
     await this.updateRecurringTransaction(recurringId, {
-      last_executed: recurring.next_execution,
       next_execution: nextExecution
     }, userId);
   }
@@ -248,12 +247,12 @@ export class RecurringTransactionService {
     }
 
     // Create transaction template (remove ID and timestamps)
-    const { id, created_at, updated_at, is_recurring, recurring_pattern, ...template } = transaction;
+    const { id, created_at, updated_at, is_recurring, ...template } = transaction;
 
     // Calculate next execution date
     const nextExecution = this.calculateNextExecution(
-      startDate || new Date().toISOString().split('T')[0], 
-      frequency
+      startDate || new Date().toISOString().split('T')[0]!, 
+      frequency || 'monthly'
     );
 
     // Create recurring transaction
@@ -261,8 +260,8 @@ export class RecurringTransactionService {
       user_id: userId,
       transaction_template: template,
       frequency: frequency as any,
-      start_date: startDate || new Date().toISOString().split('T')[0],
-      next_execution: nextExecution
+      start_date: startDate || new Date().toISOString().split('T')[0]!,
+      next_execution: nextExecution || new Date().toISOString().split('T')[0]!
     });
   }
 

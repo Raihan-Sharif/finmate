@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 // Get user's preferred currency from their profile or default to BDT
 export function useUserCurrency() {
   const { profile } = useAuth();
-  return profile?.preferred_currency || 'BDT';
+  return profile?.currency || 'BDT';
 }
 
 // Get currency symbol for any currency code

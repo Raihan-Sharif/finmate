@@ -293,14 +293,14 @@ export class BudgetService {
     const newBudget: BudgetInsert = {
       user_id: userId,
       name: `${template.name} (Copy)`,
-      description: template.description,
+      description: template.description || '',
       amount: template.amount,
       period: template.period,
-      category_ids: template.category_ids,
+      category_ids: template.category_ids || [],
       alert_percentage: template.alert_percentage,
       alert_enabled: template.alert_enabled,
-      start_date: new Date().toISOString().split('T')[0],
-      end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
+      start_date: new Date().toISOString().split('T')[0]!,
+      end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]!,
       ...overrides
     };
 
@@ -347,8 +347,8 @@ export class BudgetService {
       category_ids: originalBudget.category_ids,
       alert_percentage: originalBudget.alert_percentage,
       alert_enabled: originalBudget.alert_enabled,
-      start_date: new Date().toISOString().split('T')[0],
-      end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
+      start_date: new Date().toISOString().split('T')[0]!,
+      end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]!
     };
 
     return this.createBudget(newBudget);
@@ -366,15 +366,14 @@ export class BudgetService {
       const budgetData: BudgetInsert = {
         user_id: userId,
         name: `${template.name} - ${budgetStartDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-        description: template.description,
+        description: template.description || null,
         amount: template.amount,
         period: template.period,
-        start_date: budgetStartDate.toISOString().split('T')[0],
-        end_date: budgetEndDate.toISOString().split('T')[0],
-        category_ids: template.category_ids,
+        start_date: budgetStartDate.toISOString().split('T')[0]!,
+        end_date: budgetEndDate.toISOString().split('T')[0]!,
+        category_ids: template.category_ids || null,
         alert_percentage: template.alert_percentage,
         alert_enabled: template.alert_enabled ?? true,
-        currency: template.currency || 'BDT',
       };
 
       const budget = await this.createBudget(budgetData);
@@ -451,7 +450,7 @@ export class BudgetService {
     
     budgetsWithSpending.forEach(budget => {
       if (budget.category_ids?.length) {
-        budget.category_ids.forEach(categoryId => {
+        budget.category_ids.forEach((categoryId: string) => {
           const existing = categoryMap.get(categoryId) || { amount: 0, spent: 0, count: 0 };
           categoryMap.set(categoryId, {
             amount: existing.amount + budget.amount / (budget.category_ids?.length || 1),
@@ -565,8 +564,8 @@ export class BudgetService {
         description: previousBudget.description,
         amount: previousBudget.amount,
         period: previousBudget.period,
-        start_date: currentMonthStart.toISOString().split('T')[0],
-        end_date: currentMonthEnd.toISOString().split('T')[0],
+        start_date: currentMonthStart.toISOString().split('T')[0]!,
+        end_date: currentMonthEnd.toISOString().split('T')[0]!,
         category_ids: previousBudget.category_ids,
         alert_percentage: previousBudget.alert_percentage,
       };

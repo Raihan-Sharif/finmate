@@ -1,13 +1,24 @@
 "use client";
 
 import { db, realtime, TABLES } from "@/lib/supabase/client";
-import type { Notification } from "@/types";
+// import type { Notification } from "@/types"; // Type commented out, using local interface
+
+// Local interface for notification data
+interface AppNotification {
+  id: string;
+  is_read: boolean;
+  action_url?: string;
+  type: "info" | "warning" | "error" | "success";
+  title: string;
+  message: string;
+  created_at: string;
+}
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "./useAuth";
 
 interface UseNotificationsReturn {
-  notifications: Notification[];
+  notifications: AppNotification[];
   unreadCount: number;
   loading: boolean;
   error: string | null;
@@ -20,7 +31,7 @@ interface UseNotificationsReturn {
 
 export function useNotifications(): UseNotificationsReturn {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +45,7 @@ export function useNotifications(): UseNotificationsReturn {
 
     try {
       setError(null);
-      const notificationsData = await db.findMany<Notification>(
+      const notificationsData = await db.findMany<AppNotification>(
         TABLES.NOTIFICATIONS,
         {
           filter: { user_id: user.id },
@@ -247,7 +258,7 @@ export function useCreateNotification() {
     async (
       title: string,
       message: string,
-      type: Notification["type"],
+      type: AppNotification["type"],
       data?: Record<string, any>
     ) => {
       if (!user) return;

@@ -95,8 +95,8 @@ export class AccountService {
       if (!summary.accountsByType[account.type]) {
         summary.accountsByType[account.type] = { count: 0, balance: 0 };
       }
-      summary.accountsByType[account.type].count++;
-      summary.accountsByType[account.type].balance += account.balance;
+      summary.accountsByType[account.type]!.count++;
+      summary.accountsByType[account.type]!.balance += account.balance;
     });
 
     return summary;

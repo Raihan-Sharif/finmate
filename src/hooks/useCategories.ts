@@ -21,7 +21,7 @@ export function useCategories(type?: 'income' | 'expense' | 'transfer') {
     isLoading: loadingWithSubs
   } = useQuery({
     queryKey: ['categories-with-subs', type],
-    queryFn: () => CategoryService.getCategoriesWithSubcategories(type),
+    queryFn: () => CategoryService.getCategoriesWithSubcategories(type === 'transfer' ? undefined : type),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -31,7 +31,7 @@ export function useCategories(type?: 'income' | 'expense' | 'transfer') {
     isLoading: loadingOptions
   } = useQuery({
     queryKey: ['category-options', type],
-    queryFn: () => CategoryService.getAllCategoryOptions(type),
+    queryFn: () => CategoryService.getAllCategoryOptions(type === 'transfer' ? undefined : type),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -41,7 +41,7 @@ export function useCategories(type?: 'income' | 'expense' | 'transfer') {
     isLoading: loadingDropdown
   } = useQuery({
     queryKey: ['category-dropdown', type],
-    queryFn: () => CategoryService.getCategoriesForDropdown(type),
+    queryFn: () => CategoryService.getCategoriesForDropdown(type === 'transfer' ? undefined : type),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -58,7 +58,7 @@ export function useCategories(type?: 'income' | 'expense' | 'transfer') {
 
   const searchCategories = (query: string) => {
     if (!query.trim()) return [];
-    return CategoryService.searchCategories(query, type);
+    return CategoryService.searchCategories(query, type === 'transfer' ? undefined : type);
   };
 
   // Format categories for budget selection (compatible with existing budget code)

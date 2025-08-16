@@ -52,7 +52,7 @@ export function usePortfolioPerformanceData(
     queryFn: () => InvestmentAnalyticsService.getPortfolioPerformanceData(user!.id, period),
     enabled: enabled && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     retry: 2
   });
@@ -72,7 +72,7 @@ export function useAssetAllocationData(
     queryFn: () => InvestmentAnalyticsService.getAssetAllocationData(user!.id, currency),
     enabled: enabled && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     retry: 2
   });
@@ -93,7 +93,7 @@ export function useAllAnalyticsData(
     queryFn: () => InvestmentAnalyticsService.getAllAnalyticsData(user!.id, currency, performancePeriod),
     enabled: enabled && !!user?.id,
     staleTime: 3 * 60 * 1000, // 3 minutes (more frequent for combined data)
-    cacheTime: 8 * 60 * 1000, // 8 minutes
+    gcTime: 8 * 60 * 1000, // 8 minutes
     refetchOnWindowFocus: false,
     retry: 2,
     select: (data) => {

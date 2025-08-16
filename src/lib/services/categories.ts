@@ -304,11 +304,12 @@ export class CategoryService {
           usage.get(key).count++;
           usage.get(key).totalAmount += transaction.amount;
         } else {
+          const category = Array.isArray(transaction.category) ? transaction.category[0] : transaction.category;
           usage.set(key, {
             id: transaction.category_id,
-            name: transaction.category.name,
-            color: transaction.category.color,
-            icon: transaction.category.icon,
+            name: category?.name || 'Unknown',
+            color: category?.color || '#6B7280',
+            icon: category?.icon || 'folder',
             type: 'category',
             count: 1,
             totalAmount: transaction.amount
@@ -323,11 +324,12 @@ export class CategoryService {
           usage.get(key).count++;
           usage.get(key).totalAmount += transaction.amount;
         } else {
+          const subcategory = Array.isArray(transaction.subcategory) ? transaction.subcategory[0] : transaction.subcategory;
           usage.set(key, {
             id: transaction.subcategory_id,
-            name: transaction.subcategory.name,
-            color: transaction.subcategory.color,
-            icon: transaction.subcategory.icon,
+            name: subcategory?.name || 'Unknown',
+            color: subcategory?.color || '#6B7280',
+            icon: subcategory?.icon || 'folder',
             type: 'subcategory',
             count: 1,
             totalAmount: transaction.amount
@@ -376,7 +378,7 @@ export class CategoryService {
           total_amount: totalAmount,
           average_amount: averageAmount,
           last_used: transactions && transactions.length > 0 
-            ? transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date
+            ? transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.date || null
             : null
         };
       })

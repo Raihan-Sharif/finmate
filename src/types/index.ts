@@ -16,10 +16,10 @@ export type Profile = Tables<'profiles'>
 export type UserPermission = Tables<'user_permissions'>
 export type Transaction = Tables<'transactions'>
 export type Category = Tables<'categories'>
-export type Subcategory = Tables<'subcategories'>
+// export type Subcategory = Tables<'subcategories'> // Table not found in database schema
 export type Budget = Tables<'budgets'>
 export type Account = Tables<'accounts'>
-export type Notification = Tables<'notifications'>
+// export type Notification = Tables<'notifications'> // Table not found in database schema
 export type UserSession = Tables<'user_sessions'>
 export type AdminAuditLog = Tables<'admin_audit_logs'>
 
@@ -31,7 +31,7 @@ export type ProfileInsert = Inserts<'profiles'>
 export type UserPermissionInsert = Inserts<'user_permissions'>
 export type TransactionInsert = Inserts<'transactions'>
 export type CategoryInsert = Inserts<'categories'>
-export type SubcategoryInsert = Inserts<'subcategories'>
+// export type SubcategoryInsert = Inserts<'subcategories'> // Table not found in database schema
 export type BudgetInsert = Inserts<'budgets'>
 export type AccountInsert = Inserts<'accounts'>
 export type UserSessionInsert = Inserts<'user_sessions'>
@@ -45,7 +45,7 @@ export type ProfileUpdate = Updates<'profiles'>
 export type UserPermissionUpdate = Updates<'user_permissions'>
 export type TransactionUpdate = Updates<'transactions'>
 export type CategoryUpdate = Updates<'categories'>
-export type SubcategoryUpdate = Updates<'subcategories'>
+// export type SubcategoryUpdate = Updates<'subcategories'> // Table not found in database schema
 export type BudgetUpdate = Updates<'budgets'>
 export type AccountUpdate = Updates<'accounts'>
 export type UserSessionUpdate = Updates<'user_sessions'>
@@ -160,13 +160,13 @@ export type ProfileWithRole = Profile & {
 // Extended Transaction with relationships
 export type TransactionWithRelations = Transaction & {
   category?: Category | null
-  subcategory?: Subcategory | null
+  subcategory?: Category | null
   account?: Account | null
 }
 
 // Extended Category with subcategories
 export type CategoryWithSubcategories = Category & {
-  subcategories?: Subcategory[]
+  subcategories?: Category[]
 }
 
 export type CurrencyType =

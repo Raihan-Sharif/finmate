@@ -31,9 +31,9 @@ export class InvestmentPortfolioService {
     // Calculate aggregated metrics for each portfolio
     return (data || []).map(portfolio => {
       const investments = portfolio.investments || [];
-      const total_invested = investments.reduce((sum, inv) => sum + (inv.total_invested || 0), 0);
-      const current_value = investments.reduce((sum, inv) => sum + (inv.current_value || 0), 0);
-      const total_gain_loss = investments.reduce((sum, inv) => sum + (inv.gain_loss || 0), 0);
+      const total_invested = investments.reduce((sum: number, inv: any) => sum + (inv.total_invested || 0), 0);
+      const current_value = investments.reduce((sum: number, inv: any) => sum + (inv.current_value || 0), 0);
+      const total_gain_loss = investments.reduce((sum: number, inv: any) => sum + (inv.gain_loss || 0), 0);
       const total_return_percentage = total_invested > 0 ? (total_gain_loss / total_invested) * 100 : 0;
 
       return {
@@ -82,9 +82,9 @@ export class InvestmentPortfolioService {
 
     // Calculate aggregated metrics
     const investments = data.investments || [];
-    const total_invested = investments.reduce((sum, inv) => sum + (inv.total_invested || 0), 0);
-    const current_value = investments.reduce((sum, inv) => sum + (inv.current_value || 0), 0);
-    const total_gain_loss = investments.reduce((sum, inv) => sum + (inv.gain_loss || 0), 0);
+    const total_invested = investments.reduce((sum: number, inv: any) => sum + (inv.total_invested || 0), 0);
+    const current_value = investments.reduce((sum: number, inv: any) => sum + (inv.current_value || 0), 0);
+    const total_gain_loss = investments.reduce((sum: number, inv: any) => sum + (inv.gain_loss || 0), 0);
     const total_return_percentage = total_invested > 0 ? (total_gain_loss / total_invested) * 100 : 0;
 
     return {
@@ -173,7 +173,7 @@ export class InvestmentPortfolioService {
 
     // Calculate asset allocation
     const asset_allocation = investments.reduce((acc, inv) => {
-      const existing = acc.find(item => item.type === inv.type);
+      const existing = acc.find((item: any) => item.type === inv.type);
       if (existing) {
         existing.value += inv.current_value;
         existing.count += 1;
@@ -194,7 +194,7 @@ export class InvestmentPortfolioService {
     }>);
 
     // Calculate percentages
-    asset_allocation.forEach(allocation => {
+    asset_allocation.forEach((allocation: any) => {
       allocation.percentage = current_value > 0 ? (allocation.value / current_value) * 100 : 0;
     });
 

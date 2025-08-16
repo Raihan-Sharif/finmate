@@ -383,7 +383,7 @@ export function useInvestmentForm(investment?: Investment) {
 export function useInvestmentFilters() {
   const [filters, setFilters] = useState<InvestmentFilters>({});
   const [sort, setSort] = useState<InvestmentSortOptions>({
-    field: 'created_at',
+    field: 'name',
     direction: 'desc'
   });
 

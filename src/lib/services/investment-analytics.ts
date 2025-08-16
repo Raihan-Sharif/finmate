@@ -325,10 +325,10 @@ export class InvestmentAnalyticsService {
         dividend_income,
         active_sips: templates?.active_templates || 0,
         monthly_sip_amount: templates?.total_monthly_investment || 0,
-        top_performing_investment,
-        worst_performing_investment,
+        top_performing_investment: top_performing_investment,
+        worst_performing_investment: worst_performing_investment,
         upcoming_executions: upcoming_executions.slice(0, 5)
-      };
+      } as InvestmentDashboardStats;
     } catch (error) {
       console.error('❌ ANALYTICS: Legacy dashboard stats failed:', error);
       return this.getDefaultDashboardStats();
@@ -375,7 +375,7 @@ export class InvestmentAnalyticsService {
       }
       return acc;
     }, [] as Array<{
-      type: string;
+      type: any;
       value: number;
       percentage: number;
       count: number;
@@ -401,7 +401,7 @@ export class InvestmentAnalyticsService {
       asset_allocation,
       monthly_investment_trend,
       sip_analysis,
-      performance_metrics
+      performance_metrics: performance_metrics as any
     };
   }
 
@@ -718,8 +718,8 @@ export class InvestmentAnalyticsService {
   static async getTaxAnalysis(userId: string) {
     const transactions = await InvestmentTransactionService.getTransactions(userId, {
       date_range: {
-        start: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0], // Start of current year
-        end: new Date().toISOString().split('T')[0]
+        start: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]!, // Start of current year
+        end: new Date().toISOString().split('T')[0]!
       }
     });
 

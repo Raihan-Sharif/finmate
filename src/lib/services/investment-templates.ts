@@ -236,9 +236,9 @@ export class InvestmentTemplateService {
 
     // Update template execution tracking
     const nextExecution = this.calculateNextExecution(
-      new Date().toISOString().split('T')[0],
-      template.frequency,
-      template.interval_value
+      new Date().toISOString().split('T')[0]!,
+      template.frequency || 'monthly',
+      template.interval_value || 1
     );
 
     // Update execution tracking with only supported fields
@@ -288,7 +288,7 @@ export class InvestmentTemplateService {
         throw new Error(`Unknown frequency: ${frequency}`);
     }
     
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split('T')[0]!;
   }
 
   // Get upcoming executions (next 30 days)
@@ -476,27 +476,27 @@ export class InvestmentTemplateService {
     if (!original) throw new Error('Template not found');
 
     const duplicate: CreateInvestmentTemplateInput = {
-      portfolio_id: original.portfolio_id,
+      portfolio_id: original.portfolio_id || '',
       name: newName || `${original.name} (Copy)`,
-      description: original.description,
+      description: original.description || '',
       investment_type: original.investment_type,
-      symbol: original.symbol,
+      symbol: original.symbol || '',
       amount_per_investment: original.amount_per_investment,
       currency: original.currency,
-      platform: original.platform,
-      account_number: original.account_number,
-      frequency: original.frequency,
-      interval_value: original.interval_value,
-      start_date: new Date().toISOString().split('T')[0], // Start from today
-      end_date: original.end_date,
-      target_amount: original.target_amount,
-      auto_execute: original.auto_execute,
-      market_order: original.market_order,
-      limit_price: original.limit_price,
-      tags: original.tags,
-      notes: original.notes,
-      metadata: original.metadata,
-      template_type: original.template_type
+      platform: original.platform || '',
+      account_number: original.account_number || '',
+      frequency: original.frequency || 'monthly',
+      interval_value: original.interval_value || 1,
+      start_date: new Date().toISOString().split('T')[0]!, // Start from today
+      end_date: original.end_date || '',
+      target_amount: original.target_amount || 0,
+      auto_execute: original.auto_execute || false,
+      market_order: original.market_order || true,
+      limit_price: original.limit_price || 0,
+      tags: original.tags || [],
+      notes: original.notes || '',
+      metadata: original.metadata || {},
+      template_type: original.template_type || 'sip'
     };
 
     return this.createTemplate(duplicate, userId);

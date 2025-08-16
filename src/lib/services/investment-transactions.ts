@@ -171,14 +171,11 @@ export class InvestmentTransactionService {
       const other_charges = updates.other_charges ?? current.other_charges;
 
       const total_amount = units * price_per_unit;
-      const total_charges = brokerage_fee + tax_amount + other_charges;
+      const total_charges = (brokerage_fee || 0) + (tax_amount || 0) + (other_charges || 0);
       const net_amount = total_amount - total_charges;
 
-      updateData = {
-        ...updateData,
-        total_amount,
-        net_amount
-      };
+      // Keep calculated amounts for use but don't include in update
+      // The database will handle calculated fields through triggers
     }
 
     const { data, error } = await supabase

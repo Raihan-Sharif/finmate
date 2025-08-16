@@ -52,10 +52,10 @@ const defaultFormData: SIPFormData = {
   interval_value: 1,
   start_date: '',
   end_date: '',
-  target_amount: undefined,
+  target_amount: 0,
   auto_execute: true,
   market_order: true,
-  limit_price: undefined,
+  limit_price: 0,
   is_active: true,
   notes: '',
 };

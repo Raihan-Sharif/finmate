@@ -285,7 +285,7 @@ export class DashboardService {
 
   // Get health recommendations
   static getHealthRecommendations(score: number, factors: any[]) {
-    const recommendations = [];
+    const recommendations: Array<{title: string; description: string; action: string}> = [];
 
     // Find areas for improvement
     const lowPerformingFactors = factors.filter(f => (f.points / f.maxPoints) < 0.7);
@@ -349,8 +349,8 @@ export class DashboardService {
       const startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
 
       const stats = await TransactionService.getTransactionStats(userId, {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0]
+        startDate: startDate.toISOString().split('T')[0]!,
+        endDate: endDate.toISOString().split('T')[0]!
       });
 
       trends.unshift({
@@ -367,7 +367,7 @@ export class DashboardService {
 
   // Get upcoming financial events/reminders
   static async getUpcomingEvents(userId: string) {
-    const events = [];
+    const events: Array<{type: string; title: string; date: string; priority: string; description: string}> = [];
     const currentDate = new Date();
     const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate());
 
