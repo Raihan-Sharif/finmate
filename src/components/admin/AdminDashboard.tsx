@@ -4,11 +4,12 @@ import { useAuth, usePermissions } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Settings, BarChart3, Shield, Activity, UserCheck, UserX, TrendingUp } from 'lucide-react';
+import { Users, Settings, BarChart3, Shield, Activity, UserCheck, UserX, TrendingUp, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AdminService from '@/lib/services/admin';
 import { Profile, ProfileWithRole } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CronJobMonitor from '@/components/admin/CronJobMonitor';
 
 interface SystemStats {
   totalUsers: number;
@@ -165,7 +166,7 @@ export default function AdminDashboard() {
       )}
 
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users" disabled={!canManageUsers()}>
             <Users className="w-4 h-4 mr-2" />
             User Management
@@ -173,6 +174,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="system" disabled={!canManageSystem()}>
             <Settings className="w-4 h-4 mr-2" />
             System Settings
+          </TabsTrigger>
+          <TabsTrigger value="cron" disabled={!canManageSystem()}>
+            <Clock className="w-4 h-4 mr-2" />
+            Cron Jobs
           </TabsTrigger>
           <TabsTrigger value="analytics" disabled={!canViewAnalytics()}>
             <BarChart3 className="w-4 h-4 mr-2" />
@@ -248,6 +253,10 @@ export default function AdminDashboard() {
               <p className="text-gray-600">System settings panel coming soon...</p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="cron" className="space-y-4">
+          <CronJobMonitor />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">

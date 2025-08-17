@@ -3182,6 +3182,635 @@ CREATE INDEX IF NOT EXISTS idx_loans_type_purchase_emi ON loans(user_id, type) W
 CREATE INDEX IF NOT EXISTS idx_loans_metadata_purchase_category ON loans((metadata->>'purchase_category')) WHERE type = 'purchase_emi';
 
 -- =============================================
+-- AUTO-TRANSACTION SYSTEM WITH PG_CRON
+-- =============================================
+
+-- Cron Job Logs Table for monitoring
+CREATE TABLE IF NOT EXISTS cron_job_logs (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    job_name VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    message TEXT,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    duration_seconds INTEGER,
+    payments_processed INTEGER DEFAULT 0,
+    reminders_created INTEGER DEFAULT 0,
+    errors_count INTEGER DEFAULT 0,
+    metadata JSONB
+);
+
+-- Indexes for cron job logs
+CREATE INDEX IF NOT EXISTS idx_cron_job_logs_job_name ON cron_job_logs(job_name);
+CREATE INDEX IF NOT EXISTS idx_cron_job_logs_started_at ON cron_job_logs(started_at);
+CREATE INDEX IF NOT EXISTS idx_cron_job_logs_status ON cron_job_logs(status);
+
+-- Create views for monitoring
+CREATE OR REPLACE VIEW recent_cron_jobs AS
+SELECT 
+    id,
+    job_name,
+    status,
+    message,
+    started_at,
+    completed_at,
+    duration_seconds,
+    payments_processed,
+    reminders_created,
+    errors_count
+FROM cron_job_logs
+ORDER BY started_at DESC
+LIMIT 50;
+
+CREATE OR REPLACE VIEW cron_job_stats AS
+SELECT 
+    job_name,
+    COUNT(*) as total_runs,
+    COUNT(*) FILTER (WHERE status = 'completed') as successful_runs,
+    COUNT(*) FILTER (WHERE status = 'failed') as failed_runs,
+    AVG(duration_seconds)::INTEGER as avg_duration_seconds,
+    MAX(started_at) as last_run,
+    COALESCE(SUM(payments_processed), 0) as total_payments_processed,
+    COALESCE(SUM(reminders_created), 0) as total_reminders_created
+FROM cron_job_logs
+WHERE started_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY job_name
+ORDER BY last_run DESC;
+
+-- =============================================
+-- AUTO LOAN PAYMENT TRANSACTION FUNCTION
+-- =============================================
+
+CREATE OR REPLACE FUNCTION create_loan_payment_transaction(
+  p_loan_id UUID,
+  p_user_id UUID,
+  p_payment_date DATE DEFAULT CURRENT_DATE
+) RETURNS JSON AS $$
+DECLARE
+  v_loan loans%ROWTYPE;
+  v_transaction_id UUID;
+  v_principal_portion DECIMAL(15,2);
+  v_interest_portion DECIMAL(15,2);
+  v_result JSON;
+BEGIN
+  -- Get loan details
+  SELECT * INTO v_loan FROM loans WHERE id = p_loan_id AND user_id = p_user_id;
+  
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Loan not found');
+  END IF;
+  
+  IF v_loan.status != 'active' THEN
+    RETURN json_build_object('success', false, 'error', 'Loan is not active');
+  END IF;
+  
+  -- Calculate principal and interest portions (simplified)
+  v_interest_portion := (v_loan.outstanding_amount * v_loan.interest_rate / 100 / 12);
+  v_principal_portion := v_loan.emi_amount - v_interest_portion;
+  
+  -- Ensure principal portion doesn't exceed outstanding amount
+  IF v_principal_portion > v_loan.outstanding_amount THEN
+    v_principal_portion := v_loan.outstanding_amount;
+    v_interest_portion := v_loan.emi_amount - v_principal_portion;
+  END IF;
+  
+  -- Create expense transaction
+  INSERT INTO transactions (
+    user_id,
+    type,
+    amount,
+    currency,
+    description,
+    notes,
+    category_id,
+    account_id,
+    date,
+    tags,
+    is_recurring,
+    metadata
+  ) VALUES (
+    p_user_id,
+    'expense',
+    v_loan.emi_amount,
+    v_loan.currency,
+    v_loan.lender || ' - ' || UPPER(regexp_replace(v_loan.type::text, '_', ' ', 'g')) || ' Loan EMI',
+    'Auto-generated EMI payment. Principal: ' || v_principal_portion || ', Interest: ' || v_interest_portion,
+    v_loan.category_id,
+    v_loan.account_id,
+    p_payment_date,
+    ARRAY['loan', 'emi', 'auto_debit', v_loan.type::text],
+    false,
+    json_build_object(
+      'loan_id', v_loan.id,
+      'loan_type', v_loan.type,
+      'auto_generated', true,
+      'principal_portion', v_principal_portion,
+      'interest_portion', v_interest_portion,
+      'remaining_tenure', CEIL(v_loan.outstanding_amount / GREATEST(v_principal_portion, 1))
+    )
+  ) RETURNING id INTO v_transaction_id;
+  
+  -- Update loan details
+  UPDATE loans SET
+    outstanding_amount = GREATEST(0, outstanding_amount - v_principal_portion),
+    last_payment_date = p_payment_date,
+    next_due_date = CASE 
+      WHEN outstanding_amount - v_principal_portion <= 0 THEN NULL
+      ELSE (p_payment_date + INTERVAL '1 month')::DATE
+    END,
+    status = CASE 
+      WHEN outstanding_amount - v_principal_portion <= 0 THEN 'closed'
+      ELSE status
+    END,
+    updated_at = NOW()
+  WHERE id = p_loan_id;
+  
+  -- Update budget if category exists
+  PERFORM update_budget_for_expense(v_loan.category_id, v_loan.emi_amount, p_payment_date, p_user_id);
+  
+  -- Create EMI payment record
+  INSERT INTO emi_payments (
+    loan_id,
+    user_id,
+    amount,
+    payment_date,
+    principal_amount,
+    interest_amount,
+    outstanding_balance,
+    is_paid,
+    payment_method,
+    transaction_id
+  ) VALUES (
+    v_loan.id,
+    p_user_id,
+    v_loan.emi_amount,
+    p_payment_date,
+    v_principal_portion,
+    v_interest_portion,
+    GREATEST(0, v_loan.outstanding_amount - v_principal_portion),
+    true,
+    'auto_debit',
+    v_transaction_id
+  );
+  
+  RETURN json_build_object(
+    'success', true, 
+    'transaction_id', v_transaction_id,
+    'principal_paid', v_principal_portion,
+    'interest_paid', v_interest_portion,
+    'remaining_balance', GREATEST(0, v_loan.outstanding_amount - v_principal_portion)
+  );
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN json_build_object('success', false, 'error', SQLERRM);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- BUDGET UPDATE FUNCTION
+-- =============================================
+
+CREATE OR REPLACE FUNCTION update_budget_for_expense(
+  p_category_id UUID,
+  p_amount DECIMAL(15,2),
+  p_date DATE,
+  p_user_id UUID
+) RETURNS BOOLEAN AS $$
+DECLARE
+  v_budget budgets%ROWTYPE;
+  v_year INTEGER;
+  v_month INTEGER;
+BEGIN
+  IF p_category_id IS NULL THEN
+    RETURN FALSE;
+  END IF;
+  
+  v_year := EXTRACT(YEAR FROM p_date);
+  v_month := EXTRACT(MONTH FROM p_date);
+  
+  -- Get budget for this category and period
+  SELECT * INTO v_budget 
+  FROM budgets 
+  WHERE user_id = p_user_id 
+    AND category_id = p_category_id 
+    AND year = v_year 
+    AND month = v_month;
+  
+  IF FOUND THEN
+    -- Update existing budget
+    UPDATE budgets SET
+      spent_amount = spent_amount + p_amount,
+      remaining_amount = budgeted_amount - (spent_amount + p_amount),
+      updated_at = NOW()
+    WHERE id = v_budget.id;
+    
+    RETURN TRUE;
+  END IF;
+  
+  RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- LENDING TRANSACTION FUNCTION
+-- =============================================
+
+CREATE OR REPLACE FUNCTION create_lending_transaction(
+  p_lending_id UUID,
+  p_user_id UUID,
+  p_amount DECIMAL(15,2),
+  p_transaction_type VARCHAR(20),
+  p_payment_date DATE DEFAULT CURRENT_DATE
+) RETURNS JSON AS $$
+DECLARE
+  v_lending lending%ROWTYPE;
+  v_transaction_id UUID;
+  v_transaction_type transaction_type;
+  v_description TEXT;
+BEGIN
+  -- Get lending details
+  SELECT * INTO v_lending FROM lending WHERE id = p_lending_id AND user_id = p_user_id;
+  
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Lending record not found');
+  END IF;
+  
+  -- Determine transaction type and description
+  CASE p_transaction_type
+    WHEN 'repayment_received' THEN
+      v_transaction_type := 'income';
+      v_description := 'Repayment received from ' || v_lending.person_name;
+    WHEN 'repayment_made' THEN
+      v_transaction_type := 'expense';
+      v_description := 'Repayment made to ' || v_lending.person_name;
+    ELSE
+      RETURN json_build_object('success', false, 'error', 'Invalid transaction type');
+  END CASE;
+  
+  -- Create transaction
+  INSERT INTO transactions (
+    user_id,
+    type,
+    amount,
+    currency,
+    description,
+    notes,
+    category_id,
+    account_id,
+    date,
+    tags,
+    is_recurring,
+    metadata
+  ) VALUES (
+    p_user_id,
+    v_transaction_type,
+    p_amount,
+    v_lending.currency,
+    v_description,
+    'Auto-generated lending transaction for ' || v_lending.type || ' - ' || v_lending.person_name,
+    v_lending.category_id,
+    v_lending.account_id,
+    p_payment_date,
+    ARRAY['lending', v_lending.type::text, 'auto_generated'],
+    false,
+    json_build_object(
+      'lending_id', v_lending.id,
+      'lending_type', v_lending.type,
+      'person_name', v_lending.person_name,
+      'auto_generated', true
+    )
+  ) RETURNING id INTO v_transaction_id;
+  
+  -- Update budget if applicable
+  IF v_transaction_type = 'expense' THEN
+    PERFORM update_budget_for_expense(v_lending.category_id, p_amount, p_payment_date, p_user_id);
+  END IF;
+  
+  -- Update lending record for repayments
+  IF p_transaction_type IN ('repayment_received', 'repayment_made') THEN
+    UPDATE lending SET
+      pending_amount = GREATEST(0, pending_amount - p_amount),
+      status = CASE 
+        WHEN pending_amount - p_amount <= 0 THEN 'paid'
+        WHEN pending_amount - p_amount < amount THEN 'partial'
+        ELSE status
+      END,
+      updated_at = NOW()
+    WHERE id = p_lending_id;
+  END IF;
+  
+  RETURN json_build_object(
+    'success', true,
+    'transaction_id', v_transaction_id,
+    'remaining_amount', GREATEST(0, v_lending.pending_amount - p_amount)
+  );
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN json_build_object('success', false, 'error', SQLERRM);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- DAILY AUTO PAYMENT PROCESSING
+-- =============================================
+
+CREATE OR REPLACE FUNCTION process_auto_debit_payments(
+  p_user_id UUID,
+  p_date DATE DEFAULT CURRENT_DATE
+) RETURNS JSON AS $$
+DECLARE
+  v_loan_record RECORD;
+  v_payment_result JSON;
+  v_total_processed INTEGER := 0;
+  v_total_errors INTEGER := 0;
+  v_errors TEXT[] := ARRAY[]::TEXT[];
+BEGIN
+  -- Process auto debit loans for the user
+  FOR v_loan_record IN 
+    SELECT id, lender, emi_amount
+    FROM loans 
+    WHERE user_id = p_user_id 
+      AND status = 'active' 
+      AND auto_debit = true 
+      AND next_due_date = p_date
+  LOOP
+    BEGIN
+      -- Process payment for this loan
+      SELECT create_loan_payment_transaction(v_loan_record.id, p_user_id, p_date) INTO v_payment_result;
+      
+      IF (v_payment_result->>'success')::BOOLEAN THEN
+        v_total_processed := v_total_processed + 1;
+      ELSE
+        v_total_errors := v_total_errors + 1;
+        v_errors := array_append(v_errors, 'Loan ' || v_loan_record.lender || ': ' || (v_payment_result->>'error'));
+      END IF;
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        v_total_errors := v_total_errors + 1;
+        v_errors := array_append(v_errors, 'Loan ' || v_loan_record.lender || ': ' || SQLERRM);
+    END;
+  END LOOP;
+  
+  RETURN json_build_object(
+    'success', v_total_processed > 0 OR v_total_errors = 0,
+    'payments_processed', v_total_processed,
+    'errors_count', v_total_errors,
+    'errors', v_errors
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- PAYMENT REMINDERS FUNCTION
+-- =============================================
+
+CREATE OR REPLACE FUNCTION create_payment_reminders(
+  p_user_id UUID,
+  p_date DATE DEFAULT CURRENT_DATE
+) RETURNS JSON AS $$
+DECLARE
+  v_loan_record RECORD;
+  v_total_reminders INTEGER := 0;
+BEGIN
+  -- Create reminders for loans due soon
+  FOR v_loan_record IN 
+    SELECT id, lender, emi_amount, next_due_date, reminder_days
+    FROM loans 
+    WHERE user_id = p_user_id 
+      AND status = 'active'
+      AND reminder_days > 0
+      AND next_due_date IS NOT NULL
+      AND (next_due_date - INTERVAL '1 day' * reminder_days)::DATE = p_date
+  LOOP
+    -- Insert notification/reminder
+    INSERT INTO notifications (
+      user_id,
+      title,
+      message,
+      type,
+      priority,
+      metadata,
+      created_at
+    ) VALUES (
+      p_user_id,
+      'EMI Payment Reminder',
+      'Your EMI payment of ' || v_loan_record.emi_amount || ' for ' || v_loan_record.lender || ' is due on ' || v_loan_record.next_due_date,
+      'payment_reminder',
+      'medium',
+      json_build_object(
+        'loan_id', v_loan_record.id,
+        'emi_amount', v_loan_record.emi_amount,
+        'due_date', v_loan_record.next_due_date,
+        'lender', v_loan_record.lender
+      ),
+      NOW()
+    );
+    
+    v_total_reminders := v_total_reminders + 1;
+  END LOOP;
+  
+  RETURN json_build_object(
+    'success', true,
+    'reminders_created', v_total_reminders
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- COMPREHENSIVE DAILY PROCESSING
+-- =============================================
+
+CREATE OR REPLACE FUNCTION process_daily_auto_payments()
+RETURNS JSON AS $$
+DECLARE
+  v_user_record RECORD;
+  v_total_users INTEGER := 0;
+  v_total_payments INTEGER := 0;
+  v_total_reminders INTEGER := 0;
+  v_errors TEXT[] := ARRAY[]::TEXT[];
+  v_payment_result JSON;
+  v_reminder_result JSON;
+  v_today DATE := CURRENT_DATE;
+  v_start_time TIMESTAMP := NOW();
+BEGIN
+  -- Log start of processing
+  INSERT INTO cron_job_logs (
+    job_name,
+    status,
+    message,
+    started_at
+  ) VALUES (
+    'daily_auto_payments',
+    'running',
+    'Starting daily auto payment processing for ' || v_today,
+    v_start_time
+  );
+
+  -- Get all users who need processing today
+  FOR v_user_record IN 
+    SELECT DISTINCT u.user_id, u.email
+    FROM (
+      -- Users with auto debit loans due today
+      SELECT l.user_id, p.email
+      FROM loans l
+      JOIN auth.users p ON l.user_id = p.id
+      WHERE l.status = 'active' 
+        AND l.auto_debit = true 
+        AND l.next_due_date = v_today
+      
+      UNION
+      
+      -- Users with loans needing reminders today
+      SELECT l.user_id, p.email
+      FROM loans l
+      JOIN auth.users p ON l.user_id = p.id
+      WHERE l.status = 'active'
+        AND l.reminder_days > 0
+        AND l.next_due_date IS NOT NULL
+        AND (l.next_due_date - INTERVAL '1 day' * l.reminder_days)::DATE = v_today
+    ) u
+  LOOP
+    v_total_users := v_total_users + 1;
+    
+    BEGIN
+      -- Process auto debit payments
+      SELECT process_auto_debit_payments(v_user_record.user_id, v_today) INTO v_payment_result;
+      v_total_payments := v_total_payments + COALESCE((v_payment_result->>'payments_processed')::INTEGER, 0);
+      
+      -- Create payment reminders
+      SELECT create_payment_reminders(v_user_record.user_id, v_today) INTO v_reminder_result;
+      v_total_reminders := v_total_reminders + COALESCE((v_reminder_result->>'reminders_created')::INTEGER, 0);
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        v_errors := array_append(v_errors, 'User ' || v_user_record.email || ': ' || SQLERRM);
+    END;
+  END LOOP;
+
+  -- Log completion
+  UPDATE cron_job_logs SET
+    status = CASE WHEN array_length(v_errors, 1) > 0 THEN 'completed_with_errors' ELSE 'completed' END,
+    message = 'Processed ' || v_total_users || ' users, ' || v_total_payments || ' payments, ' || v_total_reminders || ' reminders',
+    completed_at = NOW(),
+    duration_seconds = EXTRACT(EPOCH FROM (NOW() - v_start_time))::INTEGER,
+    payments_processed = v_total_payments,
+    reminders_created = v_total_reminders,
+    errors_count = COALESCE(array_length(v_errors, 1), 0),
+    metadata = json_build_object('errors', v_errors)
+  WHERE job_name = 'daily_auto_payments' 
+    AND started_at = v_start_time;
+
+  RETURN json_build_object(
+    'success', true,
+    'users_processed', v_total_users,
+    'payments_processed', v_total_payments,
+    'reminders_created', v_total_reminders,
+    'errors_count', COALESCE(array_length(v_errors, 1), 0),
+    'errors', v_errors
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- MANUAL TRIGGER FUNCTION FOR ADMIN
+-- =============================================
+
+CREATE OR REPLACE FUNCTION trigger_auto_payments_now()
+RETURNS JSON AS $$
+BEGIN
+  RETURN process_daily_auto_payments();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- CRON JOB STATUS FUNCTION
+-- =============================================
+
+CREATE OR REPLACE FUNCTION get_cron_job_status()
+RETURNS TABLE(
+  jobname TEXT,
+  schedule TEXT,
+  active BOOLEAN,
+  last_run TIMESTAMP,
+  next_run TIMESTAMP
+) AS $$
+BEGIN
+  -- Simple approach: just return basic cron job info if table exists
+  -- If cron.job table doesn't exist, return empty result
+  BEGIN
+    RETURN QUERY
+    SELECT 
+      COALESCE(j.jobname, '')::TEXT,
+      COALESCE(j.schedule, '')::TEXT,
+      COALESCE(j.active, false)::BOOLEAN,
+      l.started_at::TIMESTAMP as last_run,
+      NULL::TIMESTAMP as next_run
+    FROM cron.job j
+    LEFT JOIN (
+      SELECT DISTINCT ON (job_name) job_name, started_at
+      FROM cron_job_logs
+      ORDER BY job_name, started_at DESC
+    ) l ON j.jobname = l.job_name
+    ORDER BY j.jobname;
+  EXCEPTION 
+    WHEN undefined_table THEN
+      -- If cron.job doesn't exist, return empty result
+      RETURN;
+  END;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- AUTO-TRANSACTION SYSTEM PERMISSIONS
+-- =============================================
+
+-- Grant execute permissions to authenticated users
+GRANT EXECUTE ON FUNCTION create_loan_payment_transaction(UUID, UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION update_budget_for_expense(UUID, DECIMAL(15,2), DATE, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION create_lending_transaction(UUID, UUID, DECIMAL(15,2), VARCHAR(20), DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION process_auto_debit_payments(UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION create_payment_reminders(UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION process_daily_auto_payments() TO authenticated;
+GRANT EXECUTE ON FUNCTION trigger_auto_payments_now() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_cron_job_status() TO authenticated;
+
+-- Grant permissions on cron job logs table
+GRANT ALL ON cron_job_logs TO authenticated;
+
+-- =============================================
+-- PG_CRON SETUP INSTRUCTIONS
+-- =============================================
+
+-- IMPORTANT: The following pg_cron jobs need to be set up manually in production:
+-- 
+-- 1. Enable pg_cron extension (requires superuser):
+--    CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- 
+-- 2. Schedule daily auto payment processing:
+--    SELECT cron.schedule(
+--      'auto-payment-processing',
+--      '0 9 * * *',  -- Daily at 9:00 AM
+--      'SELECT process_daily_auto_payments();'
+--    );
+-- 
+-- 3. Schedule health check (optional):
+--    SELECT cron.schedule(
+--      'auto-payment-health-check',
+--      '0 */6 * * *',  -- Every 6 hours
+--      'SELECT check_auto_payment_health();'
+--    );
+-- 
+-- 4. Schedule log cleanup:
+--    SELECT cron.schedule(
+--      'cleanup-old-logs',
+--      '0 2 * * 0',  -- Weekly on Sunday at 2:00 AM
+--      'DELETE FROM cron_job_logs WHERE started_at < NOW() - INTERVAL ''30 days'';'
+--    );
+
+-- =============================================
 -- GRANT PERMISSIONS
 -- =============================================
 GRANT USAGE ON SCHEMA public TO authenticated;

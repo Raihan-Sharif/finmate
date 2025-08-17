@@ -11,12 +11,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useAuth, usePermissions } from '@/hooks/useAuth';
+import { useAutoTransactions, usePaymentStatus } from '@/hooks/useAutoTransactions';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
   BarChart3,
   Bell,
+  Building,
   Calculator,
   ChevronDown,
   ChevronRight,
@@ -33,6 +35,7 @@ import {
   Search,
   Settings,
   Shield,
+  ShoppingCart,
   Sun,
   Target,
   TrendingUp,
@@ -174,25 +177,76 @@ const navigation: NavigationItem[] = [
     ],
   },
   {
-    name: 'EMI & Lending',
-    href: '/dashboard/emi',
+    name: 'Credit & Lending',
+    href: '/dashboard/credit',
     icon: CreditCard,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     children: [
       {
-        name: 'EMI Management',
-        href: '/dashboard/emi',
-        icon: CreditCard,
+        name: 'Overview',
+        href: '/dashboard/credit',
+        icon: LayoutDashboard,
         color: 'text-red-600',
         bgColor: 'bg-red-50',
       },
       {
-        name: 'EMI Calculator',
-        href: '/emi',
-        icon: Calculator,
+        name: 'Bank Loans',
+        href: '/dashboard/credit/loans',
+        icon: Building,
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-50',
+      },
+      {
+        name: 'Purchase EMI',
+        href: '/dashboard/credit/purchase-emi',
+        icon: ShoppingCart,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50',
+      },
+      {
+        name: 'Personal Lending',
+        href: '/dashboard/credit/personal-lending',
+        icon: Users,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50',
+      },
+      {
+        name: 'Analytics',
+        href: '/dashboard/credit/analytics',
+        icon: BarChart3,
         color: 'text-orange-600',
         bgColor: 'bg-orange-50',
+      },
+    ],
+  },
+  {
+    name: 'Calculators',
+    href: '/dashboard/calculators',
+    icon: Calculator,
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50',
+    children: [
+      {
+        name: 'Loan & EMI Calculator',
+        href: '/dashboard/calculators/loan-emi',
+        icon: Calculator,
+        color: 'text-indigo-600',
+        bgColor: 'bg-indigo-50',
+      },
+      {
+        name: 'Tax Calculator',
+        href: '/dashboard/calculators/tax',
+        icon: Receipt,
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-50',
+      },
+      {
+        name: 'Zakat Calculator',
+        href: '/dashboard/calculators/zakat',
+        icon: Target,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50',
       },
     ],
   },
@@ -319,6 +373,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const { user, signOut, profile } = useAuth();
   const { isAdmin } = usePermissions();
   const { theme, setTheme } = useTheme();
+  
+  // Auto transactions and reminders system
+  const { isProcessing: isAutoProcessing } = useAutoTransactions();
+  const { pendingReminders, dueTodayCount, overdueCount } = usePaymentStatus();
 
   // Close sidebar on route change
   useEffect(() => {
@@ -859,10 +917,65 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </Link>
 
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="relative">
+                    <Bell className="w-5 h-5" />
+                    {(pendingReminders > 0 || dueTodayCount > 0 || overdueCount > 0) && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                        {pendingReminders + dueTodayCount + overdueCount}
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <div className="p-3 border-b">
+                    <h3 className="font-semibold">Payment Alerts</h3>
+                  </div>
+                  {overdueCount > 0 && (
+                    <div className="p-3 border-l-4 border-l-red-500 bg-red-50 dark:bg-red-900/20">
+                      <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                        <Bell className="h-4 w-4" />
+                        <span className="font-medium">{overdueCount} Overdue Payment{overdueCount > 1 ? 's' : ''}</span>
+                      </div>
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">Immediate attention required</p>
+                    </div>
+                  )}
+                  {dueTodayCount > 0 && (
+                    <div className="p-3 border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-900/20">
+                      <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                        <Clock className="h-4 w-4" />
+                        <span className="font-medium">{dueTodayCount} Payment{dueTodayCount > 1 ? 's' : ''} Due Today</span>
+                      </div>
+                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Don't forget your EMI payments</p>
+                    </div>
+                  )}
+                  {pendingReminders > 0 && (
+                    <div className="p-3 border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                      <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                        <Bell className="h-4 w-4" />
+                        <span className="font-medium">{pendingReminders} Unread Reminder{pendingReminders > 1 ? 's' : ''}</span>
+                      </div>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Check your notification center</p>
+                    </div>
+                  )}
+                  {pendingReminders === 0 && dueTodayCount === 0 && overdueCount === 0 && (
+                    <div className="p-3 text-center text-muted-foreground">
+                      <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">All caught up!</p>
+                      <p className="text-xs">No pending payments or reminders</p>
+                    </div>
+                  )}
+                  <DropdownMenuSeparator />
+                  <div className="p-2">
+                    <Link href="/dashboard/credit">
+                      <Button variant="ghost" size="sm" className="w-full justify-start">
+                        View Credit Dashboard
+                      </Button>
+                    </Link>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Theme toggle */}
               <Button variant="ghost" size="sm" onClick={toggleTheme}>

@@ -115,7 +115,7 @@ export default function EMICalculator() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:from-background dark:via-background dark:to-background">
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <motion.div 
@@ -131,7 +131,7 @@ export default function EMICalculator() {
               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 EMI Calculator
               </h1>
-              <div className="flex items-center justify-center space-x-1 text-sm text-gray-600">
+              <div className="flex items-center justify-center space-x-1 text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4" />
                 <span>Smart loan planning made simple</span>
               </div>
@@ -159,7 +159,7 @@ export default function EMICalculator() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3 bg-background shadow-md dark:bg-card">
             <TabsTrigger value="calculator" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <Calculator className="h-4 w-4 mr-2" />
               Calculator
@@ -183,7 +183,7 @@ export default function EMICalculator() {
                 transition={{ delay: 0.1 }}
                 className="xl:col-span-1"
               >
-                <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
+                <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-xl dark:bg-card/40">
                   <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center text-white">
                       <DollarSign className="h-5 w-5 mr-2" />
@@ -196,9 +196,9 @@ export default function EMICalculator() {
                   <CardContent className="p-6 space-y-6">
                     {/* Loan Type */}
                     <div className="space-y-3">
-                      <Label className="text-sm font-semibold text-gray-700">Loan Type</Label>
+                      <Label className="text-sm font-semibold text-foreground">Loan Type</Label>
                       <Select value={loanType} onValueChange={setLoanType}>
-                        <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500">
+                        <SelectTrigger className="h-12 border-2 border-border focus:border-primary dark:border-border dark:focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -220,7 +220,7 @@ export default function EMICalculator() {
                     {/* Principal Amount */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-semibold text-gray-700">Loan Amount</Label>
+                        <Label className="text-sm font-semibold text-foreground">Loan Amount</Label>
                         <span className="text-lg font-bold text-blue-600">{formatCurrency(principal)}</span>
                       </div>
                       <Slider
@@ -231,7 +231,7 @@ export default function EMICalculator() {
                         step={10000}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-xs text-gray-500">
+                      <div className="flex justify-between text-xs text-muted-foreground">
                         <span>৳10K</span>
                         <span>৳1Cr</span>
                       </div>
@@ -240,7 +240,7 @@ export default function EMICalculator() {
                     {/* Interest Rate */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-semibold text-gray-700">Interest Rate</Label>
+                        <Label className="text-sm font-semibold text-foreground">Interest Rate</Label>
                         <span className="text-lg font-bold text-green-600">{rate}%</span>
                       </div>
                       <Slider
@@ -251,7 +251,7 @@ export default function EMICalculator() {
                         step={0.1}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-xs text-gray-500">
+                      <div className="flex justify-between text-xs text-muted-foreground">
                         <span>0%</span>
                         <span>30%</span>
                       </div>
@@ -260,7 +260,7 @@ export default function EMICalculator() {
                     {/* Tenure */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-semibold text-gray-700">Tenure</Label>
+                        <Label className="text-sm font-semibold text-foreground">Tenure</Label>
                         <span className="text-lg font-bold text-purple-600">{tenure} months</span>
                       </div>
                       <Slider
@@ -271,7 +271,7 @@ export default function EMICalculator() {
                         step={6}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-xs text-gray-500">
+                      <div className="flex justify-between text-xs text-muted-foreground">
                         <span>6M</span>
                         <span>30Y</span>
                       </div>
@@ -279,7 +279,7 @@ export default function EMICalculator() {
 
                     {/* Quick Tenure Options */}
                     <div className="space-y-3">
-                      <Label className="text-sm font-semibold text-gray-700">Quick Selection</Label>
+                      <Label className="text-sm font-semibold text-foreground">Quick Selection</Label>
                       <div className="grid grid-cols-3 gap-2">
                         {[
                           { label: '1Y', value: 12 },
@@ -312,7 +312,7 @@ export default function EMICalculator() {
                 transition={{ delay: 0.2 }}
                 className="xl:col-span-2"
               >
-                <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
+                <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-xl dark:bg-card/40">
                   <CardHeader className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center text-white">
                       <TrendingUp className="h-5 w-5 mr-2" />
@@ -345,11 +345,11 @@ export default function EMICalculator() {
                               transition={{ delay: 0.1 }}
                               className="relative overflow-hidden"
                             >
-                              <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl border border-blue-200 shadow-lg">
-                                <div className="text-3xl font-bold text-blue-600 mb-1">
+                              <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl border border-blue-200 dark:border-blue-700 shadow-lg">
+                                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                                   {formatCurrency(result.emi)}
                                 </div>
-                                <p className="text-sm text-blue-800 font-medium flex items-center justify-center">
+                                <p className="text-sm text-blue-800 dark:text-blue-300 font-medium flex items-center justify-center">
                                   <Calendar className="h-4 w-4 mr-1" />
                                   Monthly EMI
                                 </p>
@@ -365,11 +365,11 @@ export default function EMICalculator() {
                               transition={{ delay: 0.2 }}
                               className="relative overflow-hidden"
                             >
-                              <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 shadow-lg">
-                                <div className="text-3xl font-bold text-green-600 mb-1">
+                              <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-2xl border border-green-200 dark:border-green-700 shadow-lg">
+                                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
                                   {formatCurrency(result.totalAmount)}
                                 </div>
-                                <p className="text-sm text-green-800 font-medium flex items-center justify-center">
+                                <p className="text-sm text-green-800 dark:text-green-300 font-medium flex items-center justify-center">
                                   <DollarSign className="h-4 w-4 mr-1" />
                                   Total Amount
                                 </p>
@@ -385,11 +385,11 @@ export default function EMICalculator() {
                               transition={{ delay: 0.3 }}
                               className="relative overflow-hidden"
                             >
-                              <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl border border-orange-200 shadow-lg">
-                                <div className="text-3xl font-bold text-orange-600 mb-1">
+                              <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 rounded-2xl border border-orange-200 dark:border-orange-700 shadow-lg">
+                                <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
                                   {formatCurrency(result.totalInterest)}
                                 </div>
-                                <p className="text-sm text-orange-800 font-medium flex items-center justify-center">
+                                <p className="text-sm text-orange-800 dark:text-orange-300 font-medium flex items-center justify-center">
                                   <Percent className="h-4 w-4 mr-1" />
                                   Total Interest
                                 </p>
@@ -407,17 +407,17 @@ export default function EMICalculator() {
                             transition={{ delay: 0.4 }}
                             className="space-y-6"
                           >
-                            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6">
-                              <h3 className="font-bold text-xl mb-4 flex items-center text-gray-800">
+                            <div className="bg-gradient-to-r from-muted/50 to-muted/30 dark:from-muted/20 dark:to-muted/10 rounded-2xl p-6">
+                              <h3 className="font-bold text-xl mb-4 flex items-center text-foreground">
                                 <PieChart className="h-5 w-5 mr-2 text-purple-600" />
                                 Payment Composition
                               </h3>
                               
                               <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+                                <div className="flex items-center justify-between p-4 bg-background dark:bg-card rounded-xl shadow-sm">
                                   <div className="flex items-center">
                                     <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mr-3 shadow-sm"></div>
-                                    <span className="font-medium text-gray-700">Principal Amount</span>
+                                    <span className="font-medium text-foreground">Principal Amount</span>
                                   </div>
                                   <div className="flex items-center space-x-3">
                                     <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
@@ -429,10 +429,10 @@ export default function EMICalculator() {
                                   </div>
                                 </div>
                                 
-                                <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+                                <div className="flex items-center justify-between p-4 bg-background dark:bg-card rounded-xl shadow-sm">
                                   <div className="flex items-center">
                                     <div className="w-4 h-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full mr-3 shadow-sm"></div>
-                                    <span className="font-medium text-gray-700">Interest Amount</span>
+                                    <span className="font-medium text-foreground">Interest Amount</span>
                                   </div>
                                   <div className="flex items-center space-x-3">
                                     <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">
@@ -447,11 +447,11 @@ export default function EMICalculator() {
 
                               {/* Visual Progress Bar */}
                               <div className="mt-6">
-                                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                                <div className="flex justify-between text-sm text-muted-foreground mb-2">
                                   <span>Principal</span>
                                   <span>Interest</span>
                                 </div>
-                                <div className="w-full h-6 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                                <div className="w-full h-6 bg-muted dark:bg-muted/50 rounded-full overflow-hidden shadow-inner">
                                   <motion.div 
                                     initial={{ width: 0 }}
                                     animate={{ width: `${result.principalPercentage}%` }}
@@ -475,13 +475,13 @@ export default function EMICalculator() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.5 }}
                           >
-                            <Alert className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                            <Alert className="border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50">
                               <div className="flex items-center">
                                 <div className="p-2 bg-blue-500 rounded-full mr-3">
                                   <Info className="h-4 w-4 text-white" />
                                 </div>
-                                <AlertDescription className="text-gray-700 leading-relaxed">
-                                  <span className="block text-lg font-semibold text-gray-800 mb-2">Loan Summary</span>
+                                <AlertDescription className="text-foreground leading-relaxed">
+                                  <span className="block text-lg font-semibold text-foreground mb-2">Loan Summary</span>
                                   You will pay <strong className="text-blue-600">{formatCurrency(result.emi)}</strong> every month for{' '}
                                   <strong className="text-purple-600">{tenure} months</strong>, totaling{' '}
                                   <strong className="text-green-600">{formatCurrency(result.totalAmount)}</strong>. 
@@ -522,20 +522,20 @@ export default function EMICalculator() {
                                 className="space-y-4"
                               >
                                 <Separator className="bg-gradient-to-r from-blue-200 to-purple-200 h-0.5" />
-                                <h3 className="font-bold text-xl flex items-center text-gray-800">
+                                <h3 className="font-bold text-xl flex items-center text-foreground">
                                   <Calendar className="h-5 w-5 mr-2 text-purple-600" />
                                   Month-wise Payment Breakdown
                                 </h3>
                                 
-                                <div className="max-h-96 overflow-y-auto bg-white rounded-xl shadow-lg border border-gray-200">
+                                <div className="max-h-96 overflow-y-auto bg-background dark:bg-card rounded-xl shadow-lg border border-border">
                                   <table className="w-full text-sm">
-                                    <thead className="bg-gradient-to-r from-gray-100 to-gray-50 sticky top-0">
+                                    <thead className="bg-gradient-to-r from-muted/80 to-muted/60 dark:from-muted/40 dark:to-muted/20 sticky top-0">
                                       <tr>
-                                        <th className="p-4 text-left font-semibold text-gray-700">Month</th>
-                                        <th className="p-4 text-right font-semibold text-gray-700">EMI</th>
-                                        <th className="p-4 text-right font-semibold text-gray-700">Principal</th>
-                                        <th className="p-4 text-right font-semibold text-gray-700">Interest</th>
-                                        <th className="p-4 text-right font-semibold text-gray-700">Balance</th>
+                                        <th className="p-4 text-left font-semibold text-foreground">Month</th>
+                                        <th className="p-4 text-right font-semibold text-foreground">EMI</th>
+                                        <th className="p-4 text-right font-semibold text-foreground">Principal</th>
+                                        <th className="p-4 text-right font-semibold text-foreground">Interest</th>
+                                        <th className="p-4 text-right font-semibold text-foreground">Balance</th>
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -545,19 +545,19 @@ export default function EMICalculator() {
                                           initial={{ opacity: 0, x: -20 }}
                                           animate={{ opacity: 1, x: 0 }}
                                           transition={{ delay: index * 0.02 }}
-                                          className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${
-                                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                          className={`border-b border-border hover:bg-muted/50 transition-colors ${
+                                            index % 2 === 0 ? 'bg-background' : 'bg-muted/20'
                                           }`}
                                         >
-                                          <td className="p-4 font-semibold text-gray-800">{row.month}</td>
-                                          <td className="p-4 text-right font-medium text-gray-700">{formatCurrency(row.emi)}</td>
+                                          <td className="p-4 font-semibold text-foreground">{row.month}</td>
+                                          <td className="p-4 text-right font-medium text-muted-foreground">{formatCurrency(row.emi)}</td>
                                           <td className="p-4 text-right font-medium text-blue-600">
                                             {formatCurrency(row.principal)}
                                           </td>
                                           <td className="p-4 text-right font-medium text-orange-600">
                                             {formatCurrency(row.interest)}
                                           </td>
-                                          <td className="p-4 text-right font-medium text-gray-600">
+                                          <td className="p-4 text-right font-medium text-muted-foreground">
                                             {formatCurrency(row.balance)}
                                           </td>
                                         </motion.tr>
@@ -580,11 +580,11 @@ export default function EMICalculator() {
                           <div className="space-y-4">
                             <div className="relative">
                               <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-xl opacity-20 animate-pulse" />
-                              <Calculator className="h-20 w-20 mx-auto text-gray-400 relative" />
+                              <Calculator className="h-20 w-20 mx-auto text-muted-foreground relative" />
                             </div>
                             <div className="space-y-2">
-                              <h3 className="text-xl font-semibold text-gray-600">Configure Your Loan</h3>
-                              <p className="text-gray-500 max-w-md mx-auto">
+                              <h3 className="text-xl font-semibold text-muted-foreground">Configure Your Loan</h3>
+                              <p className="text-muted-foreground max-w-md mx-auto">
                                 Adjust the loan parameters on the left to see your personalized EMI calculation and payment breakdown.
                               </p>
                             </div>
@@ -604,7 +604,7 @@ export default function EMICalculator() {
               animate={{ opacity: 1, y: 0 }}
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
-              <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
+              <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-xl dark:bg-card/40">
                 <CardHeader className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-t-lg">
                   <CardTitle className="text-white">Loan Comparison</CardTitle>
                   <CardDescription className="text-green-100">
@@ -613,15 +613,15 @@ export default function EMICalculator() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    <div className="text-center text-gray-500">
-                      <TrendingUp className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                    <div className="text-center text-muted-foreground">
+                      <TrendingUp className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
                       <p>Comparison feature coming soon</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
+              <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-xl dark:bg-card/40">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg">
                   <CardTitle className="text-white">Interest Rate Impact</CardTitle>
                   <CardDescription className="text-purple-100">
@@ -630,8 +630,8 @@ export default function EMICalculator() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    <div className="text-center text-gray-500">
-                      <Percent className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                    <div className="text-center text-muted-foreground">
+                      <Percent className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
                       <p>Rate analysis coming soon</p>
                     </div>
                   </div>
@@ -647,7 +647,7 @@ export default function EMICalculator() {
               className="grid grid-cols-1 lg:grid-cols-2 gap-8"
             >
               {/* Tips to Reduce EMI */}
-              <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
+              <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-xl dark:bg-card/40">
                 <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center text-white">
                     <Target className="h-5 w-5 mr-2" />
@@ -685,7 +685,7 @@ export default function EMICalculator() {
               </Card>
               
               {/* Important Considerations */}
-              <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
+              <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-xl dark:bg-card/40">
                 <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center text-white">
                     <Info className="h-5 w-5 mr-2" />
