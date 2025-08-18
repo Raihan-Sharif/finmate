@@ -42,7 +42,7 @@ import { formatCurrency } from '@/lib/utils'
 import { LOAN_TYPES, LENDING_TYPES, LoanFormData, LendingFormData } from '@/types/emi'
 import LoanForm from '@/components/loans/LoanForm'
 import LendingForm from '@/components/loans/LendingForm'
-import PurchaseEMIForm from '@/components/loans/PurchaseEMIForm'
+import PurchaseEMIForm from '@/components/purchase-emi/PurchaseEMIForm'
 import Link from 'next/link'
 
 const loanTypeIcons = {
@@ -263,12 +263,24 @@ export default function CreditOverviewPage() {
                 <div className="space-y-4">
                   {loans.slice(0, 3).map((loan) => {
                     const IconComponent = loanTypeIcons[loan.type]
+                    const isOverdue = loan.status === 'active' && loan.next_due_date && new Date(loan.next_due_date) < new Date()
+                    
                     return (
                       <motion.div 
                         key={loan.id} 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-4 bg-gradient-to-r from-muted/50 to-muted/30 rounded-xl border border-border hover:shadow-md transition-all dark:from-muted/20 dark:to-muted/10"
+                        className={`p-4 bg-gradient-to-r from-muted/50 to-muted/30 rounded-xl transition-all hover:shadow-md dark:from-muted/20 dark:to-muted/10 ${
+                          isOverdue 
+                            ? 'border border-border border-l-4 border-l-orange-500' 
+                            : loan.status === 'active'
+                              ? 'border border-border border-l-4 border-l-purple-500'
+                              : loan.status === 'closed'
+                                ? 'border border-border border-l-4 border-l-gray-500'
+                                : loan.status === 'defaulted'
+                                  ? 'border border-border border-l-4 border-l-red-500'
+                                  : 'border border-border'
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
@@ -276,7 +288,14 @@ export default function CreditOverviewPage() {
                               <IconComponent className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div>
-                              <h4 className="font-bold text-foreground">{loan.lender}</h4>
+                              <div className="flex items-center space-x-2">
+                                <h4 className="font-bold text-foreground">{loan.lender}</h4>
+                                {isOverdue && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    Overdue
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-muted-foreground">{LOAN_TYPES.find(t => t.value === loan.type)?.label}</p>
                               <p className="text-xs text-muted-foreground">
                                 {loan.tenure_months} months • {loan.interest_rate}% interest
@@ -450,7 +469,7 @@ export default function CreditOverviewPage() {
         />
 
         <PurchaseEMIForm
-          purchaseEMI={editingPurchaseEMI}
+          emi={editingPurchaseEMI}
           isOpen={isPurchaseEMIFormOpen}
           onClose={() => {
             setIsPurchaseEMIFormOpen(false)

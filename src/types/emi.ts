@@ -17,6 +17,7 @@ export interface Loan {
   status: LoanStatus
   account_id?: string | null
   category_id?: string | null
+  subcategory_id?: string | null
   auto_debit?: boolean
   reminder_days?: number
   prepayment_amount?: number
@@ -45,6 +46,9 @@ export interface Lending {
   status: LendingStatus
   account_id?: string | null
   category_id?: string | null
+  subcategory_id?: string | null
+  auto_debit?: boolean
+  next_due_date?: string | null
   reminder_days?: number
   contact_info?: any
   payment_history?: any
@@ -331,6 +335,7 @@ export interface LoanFormData {
   payment_day?: number
   account_id?: string
   category_id?: string
+  subcategory_id?: string
   type: LoanType
   auto_debit?: boolean
   reminder_days?: number
@@ -345,6 +350,8 @@ export interface LendingFormData {
   type: LendingType
   account_id?: string
   category_id?: string
+  subcategory_id?: string
+  auto_debit?: boolean
   contact_info?: ContactInfo | undefined
   reminder_days?: number
   notes?: string | undefined

@@ -622,6 +622,7 @@ CREATE TABLE loans (
     status loan_status DEFAULT 'active' NOT NULL,
     account_id UUID REFERENCES accounts(id),
     category_id UUID REFERENCES categories(id),
+    subcategory_id UUID REFERENCES subcategories(id) ON DELETE SET NULL,
     auto_debit BOOLEAN DEFAULT false,
     reminder_days INTEGER DEFAULT 3,
     prepayment_amount DECIMAL(15,2) DEFAULT 0,
@@ -636,7 +637,12 @@ CREATE TABLE loans (
     CONSTRAINT loans_outstanding_non_negative CHECK (outstanding_amount >= 0),
     CONSTRAINT loans_interest_rate_valid CHECK (interest_rate >= 0 AND interest_rate <= 100),
     CONSTRAINT loans_emi_positive CHECK (emi_amount > 0),
-    CONSTRAINT loans_tenure_positive CHECK (tenure_months > 0)
+    CONSTRAINT loans_tenure_positive CHECK (tenure_months > 0),
+    CONSTRAINT loans_category_xor_subcategory CHECK (
+        (category_id IS NOT NULL AND subcategory_id IS NULL) OR 
+        (category_id IS NULL AND subcategory_id IS NOT NULL) OR 
+        (category_id IS NULL AND subcategory_id IS NULL)
+    )
 );
 
 -- Enhanced Lending Table
@@ -654,6 +660,9 @@ CREATE TABLE lending (
     status lending_status DEFAULT 'pending' NOT NULL,
     account_id UUID REFERENCES accounts(id),
     category_id UUID REFERENCES categories(id),
+    subcategory_id UUID REFERENCES subcategories(id) ON DELETE SET NULL,
+    auto_debit BOOLEAN DEFAULT false,
+    next_due_date DATE,
     reminder_days INTEGER DEFAULT 7,
     contact_info JSONB,
     payment_history JSONB DEFAULT '[]',
@@ -665,7 +674,12 @@ CREATE TABLE lending (
     CONSTRAINT lending_amount_positive CHECK (amount > 0),
     CONSTRAINT lending_pending_amount_non_negative CHECK (pending_amount >= 0),
     CONSTRAINT lending_pending_amount_not_exceeds CHECK (pending_amount <= amount),
-    CONSTRAINT lending_interest_rate_valid CHECK (interest_rate >= 0 AND interest_rate <= 100)
+    CONSTRAINT lending_interest_rate_valid CHECK (interest_rate >= 0 AND interest_rate <= 100),
+    CONSTRAINT lending_category_xor_subcategory CHECK (
+        (category_id IS NOT NULL AND subcategory_id IS NULL) OR 
+        (category_id IS NULL AND subcategory_id IS NOT NULL) OR 
+        (category_id IS NULL AND subcategory_id IS NULL)
+    )
 );
 
 -- Enhanced EMI Payments Table
@@ -728,7 +742,7 @@ CREATE TABLE lending_payments (
     lending_id UUID REFERENCES lending(id) ON DELETE CASCADE NOT NULL,
     payment_date DATE NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
-    payment_method VARCHAR(50),
+    account_id UUID REFERENCES accounts(id),
     transaction_id UUID REFERENCES transactions(id),
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -1125,6 +1139,22 @@ CREATE POLICY "Block audit logs access" ON admin_audit_logs FOR ALL USING (false
 -- =============================================
 -- FUNCTIONS
 -- =============================================
+
+-- Helper function to get effective category for loans/lending
+CREATE OR REPLACE FUNCTION get_effective_category(
+    p_category_id UUID,
+    p_subcategory_id UUID
+) RETURNS UUID AS $$
+BEGIN
+    IF p_subcategory_id IS NOT NULL THEN
+        -- Return the parent category of the subcategory
+        RETURN (SELECT category_id FROM subcategories WHERE id = p_subcategory_id);
+    ELSE
+        -- Return the category directly
+        RETURN p_category_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to update updated_at column
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -1983,6 +2013,64 @@ $$ LANGUAGE plpgsql;
 -- =============================================
 -- UNIFIED TRANSACTION VIEW
 -- =============================================
+
+-- Create views for loans and lending with resolved category information
+CREATE OR REPLACE VIEW loans_with_categories AS
+SELECT 
+    l.*,
+    CASE 
+        WHEN l.subcategory_id IS NOT NULL THEN s.name
+        WHEN l.category_id IS NOT NULL THEN c.name
+        ELSE NULL
+    END as category_name,
+    CASE 
+        WHEN l.subcategory_id IS NOT NULL THEN s.icon
+        WHEN l.category_id IS NOT NULL THEN c.icon
+        ELSE NULL
+    END as category_icon,
+    CASE 
+        WHEN l.subcategory_id IS NOT NULL THEN s.color
+        WHEN l.category_id IS NOT NULL THEN c.color
+        ELSE NULL
+    END as category_color,
+    CASE 
+        WHEN l.subcategory_id IS NOT NULL THEN pc.name
+        ELSE NULL
+    END as parent_category_name,
+    get_effective_category(l.category_id, l.subcategory_id) as effective_category_id
+FROM loans l
+LEFT JOIN categories c ON l.category_id = c.id
+LEFT JOIN subcategories s ON l.subcategory_id = s.id
+LEFT JOIN categories pc ON s.category_id = pc.id;
+
+-- Create view for lending with resolved category information
+CREATE OR REPLACE VIEW lending_with_categories AS
+SELECT 
+    l.*,
+    CASE 
+        WHEN l.subcategory_id IS NOT NULL THEN s.name
+        WHEN l.category_id IS NOT NULL THEN c.name
+        ELSE NULL
+    END as category_name,
+    CASE 
+        WHEN l.subcategory_id IS NOT NULL THEN s.icon
+        WHEN l.category_id IS NOT NULL THEN c.icon
+        ELSE NULL
+    END as category_icon,
+    CASE 
+        WHEN l.subcategory_id IS NOT NULL THEN s.color
+        WHEN l.category_id IS NOT NULL THEN c.color
+        ELSE NULL
+    END as category_color,
+    CASE 
+        WHEN l.subcategory_id IS NOT NULL THEN pc.name
+        ELSE NULL
+    END as parent_category_name,
+    get_effective_category(l.category_id, l.subcategory_id) as effective_category_id
+FROM lending l
+LEFT JOIN categories c ON l.category_id = c.id
+LEFT JOIN subcategories s ON l.subcategory_id = s.id
+LEFT JOIN categories pc ON s.category_id = pc.id;
 
 -- Create view for unified transaction view
 CREATE OR REPLACE VIEW unified_transactions AS
@@ -3560,6 +3648,106 @@ BEGIN
     'errors_count', v_total_errors,
     'errors', v_errors
   );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- LENDING TRANSACTION FUNCTIONS
+-- =============================================
+
+-- Function to create transaction for Personal Lending
+CREATE OR REPLACE FUNCTION create_lending_transaction(
+  p_lending_id UUID,
+  p_user_id UUID,
+  p_amount DECIMAL(15,2),
+  p_transaction_type TEXT,
+  p_payment_date DATE DEFAULT CURRENT_DATE
+) RETURNS JSON AS $$
+DECLARE
+  v_lending RECORD;
+  v_transaction_id UUID;
+  v_effective_category_id UUID;
+BEGIN
+  -- Get lending details
+  SELECT * INTO v_lending
+  FROM lending
+  WHERE id = p_lending_id AND user_id = p_user_id;
+  
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Lending record not found');
+  END IF;
+  
+  -- Get effective category ID
+  v_effective_category_id := get_effective_category(v_lending.category_id, v_lending.subcategory_id);
+  
+  -- Create transaction
+  INSERT INTO transactions (
+    user_id,
+    type,
+    amount,
+    currency,
+    description,
+    notes,
+    category_id,
+    account_id,
+    date,
+    tags,
+    is_recurring,
+    metadata
+  ) VALUES (
+    p_user_id,
+    CASE 
+      WHEN p_transaction_type = 'repayment_received' THEN 'income'::transaction_type
+      WHEN p_transaction_type = 'repayment_made' THEN 'expense'::transaction_type
+      WHEN p_transaction_type = 'lending_given' THEN 'expense'::transaction_type
+      WHEN p_transaction_type = 'lending_received' THEN 'income'::transaction_type
+      ELSE 'expense'::transaction_type
+    END,
+    p_amount,
+    v_lending.currency,
+    CASE 
+      WHEN p_transaction_type = 'repayment_received' THEN 'Repayment received from ' || v_lending.person_name
+      WHEN p_transaction_type = 'repayment_made' THEN 'Repayment made to ' || v_lending.person_name
+      WHEN p_transaction_type = 'lending_given' THEN 'Money lent to ' || v_lending.person_name
+      WHEN p_transaction_type = 'lending_received' THEN 'Money borrowed from ' || v_lending.person_name
+      ELSE 'Transaction for ' || v_lending.person_name
+    END,
+    'Personal lending transaction',
+    v_effective_category_id,
+    v_lending.account_id,
+    p_payment_date,
+    ARRAY['lending', p_transaction_type, v_lending.type::text],
+    false,
+    json_build_object(
+      'lending_id', v_lending.id,
+      'lending_type', v_lending.type,
+      'person_name', v_lending.person_name,
+      'original_amount', v_lending.amount
+    )
+  ) RETURNING id INTO v_transaction_id;
+  
+  -- Update lending status if this is a payment
+  IF p_transaction_type IN ('repayment_received', 'repayment_made') THEN
+    UPDATE lending SET
+      pending_amount = GREATEST(0, pending_amount - p_amount),
+      status = CASE 
+        WHEN pending_amount - p_amount <= 0 THEN 'paid'::lending_status
+        WHEN pending_amount - p_amount < amount THEN 'partial'::lending_status
+        ELSE status
+      END,
+      updated_at = NOW()
+    WHERE id = p_lending_id;
+  END IF;
+  
+  RETURN json_build_object(
+    'success', true, 
+    'transaction_id', v_transaction_id,
+    'amount', p_amount
+  );
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN json_build_object('success', false, 'error', SQLERRM);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

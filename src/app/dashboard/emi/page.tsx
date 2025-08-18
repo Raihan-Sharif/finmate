@@ -41,7 +41,7 @@ import { LOAN_TYPES, LENDING_TYPES, LoanFormData, LendingFormData } from '@/type
 import EMICalculator from '@/components/emi-calculator'
 import LoanForm from '@/components/loans/LoanForm'
 import LendingForm from '@/components/loans/LendingForm'
-import PurchaseEMIForm from '@/components/loans/PurchaseEMIForm'
+import PurchaseEMIForm from '@/components/purchase-emi/PurchaseEMIForm'
 
 const loanTypeIcons = {
   personal: CreditCard,
@@ -588,7 +588,7 @@ export default function EMIPage() {
         />
 
         <PurchaseEMIForm
-          purchaseEMI={editingPurchaseEMI}
+          emi={editingPurchaseEMI}
           isOpen={isPurchaseEMIFormOpen}
           onClose={() => {
             setIsPurchaseEMIFormOpen(false)

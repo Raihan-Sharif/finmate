@@ -117,23 +117,40 @@ export class CategoryService {
   static async getCategoriesForDropdown(type?: 'income' | 'expense') {
     const categoriesWithSubs = await this.getCategoriesWithSubcategories(type);
     
-    const options: Array<{ value: string; label: string; parent?: string; level: number }> = [];
+    const options: Array<{ 
+      value: string; 
+      label: string; 
+      displayLabel: string;
+      parent?: string; 
+      level: number;
+      icon?: string;
+      color?: string;
+      isSubcategory: boolean;
+    }> = [];
     
     categoriesWithSubs.forEach(category => {
       // Add main category
       options.push({
-        value: category.id,
+        value: `category_${category.id}`,
         label: category.name,
-        level: 0
+        displayLabel: category.name,
+        level: 0,
+        icon: category.icon,
+        color: category.color,
+        isSubcategory: false
       });
       
-      // Add subcategories with indentation
+      // Add subcategories with indentation and parent context
       category.subcategories?.forEach(subcategory => {
         options.push({
-          value: subcategory.id,
-          label: subcategory.name,
+          value: `subcategory_${subcategory.id}`,
+          label: `${category.name} > ${subcategory.name}`,
+          displayLabel: subcategory.name,
           parent: category.name,
-          level: 1
+          level: 1,
+          icon: subcategory.icon,
+          color: subcategory.color,
+          isSubcategory: true
         });
       });
     });
