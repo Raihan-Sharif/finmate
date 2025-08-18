@@ -122,7 +122,17 @@ export default function LoanCard({
         whileHover={{ y: -2 }}
         className={className}
       >
-        <Card className="group hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <Card className={`group hover:shadow-lg transition-all duration-200 bg-white dark:bg-gray-900 ${
+          loan.status === 'active' && daysUntilDue !== null && daysUntilDue < 0
+            ? 'border-2 border-orange-600/50 shadow-orange-100/50 dark:shadow-orange-900/20'
+            : loan.status === 'active'
+              ? 'border-2 border-blue-600/50 shadow-blue-100/50 dark:shadow-blue-900/20'
+              : loan.status === 'closed'
+                ? 'border-2 border-green-600/50 shadow-green-100/50 dark:shadow-green-900/20'
+                : loan.status === 'defaulted'
+                  ? 'border-2 border-red-600/50 shadow-red-100/50 dark:shadow-red-900/20'
+                  : 'border-2 border-gray-200 dark:border-gray-800'
+        }`}>
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">

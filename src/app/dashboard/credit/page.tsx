@@ -272,14 +272,14 @@ export default function CreditOverviewPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className={`p-4 bg-gradient-to-r from-muted/50 to-muted/30 rounded-xl transition-all hover:shadow-md dark:from-muted/20 dark:to-muted/10 ${
                           isOverdue 
-                            ? 'border border-border border-l-4 border-l-orange-500' 
+                            ? 'border-2 border-orange-600/50 shadow-orange-100/50 dark:shadow-orange-900/20' 
                             : loan.status === 'active'
-                              ? 'border border-border border-l-4 border-l-purple-500'
+                              ? 'border-2 border-blue-600/50 shadow-blue-100/50 dark:shadow-blue-900/20'
                               : loan.status === 'closed'
-                                ? 'border border-border border-l-4 border-l-gray-500'
+                                ? 'border-2 border-green-600/50 shadow-green-100/50 dark:shadow-green-900/20'
                                 : loan.status === 'defaulted'
-                                  ? 'border border-border border-l-4 border-l-red-500'
-                                  : 'border border-border'
+                                  ? 'border-2 border-red-600/50 shadow-red-100/50 dark:shadow-red-900/20'
+                                  : 'border-2 border-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -367,7 +367,17 @@ export default function CreditOverviewPage() {
                         key={lending.id}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="p-3 bg-gradient-to-r from-muted/50 to-muted/30 rounded-lg border border-border dark:from-muted/20 dark:to-muted/10"
+                        className={`p-3 bg-gradient-to-r from-muted/50 to-muted/30 rounded-lg transition-all hover:shadow-md dark:from-muted/20 dark:to-muted/10 ${
+                          lending.status === 'overdue'
+                            ? 'border-2 border-orange-600/50 shadow-orange-100/50 dark:shadow-orange-900/20'
+                            : lending.status === 'paid'
+                              ? 'border-2 border-emerald-600/50 shadow-emerald-100/50 dark:shadow-emerald-900/20'
+                              : lending.status === 'partial'
+                                ? 'border-2 border-cyan-600/50 shadow-cyan-100/50 dark:shadow-cyan-900/20'
+                                : lending.status === 'pending'
+                                  ? 'border-2 border-purple-600/50 shadow-purple-100/50 dark:shadow-purple-900/20'
+                                  : 'border-2 border-border'
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">

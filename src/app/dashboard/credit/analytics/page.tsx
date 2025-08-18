@@ -516,13 +516,24 @@ export default function CreditAnalyticsPage() {
                   <div className="space-y-3">
                     {analyticsData.paymentHistory.slice(0, 5).map((payment, index) => (
                       <div key={payment.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                        <div>
-                          <p className="font-semibold">{payment.name}</p>
-                          <p className="text-sm text-muted-foreground">{payment.type}</p>
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{payment.name}</p>
+                            <p className="text-sm text-muted-foreground">{payment.type}</p>
+                            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                              <span>💳</span>
+                              <span>Source: {payment.account_name || 'Primary Account'}</span>
+                              <span className="text-muted-foreground">• Auto-debit</span>
+                            </div>
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="font-bold">{formatAmount(payment.amount)}</p>
                           <p className="text-xs text-muted-foreground">{new Date(payment.date).toLocaleDateString()}</p>
+                          <p className="text-xs text-green-600 dark:text-green-400">Completed</p>
                         </div>
                       </div>
                     ))}

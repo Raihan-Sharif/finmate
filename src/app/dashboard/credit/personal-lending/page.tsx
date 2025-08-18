@@ -484,16 +484,16 @@ export default function PersonalLendingPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className={`p-6 bg-gradient-to-r from-muted/30 to-muted/10 rounded-xl transition-all hover:shadow-md dark:from-muted/10 dark:to-muted/5 ${
                           overdue
-                            ? 'border border-border border-l-4 border-l-red-500' 
+                            ? 'border-2 border-orange-600/50 shadow-orange-100/50 dark:shadow-orange-900/20' 
                             : lending.status === 'pending'
-                              ? 'border border-border border-l-4 border-l-yellow-500'
+                              ? 'border-2 border-purple-600/50 shadow-purple-100/50 dark:shadow-purple-900/20'
                               : lending.status === 'partial'
-                                ? 'border border-border border-l-4 border-l-blue-500'
+                                ? 'border-2 border-cyan-600/50 shadow-cyan-100/50 dark:shadow-cyan-900/20'
                                 : lending.status === 'paid'
-                                  ? 'border border-border border-l-4 border-l-green-500'
+                                  ? 'border-2 border-emerald-600/50 shadow-emerald-100/50 dark:shadow-emerald-900/20'
                                   : isSelected 
-                                    ? 'border border-primary bg-primary/5' 
-                                    : 'border border-border'
+                                    ? 'border-2 border-primary bg-primary/5' 
+                                    : 'border-2 border-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">

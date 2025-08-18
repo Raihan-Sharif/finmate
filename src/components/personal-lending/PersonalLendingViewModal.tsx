@@ -324,23 +324,38 @@ export default function PersonalLendingViewModal({
                       className="p-4 bg-muted/30 rounded-lg"
                     >
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold">{formatAmount(payment.amount)}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(payment.payment_date).toLocaleDateString()}
-                            {payment.account_id && (() => {
-                              const account = accounts?.find(acc => acc.id === payment.account_id)
-                              return account ? ` • ${account.name}` : ''
-                            })()}
-                          </p>
-                          {payment.notes && (
-                            <p className="text-xs text-muted-foreground mt-1">{payment.notes}</p>
-                          )}
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{payment.lending?.person_name || 'Personal Payment'}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {lending.type === 'lent' ? 'Received Payment' : 'Paid Amount'}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                              <span>💳</span>
+                              <span>
+                                {payment.account_id && (() => {
+                                  const account = accounts?.find(acc => acc.id === payment.account_id)
+                                  return account ? `Source: ${account.name}` : 'Source: Cash Payment'
+                                })() || 'Source: Cash Payment'}
+                              </span>
+                              <span className="text-muted-foreground">
+                                • {payment.payment_method || 'Bank Transfer'}
+                              </span>
+                            </div>
+                            {payment.notes && (
+                              <p className="text-xs text-muted-foreground mt-1">{payment.notes}</p>
+                            )}
+                          </div>
                         </div>
                         <div className="text-right">
-                          <Badge variant="outline" className="text-xs">
-                            Payment #{payments.length - index}
-                          </Badge>
+                          <p className="font-bold">{formatAmount(payment.amount)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(payment.payment_date).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-green-600 dark:text-green-400">Completed</p>
                         </div>
                       </div>
                     </motion.div>
