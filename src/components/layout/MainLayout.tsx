@@ -367,7 +367,7 @@ const quickActions = [
 export default function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Transactions']); // Default expand Transactions
+  const [expandedItems, setExpandedItems] = useState<string[]>([]); // No menu expanded by default
 
   const pathname = usePathname();
   const { user, signOut, profile } = useAuth();
@@ -378,9 +378,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const { isProcessing: isAutoProcessing } = useAutoTransactions();
   const { pendingReminders, dueTodayCount, overdueCount } = usePaymentStatus();
 
-  // Close sidebar on route change
+  // Close sidebar on route change and auto-expand parent menu if child is active
   useEffect(() => {
     setSidebarOpen(false);
+    
+    // Auto-expand parent menu if a child route is active
+    const activeParent = [...navigation, ...adminNavigation].find(item => 
+      item.children && item.children.some(child => isActiveRoute(child.href))
+    );
+    
+    if (activeParent) {
+      setExpandedItems([activeParent.name]);
+    }
   }, [pathname]);
 
   // Handle keyboard shortcuts
@@ -404,18 +413,53 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Get all possible routes from navigation items
+  const getAllRoutes = () => {
+    const allRoutes: string[] = [];
+    [...navigation, ...adminNavigation].forEach(item => {
+      allRoutes.push(item.href);
+      if (item.children) {
+        item.children.forEach(child => {
+          allRoutes.push(child.href);
+        });
+      }
+    });
+    return allRoutes;
+  };
+
   const isActiveRoute = (href: string) => {
     if (href === '/dashboard') {
       return pathname === '/dashboard';
     }
-    return pathname.startsWith(href);
+    return pathname === href || pathname.startsWith(href + '/');
+  };
+
+  // Check if this is the most specific matching route
+  const isMostSpecificActiveRoute = (href: string) => {
+    if (!isActiveRoute(href)) return false;
+    
+    // Get all routes that match the current pathname
+    const allRoutes = getAllRoutes();
+    const matchingRoutes = allRoutes.filter(route => isActiveRoute(route));
+    
+    // If current pathname exactly matches a route, only that route should be active
+    if (matchingRoutes.includes(pathname)) {
+      return href === pathname;
+    }
+    
+    // If no exact match, find the longest matching route (most specific)
+    const longestMatch = matchingRoutes.reduce((longest, current) => 
+      current.length > longest.length ? current : longest, ''
+    );
+    
+    return href === longestMatch;
   };
 
   const toggleExpanded = (itemName: string) => {
     setExpandedItems(prev => 
       prev.includes(itemName) 
-        ? prev.filter(name => name !== itemName)
-        : [...prev, itemName]
+        ? [] // Close if already expanded
+        : [itemName] // Open only this one, close others
     );
   };
 
@@ -513,8 +557,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     onClick={() => toggleExpanded(item.name)}
                     className={cn(
                       'w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02]',
-                      isActive || childActive
+                      isActive
                         ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-r-2 border-primary shadow-lg'
+                        : childActive
+                        ? 'bg-gradient-to-r from-primary/5 to-primary/2 text-primary/80 border-r border-primary/50'
                         : 'text-muted-foreground hover:bg-gradient-to-r hover:from-muted/80 hover:to-muted hover:text-foreground hover:shadow-md'
                     )}
                   >
@@ -522,14 +568,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
                       <div
                         className={cn(
                           'flex items-center justify-center w-8 h-8 rounded-lg mr-3 transform transition-all duration-200',
-                          (isActive || childActive) ? `${item.bgColor} shadow-lg` : 'bg-transparent',
+                          isActive ? `${item.bgColor} shadow-lg` : 
+                          childActive ? `${item.bgColor} opacity-60` : 'bg-transparent',
                           hasChildren && 'hover:scale-110'
                         )}
                       >
                         <item.icon
                           className={cn(
                             'w-5 h-5 transition-all duration-200',
-                            (isActive || childActive) ? item.color : 'text-muted-foreground'
+                            isActive ? item.color : 
+                            childActive ? item.color + ' opacity-80' : 'text-muted-foreground'
                           )}
                         />
                       </div>
@@ -582,7 +630,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                         className="ml-4 space-y-1"
                       >
                         {item.children!.map((child) => {
-                          const childIsActive = isActiveRoute(child.href);
+                          const childIsActive = isMostSpecificActiveRoute(child.href);
                           return (
                             <Link
                               key={child.name}
@@ -665,7 +713,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                             href={child.href}
                             className={cn(
                               'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] ml-2',
-                              isActiveRoute(child.href) 
+                              isMostSpecificActiveRoute(child.href) 
                                 ? 'bg-gradient-to-r from-primary/15 to-primary/5 text-primary shadow-md border-l-2 border-primary'
                                 : 'text-muted-foreground/80 hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 hover:text-foreground hover:shadow-sm'
                             )}
@@ -673,13 +721,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
                             <div
                               className={cn(
                                 'flex items-center justify-center w-6 h-6 rounded-md mr-3 transform transition-all duration-200 hover:scale-110',
-                                isActiveRoute(child.href) ? `${child.bgColor} shadow-md` : 'bg-transparent'
+                                isMostSpecificActiveRoute(child.href) ? `${child.bgColor} shadow-md` : 'bg-transparent'
                               )}
                             >
                               <child.icon
                                 className={cn(
                                   'w-4 h-4 transition-all duration-200',
-                                  isActiveRoute(child.href) ? child.color : 'text-muted-foreground/70'
+                                  isMostSpecificActiveRoute(child.href) ? child.color : 'text-muted-foreground/70'
                                 )}
                               />
                             </div>
@@ -765,8 +813,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     onClick={() => toggleExpanded(item.name)}
                     className={cn(
                       'w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02]',
-                      isActive || childActive
+                      isActive
                         ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-r-2 border-primary shadow-lg'
+                        : childActive
+                        ? 'bg-gradient-to-r from-primary/5 to-primary/2 text-primary/80 border-r border-primary/50'
                         : 'text-muted-foreground hover:bg-gradient-to-r hover:from-muted/80 hover:to-muted hover:text-foreground hover:shadow-md'
                     )}
                   >
@@ -774,14 +824,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
                       <div
                         className={cn(
                           'flex items-center justify-center w-8 h-8 rounded-lg mr-3 transform transition-all duration-200',
-                          (isActive || childActive) ? `${item.bgColor} shadow-lg` : 'bg-transparent',
+                          isActive ? `${item.bgColor} shadow-lg` : 
+                          childActive ? `${item.bgColor} opacity-60` : 'bg-transparent',
                           hasChildren && 'hover:scale-110'
                         )}
                       >
                         <item.icon
                           className={cn(
                             'w-5 h-5 transition-all duration-200',
-                            (isActive || childActive) ? item.color : 'text-muted-foreground'
+                            isActive ? item.color : 
+                            childActive ? item.color + ' opacity-80' : 'text-muted-foreground'
                           )}
                         />
                       </div>
@@ -833,7 +885,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                         className="ml-4 space-y-1"
                       >
                         {item.children!.map((child) => {
-                          const childIsActive = isActiveRoute(child.href);
+                          const childIsActive = isMostSpecificActiveRoute(child.href);
                           return (
                             <Link
                               key={child.name}
