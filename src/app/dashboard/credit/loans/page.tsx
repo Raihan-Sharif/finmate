@@ -350,12 +350,12 @@ export default function BankLoansPage() {
           <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-lg dark:bg-card/40">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-2xl">
-                  <CheckCircle className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-2xl">
+                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Loans</p>
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {activeLoans}
                   </p>
                 </div>
@@ -465,9 +465,15 @@ export default function BankLoansPage() {
                         className={`p-6 bg-gradient-to-r from-muted/30 to-muted/10 rounded-xl transition-all hover:shadow-md dark:from-muted/10 dark:to-muted/5 ${
                           isOverdue 
                             ? 'border border-border border-l-4 border-l-orange-500' 
-                            : isSelected 
-                              ? 'border border-primary bg-primary/5' 
-                              : 'border border-border'
+                            : loan.status === 'active'
+                              ? 'border border-border border-l-4 border-l-green-500'
+                              : loan.status === 'closed'
+                                ? 'border border-border border-l-4 border-l-gray-500'
+                                : loan.status === 'defaulted'
+                                  ? 'border border-border border-l-4 border-l-red-500'
+                                  : isSelected 
+                                    ? 'border border-primary bg-primary/5' 
+                                    : 'border border-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">

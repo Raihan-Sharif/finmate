@@ -224,12 +224,12 @@ export default function CreditOverviewPage() {
           <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-lg dark:bg-card/40">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-2xl">
-                  <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-2xl">
+                  <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Loans</p>
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {emiOverview?.total_active_loans || 0}
                   </p>
                 </div>
@@ -272,14 +272,14 @@ export default function CreditOverviewPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className={`p-4 bg-gradient-to-r from-muted/50 to-muted/30 rounded-xl transition-all hover:shadow-md dark:from-muted/20 dark:to-muted/10 ${
                           isOverdue 
-                            ? 'border-2 border-orange-600/50 shadow-orange-100/50 dark:shadow-orange-900/20' 
+                            ? 'border border-border border-l-4 border-l-orange-500' 
                             : loan.status === 'active'
-                              ? 'border-2 border-blue-600/50 shadow-blue-100/50 dark:shadow-blue-900/20'
+                              ? 'border border-border border-l-4 border-l-green-500'
                               : loan.status === 'closed'
-                                ? 'border-2 border-green-600/50 shadow-green-100/50 dark:shadow-green-900/20'
+                                ? 'border border-border border-l-4 border-l-gray-500'
                                 : loan.status === 'defaulted'
-                                  ? 'border-2 border-red-600/50 shadow-red-100/50 dark:shadow-red-900/20'
-                                  : 'border-2 border-border'
+                                  ? 'border border-border border-l-4 border-l-red-500'
+                                  : 'border border-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -369,14 +369,14 @@ export default function CreditOverviewPage() {
                         animate={{ opacity: 1, x: 0 }}
                         className={`p-3 bg-gradient-to-r from-muted/50 to-muted/30 rounded-lg transition-all hover:shadow-md dark:from-muted/20 dark:to-muted/10 ${
                           lending.status === 'overdue'
-                            ? 'border-2 border-orange-600/50 shadow-orange-100/50 dark:shadow-orange-900/20'
+                            ? 'border border-border border-l-4 border-l-orange-500'
                             : lending.status === 'paid'
-                              ? 'border-2 border-emerald-600/50 shadow-emerald-100/50 dark:shadow-emerald-900/20'
+                              ? 'border border-border border-l-4 border-l-green-500'
                               : lending.status === 'partial'
-                                ? 'border-2 border-cyan-600/50 shadow-cyan-100/50 dark:shadow-cyan-900/20'
+                                ? 'border border-border border-l-4 border-l-cyan-500'
                                 : lending.status === 'pending'
-                                  ? 'border-2 border-purple-600/50 shadow-purple-100/50 dark:shadow-purple-900/20'
-                                  : 'border-2 border-border'
+                                  ? 'border border-border border-l-4 border-l-purple-500'
+                                  : 'border border-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">

@@ -116,6 +116,10 @@ export default function PersonalLendingPage() {
   const activeBorrowed = allBorrowedMoney.filter(l => l.status !== 'paid').length
   const overdueLent = allLentMoney.filter(l => l.status === 'overdue').length
   const overdueBorrowed = allBorrowedMoney.filter(l => l.status === 'overdue').length
+  const pendingLent = allLentMoney.filter(l => l.status === 'pending').length
+  const pendingBorrowed = allBorrowedMoney.filter(l => l.status === 'pending').length
+  const partialLent = allLentMoney.filter(l => l.status === 'partial').length
+  const partialBorrowed = allBorrowedMoney.filter(l => l.status === 'partial').length
 
   // Filter lendings based on search, filters, and active tab (for display only)
   const filteredLendings = lendings?.filter(lending => {
@@ -331,7 +335,7 @@ export default function PersonalLendingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6"
         >
           <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-lg dark:bg-card/40">
             <CardContent className="p-6">
@@ -384,12 +388,44 @@ export default function PersonalLendingPage() {
           <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-lg dark:bg-card/40">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-2xl">
-                  <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-2xl">
+                  <Clock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {pendingLent + pendingBorrowed}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-lg dark:bg-card/40">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-2xl">
+                  <PiggyBank className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Partial</p>
+                  <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
+                    {partialLent + partialBorrowed}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-lg dark:bg-card/40">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-2xl">
+                  <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Overdue</p>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {overdueLent + overdueBorrowed}
                   </p>
                 </div>
@@ -484,16 +520,16 @@ export default function PersonalLendingPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className={`p-6 bg-gradient-to-r from-muted/30 to-muted/10 rounded-xl transition-all hover:shadow-md dark:from-muted/10 dark:to-muted/5 ${
                           overdue
-                            ? 'border-2 border-orange-600/50 shadow-orange-100/50 dark:shadow-orange-900/20' 
+                            ? 'border border-border border-l-4 border-l-orange-500' 
                             : lending.status === 'pending'
-                              ? 'border-2 border-purple-600/50 shadow-purple-100/50 dark:shadow-purple-900/20'
+                              ? 'border border-border border-l-4 border-l-purple-500'
                               : lending.status === 'partial'
-                                ? 'border-2 border-cyan-600/50 shadow-cyan-100/50 dark:shadow-cyan-900/20'
+                                ? 'border border-border border-l-4 border-l-cyan-500'
                                 : lending.status === 'paid'
-                                  ? 'border-2 border-emerald-600/50 shadow-emerald-100/50 dark:shadow-emerald-900/20'
+                                  ? 'border border-border border-l-4 border-l-green-500'
                                   : isSelected 
-                                    ? 'border-2 border-primary bg-primary/5' 
-                                    : 'border-2 border-border'
+                                    ? 'border border-primary bg-primary/5' 
+                                    : 'border border-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">
