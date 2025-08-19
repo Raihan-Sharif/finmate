@@ -298,11 +298,11 @@ export default function DashboardPage() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-blue-50 via-blue-50 to-cyan-50 dark:from-blue-950/40 dark:via-blue-950/40 dark:to-cyan-950/40 border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all">
+            <Card className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900/50 dark:via-blue-950/30 dark:to-indigo-950/30 border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center">
                   Account Balance
-                  <Info className="h-3 w-3 inline ml-1 opacity-70" />
+                  <Info className="h-3 w-3 ml-1 opacity-60" />
                 </CardTitle>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -313,32 +313,32 @@ export default function DashboardPage() {
                   >
                     {balanceVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                   </Button>
-                  <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <DollarSign className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                <div className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
                   {balanceVisible ? formatAmount(stats.total_account_balance) : '••••••'}
                 </div>
-                <p className="text-xs text-blue-600/70 dark:text-blue-400/70 flex items-center mt-1">
+                <p className="text-xs text-slate-600/80 dark:text-slate-400/80 flex items-center mt-1">
                   <Banknote className="h-3 w-3 mr-1" />
-                  {stats.total_accounts} accounts • Real-time
+                  {stats.total_accounts} accounts • Live
                 </p>
               </CardContent>
             </Card>
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-green-50 via-green-50 to-emerald-50 dark:from-green-950/40 dark:via-green-950/40 dark:to-emerald-950/40 border-green-200 dark:border-green-800 shadow-lg hover:shadow-xl transition-all">
+            <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-900/30 dark:via-green-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">Income</CardTitle>
-                <TrendingUpIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <CardTitle className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Income</CardTitle>
+                <TrendingUpIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
                   +{formatAmount(stats.total_income)}
                 </div>
-                <p className="text-xs text-green-600/70 dark:text-green-400/70">
+                <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">
                   {periodOptions.find(p => p.value === currentPeriod)?.label.toLowerCase()}
                 </p>
               </CardContent>
@@ -346,16 +346,16 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-red-50 via-red-50 to-pink-50 dark:from-red-950/40 dark:via-red-950/40 dark:to-pink-950/40 border-red-200 dark:border-red-800 shadow-lg hover:shadow-xl transition-all">
+            <Card className="bg-gradient-to-br from-rose-50 via-red-50 to-pink-50 dark:from-rose-900/30 dark:via-red-950/30 dark:to-pink-950/30 border-rose-200 dark:border-rose-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-red-700 dark:text-red-300">Expenses</CardTitle>
-                <TrendingDownIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <CardTitle className="text-sm font-semibold text-rose-700 dark:text-rose-300">Expenses</CardTitle>
+                <TrendingDownIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+                <div className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-red-600 bg-clip-text text-transparent">
                   -{formatAmount(stats.total_expenses)}
                 </div>
-                <p className="text-xs text-red-600/70 dark:text-red-400/70">
+                <p className="text-xs text-rose-600/80 dark:text-rose-400/80">
                   {periodOptions.find(p => p.value === currentPeriod)?.label.toLowerCase()}
                 </p>
               </CardContent>
@@ -363,9 +363,9 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-purple-50 via-purple-50 to-pink-50 dark:from-purple-950/40 dark:via-purple-950/40 dark:to-pink-950/40 border-purple-200 dark:border-purple-800 shadow-lg hover:shadow-xl transition-all">
+            <Card className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-900/30 dark:via-purple-950/30 dark:to-fuchsia-950/30 border-violet-200 dark:border-violet-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">Net Balance</CardTitle>
+                <CardTitle className="text-sm font-semibold text-violet-700 dark:text-violet-300">Net Balance</CardTitle>
                 {stats.net_balance >= 0 ? (
                   <ArrowUpRight className="h-4 w-4 text-green-600 dark:text-green-400" />
                 ) : (
@@ -373,49 +373,124 @@ export default function DashboardPage() {
                 )}
               </CardHeader>
               <CardContent>
-                <div className={`text-3xl font-bold ${stats.net_balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                <div className={`text-3xl font-bold ${stats.net_balance >= 0 ? 'bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent' : 'bg-gradient-to-r from-rose-600 to-red-600 bg-clip-text text-transparent'}`}>
                   {stats.net_balance >= 0 ? '+' : ''}{formatAmount(stats.net_balance)}
                 </div>
-                <p className={`text-xs flex items-center ${stats.net_balance >= 0 ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'}`}>
+                <p className={`text-xs flex items-center ${stats.net_balance >= 0 ? 'text-emerald-600/80 dark:text-emerald-400/80' : 'text-rose-600/80 dark:text-rose-400/80'}`}>
                   <PiggyBank className="h-3 w-3 mr-1" />
                   {stats.total_income > 0 ? ((stats.net_balance / stats.total_income) * 100).toFixed(1) : '0'}% savings rate
                 </p>
               </CardContent>
             </Card>
           </motion.div>
+
+        </motion.div>
+
+        {/* Secondary Financial Stats */}
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          <motion.div variants={fadeInUp}>
+            <Card className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/30 dark:via-yellow-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-base font-semibold text-amber-700 dark:text-amber-300">Investment Portfolio</CardTitle>
+                <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                      {formatAmount(stats.total_investment_value)}
+                    </div>
+                    <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-1">
+                      Total Investment Value
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Active Investments</p>
+                      <p className="text-lg font-semibold text-amber-700 dark:text-amber-300">{stats.total_investments}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Returns</p>
+                      <p className={`text-lg font-semibold ${stats.investment_return >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {stats.investment_return >= 0 ? '+' : ''}{stats.investment_return.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={fadeInUp}>
+            <Card className="bg-gradient-to-br from-cyan-50 via-teal-50 to-blue-50 dark:from-cyan-900/30 dark:via-teal-950/30 dark:to-blue-950/30 border-cyan-200 dark:border-cyan-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-base font-semibold text-cyan-700 dark:text-cyan-300">Loan & Credit</CardTitle>
+                <CreditCard className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+                      {formatAmount(stats.total_loan_amount)}
+                    </div>
+                    <p className="text-sm text-cyan-600/80 dark:text-cyan-400/80 mt-1">
+                      Outstanding Loans
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Active Loans</p>
+                      <p className="text-lg font-semibold text-cyan-700 dark:text-cyan-300">{stats.total_loans}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Pending EMIs</p>
+                      <p className={`text-lg font-semibold ${stats.pending_emis > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                        {stats.pending_emis}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </motion.div>
 
         {/* Smart Financial Alerts */}
-        {(stats.pending_emis > 0 || stats.overdue_lendings > 0 || stats.budget_used_percentage > 90 || budgetAlerts.length > 0) && (
+        {(stats.pending_emis > 0 || stats.overdue_lendings > 0 || budgetAlerts.length > 0) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="border-orange-200 dark:border-orange-800 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-950/30 dark:via-amber-950/30 dark:to-yellow-950/30 shadow-lg">
+            <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/80 via-orange-50/80 to-red-50/80 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-red-950/20 shadow-xl backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-orange-800 dark:text-orange-300 flex items-center">
-                  <AlertTriangle className="h-5 w-5 mr-2" />
+                <CardTitle className="text-amber-800 dark:text-amber-200 flex items-center">
+                  <AlertTriangle className="h-5 w-5 mr-2 text-amber-600 dark:text-amber-400" />
                   Smart Financial Alerts
-                  <Badge variant="outline" className="ml-2 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300">
+                  <Badge variant="outline" className="ml-2 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-200 bg-amber-100/50 dark:bg-amber-900/30">
                     {(stats.pending_emis || 0) + (stats.overdue_lendings || 0) + budgetAlerts.length}
                   </Badge>
                 </CardTitle>
-                <CardDescription className="text-orange-700 dark:text-orange-400">
+                <CardDescription className="text-amber-700 dark:text-amber-300">
                   Items requiring your immediate attention
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {stats.pending_emis > 0 && (
-                    <div className="p-4 bg-white/60 dark:bg-black/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <div className="p-4 bg-white/80 dark:bg-slate-900/40 rounded-xl border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
                       <div className="flex items-center space-x-2 mb-2">
-                        <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                        <p className="font-medium text-orange-800 dark:text-orange-300">Pending EMIs</p>
+                        <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <p className="font-semibold text-amber-800 dark:text-amber-200">Pending EMIs</p>
                       </div>
-                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.pending_emis}</p>
+                      <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending_emis}</p>
                       <Link href="/dashboard/credit/loans">
-                        <Button size="sm" variant="outline" className="mt-2 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-950">
+                        <Button size="sm" variant="outline" className="mt-2 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30">
                           Manage Loans
                         </Button>
                       </Link>
@@ -423,14 +498,14 @@ export default function DashboardPage() {
                   )}
                   
                   {stats.overdue_lendings > 0 && (
-                    <div className="p-4 bg-white/60 dark:bg-black/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <div className="p-4 bg-white/80 dark:bg-slate-900/40 rounded-xl border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
                       <div className="flex items-center space-x-2 mb-2">
-                        <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                        <p className="font-medium text-orange-800 dark:text-orange-300">Overdue Lendings</p>
+                        <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <p className="font-semibold text-amber-800 dark:text-amber-200">Overdue Lendings</p>
                       </div>
-                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.overdue_lendings}</p>
+                      <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.overdue_lendings}</p>
                       <Link href="/dashboard/credit/personal-lending">
-                        <Button size="sm" variant="outline" className="mt-2 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-950">
+                        <Button size="sm" variant="outline" className="mt-2 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30">
                           Review Lendings
                         </Button>
                       </Link>
@@ -438,21 +513,21 @@ export default function DashboardPage() {
                   )}
                   
                   {budgetAlerts.map(alert => (
-                    <div key={alert.id} className="p-4 bg-white/60 dark:bg-black/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <div key={alert.id} className="p-4 bg-white/80 dark:bg-slate-900/40 rounded-xl border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
-                          <Target className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                          <p className="font-medium text-orange-800 dark:text-orange-300 text-sm">{alert.name}</p>
+                          <Target className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                          <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">{alert.name}</p>
                         </div>
-                        <Badge variant={alert.is_over_budget ? "destructive" : "outline"} className="text-xs">
+                        <Badge variant={alert.is_over_budget ? "destructive" : "outline"} className="text-xs bg-amber-100 dark:bg-amber-900/30">
                           {alert.percentage_used.toFixed(0)}%
                         </Badge>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-orange-600 dark:text-orange-400">
+                      <div className="space-y-2">
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
                           {formatAmount(alert.spent_amount)} of {formatAmount(alert.amount)}
                         </p>
-                        <Progress value={Math.min(100, alert.percentage_used)} className="h-1" />
+                        <Progress value={Math.min(100, alert.percentage_used)} className="h-2" />
                       </div>
                     </div>
                   ))}
@@ -500,7 +575,10 @@ export default function DashboardPage() {
                       tickFormatter={(value) => formatAmount(value).replace(/[^\d.,]/g, '')}
                     />
                     <Tooltip 
-                      formatter={(value, name) => [formatAmount(Number(value)), name === 'income' ? 'Income' : name === 'expenses' ? 'Expenses' : 'Budget']}
+                      formatter={(value, name) => [
+                        formatAmount(Number(value)), 
+                        name === 'income' ? 'Income' : name === 'expenses' ? 'Expenses' : name === 'budget' ? 'Budget' : name
+                      ]}
                       labelClassName="text-foreground"
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',

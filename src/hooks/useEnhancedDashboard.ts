@@ -178,7 +178,7 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
       const { data: accountsData } = await supabase
         .from(TABLES.ACCOUNTS)
         .select("id, name, type, balance, currency, include_in_total")
-        .or(`user_id.eq.${user.id},user_id.is.null`)
+        .eq("user_id", user.id)
         .eq("is_active", true);
 
       const totalAccountBalance = accountsData
@@ -187,39 +187,42 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
 
       // Get monthly budget
       const currentMonth = new Date();
+      const monthStart = startOfMonth(currentMonth);
+      const monthEnd = endOfMonth(currentMonth);
       const { data: budgets } = await supabase
         .from(TABLES.BUDGETS)
-        .select("amount, spent_amount")
+        .select("amount, spent")
         .eq("user_id", user.id)
-        .eq("month", currentMonth.getMonth() + 1)
-        .eq("year", currentMonth.getFullYear());
+        .eq("is_active", true)
+        .lte("start_date", format(monthEnd, "yyyy-MM-dd"))
+        .gte("end_date", format(monthStart, "yyyy-MM-dd"));
 
       const monthlyBudget = budgets?.reduce((sum, b) => sum + b.amount, 0) || 0;
-      const totalBudgetSpent = budgets?.reduce((sum, b) => sum + (b.spent_amount || 0), 0) || 0;
+      const totalBudgetSpent = budgets?.reduce((sum, b) => sum + (b.spent || 0), 0) || 0;
 
       // Get investments
       const { data: investments } = await supabase
         .from(TABLES.INVESTMENTS)
-        .select("initial_amount, current_value")
+        .select("total_invested, current_value")
         .eq("user_id", user.id)
         .eq("is_active", true);
 
       const investmentValue = investments?.reduce(
-        (sum, inv) => sum + (inv.current_value || inv.initial_amount), 0
+        (sum, inv) => sum + (inv.current_value || inv.total_invested), 0
       ) || 0;
 
-      const investmentCost = investments?.reduce((sum, inv) => sum + inv.initial_amount, 0) || 0;
+      const investmentCost = investments?.reduce((sum, inv) => sum + inv.total_invested, 0) || 0;
       const investmentReturn = investmentCost > 0 ? ((investmentValue - investmentCost) / investmentCost) * 100 : 0;
       
       // Get loans
       const { data: loans } = await supabase
         .from(TABLES.LOANS)
-        .select("outstanding_balance, loan_amount")
+        .select("outstanding_amount, principal_amount")
         .eq("user_id", user.id)
-        .in("status", ["active", "pending"]);
+        .eq("status", "active");
 
-      const totalLoanAmount = loans?.reduce((sum, loan) => sum + loan.loan_amount, 0) || 0;
-      const totalOutstandingBalance = loans?.reduce((sum, loan) => sum + loan.outstanding_balance, 0) || 0;
+      const totalLoanAmount = loans?.reduce((sum, loan) => sum + loan.principal_amount, 0) || 0;
+      const totalOutstandingBalance = loans?.reduce((sum, loan) => sum + loan.outstanding_amount, 0) || 0;
 
       // Get pending EMIs (past due date)
       const today = format(new Date(), "yyyy-MM-dd");
@@ -247,6 +250,8 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
         investmentValue,
         pendingEmis,
         overdueLendingsCount: overdueLendings?.length || 0,
+        accountBalance: totalAccountBalance,
+        totalIncome,
       });
 
       setStats({
@@ -281,31 +286,54 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
     investmentValue: number;
     pendingEmis: number;
     overdueLendingsCount: number;
+    accountBalance: number;
+    totalIncome: number;
   }) => {
     let score = 0;
 
-    // Budget adherence (30%)
-    if (params.budgetUsage <= 70) score += 30;
-    else if (params.budgetUsage <= 90) score += 20;
-    else if (params.budgetUsage <= 100) score += 10;
+    // Budget adherence (25%)
+    if (params.budgetUsage <= 70) score += 25;
+    else if (params.budgetUsage <= 85) score += 20;
+    else if (params.budgetUsage <= 100) score += 15;
+    else if (params.budgetUsage <= 120) score += 10;
 
     // Savings rate (25%)
     if (params.savingsRate >= 30) score += 25;
     else if (params.savingsRate >= 20) score += 20;
-    else if (params.savingsRate >= 10) score += 15;
+    else if (params.savingsRate >= 15) score += 17;
+    else if (params.savingsRate >= 10) score += 14;
+    else if (params.savingsRate >= 5) score += 10;
     else if (params.savingsRate >= 0) score += 5;
 
-    // Investment presence (20%)
-    if (params.investmentValue > 0) score += 20;
+    // Investment diversification (20%)
+    if (params.totalIncome > 0) {
+      const investmentToIncomeRatio = params.investmentValue / params.totalIncome;
+      if (investmentToIncomeRatio >= 2) score += 20;
+      else if (investmentToIncomeRatio >= 1) score += 17;
+      else if (investmentToIncomeRatio >= 0.5) score += 14;
+      else if (investmentToIncomeRatio > 0) score += 10;
+    } else if (params.investmentValue > 0) {
+      score += 10;
+    }
 
     // Debt management (15%)
     if (params.pendingEmis === 0) score += 15;
-    else if (params.pendingEmis <= 2) score += 10;
-    else if (params.pendingEmis <= 5) score += 5;
+    else if (params.pendingEmis <= 1) score += 12;
+    else if (params.pendingEmis <= 2) score += 8;
+    else if (params.pendingEmis <= 3) score += 5;
 
     // Payment discipline (10%)
     if (params.overdueLendingsCount === 0) score += 10;
-    else if (params.overdueLendingsCount <= 1) score += 5;
+    else if (params.overdueLendingsCount <= 1) score += 6;
+    else if (params.overdueLendingsCount <= 2) score += 3;
+
+    // Emergency fund (5%)
+    if (params.totalIncome > 0) {
+      const monthlyExpenses = params.totalIncome * 0.7;
+      if (params.accountBalance >= monthlyExpenses * 6) score += 5;
+      else if (params.accountBalance >= monthlyExpenses * 3) score += 3;
+      else if (params.accountBalance >= monthlyExpenses) score += 1;
+    }
 
     return Math.max(0, Math.min(100, score));
   };
@@ -541,7 +569,7 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
       const { data: accountsData } = await supabase
         .from(TABLES.ACCOUNTS)
         .select("id, name, type, balance, currency, include_in_total")
-        .or(`user_id.eq.${user.id},user_id.is.null`)
+        .eq("user_id", user.id)
         .eq("is_active", true);
 
       // Get recent transactions to calculate real-time balance
@@ -588,25 +616,26 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
           id,
           name,
           amount,
-          spent_amount,
+          spent,
           remaining_amount,
           categories (
             name
           )
         `)
         .eq("user_id", user.id)
-        .eq("month", currentMonth.getMonth() + 1)
-        .eq("year", currentMonth.getFullYear());
+        .eq("is_active", true)
+        .lte("start_date", format(endOfMonth(currentMonth), "yyyy-MM-dd"))
+        .gte("end_date", format(startOfMonth(currentMonth), "yyyy-MM-dd"));
 
       const alerts = budgets?.map((budget: any) => {
-        const percentageUsed = budget.amount > 0 ? ((budget.spent_amount || 0) / budget.amount) * 100 : 0;
+        const percentageUsed = budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0;
         return {
           id: budget.id,
           name: budget.name,
           category_name: budget.categories?.name || 'General',
           amount: budget.amount,
-          spent_amount: budget.spent_amount || 0,
-          remaining_amount: budget.remaining_amount || (budget.amount - (budget.spent_amount || 0)),
+          spent_amount: budget.spent || 0,
+          remaining_amount: budget.remaining_amount || (budget.amount - (budget.spent || 0)),
           percentage_used: percentageUsed,
           is_over_budget: percentageUsed > 100,
           status: percentageUsed > 100 ? 'danger' as const : percentageUsed > 85 ? 'warning' as const : 'normal' as const
@@ -624,7 +653,7 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
 
   // Fetch monthly goals
   const fetchMonthlyGoals = useCallback(async () => {
-    if (!user || !stats.total_income) return;
+    if (!user) return;
 
     try {
       const savingsRate = stats.total_income > 0 
@@ -646,7 +675,7 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
         .lte("date", format(monthEnd, "yyyy-MM-dd"));
 
       const monthlyInvestmentAmount = monthlyInvestments?.reduce((sum, inv) => sum + inv.amount, 0) || 0;
-      const investmentTarget = stats.total_income * 0.15; // 15% of income target
+      const investmentTarget = Math.max(stats.total_income * 0.15, 1000); // 15% of income target
       const investmentProgress = investmentTarget > 0 ? (monthlyInvestmentAmount / investmentTarget) * 100 : 0;
 
       const goals = [
@@ -746,7 +775,7 @@ export function useEnhancedDashboard(): EnhancedDashboardData {
     if (user && !loading && stats.total_income !== undefined) {
       fetchMonthlyGoals();
     }
-  }, [user, stats, loading, fetchMonthlyGoals]);
+  }, [user, stats.total_income, stats.total_expenses, stats.budget_used_percentage, loading, fetchMonthlyGoals]);
 
   return {
     stats,
