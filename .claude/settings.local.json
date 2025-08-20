@@ -30,7 +30,9 @@
       "Bash(mv:*)",
       "Bash(npm run clean:*)",
       "WebSearch",
-      "WebFetch(domain:next-intl.dev)"
+      "WebFetch(domain:next-intl.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:phrase.com)"
     ],
     "deny": []
   }

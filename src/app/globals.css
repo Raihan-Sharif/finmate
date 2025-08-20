@@ -5,6 +5,9 @@
 /* Inter font with all weights */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
+/* Bengali font support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -86,6 +89,19 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Bengali text support */
+  [lang="bn"], [lang="bn"] * {
+    font-family: var(--font-bengali), "Noto Sans Bengali", "Kalpurush", "SiyamRupali", sans-serif;
+    font-display: swap;
+  }
+  
+  /* Fallback for Bengali characters in any language */
+  *:lang(bn), 
+  .bengali-text {
+    font-family: var(--font-bengali), "Noto Sans Bengali", "Inter", sans-serif;
+    font-display: swap;
   }
 
   /* Smooth scrolling */

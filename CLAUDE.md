@@ -19,6 +19,7 @@
 - **ShadCN UI**: Modern, accessible component library
 - **Framer Motion**: Smooth animations and transitions
 - **React Hook Form**: Form management with Zod validation
+- **next-intl**: Internationalization (i18n) with Bengali and English support
 
 ### Backend & Database
 - **Supabase**: Backend-as-a-Service with PostgreSQL
@@ -631,6 +632,143 @@ npm run build      # Full production build
 - ✅ Performance optimizations maintained
 
 **If build fails or has errors, immediately fix them before considering the task complete.**
+
+## Internationalization (i18n) - CRITICAL IMPLEMENTATION NOTES
+
+### **VERY IMPORTANT: Next.js 15 + next-intl Setup**
+
+The FinMate application supports **Bengali (বাংলা)** and **English** localization. The setup is complex and has specific requirements for Next.js 15.
+
+### **Key Files & Structure:**
+```
+src/
+├── i18n/
+│   ├── routing.ts          # Locale configuration
+│   ├── navigation.ts       # Internationalized navigation
+│   └── request.ts          # Message loading configuration
+├── middleware.ts           # Locale detection middleware
+├── messages/
+│   ├── en.json            # English translations
+│   └── bn.json            # Bengali translations
+└── app/
+    ├── layout.tsx         # Root layout (minimal)
+    ├── page.tsx           # Root redirect page
+    └── [locale]/          # Localized routes
+        ├── layout.tsx     # Main app layout with i18n
+        └── page.tsx       # Localized pages
+```
+
+### **CRITICAL CONFIGURATION FIXES:**
+
+#### 1. **Next.js 15 Promise Issue - MUST AWAIT `requestLocale`**
+```typescript
+// src/i18n/request.ts
+export default getRequestConfig(async (params) => {
+  // CRITICAL: In Next.js 15, requestLocale is a Promise!
+  const locale = await params.requestLocale; // Must await this!
+  
+  return {
+    locale,
+    messages: (await import(`../../messages/${locale}.json`)).default
+  };
+});
+```
+
+#### 2. **Middleware Configuration**
+```typescript
+// src/middleware.ts
+export default createMiddleware({
+  locales: ['en', 'bn'],
+  defaultLocale: 'en'
+});
+```
+
+#### 3. **Layout Structure**
+- **Root layout** (`app/layout.tsx`): Minimal, only for redirect
+- **Locale layout** (`app/[locale]/layout.tsx`): Main app with NextIntlClientProvider
+- **Both layouts required** for proper App Router routing
+
+#### 4. **Font Support for Bengali**
+```typescript
+// In app/[locale]/layout.tsx
+const notoSansBengali = Noto_Sans_Bengali({ 
+  subsets: ['bengali', 'latin'],
+  variable: '--font-bengali',
+  display: 'swap',
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+});
+```
+
+```css
+/* In globals.css */
+[lang="bn"], [lang="bn"] * {
+  font-family: var(--font-bengali), "Noto Sans Bengali", "Kalpurush", "SiyamRupali", sans-serif;
+  font-display: swap;
+}
+```
+
+### **Common Issues & Solutions:**
+
+#### ❌ **Problem**: `requestLocale` is undefined
+**Solution**: The `requestLocale` parameter is a Promise in Next.js 15 - you MUST await it!
+
+#### ❌ **Problem**: English text shows on Bengali routes
+**Solution**: Check that request.ts is properly awaiting the locale Promise and loading correct messages.
+
+#### ❌ **Problem**: TypeScript errors with RequestConfig
+**Solution**: Ensure return type includes both `locale` and `messages`:
+```typescript
+return {
+  locale: validatedLocale,
+  messages: messagesObject
+};
+```
+
+#### ❌ **Problem**: 404 errors on locale routes  
+**Solution**: Ensure `generateStaticParams()` is present in both layout.tsx and page.tsx in [locale] folder.
+
+### **Testing Localization:**
+
+#### URLs to Test:
+- `http://localhost:3000/` → Redirects to `/en`
+- `http://localhost:3000/en` → English content
+- `http://localhost:3000/bn` → Bengali content (বাংলা)
+
+#### Debug Verification:
+1. Check browser console for locale detection logs
+2. Verify HTML `lang` attribute matches URL locale
+3. Confirm translation hooks return correct language content
+4. Test language switcher functionality
+
+### **Translation Usage:**
+```typescript
+// In components
+const t = useTranslations('home');
+const tCommon = useTranslations('common');
+
+// Usage
+<h1>{t('hero.title')}</h1>
+<button>{tCommon('save')}</button>
+```
+
+### **Language Switcher Component:**
+Use the `LanguageSwitcher` component which properly handles locale routing:
+```typescript
+<LanguageSwitcher variant="minimal" size="sm" />
+```
+
+### **CRITICAL RULES:**
+1. **Always await `requestLocale`** in request.ts for Next.js 15
+2. **Never skip the root layout** - both layouts are required
+3. **Test both locales** after any i18n changes
+4. **Check font rendering** for Bengali characters
+5. **Verify URL routing** matches locale content
+
+### **Message Files:**
+- `messages/en.json`: Complete English translations
+- `messages/bn.json`: Complete Bengali translations (বাংলা)
+- Both files must have identical key structure
+- All UI text must be translatable - no hardcoded strings
 
 ---
 

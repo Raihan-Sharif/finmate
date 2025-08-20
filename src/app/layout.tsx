@@ -1,23 +1,18 @@
-// src/app/layout.tsx
-import type { Metadata } from 'next';
+// Root layout - minimal setup for root-level pages only
 import { Inter } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: 'FinMate - Personal Finance Companion',
-  description: 'Take control of your finances with the ultimate personal finance app',
-};
-
-// Root layout for redirect page only
+// This layout only applies to the root page that handles redirects
+// The actual app layout is in /[locale]/layout.tsx
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html suppressHydrationWarning={true}>
       <body className={inter.className} suppressHydrationWarning={true}>
         {children}
       </body>
