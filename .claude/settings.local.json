@@ -26,7 +26,11 @@
       "Bash(timeout 30s npm run dev)",
       "Bash(timeout 15s npm run dev)",
       "Bash(mkdir:*)",
-      "Bash(timeout 30s npm run build)"
+      "Bash(timeout 30s npm run build)",
+      "Bash(mv:*)",
+      "Bash(npm run clean:*)",
+      "WebSearch",
+      "WebFetch(domain:next-intl.dev)"
     ],
     "deny": []
   }

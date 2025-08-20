@@ -1,0 +1,271 @@
+{
+  "common": {
+    "language": "Language",
+    "english": "English",
+    "bangla": "বাংলা",
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "view": "View",
+    "close": "Close"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "allTransactions": "All Transactions",
+    "addTransaction": "Add Transaction",
+    "recurringTransactions": "Recurring Transactions",
+    "importExport": "Import/Export",
+    "budget": "Budget",
+    "currentBudget": "Current Budget",
+    "createBudget": "Create Budget",
+    "recurringBudget": "Recurring Budget",
+    "investments": "Investments",
+    "portfolioOverview": "Portfolio Overview",
+    "addInvestment": "Add Investment",
+    "sipManagement": "SIP Management",
+    "analytics": "Analytics",
+    "creditLending": "Credit & Lending",
+    "overview": "Overview",
+    "bankLoans": "Bank Loans",
+    "purchaseEMI": "Purchase EMI",
+    "personalLending": "Personal Lending",
+    "calculators": "Calculators",
+    "loanEmiCalculator": "Loan & EMI Calculator",
+    "taxCalculator": "Tax Calculator",
+    "zakatCalculator": "Zakat Calculator",
+    "settings": "Settings",
+    "general": "General",
+    "accounts": "Accounts",
+    "categories": "Categories",
+    "exportData": "Export Data",
+    "adminPanel": "Admin Panel",
+    "userManagement": "User Management",
+    "systemSettings": "System Settings",
+    "auditLogs": "Audit Logs"
+  },
+  "home": {
+    "hero": {
+      "badge": "🚀 #1 Personal Finance App in Bangladesh",
+      "title": "Master Your Money,",
+      "titleHighlight": "Transform Your Life",
+      "subtitle": "The only financial companion you'll ever need. Track expenses, manage investments, automate EMIs, and achieve your goals with AI-powered insights.",
+      "startFree": "Start Free - No Credit Card",
+      "watchDemo": "Watch Demo"
+    },
+    "stats": {
+      "happyUsers": "Happy Users",
+      "assetsManaged": "Assets Managed",
+      "transactions": "Transactions",
+      "userRating": "User Rating"
+    },
+    "features": {
+      "badge": "💎 Complete Financial Ecosystem",
+      "title": "Everything You Need in One App",
+      "subtitle": "From daily expense tracking to advanced investment management, FinMate provides all the tools you need to take complete control of your financial life.",
+      "smartTransactionTracking": {
+        "title": "Smart Transaction Tracking",
+        "description": "AI-powered expense categorization with real-time insights across all your accounts.",
+        "stats": "500K+ transactions tracked"
+      },
+      "intelligentBudgetManagement": {
+        "title": "Intelligent Budget Management",
+        "description": "Set smart budgets, get predictive alerts, and achieve financial goals faster.",
+        "stats": "Save 30% more on average"
+      },
+      "investmentPortfolioManager": {
+        "title": "Investment Portfolio Manager",
+        "description": "Track stocks, crypto, mutual funds, and SIPs with real-time performance analytics.",
+        "stats": "Multi-asset tracking"
+      },
+      "autoEmiLoanManager": {
+        "title": "Auto EMI & Loan Manager",
+        "description": "Automated EMI processing, loan tracking, and payment reminders with pg_cron.",
+        "stats": "Never miss a payment"
+      },
+      "personalLendingTracker": {
+        "title": "Personal Lending Tracker",
+        "description": "Track money lent to friends/family with payment reminders and interest calculations.",
+        "stats": "Maintain relationships"
+      },
+      "financialCalculatorsSuite": {
+        "title": "Financial Calculators Suite",
+        "description": "EMI, Tax, Zakat, and investment projection calculators for informed decisions.",
+        "stats": "Professional-grade tools"
+      },
+      "poweredByTechnology": "Powered by Advanced Technology",
+      "technologySubtitle": "Built with cutting-edge features to give you professional-grade financial management capabilities.",
+      "aiFinancialInsights": {
+        "title": "AI Financial Insights",
+        "description": "Get personalized recommendations and spending pattern analysis"
+      },
+      "autoTransactionSystem": {
+        "title": "Auto-Transaction System",
+        "description": "Automated EMI processing with PostgreSQL pg_cron integration"
+      },
+      "multiFormatReports": {
+        "title": "Multi-Format Reports",
+        "description": "Export data in CSV, PDF, and Excel formats"
+      },
+      "multiCurrencySupport": {
+        "title": "Multi-Currency Support",
+        "description": "Track finances in USD, EUR, GBP, INR, BDT, JPY, CAD, AUD"
+      },
+      "progressiveWebApp": {
+        "title": "Progressive Web App",
+        "description": "Native app experience with offline functionality"
+      },
+      "realtimeSync": {
+        "title": "Real-time Sync",
+        "description": "Instant data synchronization across all your devices"
+      }
+    },
+    "useCases": {
+      "badge": "👥 Trusted by Thousands",
+      "title": "Perfect for Every Financial Journey",
+      "subtitle": "Whether you're just starting out or managing complex investments, FinMate adapts to your needs.",
+      "personalFinanceManagement": {
+        "title": "Personal Finance Management",
+        "description": "Track daily expenses, manage budgets, and build wealth systematically.",
+        "users": "15K+ users"
+      },
+      "investmentPortfolioTracking": {
+        "title": "Investment Portfolio Tracking",
+        "description": "Monitor stocks, mutual funds, crypto, and SIPs with detailed analytics.",
+        "users": "8K+ investors"
+      },
+      "familyFinancialPlanning": {
+        "title": "Family Financial Planning",
+        "description": "Manage household budgets, track lending, and plan for family goals.",
+        "users": "12K+ families"
+      }
+    },
+    "security": {
+      "title": "Enterprise-Grade Security You Can Trust",
+      "subtitle": "Your financial data is protected with the same security standards used by major banks and financial institutions worldwide.",
+      "aes256Encryption": {
+        "title": "AES-256 Encryption",
+        "description": "Military-grade encryption for all data transmission and storage"
+      },
+      "rowLevelSecurity": {
+        "title": "Row-Level Security",
+        "description": "Advanced PostgreSQL RLS ensures complete data isolation"
+      },
+      "privacyFirst": {
+        "title": "Privacy First",
+        "description": "No data selling, no tracking, your information stays yours"
+      },
+      "complianceReady": {
+        "title": "Compliance Ready",
+        "description": "Built with international financial regulations in mind"
+      }
+    },
+    "testimonials": {
+      "title": "Loved by Thousands of Users",
+      "subtitle": "See what our users have to say about FinMate",
+      "rashed": {
+        "name": "Rashed Ahmed",
+        "role": "Software Engineer",
+        "content": "FinMate has completely transformed how I manage my finances in Bangladesh. The multi-currency support and EMI tracking are incredible!"
+      },
+      "fatima": {
+        "name": "Fatima Khan",
+        "role": "Entrepreneur",
+        "content": "The investment tracking and Zakat calculator features are exactly what I needed. Best financial app I've used!"
+      },
+      "hassan": {
+        "name": "Mohammad Hassan",
+        "role": "Marketing Manager",
+        "content": "Simple, beautiful, and powerful. The automated EMI system saves me so much time and stress."
+      }
+    },
+    "cta": {
+      "badge": "🎉 Join 25,000+ Happy Users Today",
+      "title": "Your Financial Freedom",
+      "titleHighlight": "Starts Here",
+      "subtitle": "Stop letting money stress control your life. Take charge with FinMate's comprehensive financial management platform.",
+      "startFreeForever": "Start Free Forever",
+      "seeItInAction": "See It In Action",
+      "noCreditCard": "No Credit Card Required",
+      "setupMinutes": "Setup in Under 2 Minutes",
+      "cancelAnytime": "Cancel Anytime"
+    },
+    "footer": {
+      "tagline": "The comprehensive financial management platform trusted by thousands. Track expenses, manage investments, automate EMIs, and achieve your financial goals.",
+      "features": "Features",
+      "expenseTracking": "Expense Tracking",
+      "budgetManagement": "Budget Management",
+      "investmentTracking": "Investment Tracking",
+      "emiManagement": "EMI Management",
+      "financialCalculators": "Financial Calculators",
+      "resources": "Resources",
+      "financialBlog": "Financial Blog",
+      "helpCenter": "Help Center",
+      "developerAPI": "Developer API",
+      "aboutUs": "About Us",
+      "contact": "Contact",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "supportCenter": "Support Center",
+      "currencies": "8 Currencies Supported",
+      "security": "Bank-Grade Security",
+      "pwaReady": "PWA Ready",
+      "allSystemsOperational": "All systems operational",
+      "version": "Version 2.1.0",
+      "copyright": "© 2025 FinMate. All rights reserved. Made with ❤️ for your financial success."
+    },
+    "trustIndicators": {
+      "bankLevelSecurity": "Bank-level Security",
+      "multiCurrencySupport": "Multi-Currency Support",
+      "pwaEnabled": "PWA Enabled",
+      "realtimeSync": "Real-time Sync"
+    }
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "getStarted": "Get Started",
+    "signOut": "Sign out",
+    "goToDashboard": "Go to Dashboard",
+    "helpSupport": "Help & Support"
+  },
+  "dashboard": {
+    "quickActions": {
+      "addTransaction": "Add Transaction",
+      "createBudget": "Create Budget",
+      "viewAnalytics": "View Analytics",
+      "helpCenter": "Help Center"
+    },
+    "notifications": {
+      "paymentAlerts": "Payment Alerts",
+      "overduePayments": "Overdue Payment{count, plural, one {} other {s}}",
+      "dueToday": "Payment{count, plural, one {} other {s}} Due Today",
+      "unreadReminders": "Unread Reminder{count, plural, one {} other {s}}",
+      "immediateAttention": "Immediate attention required",
+      "dontForgetEmi": "Don't forget your EMI payments",
+      "checkNotificationCenter": "Check your notification center",
+      "allCaughtUp": "All caught up!",
+      "noPendingPayments": "No pending payments or reminders",
+      "viewCreditDashboard": "View Credit Dashboard"
+    },
+    "searchPlaceholder": "Search transactions, categories...",
+    "profile": "Profile"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  }
+}

@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,8 +47,8 @@ import {
   X,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/navigation';
+import { Link } from '@/i18n/navigation';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -1028,6 +1029,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Language Switcher */}
+              <LanguageSwitcher variant="icon-only" size="sm" />
 
               {/* Theme toggle */}
               <Button variant="ghost" size="sm" onClick={toggleTheme}>

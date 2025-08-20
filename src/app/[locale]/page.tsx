@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -57,6 +58,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 // Animation variants
 const fadeInUp = {
@@ -76,6 +78,10 @@ export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const { user, profile, loading, signOut } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
+  const t = useTranslations('home');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
+  const tNav = useTranslations('navigation');
 
   useEffect(() => {
     setIsLoaded(true);
@@ -315,6 +321,9 @@ export default function LandingPage() {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* Language Switcher */}
+              <LanguageSwitcher variant="minimal" size="sm" />
+              
               {user ? (
                 <>
                   {/* Theme Toggle */}
@@ -573,12 +582,12 @@ export default function LandingPage() {
 
                   <Link href="/auth/signin">
                     <Button variant="ghost" size="sm">
-                      Sign In
+                      {tAuth('signIn')}
                     </Button>
                   </Link>
                   <Link href="/auth/signup">
                     <Button size="sm">
-                      Get Started
+                      {tAuth('getStarted')}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </Link>
@@ -606,7 +615,7 @@ export default function LandingPage() {
           >
             <motion.div variants={fadeInUp} className="mb-6">
               <Badge className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 text-sm font-semibold">
-                🚀 #1 Personal Finance App in Bangladesh
+                {t('hero.badge')}
               </Badge>
             </motion.div>
             
@@ -614,15 +623,15 @@ export default function LandingPage() {
               variants={fadeInUp}
               className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
             >
-              Master Your Money,{' '}
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">Transform Your Life</span>
+              {t('hero.title')}{' '}
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">{t('hero.titleHighlight')}</span>
             </motion.h1>
             
             <motion.p
               variants={fadeInUp}
               className="text-xl sm:text-2xl text-muted-foreground mb-8 max-w-4xl mx-auto leading-relaxed"
             >
-              The only financial companion you'll ever need. Track expenses, manage investments, automate EMIs, and achieve your goals with AI-powered insights.
+              {t('hero.subtitle')}
             </motion.p>
 
             <motion.div
@@ -631,14 +640,14 @@ export default function LandingPage() {
             >
               <Link href="/auth/signup">
                 <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 text-lg px-8 py-4">
-                  Start Free - No Credit Card
+                  {t('hero.startFree')}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Link href="#demo">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto border-2 hover:bg-muted/50 text-lg px-8 py-4 group">
                   <PlayCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                  Watch Demo
+                  {t('hero.watchDemo')}
                 </Button>
               </Link>
             </motion.div>
