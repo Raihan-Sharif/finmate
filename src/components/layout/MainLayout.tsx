@@ -51,6 +51,7 @@ import { usePathname } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslations } from 'next-intl';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -65,307 +66,358 @@ interface NavigationItem {
   children?: NavigationItem[];
 }
 
-const navigation: NavigationItem[] = [
-  {
-    name: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-  },
-  {
-    name: 'Transactions',
-    href: '/dashboard/transactions',
-    icon: Receipt,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    children: [
-      {
-        name: 'All Transactions',
-        href: '/dashboard/transactions',
-        icon: Receipt,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50',
-      },
-      {
-        name: 'Add Transaction',
-        href: '/dashboard/transactions/new',
-        icon: Plus,
-        color: 'text-emerald-600',
-        bgColor: 'bg-emerald-50',
-      },
-      {
-        name: 'Recurring Transactions',
-        href: '/dashboard/transactions/recurring',
-        icon: Clock,
-        color: 'text-emerald-600',
-        bgColor: 'bg-emerald-50',
-      },
-      {
-        name: 'Import/Export',
-        href: '/dashboard/transactions/import-export',
-        icon: Upload,
-        color: 'text-teal-600',
-        bgColor: 'bg-teal-50',
-      },
-    ],
-  },
-  {
-    name: 'Budget',
-    href: '/dashboard/budget',
-    icon: Target,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
-    children: [
-      {
-        name: 'Current Budget',
-        href: '/dashboard/budget',
-        icon: Target,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-50',
-      },
-      {
-        name: 'Create Budget',
-        href: '/dashboard/budget/new',
-        icon: Plus,
-        color: 'text-amber-600',
-        bgColor: 'bg-amber-50',
-      },
-      {
-        name: 'Recurring Budget',
-        href: '/dashboard/budget/recurring',
-        icon: Clock,
-        color: 'text-yellow-600',
-        bgColor: 'bg-yellow-50',
-      },
-    ],
-  },
-  {
-    name: 'Investments',
-    href: '/dashboard/investments',
-    icon: TrendingUp,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    children: [
-      {
-        name: 'Portfolio Overview',
-        href: '/dashboard/investments',
-        icon: TrendingUp,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-50',
-      },
-      {
-        name: 'Add Investment',
-        href: '/dashboard/investments/new',
-        icon: Plus,
-        color: 'text-violet-600',
-        bgColor: 'bg-violet-50',
-      },
-      {
-        name: 'SIP Management',
-        href: '/dashboard/investments/sips',
-        icon: Clock,
-        color: 'text-indigo-600',
-        bgColor: 'bg-indigo-50',
-      },
-      {
-        name: 'Analytics',
-        href: '/dashboard/investments/analytics',
-        icon: BarChart3,
-        color: 'text-purple-700',
-        bgColor: 'bg-purple-100',
-      },
-    ],
-  },
-  {
-    name: 'Credit & Lending',
-    href: '/dashboard/credit',
-    icon: CreditCard,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
-    children: [
-      {
-        name: 'Overview',
-        href: '/dashboard/credit',
-        icon: LayoutDashboard,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50',
-      },
-      {
-        name: 'Bank Loans',
-        href: '/dashboard/credit/loans',
-        icon: Building,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50',
-      },
-      {
-        name: 'Purchase EMI',
-        href: '/dashboard/credit/purchase-emi',
-        icon: ShoppingCart,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-50',
-      },
-      {
-        name: 'Personal Lending',
-        href: '/dashboard/credit/personal-lending',
-        icon: Users,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50',
-      },
-      {
-        name: 'Analytics',
-        href: '/dashboard/credit/analytics',
-        icon: BarChart3,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-50',
-      },
-    ],
-  },
-  {
-    name: 'Calculators',
-    href: '/dashboard/calculators',
-    icon: Calculator,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
-    children: [
-      {
-        name: 'Loan & EMI Calculator',
-        href: '/dashboard/calculators/loan-emi',
-        icon: Calculator,
-        color: 'text-indigo-600',
-        bgColor: 'bg-indigo-50',
-      },
-      {
-        name: 'Tax Calculator',
-        href: '/dashboard/calculators/tax',
-        icon: Receipt,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50',
-      },
-      {
-        name: 'Zakat Calculator',
-        href: '/dashboard/calculators/zakat',
-        icon: Target,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50',
-      },
-    ],
-  },
-  {
-    name: 'Analytics',
-    href: '/dashboard/analytics',
-    icon: BarChart3,
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-50',
-  },
-  {
-    name: 'Settings',
-    href: '/dashboard/settings',
-    icon: Settings,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50',
-    children: [
-      {
-        name: 'General',
-        href: '/dashboard/settings',
-        icon: Settings,
-        color: 'text-gray-600',
-        bgColor: 'bg-gray-50',
-      },
-      {
-        name: 'Accounts',
-        href: '/dashboard/settings/accounts',
-        icon: CreditCard,
-        color: 'text-pink-600',
-        bgColor: 'bg-pink-50',
-      },
-      {
-        name: 'Categories',
-        href: '/dashboard/settings/categories',
-        icon: Receipt,
-        color: 'text-indigo-600',
-        bgColor: 'bg-indigo-50',
-      },
-      {
-        name: 'Export Data',
-        href: '/dashboard/settings/export',
-        icon: Download,
-        color: 'text-slate-600',
-        bgColor: 'bg-slate-50',
-      },
-    ],
-  },
-];
+interface NavigationItemConfig {
+  translationKey: string;
+  href: string;
+  icon: any;
+  color: string;
+  bgColor: string;
+  children?: NavigationItemConfig[];
+}
 
-const adminNavigation: NavigationItem[] = [
-  {
-    name: 'Admin Panel',
-    href: '/admin',
-    icon: Shield,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
-    children: [
-      {
-        name: 'Dashboard',
-        href: '/admin',
-        icon: LayoutDashboard,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50',
-      },
-      {
-        name: 'User Management',
-        href: '/admin/users',
-        icon: Users,
-        color: 'text-rose-600',
-        bgColor: 'bg-rose-50',
-      },
-      {
-        name: 'System Settings',
-        href: '/admin/settings',
-        icon: Settings,
-        color: 'text-pink-600',
-        bgColor: 'bg-pink-50',
-      },
-      {
-        name: 'Audit Logs',
-        href: '/admin/audit-logs',
-        icon: Receipt,
-        color: 'text-red-700',
-        bgColor: 'bg-red-100',
-      },
-    ],
-  },
-];
+function getNavigationItems(t: (key: string) => string): NavigationItem[] {
+  const navigationConfig: NavigationItemConfig[] = [
+    {
+      translationKey: 'navigation.dashboard',
+      href: '/dashboard',
+      icon: LayoutDashboard,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+    },
+    {
+      translationKey: 'navigation.transactions',
+      href: '/dashboard/transactions',
+      icon: Receipt,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      children: [
+        {
+          translationKey: 'navigation.allTransactions',
+          href: '/dashboard/transactions',
+          icon: Receipt,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50',
+        },
+        {
+          translationKey: 'navigation.addTransaction',
+          href: '/dashboard/transactions/new',
+          icon: Plus,
+          color: 'text-emerald-600',
+          bgColor: 'bg-emerald-50',
+        },
+        {
+          translationKey: 'navigation.recurringTransactions',
+          href: '/dashboard/transactions/recurring',
+          icon: Clock,
+          color: 'text-emerald-600',
+          bgColor: 'bg-emerald-50',
+        },
+        {
+          translationKey: 'navigation.importExport',
+          href: '/dashboard/transactions/import-export',
+          icon: Upload,
+          color: 'text-teal-600',
+          bgColor: 'bg-teal-50',
+        },
+      ],
+    },
+    {
+      translationKey: 'navigation.budget',
+      href: '/dashboard/budget',
+      icon: Target,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      children: [
+        {
+          translationKey: 'navigation.currentBudget',
+          href: '/dashboard/budget',
+          icon: Target,
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-50',
+        },
+        {
+          translationKey: 'navigation.createBudget',
+          href: '/dashboard/budget/new',
+          icon: Plus,
+          color: 'text-amber-600',
+          bgColor: 'bg-amber-50',
+        },
+        {
+          translationKey: 'navigation.recurringBudget',
+          href: '/dashboard/budget/recurring',
+          icon: Clock,
+          color: 'text-yellow-600',
+          bgColor: 'bg-yellow-50',
+        },
+      ],
+    },
+    {
+      translationKey: 'navigation.investments',
+      href: '/dashboard/investments',
+      icon: TrendingUp,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      children: [
+        {
+          translationKey: 'navigation.portfolioOverview',
+          href: '/dashboard/investments',
+          icon: TrendingUp,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50',
+        },
+        {
+          translationKey: 'navigation.addInvestment',
+          href: '/dashboard/investments/new',
+          icon: Plus,
+          color: 'text-violet-600',
+          bgColor: 'bg-violet-50',
+        },
+        {
+          translationKey: 'navigation.sipManagement',
+          href: '/dashboard/investments/sips',
+          icon: Clock,
+          color: 'text-indigo-600',
+          bgColor: 'bg-indigo-50',
+        },
+        {
+          translationKey: 'navigation.analytics',
+          href: '/dashboard/investments/analytics',
+          icon: BarChart3,
+          color: 'text-purple-700',
+          bgColor: 'bg-purple-100',
+        },
+      ],
+    },
+    {
+      translationKey: 'navigation.creditLending',
+      href: '/dashboard/credit',
+      icon: CreditCard,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      children: [
+        {
+          translationKey: 'navigation.overview',
+          href: '/dashboard/credit',
+          icon: LayoutDashboard,
+          color: 'text-red-600',
+          bgColor: 'bg-red-50',
+        },
+        {
+          translationKey: 'navigation.bankLoans',
+          href: '/dashboard/credit/loans',
+          icon: Building,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50',
+        },
+        {
+          translationKey: 'navigation.purchaseEMI',
+          href: '/dashboard/credit/purchase-emi',
+          icon: ShoppingCart,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50',
+        },
+        {
+          translationKey: 'navigation.personalLending',
+          href: '/dashboard/credit/personal-lending',
+          icon: Users,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50',
+        },
+        {
+          translationKey: 'navigation.analytics',
+          href: '/dashboard/credit/analytics',
+          icon: BarChart3,
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-50',
+        },
+      ],
+    },
+    {
+      translationKey: 'navigation.calculators',
+      href: '/dashboard/calculators',
+      icon: Calculator,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      children: [
+        {
+          translationKey: 'navigation.loanEmiCalculator',
+          href: '/dashboard/calculators/loan-emi',
+          icon: Calculator,
+          color: 'text-indigo-600',
+          bgColor: 'bg-indigo-50',
+        },
+        {
+          translationKey: 'navigation.taxCalculator',
+          href: '/dashboard/calculators/tax',
+          icon: Receipt,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50',
+        },
+        {
+          translationKey: 'navigation.zakatCalculator',
+          href: '/dashboard/calculators/zakat',
+          icon: Target,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50',
+        },
+      ],
+    },
+    {
+      translationKey: 'navigation.analytics',
+      href: '/dashboard/analytics',
+      icon: BarChart3,
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-50',
+    },
+    {
+      translationKey: 'navigation.settings',
+      href: '/dashboard/settings',
+      icon: Settings,
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      children: [
+        {
+          translationKey: 'navigation.general',
+          href: '/dashboard/settings',
+          icon: Settings,
+          color: 'text-gray-600',
+          bgColor: 'bg-gray-50',
+        },
+        {
+          translationKey: 'navigation.accounts',
+          href: '/dashboard/settings/accounts',
+          icon: CreditCard,
+          color: 'text-pink-600',
+          bgColor: 'bg-pink-50',
+        },
+        {
+          translationKey: 'navigation.categories',
+          href: '/dashboard/settings/categories',
+          icon: Receipt,
+          color: 'text-indigo-600',
+          bgColor: 'bg-indigo-50',
+        },
+        {
+          translationKey: 'navigation.exportData',
+          href: '/dashboard/settings/export',
+          icon: Download,
+          color: 'text-slate-600',
+          bgColor: 'bg-slate-50',
+        },
+      ],
+    },
+  ];
+  
+  return navigationConfig.map(item => ({
+    name: t(item.translationKey),
+    href: item.href,
+    icon: item.icon,
+    color: item.color,
+    bgColor: item.bgColor,
+    ...(item.children && {
+      children: item.children.map(child => ({
+        name: t(child.translationKey),
+        href: child.href,
+        icon: child.icon,
+        color: child.color,
+        bgColor: child.bgColor
+      }))
+    })
+  }));
+}
 
-const quickActions = [
-  {
-    name: 'Add Transaction',
-    href: '/dashboard/transactions/new',
-    icon: Plus,
-    color: 'text-green-600',
-  },
-  {
-    name: 'Create Budget',
-    href: '/dashboard/budget/new',
-    icon: Target,
-    color: 'text-blue-600',
-  },
-  {
-    name: 'View Analytics',
-    href: '/dashboard/analytics',
-    icon: BarChart3,
-    color: 'text-purple-600',
-  },
-  {
-    name: 'Help Center',
-    href: '/help',
-    icon: HelpCircle,
-    color: 'text-gray-600',
-  },
-];
+function getAdminNavigationItems(t: (key: string) => string): NavigationItem[] {
+  const adminNavigationConfig: NavigationItemConfig[] = [
+    {
+      translationKey: 'navigation.adminPanel',
+      href: '/admin',
+      icon: Shield,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      children: [
+        {
+          translationKey: 'navigation.dashboard',
+          href: '/admin',
+          icon: LayoutDashboard,
+          color: 'text-red-600',
+          bgColor: 'bg-red-50',
+        },
+        {
+          translationKey: 'navigation.userManagement',
+          href: '/admin/users',
+          icon: Users,
+          color: 'text-rose-600',
+          bgColor: 'bg-rose-50',
+        },
+        {
+          translationKey: 'navigation.systemSettings',
+          href: '/admin/settings',
+          icon: Settings,
+          color: 'text-pink-600',
+          bgColor: 'bg-pink-50',
+        },
+        {
+          translationKey: 'navigation.auditLogs',
+          href: '/admin/audit-logs',
+          icon: Receipt,
+          color: 'text-red-700',
+          bgColor: 'bg-red-100',
+        },
+      ],
+    },
+  ];
+  
+  return adminNavigationConfig.map(item => ({
+    name: t(item.translationKey),
+    href: item.href,
+    icon: item.icon,
+    color: item.color,
+    bgColor: item.bgColor,
+    ...(item.children && {
+      children: item.children.map(child => ({
+        name: t(child.translationKey),
+        href: child.href,
+        icon: child.icon,
+        color: child.color,
+        bgColor: child.bgColor
+      }))
+    })
+  }));
+}
+
+function getQuickActions(t: (key: string) => string) {
+  return [
+    {
+      name: t('dashboard.quickActions.addTransaction'),
+      href: '/dashboard/transactions/new',
+      icon: Plus,
+      color: 'text-green-600',
+    },
+    {
+      name: t('dashboard.quickActions.createBudget'),
+      href: '/dashboard/budget/new',
+      icon: Target,
+      color: 'text-blue-600',
+    },
+    {
+      name: t('dashboard.quickActions.viewAnalytics'),
+      href: '/dashboard/analytics',
+      icon: BarChart3,
+      color: 'text-purple-600',
+    },
+    {
+      name: t('dashboard.quickActions.helpCenter'),
+      href: '/help',
+      icon: HelpCircle,
+      color: 'text-gray-600',
+    },
+  ];
+}
 
 // Default export function
 export default function MainLayout({ children }: MainLayoutProps) {
+  const t = useTranslations();
+  const tDashboard = useTranslations('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedItems, setExpandedItems] = useState<string[]>([]); // No menu expanded by default
@@ -378,6 +430,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
   // Auto transactions and reminders system
   const { isProcessing: isAutoProcessing } = useAutoTransactions();
   const { pendingReminders, dueTodayCount, overdueCount } = usePaymentStatus();
+  
+  // Get navigation items with translations
+  const navigation = getNavigationItems(t);
+  const adminNavigation = getAdminNavigationItems(t);
+  const quickActions = getQuickActions(t);
 
   // Close sidebar on route change and auto-expand parent menu if child is active
   useEffect(() => {
@@ -673,7 +730,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <>
               <div className="my-4 border-t border-border pt-4">
                 <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Administration
+                  {t('navigation.administration') || 'Administration'}
                 </p>
               </div>
               {adminNavigation.map((item) => (
@@ -747,7 +804,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="p-4 border-t border-border">
           <div className="mb-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Quick Actions
+              {tDashboard('quickActions.title') || 'Quick Actions'}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {quickActions.map((action) => (
@@ -948,7 +1005,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 <Input
                   id="search-input"
                   type="text"
-                  placeholder="Search transactions, categories..."
+                  placeholder={tDashboard('searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-4 w-64"
@@ -965,7 +1022,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               <Link href="/dashboard/transactions/new">
                 <Button size="sm" className="hidden sm:flex">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Transaction
+                  {tDashboard('quickActions.addTransaction')}
                 </Button>
               </Link>
 
@@ -983,47 +1040,47 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80">
                   <div className="p-3 border-b">
-                    <h3 className="font-semibold">Payment Alerts</h3>
+                    <h3 className="font-semibold">{tDashboard('notifications.paymentAlerts')}</h3>
                   </div>
                   {overdueCount > 0 && (
                     <div className="p-3 border-l-4 border-l-red-500 bg-red-50 dark:bg-red-900/20">
                       <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
                         <Bell className="h-4 w-4" />
-                        <span className="font-medium">{overdueCount} Overdue Payment{overdueCount > 1 ? 's' : ''}</span>
+                        <span className="font-medium">{overdueCount} {tDashboard('notifications.overduePayments')}</span>
                       </div>
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">Immediate attention required</p>
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">{tDashboard('notifications.immediateAttention')}</p>
                     </div>
                   )}
                   {dueTodayCount > 0 && (
                     <div className="p-3 border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-900/20">
                       <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
                         <Clock className="h-4 w-4" />
-                        <span className="font-medium">{dueTodayCount} Payment{dueTodayCount > 1 ? 's' : ''} Due Today</span>
+                        <span className="font-medium">{dueTodayCount} {tDashboard('notifications.dueToday')}</span>
                       </div>
-                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Don't forget your EMI payments</p>
+                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">{tDashboard('notifications.dontForgetEmi')}</p>
                     </div>
                   )}
                   {pendingReminders > 0 && (
                     <div className="p-3 border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-900/20">
                       <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
                         <Bell className="h-4 w-4" />
-                        <span className="font-medium">{pendingReminders} Unread Reminder{pendingReminders > 1 ? 's' : ''}</span>
+                        <span className="font-medium">{pendingReminders} {tDashboard('notifications.unreadReminders')}</span>
                       </div>
-                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Check your notification center</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">{tDashboard('notifications.checkNotificationCenter')}</p>
                     </div>
                   )}
                   {pendingReminders === 0 && dueTodayCount === 0 && overdueCount === 0 && (
                     <div className="p-3 text-center text-muted-foreground">
                       <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">All caught up!</p>
-                      <p className="text-xs">No pending payments or reminders</p>
+                      <p className="text-sm">{tDashboard('notifications.allCaughtUp')}</p>
+                      <p className="text-xs">{tDashboard('notifications.noPendingPayments')}</p>
                     </div>
                   )}
                   <DropdownMenuSeparator />
                   <div className="p-2">
                     <Link href="/dashboard/credit">
                       <Button variant="ghost" size="sm" className="w-full justify-start">
-                        View Credit Dashboard
+                        {tDashboard('notifications.viewCreditDashboard')}
                       </Button>
                     </Link>
                   </div>
@@ -1119,33 +1176,33 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard">
                       <ArrowRight className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
+                      <span>{t('navigation.dashboard')}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/settings">
                       <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
+                      <span>{tDashboard('profile')}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/settings">
                       <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
+                      <span>{t('navigation.settings')}</span>
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin() && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin">
                         <Shield className="mr-2 h-4 w-4" />
-                        <span>Admin Panel</span>
+                        <span>{t('navigation.adminPanel')}</span>
                       </Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>{t('auth.signOut')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

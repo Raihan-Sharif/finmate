@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Github, Loader2, Mail, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -19,6 +21,8 @@ interface SignInForm {
 }
 
 export default function SignInForm() {
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
   const { signIn, signInWithOAuth, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,9 +71,9 @@ export default function SignInForm() {
               </div>
               <span className="text-2xl font-bold text-gray-900 dark:text-white">FinMate</span>
             </div>
-            <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t('welcomeBack')}</CardTitle>
             <CardDescription>
-              Enter your credentials to access your financial dashboard
+              {t('enterCredentials')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -85,19 +89,19 @@ export default function SignInForm() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t('enterEmail')}
                     className="pl-10"
                     {...register('email', {
-                      required: 'Email is required',
+                      required: t('emailRequired'),
                       pattern: {
                         value: /^\S+@\S+$/i,
-                        message: 'Invalid email address',
+                        message: t('invalidEmail'),
                       },
                     })}
                   />
@@ -108,18 +112,18 @@ export default function SignInForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
+                    placeholder={t('enterPassword')}
                     className="pr-10"
                     {...register('password', {
-                      required: 'Password is required',
+                      required: t('passwordRequired'),
                       minLength: {
                         value: 6,
-                        message: 'Password must be at least 6 characters',
+                        message: t('passwordMinLength'),
                       },
                     })}
                   />
@@ -144,10 +148,10 @@ export default function SignInForm() {
                 {isSubmitting || loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {t('signingIn')}
                   </>
                 ) : (
-                  'Sign In'
+                  t('signIn')
                 )}
               </Button>
             </form>
@@ -158,7 +162,7 @@ export default function SignInForm() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-white px-2 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-                  Or continue with
+                  {t('orContinueWith')}
                 </span>
               </div>
             </div>
@@ -171,7 +175,7 @@ export default function SignInForm() {
                 className="hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 <Mail className="mr-2 h-4 w-4" />
-                Google
+                {t('google')}
               </Button>
               <Button
                 variant="outline"
@@ -180,21 +184,22 @@ export default function SignInForm() {
                 className="hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 <Github className="mr-2 h-4 w-4" />
-                GitHub
+                {t('github')}
               </Button>
             </div>
 
             <div className="text-center text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Don't have an account? </span>
+              <span className="text-gray-600 dark:text-gray-400">{t('dontHaveAccount')} </span>
               <Link href="/auth/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-                Sign up
+                {t('signUp')}
               </Link>
             </div>
 
-            <div className="text-center">
+            <div className="flex items-center justify-between">
               <Link href="/" className="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
-                ← Back to home
+                {t('backToHome')}
               </Link>
+              <LanguageSwitcher variant="minimal" size="sm" />
             </div>
           </CardContent>
         </Card>

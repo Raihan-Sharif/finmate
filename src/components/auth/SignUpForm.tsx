@@ -9,8 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Github, Loader2, Mail, User, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -23,6 +25,8 @@ interface SignUpForm {
 }
 
 export default function SignUpForm() {
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
   const { signUp, signInWithOAuth, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -77,9 +81,9 @@ export default function SignUpForm() {
               </div>
               <span className="text-2xl font-bold text-gray-900 dark:text-white">FinMate</span>
             </div>
-            <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t('createAccount')}</CardTitle>
             <CardDescription>
-              Start your journey to better financial management
+              {t('startJourney')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -95,19 +99,19 @@ export default function SignUpForm() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">{t('fullName')}</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="fullName"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder={t('enterFullName')}
                     className="pl-10"
                     {...register('fullName', {
-                      required: 'Full name is required',
+                      required: t('fullNameRequired'),
                       minLength: {
                         value: 2,
-                        message: 'Name must be at least 2 characters',
+                        message: t('nameMinLength'),
                       },
                     })}
                   />
@@ -118,19 +122,19 @@ export default function SignUpForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t('enterEmail')}
                     className="pl-10"
                     {...register('email', {
-                      required: 'Email is required',
+                      required: t('emailRequired'),
                       pattern: {
                         value: /^\S+@\S+$/i,
-                        message: 'Invalid email address',
+                        message: t('invalidEmail'),
                       },
                     })}
                   />
@@ -141,22 +145,22 @@ export default function SignUpForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Create a password"
+                    placeholder={t('createPassword')}
                     className="pr-10"
                     {...register('password', {
-                      required: 'Password is required',
+                      required: t('passwordRequired'),
                       minLength: {
                         value: 8,
-                        message: 'Password must be at least 8 characters',
+                        message: t('passwordMinLengthStrong'),
                       },
                       pattern: {
                         value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                        message: 'Password must contain at least one uppercase, lowercase, and number',
+                        message: t('passwordPattern'),
                       },
                     })}
                   />
@@ -174,17 +178,17 @@ export default function SignUpForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm your password"
+                    placeholder={t('confirmYourPassword')}
                     className="pr-10"
                     {...register('confirmPassword', {
-                      required: 'Please confirm your password',
+                      required: t('confirmPasswordRequired'),
                       validate: (value) =>
-                        value === password || 'Passwords do not match',
+                        value === password || t('passwordsDoNotMatch'),
                     })}
                   />
                   <button
@@ -204,17 +208,17 @@ export default function SignUpForm() {
                 <Checkbox
                   id="acceptTerms"
                   {...register('acceptTerms', {
-                    required: 'You must accept the terms and conditions',
+                    required: t('acceptTermsRequired'),
                   })}
                 />
                 <Label htmlFor="acceptTerms" className="text-sm text-gray-600 dark:text-gray-400">
-                  I agree to the{' '}
+                  {t('acceptTerms')}{' '}
                   <Link href="/terms" className="text-blue-600 hover:text-blue-700">
-                    Terms of Service
+                    {t('termsOfService')}
                   </Link>{' '}
-                  and{' '}
+                  {t('and')}{' '}
                   <Link href="/privacy" className="text-blue-600 hover:text-blue-700">
-                    Privacy Policy
+                    {t('privacyPolicy')}
                   </Link>
                 </Label>
               </div>
@@ -230,10 +234,10 @@ export default function SignUpForm() {
                 {isSubmitting || loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    {t('creatingAccount')}
                   </>
                 ) : (
-                  'Create Account'
+                  t('createAccountButton')
                 )}
               </Button>
             </form>
@@ -244,7 +248,7 @@ export default function SignUpForm() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-white px-2 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-                  Or continue with
+                  {t('orContinueWith')}
                 </span>
               </div>
             </div>
@@ -257,7 +261,7 @@ export default function SignUpForm() {
                 className="hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 <Mail className="mr-2 h-4 w-4" />
-                Google
+                {t('google')}
               </Button>
               <Button
                 variant="outline"
@@ -266,21 +270,22 @@ export default function SignUpForm() {
                 className="hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 <Github className="mr-2 h-4 w-4" />
-                GitHub
+                {t('github')}
               </Button>
             </div>
 
             <div className="text-center text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Already have an account? </span>
+              <span className="text-gray-600 dark:text-gray-400">{t('alreadyHaveAccount')} </span>
               <Link href="/auth/signin" className="text-blue-600 hover:text-blue-700 font-medium">
-                Sign in
+                {t('signIn')}
               </Link>
             </div>
 
-            <div className="text-center">
+            <div className="flex items-center justify-between">
               <Link href="/" className="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
-                ← Back to home
+                {t('backToHome')}
               </Link>
+              <LanguageSwitcher variant="minimal" size="sm" />
             </div>
           </CardContent>
         </Card>
