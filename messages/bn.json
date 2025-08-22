@@ -243,6 +243,115 @@
       "realtimeSync": "রিয়েল-টাইম সিঙ্ক"
     }
   },
+  "dashboard": {
+    "periods": {
+      "last7Days": "গত ৭ দিন",
+      "last30Days": "গত ৩০ দিন",
+      "last3Months": "গত ৩ মাস",
+      "last6Months": "গত ৬ মাস",
+      "lastYear": "গত বছর",
+      "yearToDate": "বছরের শুরু থেকে এ পর্যন্ত",
+      "allTime": "সকল সময়",
+      "thisMonth": "এই মাস",
+      "thisYear": "এই বছর"
+    },
+    "greeting": {
+      "morning": "সুপ্রভাত",
+      "afternoon": "শুভ দুপুর",
+      "evening": "শুভ সন্ধ্যা"
+    },
+    "overview": {
+      "financialOverview": "এখানে আপনার সম্পূর্ণ আর্থিক অবস্থার সারসংক্ষেপ রয়েছে",
+      "loadingDashboard": "আপনার আর্থিক ড্যাশবোর্ড লোড হচ্ছে...",
+      "somethingWentWrong": "কিছু সমস্যা হয়েছে",
+      "tryAgain": "পুনরায় চেষ্টা করুন",
+      "quickAdd": "দ্রুত যোগ",
+      "manageBudgets": "বাজেট পরিচালনা",
+      "manageLoans": "ঋণ পরিচালনা",
+      "investments": "বিনিয়োগ",
+      "addTransaction": "লেনদেন যোগ করুন",
+      "createBudget": "বাজেট তৈরি করুন",
+      "viewReports": "রিপোর্ট দেখুন",
+      "addInvestment": "বিনিয়োগ যোগ করুন"
+    },
+    "stats": {
+      "accountBalance": "অ্যাকাউন্ট ব্যালেন্স",
+      "income": "আয়",
+      "expenses": "খরচ",
+      "netBalance": "নিট ব্যালেন্স",
+      "accounts": "অ্যাকাউন্ট",
+      "live": "লাইভ",
+      "savingsRate": "সঞ্চয় হার",
+      "investmentPortfolio": "বিনিয়োগ পোর্টফোলিও",
+      "totalInvestmentValue": "মোট বিনিয়োগের মূল্য",
+      "activeInvestments": "সক্রিয় বিনিয়োগ",
+      "returns": "রিটার্ন",
+      "loanCredit": "ঋণ ও ক্রেডিট",
+      "outstandingLoans": "বকেয়া ঋণ",
+      "activeLoans": "সক্রিয় ঋণ",
+      "pendingEmis": "পেন্ডিং ইএমআই"
+    },
+    "alerts": {
+      "smartFinancialAlerts": "স্মার্ট আর্থিক সতর্কবার্তা",
+      "immediateAttention": "তাৎক্ষণিক মনোযোগ প্রয়োজন",
+      "pendingEmis": "পেন্ডিং ইএমআই",
+      "manageLoans": "ঋণ ব্যবস্থাপনা",
+      "overdueLendings": "বকেয়া ধারদান",
+      "reviewLendings": "ধারদান পর্যালোচনা"
+    },
+    "analytics": {
+      "monthlyTrends": "মাসিক ট্রেন্ড",
+      "dynamicData": "ডাইনামিক ডেটা",
+      "incomeVsExpenses": "সময়ের সাথে আয় বনাম খরচ",
+      "allAmountsIn": "সকল পরিমাণ",
+      "categoryBreakdown": "বিভাগ অনুযায়ী ভাঙ্গন",
+      "topCategories": "শীর্ষ",
+      "expensesByCategory": "বিভাগ অনুযায়ী খরচ",
+      "financialHealth": "আর্থিক সুস্থতা",
+      "healthScore": "সুস্থতা স্কোর",
+      "excellent": "অসাধারণ",
+      "good": "ভালো",
+      "average": "গড়",
+      "poor": "খারাপ",
+      "keyFinancialMetrics": "প্রধান আর্থিক মেট্রিক্স",
+      "advancedAnalytics": "উন্নত বিশ্লেষণ",
+      "avgTransaction": "গড় লেনদেন",
+      "savingsRate": "সঞ্চয় হার",
+      "budgetUsage": "বাজেট ব্যবহার",
+      "investmentReturn": "বিনিয়োগ রিটার্ন"
+    },
+    "activity": {
+      "recentActivity": "সাম্প্রতিক কার্যক্রম",
+      "viewAll": "সব দেখুন",
+      "latestTransactions": "সর্বশেষ লেনদেন",
+      "noRecentActivity": "সাম্প্রতিক কোনো কার্যক্রম নেই",
+      "startAddingTransactions": "লেনদেন যোগ করা শুরু করুন"
+    },
+    "reminders": {
+      "upcomingReminders": "আসন্ন অনুস্মারক",
+      "items": "আইটেম",
+      "financialDeadlines": "আর্থিক সময়সীমা",
+      "today": "আজ"
+    },
+    "goals": {
+      "monthlyGoalsProgress": "মাসিক লক্ষ্যের অগ্রগতি",
+      "trackProgress": "অগ্রগতি ট্র্যাক করুন",
+      "progress": "অগ্রগতি"
+    },
+    "health": {
+      "excellentBudgetControl": "চমৎকার বাজেট নিয়ন্ত্রণ",
+      "closeToBudgetLimit": "বাজেট সীমার কাছাকাছি",
+      "overBudget": "বাজেট অতিক্রম",
+      "greatSavingsRate": "দুর্দান্ত সঞ্চয় হার",
+      "goodSavingsRate": "ভালো সঞ্চয় হার",
+      "lowSavingsRate": "নিম্ন সঞ্চয় হার",
+      "spendingMoreThanEarning": "আয়ের চেয়ে বেশি খরচ",
+      "activeInvestor": "সক্রিয় বিনিয়োগকারী",
+      "noInvestments": "কোনো বিনিয়োগ নেই",
+      "noPendingEmis": "কোনো পেন্ডিং ইএমআই নেই",
+      "hasPendingPayments": "পেন্ডিং পেমেন্ট আছে"
+    }
+  },
   "auth": {
     "signIn": "সাইন ইন",
     "signUp": "সাইন আপ",
@@ -847,7 +956,187 @@
     "budgetProgress": "বাজেটের অগ্রগতি",
     "totalBudgeted": "মোট বাজেট",
     "totalSpent": "মোট খরচ",
-    "budgetRemaining": "বাজেট অবশিষ্ট"
+    "budgetRemaining": "বাজেট অবশিষ্ট",
+    "of": "এর",
+    "daysLeft": "দিন বাকি",
+    "management": {
+      "title": "বাজেট পরিচালনা",
+      "subtitle": "আপনার আর্থিক লক্ষ্য অর্জনের জন্য ব্যয়ের সীমা নির্ধারণ এবং ট্র্যাক করুন",
+      "refresh": "রিফ্রেশ",
+      "recurring": "নিয়মিত",
+      "createNew": "বাজেট তৈরি করুন"
+    },
+    "alerts": {
+      "title": "বাজেট সতর্কতা ({count})",
+      "left": "বাকি",
+      "viewAll": "সব দেখুন"
+    },
+    "overview": {
+      "title": "বাজেট সারসংক্ষেপ",
+      "budgets": "বাজেট",
+      "activeCategories": "সক্রিয় বিভাগ",
+      "avgUsage": "গড় ব্যবহার",
+      "atRisk": "ঝুঁকিতে"
+    },
+    "status": {
+      "overBudget": "বাজেট অতিক্রম",
+      "atRisk": "ঝুঁকিতে",
+      "onTrack": "সঠিক পথে",
+      "good": "ভাল",
+      "warning": "সতর্কতা",
+      "over": "অতিক্রম"
+    },
+    "period": {
+      "weekly": "সাপ্তাহিক",
+      "monthly": "মাসিক",
+      "yearly": "বার্ষিক",
+      "current": "বর্তমান",
+      "thisMonth": "এই মাস",
+      "thisYear": "এই বছর"
+    },
+    "actions": {
+      "edit": "সম্পাদনা",
+      "delete": "মুছুন",
+      "duplicate": "নকল করুন",
+      "view": "দেখুন",
+      "manage": "পরিচালনা"
+    },
+    "empty": {
+      "title": "কোনো বাজেট নেই",
+      "description": "আপনার আর্থিক লক্ষ্য অর্জনের জন্য আপনার প্রথম বাজেট তৈরি করুন।",
+      "createFirst": "প্রথম বাজেট তৈরি করুন"
+    },
+    "messages": {
+      "duplicated": "বাজেট সফলভাবে নকল করা হয়েছে!",
+      "deleted": "বাজেট সফলভাবে মুছে ফেলা হয়েছে!",
+      "created": "বাজেট সফলভাবে তৈরি হয়েছে!",
+      "updated": "বাজেট সফলভাবে আপডেট হয়েছে!",
+      "deleteConfirm": "আপনি কি নিশ্চিত যে আপনি এই বাজেটটি মুছে ফেলতে চান?",
+      "duplicateConfirm": "আপনি কি এই বাজেটটি নকল করতে চান?",
+      "loadFailed": "বাজেট লোড করতে ব্যর্থ",
+      "saveFailed": "বাজেট সংরক্ষণ করতে ব্যর্থ",
+      "deleteFailed": "বাজেট মুছতে ব্যর্থ",
+      "budgetNotFound": "বাজেট পাওয়া যায়নি",
+      "budgetNotFoundOrNoPermission": "বাজেট পাওয়া যায়নি বা এটি সম্পাদনার অনুমতি নেই।"
+    },
+    "form": {
+      "name": "বাজেটের নাম",
+      "namePlaceholder": "যেমন: মাসিক খাদ্য বাজেট",
+      "description": "বিবরণ",
+      "descriptionPlaceholder": "এই বাজেট সম্পর্কে সংক্ষিপ্ত বিবরণ...",
+      "budgetType": "বাজেটের ধরন",
+      "period": "সময়কাল",
+      "amount": "বাজেটের পরিমাণ",
+      "amountPlaceholder": "০.০০",
+      "category": "বিভাগ",
+      "selectCategory": "বিভাগ নির্বাচন করুন",
+      "allCategories": "সকল বিভাগ",
+      "specificCategory": "নির্দিষ্ট বিভাগ",
+      "startDate": "শুরুর তারিখ",
+      "endDate": "শেষের তারিখ",
+      "alertThreshold": "সতর্কতার সীমা",
+      "alertThresholdHelp": "কত শতাংশ ব্যয় হলে সতর্কতা দেবে",
+      "autoRenew": "স্বয়ংক্রিয় নবায়ন",
+      "autoRenewHelp": "প্রতি মাস/বছর এই বাজেট স্বয়ংক্রিয়ভাবে নবায়ন করুন",
+      "isActive": "সক্রিয়",
+      "notes": "নোট",
+      "notesPlaceholder": "এই বাজেট সম্পর্কে অতিরিক্ত তথ্য...",
+      "basicInformation": "মৌলিক তথ্য",
+      "backToBudgets": "বাজেটে ফিরে যান",
+      "createNewBudget": "নতুন বাজেট তৈরি করুন",
+      "createBudgetDescription": "আপনার আর্থিক লক্ষ্য অর্জনের জন্য খরচের সীমা নির্ধারণ করুন",
+      "editBudget": "বাজেট সম্পাদনা করুন",
+      "editBudgetDescription": "আপনার বাজেট সেটিংস এবং খরচের সীমা আপডেট করুন",
+      "categories": "বিভাগসমূহ",
+      "categoriesDescription": "এই বাজেটে ট্র্যাক করার জন্য বিভাগ নির্বাচন করুন। সমস্ত খরচ ট্র্যাক করতে খালি রাখুন।",
+      "selectedCategories": "নির্বাচিত বিভাগ",
+      "alertSettings": "সতর্কতা সেটিংস",
+      "enableBudgetAlerts": "বাজেট সতর্কতা সক্রিয় করুন",
+      "alertsDescription": "আপনার বাজেট সীমার কাছাকাছি পৌঁছালে নোটিফিকেশন পান",
+      "alertThreshold": "সতর্কতার সীমা",
+      "alertNotificationDescription": "আপনার বাজেটের {threshold}% খরচ হলে আপনি নোটিফিকেশন পাবেন।",
+      "budgetSummary": "বাজেট সারসংক্ষেপ",
+      "duration": "সময়কাল",
+      "days": "দিন",
+      "all": "সব",
+      "alertAt": "সতর্কতা",
+      "creating": "তৈরি করা হচ্ছে",
+      "createBudget": "বাজেট তৈরি করুন",
+      "updating": "আপডেট হচ্ছে",
+      "updateBudget": "বাজেট আপডেট করুন",
+      "currentSpent": "বর্তমান খরচ",
+      "errors": {
+        "nameRequired": "বাজেটের নাম প্রয়োজন",
+        "amountRequired": "পরিমাণ প্রয়োজন",
+        "amountMustBeGreater": "পরিমাণ ০-এর চেয়ে বেশি হতে হবে",
+        "startDateRequired": "শুরুর তারিখ প্রয়োজন",
+        "endDateRequired": "শেষের তারিখ প্রয়োজন",
+        "endDateAfterStart": "শেষের তারিখ শুরুর তারিখের পরে হতে হবে",
+        "alertThresholdRange": "সতর্কতার সীমা ১ থেকে ১০০ এর মধ্যে হতে হবে",
+        "categoryRequired": "বিভাগ নির্বাচন প্রয়োজন",
+        "fixErrors": "দয়া করে ফর্মের ত্রুটিগুলি সংশোধন করুন",
+        "userNotAuthenticated": "ব্যবহারকারী অনুমোদিত নন",
+        "budgetIdNotFound": "বাজেট আইডি পাওয়া যায়নি"
+      },
+      "success": {
+        "created": "বাজেট সফলভাবে তৈরি হয়েছে!",
+        "updated": "বাজেট সফলভাবে আপডেট হয়েছে!",
+        "deleted": "বাজেট সফলভাবে মুছে ফেলা হয়েছে!"
+      }
+    },
+    "recurring": {
+      "title": "নিয়মিত বাজেট",
+      "subtitle": "টেমপ্লেট এবং নিয়মিত সেটআপের মাধ্যমে আপনার বাজেট তৈরি স্বয়ংক্রিয় করুন",
+      "createdSuccessfully": "{count}টি নিয়মিত বাজেট সফলভাবে তৈরি হয়েছে!",
+      "createdFromPrevious": "পূর্ববর্তী মাস থেকে {count}টি বাজেট তৈরি হয়েছে!",
+      "quickActions": "দ্রুত কার্যক্রম",
+      "quickActionsSubtitle": "বিদ্যমান প্যাটার্নের ভিত্তিতে বাজেট তৈরির দ্রুত উপায়",
+      "createFromPrevious": "পূর্ববর্তী মাস থেকে তৈরি করুন",
+      "createFromPreviousDescription": "আপনার পূর্ববর্তী মাসের বাজেটের উপর ভিত্তি করে নতুন বাজেট তৈরি করুন",
+      "templates": "টেমপ্লেট",
+      "customTemplate": "কাস্টম টেমপ্লেট",
+      "popularTemplates": "জনপ্রিয় টেমপ্লেট",
+      "myTemplates": "আমার টেমপ্লেট",
+      "globalTemplates": "গ্লোবাল টেমপ্লেট",
+      "searchPlaceholder": "টেমপ্লেট খুঁজুন...",
+      "noTemplatesFound": "কোনো টেমপ্লেট পাওয়া যায়নি",
+      "createCustom": "কাস্টম তৈরি করুন",
+      "saveAsTemplate": "টেমপ্লেট হিসেবে সংরক্ষণ",
+      "useTemplate": "টেমপ্লেট ব্যবহার করুন",
+      "customize": "কাস্টমাইজ করুন",
+      "duplicate": "নকল করুন",
+      "delete": "মুছুন",
+      "edit": "সম্পাদনা",
+      "months": "মাস",
+      "monthsPlaceholder": "কত মাসের জন্য?",
+      "createRecurring": "নিয়মিত বাজেট তৈরি করুন",
+      "onlyPaidUsers": "শুধুমাত্র পেইড ব্যবহারকারীরা কাস্টম টেমপ্লেট তৈরি করতে পারেন। আপনার অ্যাকাউন্ট আপগ্রেড করুন।",
+      "cannotDeleteGlobal": "আপনি গ্লোবাল টেমপ্লেট মুছতে পারবেন না"
+    },
+    "tips": {
+      "title": "বাজেট টিপস",
+      "subtitle": "আপনার বাজেট আরও ভালভাবে পরিচালনা করতে স্মার্ট পরামর্শ",
+      "realisticGoals": {
+        "title": "বাস্তবসম্মত লক্ষ্য নির্ধারণ করুন",
+        "description": "গত ৩ মাসের আপনার প্রকৃত খরচের ধরন অনুযায়ী বাজেট নির্ধারণ করুন।"
+      },
+      "rule503020": {
+        "title": "৫০/৩০/২০ নিয়ম ব্যবহার করুন",
+        "description": "প্রয়োজনীয় খরচের জন্য ৫০%, ইচ্ছার জন্য ৩০%, এবং সঞ্চয় ও ঋণ পরিশোধের জন্য ২০% বরাদ্দ করুন।"
+      },
+      "reviewRegularly": {
+        "title": "নিয়মিত পর্যালোচনা করুন",
+        "description": "নিয়ন্ত্রণে থাকতে এবং প্রয়োজনীয় সমন্বয় করতে সাপ্তাহিক ভিত্তিতে আপনার বাজেট অগ্রগতি পরীক্ষা করুন।"
+      },
+      "planUnexpected": {
+        "title": "অপ্রত্যাশিত খরচের পরিকল্পনা করুন",
+        "description": "অপ্রত্যাশিত খরচের জন্য আপনার বাজেটে ১০-১৫% বাফার যোগ করুন।"
+      },
+      "planUnexpected": {
+        "title": "অপ্রত্যাশিত খরচের পরিকল্পনা করুন",
+        "description": "অপ্রত্যাশিত খরচের জন্য আপনার বাজেটে ১০-১৫% বাফার যোগ করুন।"
+      }
+    }
   },
   "investments": {
     "title": "বিনিয়োগ",

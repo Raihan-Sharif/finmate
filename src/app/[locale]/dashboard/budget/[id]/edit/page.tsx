@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, DollarSign, Target, AlertTriangle, Save, Tag, Info, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -37,6 +38,8 @@ interface EditBudgetPageProps {
 
 export default function EditBudgetPage({ params }: EditBudgetPageProps) {
   const router = useRouter();
+  const t = useTranslations('budget');
+  const tCommon = useTranslations('common');
   const { profile } = useAuth();
   const { updateBudget, deleteBudget, getBudgetById, isUpdating, isDeleting } = useBudgets();
   const { budgetCategories, isLoading: categoriesLoading } = useCategories('expense');
@@ -75,7 +78,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
       try {
         const budgetData = await getBudgetById(budgetId);
         if (!budgetData) {
-          toast.error('Budget not found');
+          toast.error(t('messages.budgetNotFound'));
           router.push('/dashboard/budget');
           return;
         }
@@ -94,7 +97,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
         });
       } catch (error) {
         console.error('Error loading budget:', error);
-        toast.error('Failed to load budget');
+        toast.error(t('messages.loadFailed'));
         router.push('/dashboard/budget');
       } finally {
         setLoading(false);
@@ -108,27 +111,27 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Budget name is required';
+      newErrors.name = t('form.errors.nameRequired');
     }
 
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      newErrors.amount = 'Budget amount must be greater than 0';
+      newErrors.amount = t('form.errors.amountMustBeGreater');
     }
 
     if (!formData.start_date) {
-      newErrors.start_date = 'Start date is required';
+      newErrors.start_date = t('form.errors.startDateRequired');
     }
 
     if (!formData.end_date) {
-      newErrors.end_date = 'End date is required';
+      newErrors.end_date = t('form.errors.endDateRequired');
     }
 
     if (formData.start_date && formData.end_date && formData.start_date >= formData.end_date) {
-      newErrors.end_date = 'End date must be after start date';
+      newErrors.end_date = t('form.errors.endDateAfterStart');
     }
 
     if (formData.alert_threshold < 1 || formData.alert_threshold > 100) {
-      newErrors.alert_threshold = 'Alert threshold must be between 1 and 100';
+      newErrors.alert_threshold = t('form.errors.alertThresholdRange');
     }
 
     setErrors(newErrors);
@@ -139,12 +142,12 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
     e.preventDefault();
     
     if (!validateForm()) {
-      toast.error('Please fix the form errors');
+      toast.error(t('form.errors.fixErrors'));
       return;
     }
 
     if (!budgetId) {
-      toast.error('Budget ID not found');
+      toast.error(t('form.errors.budgetIdNotFound'));
       return;
     }
 
@@ -168,7 +171,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
       });
     } catch (error) {
       console.error('Error updating budget:', error);
-      toast.error('Failed to update budget');
+      toast.error(t('messages.saveFailed'));
     }
   };
 
@@ -183,7 +186,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
       });
     } catch (error) {
       console.error('Error deleting budget:', error);
-      toast.error('Failed to delete budget');
+      toast.error(t('messages.deleteFailed'));
     }
   };
 
@@ -247,11 +250,11 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Budget not found or you don't have permission to edit it.
+            {t('messages.budgetNotFoundOrNoPermission')}
           </AlertDescription>
         </Alert>
         <Link href="/dashboard/budget">
-          <Button variant="outline">Back to Budgets</Button>
+          <Button variant="outline">{t('form.backToBudgets')}</Button>
         </Link>
       </div>
     );
@@ -271,13 +274,13 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
           <Link href="/dashboard/budget">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Budgets
+              {t('form.backToBudgets')}
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Budget</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('form.editBudget')}</h1>
             <p className="text-muted-foreground mt-1">
-              Update your budget settings and spending limits
+              {t('form.editBudgetDescription')}
             </p>
           </div>
         </div>
@@ -287,14 +290,14 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
           <AlertDialogTrigger asChild>
             <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
               <Trash2 className="w-4 h-4 mr-2" />
-              Delete Budget
+              {t('actions.delete')} {t('title')}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Budget</AlertDialogTitle>
+              <AlertDialogTitle>{t('actions.delete')} {t('title')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this budget? This action cannot be undone.
+                {t('messages.deleteConfirm')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -321,7 +324,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Target className="w-5 h-5 mr-2 text-orange-600" />
-                    Basic Information
+                    {t('form.basicInformation')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -427,10 +430,10 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Tag className="w-5 h-5 mr-2 text-blue-600" />
-                    Categories
+                    {t('form.categories')}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Select categories to track in this budget. Leave empty to track all expenses.
+                    {t('form.categoriesDescription')}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -479,7 +482,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
 
                   {!categoriesLoading && formData.category_ids.length > 0 && (
                     <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm font-medium mb-2">Selected Categories:</p>
+                      <p className="text-sm font-medium mb-2">{t('form.selectedCategories')}:</p>
                       <div className="flex flex-wrap gap-2">
                         {formData.category_ids.map((categoryId) => {
                           const category = budgetCategories.find(c => c.id === categoryId);
@@ -506,15 +509,15 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <AlertTriangle className="w-5 h-5 mr-2 text-yellow-600" />
-                    Alert Settings
+                    {t('form.alertSettings')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label htmlFor="alert_enabled" className="text-base">Enable Budget Alerts</Label>
+                      <Label htmlFor="alert_enabled" className="text-base">{t('form.enableBudgetAlerts')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Receive notifications when you approach your budget limit
+                        {t('form.alertsDescription')}
                       </p>
                     </div>
                     <Switch
@@ -528,7 +531,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
                     <>
                       <div>
                         <Label htmlFor="alert_threshold">
-                          Alert Threshold ({formData.alert_threshold}%)
+                          {t('form.alertThreshold')} ({formData.alert_threshold}%)
                         </Label>
                         <Input
                           id="alert_threshold"
@@ -550,7 +553,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
                       <Alert>
                         <Info className="h-4 w-4" />
                         <AlertDescription>
-                          You'll receive notifications when spending reaches {formData.alert_threshold}% of your budget.
+                          {t('form.alertNotificationDescription', { threshold: formData.alert_threshold })}
                         </AlertDescription>
                       </Alert>
                     </>
@@ -565,40 +568,40 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
             <motion.div variants={fadeInUp} initial="initial" animate="animate">
               <Card>
                 <CardHeader>
-                  <CardTitle>Budget Summary</CardTitle>
+                  <CardTitle>{t('form.budgetSummary')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Amount:</span>
+                      <span className="text-sm font-medium">{t('form.amount')}:</span>
                       <span className="font-semibold text-lg">
                         {formatCurrency(parseFloat(formData.amount) || 0, currency)}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Period:</span>
+                      <span className="text-sm font-medium">{t('form.period')}:</span>
                       <Badge variant="secondary">{formData.period}</Badge>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Duration:</span>
+                      <span className="text-sm font-medium">{t('form.duration')}:</span>
                       <span className="text-sm">
                         {formData.start_date && formData.end_date && 
-                          `${Math.ceil((new Date(formData.end_date).getTime() - new Date(formData.start_date).getTime()) / (1000 * 60 * 60 * 24))} days`
+                          `${Math.ceil((new Date(formData.end_date).getTime() - new Date(formData.start_date).getTime()) / (1000 * 60 * 60 * 24))} ${t('form.days')}`
                         }
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Categories:</span>
+                      <span className="text-sm font-medium">{t('form.categories')}:</span>
                       <span className="text-sm">
-                        {formData.category_ids.length === 0 ? 'All' : formData.category_ids.length}
+                        {formData.category_ids.length === 0 ? t('form.all') : formData.category_ids.length}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Alert at:</span>
+                      <span className="text-sm font-medium">{t('form.alertAt')}:</span>
                       <span className="text-sm">
                         {formatCurrency((parseFloat(formData.amount) || 0) * (formData.alert_threshold / 100), currency)}
                       </span>
@@ -607,13 +610,13 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
                     {budget && (
                       <div className="pt-3 border-t space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">Current Spent:</span>
+                          <span className="text-sm font-medium">{t('form.currentSpent')}:</span>
                           <span className="text-sm">
                             {formatCurrency(budget.spent || 0, currency)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">Remaining:</span>
+                          <span className="text-sm font-medium">{t('remaining')}:</span>
                           <span className={`text-sm ${(budget.amount - (budget.spent || 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {formatCurrency(budget.amount - (budget.spent || 0), currency)}
                           </span>
@@ -628,12 +631,12 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
                         {isUpdating ? (
                           <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                            Updating...
+                            {t('form.updating')}...
                           </>
                         ) : (
                           <>
                             <Save className="w-4 h-4 mr-2" />
-                            Update Budget
+                            {t('form.updateBudget')}
                           </>
                         )}
                       </Button>

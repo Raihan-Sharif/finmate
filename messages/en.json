@@ -501,6 +501,115 @@
     "searchPlaceholder": "Search transactions, categories...",
     "profile": "Profile"
   },
+  "dashboard": {
+    "periods": {
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last3Months": "Last 3 months",
+      "last6Months": "Last 6 months",
+      "lastYear": "Last year",
+      "yearToDate": "Year to date",
+      "allTime": "All time",
+      "thisMonth": "This month",
+      "thisYear": "This year"
+    },
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "overview": {
+      "financialOverview": "Here's your complete financial overview",
+      "loadingDashboard": "Loading your financial dashboard...",
+      "somethingWentWrong": "Something went wrong",
+      "tryAgain": "Try again",
+      "quickAdd": "Quick Add",
+      "manageBudgets": "Manage Budgets",
+      "manageLoans": "Manage Loans",
+      "investments": "Investments",
+      "addTransaction": "Add Transaction",
+      "createBudget": "Create Budget",
+      "viewReports": "View Reports",
+      "addInvestment": "Add Investment"
+    },
+    "stats": {
+      "accountBalance": "Account Balance",
+      "income": "Income",
+      "expenses": "Expenses",
+      "netBalance": "Net Balance",
+      "accounts": "accounts",
+      "live": "live",
+      "savingsRate": "savings rate",
+      "investmentPortfolio": "Investment Portfolio",
+      "totalInvestmentValue": "Total Investment Value",
+      "activeInvestments": "Active Investments",
+      "returns": "Returns",
+      "loanCredit": "Loan & Credit",
+      "outstandingLoans": "Outstanding Loans",
+      "activeLoans": "Active Loans",
+      "pendingEmis": "Pending EMIs"
+    },
+    "alerts": {
+      "smartFinancialAlerts": "Smart Financial Alerts",
+      "immediateAttention": "Immediate attention required",
+      "pendingEmis": "Pending EMIs",
+      "manageLoans": "Manage Loans",
+      "overdueLendings": "Overdue Lendings",
+      "reviewLendings": "Review Lendings"
+    },
+    "analytics": {
+      "monthlyTrends": "Monthly Trends",
+      "dynamicData": "Dynamic Data",
+      "incomeVsExpenses": "Income vs Expenses over time",
+      "allAmountsIn": "All amounts in",
+      "categoryBreakdown": "Category Breakdown",
+      "topCategories": "Top",
+      "expensesByCategory": "expenses by category",
+      "financialHealth": "Financial Health",
+      "healthScore": "Health Score",
+      "excellent": "Excellent",
+      "good": "Good",
+      "average": "Average",
+      "poor": "Poor",
+      "keyFinancialMetrics": "Key Financial Metrics",
+      "advancedAnalytics": "Advanced Analytics",
+      "avgTransaction": "Avg. Transaction",
+      "savingsRate": "Savings Rate",
+      "budgetUsage": "Budget Usage",
+      "investmentReturn": "Investment Return"
+    },
+    "activity": {
+      "recentActivity": "Recent Activity",
+      "viewAll": "View All",
+      "latestTransactions": "Latest transactions",
+      "noRecentActivity": "No recent activity",
+      "startAddingTransactions": "Start adding transactions"
+    },
+    "reminders": {
+      "upcomingReminders": "Upcoming Reminders",
+      "items": "items",
+      "financialDeadlines": "Financial deadlines",
+      "today": "Today"
+    },
+    "goals": {
+      "monthlyGoalsProgress": "Monthly Goals Progress",
+      "trackProgress": "Track progress",
+      "progress": "Progress"
+    },
+    "health": {
+      "excellentBudgetControl": "Excellent budget control",
+      "closeToBudgetLimit": "Close to budget limit",
+      "overBudget": "Over budget",
+      "greatSavingsRate": "Great savings rate",
+      "goodSavingsRate": "Good savings rate",
+      "lowSavingsRate": "Low savings rate",
+      "spendingMoreThanEarning": "Spending more than earning",
+      "activeInvestor": "Active investor",
+      "noInvestments": "No investments",
+      "noPendingEmis": "No pending EMIs",
+      "hasPendingPayments": "Has pending payments"
+    }
+  },
   "transactions": {
     "title": "Transactions",
     "subtitle": "Track and manage all your financial transactions",
@@ -733,7 +842,183 @@
     "budgetProgress": "Budget Progress",
     "totalBudgeted": "Total Budgeted",
     "totalSpent": "Total Spent",
-    "budgetRemaining": "Budget Remaining"
+    "budgetRemaining": "Budget Remaining",
+    "of": "of",
+    "daysLeft": "days left",
+    "management": {
+      "title": "Budget Management",
+      "subtitle": "Set and track your spending limits to achieve your financial goals",
+      "refresh": "Refresh",
+      "recurring": "Recurring",
+      "createNew": "Create Budget"
+    },
+    "alerts": {
+      "title": "Budget Alerts ({count})",
+      "left": "left",
+      "viewAll": "View All"
+    },
+    "overview": {
+      "title": "Budget Overview",
+      "budgets": "Budgets",
+      "activeCategories": "Active Categories",
+      "avgUsage": "Avg. Usage",
+      "atRisk": "At Risk"
+    },
+    "status": {
+      "overBudget": "Over Budget",
+      "atRisk": "At Risk",
+      "onTrack": "On Track",
+      "good": "Good",
+      "warning": "Warning",
+      "over": "Over"
+    },
+    "period": {
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "current": "Current",
+      "thisMonth": "This Month",
+      "thisYear": "This Year"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "view": "View",
+      "manage": "Manage"
+    },
+    "empty": {
+      "title": "No Budgets",
+      "description": "Create your first budget to start achieving your financial goals.",
+      "createFirst": "Create First Budget"
+    },
+    "messages": {
+      "duplicated": "Budget duplicated successfully!",
+      "deleted": "Budget deleted successfully!",
+      "created": "Budget created successfully!",
+      "updated": "Budget updated successfully!",
+      "deleteConfirm": "Are you sure you want to delete this budget?",
+      "duplicateConfirm": "Do you want to duplicate this budget?",
+      "loadFailed": "Failed to load budgets",
+      "saveFailed": "Failed to save budget",
+      "deleteFailed": "Failed to delete budget",
+      "budgetNotFound": "Budget not found",
+      "budgetNotFoundOrNoPermission": "Budget not found or you don't have permission to edit it."
+    },
+    "form": {
+      "name": "Budget Name",
+      "namePlaceholder": "e.g., Monthly Expense Budget",
+      "description": "Description",
+      "descriptionPlaceholder": "What is this budget for...",
+      "budgetType": "Budget Type",
+      "period": "Period",
+      "amount": "Budget Amount",
+      "amountPlaceholder": "0.00",
+      "category": "Category",
+      "selectCategory": "Select Category",
+      "allCategories": "All Categories",
+      "specificCategory": "Specific Category",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "alertThreshold": "Alert Threshold",
+      "alertThresholdHelp": "At what percentage to send alerts",
+      "autoRenew": "Auto Renew",
+      "autoRenewHelp": "Automatically renew this budget every month/year",
+      "isActive": "Active",
+      "notes": "Notes",
+      "notesPlaceholder": "Additional information about this budget...",
+      "basicInformation": "Basic Information",
+      "backToBudgets": "Back to Budgets",
+      "createNewBudget": "Create New Budget",
+      "createBudgetDescription": "Set spending limits to achieve your financial goals",
+      "editBudget": "Edit Budget",
+      "editBudgetDescription": "Update your budget settings and spending limits",
+      "categories": "Categories",
+      "categoriesDescription": "Select categories to track in this budget. Leave empty to track all expenses.",
+      "selectedCategories": "Selected Categories",
+      "alertSettings": "Alert Settings",
+      "enableBudgetAlerts": "Enable Budget Alerts",
+      "alertsDescription": "Receive notifications when you approach your budget limit",
+      "alertThreshold": "Alert Threshold",
+      "alertNotificationDescription": "You'll receive notifications when spending reaches {threshold}% of your budget.",
+      "budgetSummary": "Budget Summary",
+      "duration": "Duration",
+      "days": "days",
+      "all": "All",
+      "alertAt": "Alert at",
+      "creating": "Creating",
+      "createBudget": "Create Budget",
+      "updating": "Updating",
+      "updateBudget": "Update Budget",
+      "currentSpent": "Current Spent",
+      "errors": {
+        "nameRequired": "Budget name is required",
+        "amountRequired": "Amount is required",
+        "amountMustBeGreater": "Amount must be greater than 0",
+        "startDateRequired": "Start date is required",
+        "endDateRequired": "End date is required",
+        "endDateAfterStart": "End date must be after start date",
+        "alertThresholdRange": "Alert threshold must be between 1 and 100",
+        "categoryRequired": "Category selection is required",
+        "fixErrors": "Please fix the form errors",
+        "userNotAuthenticated": "User not authenticated",
+        "budgetIdNotFound": "Budget ID not found"
+      },
+      "success": {
+        "created": "Budget created successfully!",
+        "updated": "Budget updated successfully!",
+        "deleted": "Budget deleted successfully!"
+      }
+    },
+    "recurring": {
+      "title": "Recurring Budgets",
+      "subtitle": "Automate your budget creation with templates and recurring setups",
+      "createdSuccessfully": "Created {count} recurring budgets successfully!",
+      "createdFromPrevious": "Created {count} budgets from previous month!",
+      "quickActions": "Quick Actions",
+      "quickActionsSubtitle": "Fast ways to create budgets based on existing patterns",
+      "createFromPrevious": "Create from Previous Month",
+      "createFromPreviousDescription": "Create new budgets based on your previous month's budgets",
+      "templates": "Templates",
+      "customTemplate": "Custom Template",
+      "popularTemplates": "Popular Templates",
+      "myTemplates": "My Templates",
+      "globalTemplates": "Global Templates",
+      "searchPlaceholder": "Search templates...",
+      "noTemplatesFound": "No templates found",
+      "createCustom": "Create Custom",
+      "saveAsTemplate": "Save as Template",
+      "useTemplate": "Use Template",
+      "customize": "Customize",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "edit": "Edit",
+      "months": "months",
+      "monthsPlaceholder": "How many months?",
+      "createRecurring": "Create Recurring Budget",
+      "onlyPaidUsers": "Only paid users can create custom templates. Please upgrade your account.",
+      "cannotDeleteGlobal": "You cannot delete global templates"
+    },
+    "tips": {
+      "title": "Budget Tips",
+      "subtitle": "Smart suggestions to help you manage your budgets better",
+      "realisticGoals": {
+        "title": "Set Realistic Goals",
+        "description": "Base your budgets on your actual spending patterns from the last 3 months."
+      },
+      "rule503020": {
+        "title": "Use the 50/30/20 Rule",
+        "description": "Allocate 50% for needs, 30% for wants, and 20% for savings and debt repayment."
+      },
+      "reviewRegularly": {
+        "title": "Review Regularly",
+        "description": "Check your budget progress weekly to stay on track and make adjustments."
+      },
+      "planUnexpected": {
+        "title": "Plan for Unexpected",
+        "description": "Add a buffer of 10-15% to your budgets for unexpected expenses."
+      }
+    }
   },
   "investments": {
     "title": "Investments",

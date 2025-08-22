@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, DollarSign, Target, AlertTriangle, Plus, Tag, Info } from 'lucide-react';
 import Link from 'next/link';
@@ -30,6 +31,8 @@ const fadeInUp = {
 
 export default function NewBudgetPage() {
   const router = useRouter();
+  const t = useTranslations('budget');
+  const tCommon = useTranslations('common');
   const { profile } = useAuth();
   const { createBudget, isCreating } = useBudgets();
   const { budgetCategories, isLoading: categoriesLoading } = useCategories('expense');
@@ -52,27 +55,27 @@ export default function NewBudgetPage() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Budget name is required';
+      newErrors.name = t('form.errors.nameRequired');
     }
 
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      newErrors.amount = 'Budget amount must be greater than 0';
+      newErrors.amount = t('form.errors.amountMustBeGreater');
     }
 
     if (!formData.start_date) {
-      newErrors.start_date = 'Start date is required';
+      newErrors.start_date = t('form.errors.startDateRequired');
     }
 
     if (!formData.end_date) {
-      newErrors.end_date = 'End date is required';
+      newErrors.end_date = t('form.errors.endDateRequired');
     }
 
     if (formData.start_date && formData.end_date && formData.start_date >= formData.end_date) {
-      newErrors.end_date = 'End date must be after start date';
+      newErrors.end_date = t('form.errors.endDateAfterStart');
     }
 
     if (formData.alert_threshold < 1 || formData.alert_threshold > 100) {
-      newErrors.alert_threshold = 'Alert threshold must be between 1 and 100';
+      newErrors.alert_threshold = t('form.errors.alertThresholdRange');
     }
 
     setErrors(newErrors);
@@ -83,12 +86,12 @@ export default function NewBudgetPage() {
     e.preventDefault();
     
     if (!validateForm()) {
-      toast.error('Please fix the form errors');
+      toast.error(t('form.errors.fixErrors'));
       return;
     }
 
     if (!profile?.user_id) {
-      toast.error('User not authenticated');
+      toast.error(t('form.errors.userNotAuthenticated'));
       return;
     }
 
@@ -113,7 +116,7 @@ export default function NewBudgetPage() {
       });
     } catch (error) {
       console.error('Error creating budget:', error);
-      toast.error('Failed to create budget');
+      toast.error(t('messages.saveFailed'));
     }
   };
 
@@ -169,13 +172,13 @@ export default function NewBudgetPage() {
         <Link href="/dashboard/budget">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Budgets
+            {t('form.backToBudgets')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Create New Budget</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('form.createNewBudget')}</h1>
           <p className="text-muted-foreground mt-1">
-            Set spending limits to achieve your financial goals
+            {t('form.createBudgetDescription')}
           </p>
         </div>
       </motion.div>
@@ -190,16 +193,16 @@ export default function NewBudgetPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Target className="w-5 h-5 mr-2 text-orange-600" />
-                    Basic Information
+                    {t('form.basicInformation')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Budget Name *</Label>
+                    <Label htmlFor="name">{t('form.name')} *</Label>
                     <Input
                       id="name"
                       type="text"
-                      placeholder="e.g., Monthly Food Budget"
+                      placeholder={t('form.namePlaceholder')}
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       className={errors.name ? 'border-red-500' : ''}
@@ -208,10 +211,10 @@ export default function NewBudgetPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">{t('form.description')}</Label>
                     <Textarea
                       id="description"
-                      placeholder="Brief description of this budget..."
+                      placeholder={t('form.descriptionPlaceholder')}
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                       rows={3}
@@ -220,14 +223,14 @@ export default function NewBudgetPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="amount">Budget Amount *</Label>
+                      <Label htmlFor="amount">{t('form.amount')} *</Label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="amount"
                           type="number"
                           step="0.01"
-                          placeholder="0.00"
+                          placeholder={t('form.amountPlaceholder')}
                           value={formData.amount}
                           onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
                           className={`pl-10 ${errors.amount ? 'border-red-500' : ''}`}
@@ -237,15 +240,15 @@ export default function NewBudgetPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="period">Budget Period *</Label>
+                      <Label htmlFor="period">{t('form.period')} *</Label>
                       <Select value={formData.period} onValueChange={handlePeriodChange}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="yearly">Yearly</SelectItem>
+                          <SelectItem value="weekly">{t('period.weekly')}</SelectItem>
+                          <SelectItem value="monthly">{t('period.monthly')}</SelectItem>
+                          <SelectItem value="yearly">{t('period.yearly')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -253,7 +256,7 @@ export default function NewBudgetPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="start_date">Start Date *</Label>
+                      <Label htmlFor="start_date">{t('form.startDate')} *</Label>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -272,7 +275,7 @@ export default function NewBudgetPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="end_date">End Date *</Label>
+                      <Label htmlFor="end_date">{t('form.endDate')} *</Label>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -296,10 +299,10 @@ export default function NewBudgetPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Tag className="w-5 h-5 mr-2 text-blue-600" />
-                    Categories
+                    {t('form.categories')}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Select categories to track in this budget. Leave empty to track all expenses.
+                    {t('form.categoriesDescription')}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -348,7 +351,7 @@ export default function NewBudgetPage() {
 
                   {!categoriesLoading && formData.category_ids.length > 0 && (
                     <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm font-medium mb-2">Selected Categories:</p>
+                      <p className="text-sm font-medium mb-2">{t('form.selectedCategories')}:</p>
                       <div className="flex flex-wrap gap-2">
                         {formData.category_ids.map((categoryId) => {
                           const category = budgetCategories.find(c => c.id === categoryId);
@@ -375,15 +378,15 @@ export default function NewBudgetPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <AlertTriangle className="w-5 h-5 mr-2 text-yellow-600" />
-                    Alert Settings
+                    {t('form.alertSettings')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label htmlFor="alert_enabled" className="text-base">Enable Budget Alerts</Label>
+                      <Label htmlFor="alert_enabled" className="text-base">{t('form.enableBudgetAlerts')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Receive notifications when you approach your budget limit
+                        {t('form.alertsDescription')}
                       </p>
                     </div>
                     <Switch
@@ -397,7 +400,7 @@ export default function NewBudgetPage() {
                     <>
                       <div>
                         <Label htmlFor="alert_threshold">
-                          Alert Threshold ({formData.alert_threshold}%)
+                          {t('form.alertThreshold')} ({formData.alert_threshold}%)
                         </Label>
                         <Input
                           id="alert_threshold"
@@ -419,7 +422,7 @@ export default function NewBudgetPage() {
                       <Alert>
                         <Info className="h-4 w-4" />
                         <AlertDescription>
-                          You'll receive notifications when spending reaches {formData.alert_threshold}% of your budget.
+                          {t('form.alertNotificationDescription', { threshold: formData.alert_threshold })}
                         </AlertDescription>
                       </Alert>
                     </>
@@ -434,40 +437,40 @@ export default function NewBudgetPage() {
             <motion.div variants={fadeInUp} initial="initial" animate="animate">
               <Card>
                 <CardHeader>
-                  <CardTitle>Budget Summary</CardTitle>
+                  <CardTitle>{t('form.budgetSummary')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Amount:</span>
+                      <span className="text-sm font-medium">{t('form.amount')}:</span>
                       <span className="font-semibold text-lg">
                         {formatCurrency(parseFloat(formData.amount) || 0, currency)}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Period:</span>
-                      <Badge variant="secondary">{formData.period}</Badge>
+                      <span className="text-sm font-medium">{t('form.period')}:</span>
+                      <Badge variant="secondary">{t(`period.${formData.period}`)}</Badge>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Duration:</span>
+                      <span className="text-sm font-medium">{t('form.duration')}:</span>
                       <span className="text-sm">
                         {formData.start_date && formData.end_date && 
-                          `${Math.ceil((new Date(formData.end_date).getTime() - new Date(formData.start_date).getTime()) / (1000 * 60 * 60 * 24))} days`
+                          `${Math.ceil((new Date(formData.end_date).getTime() - new Date(formData.start_date).getTime()) / (1000 * 60 * 60 * 24))} ${t('form.days')}`
                         }
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Categories:</span>
+                      <span className="text-sm font-medium">{t('form.categories')}:</span>
                       <span className="text-sm">
-                        {formData.category_ids.length === 0 ? 'All' : formData.category_ids.length}
+                        {formData.category_ids.length === 0 ? t('form.all') : formData.category_ids.length}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Alert at:</span>
+                      <span className="text-sm font-medium">{t('form.alertAt')}:</span>
                       <span className="text-sm">
                         {formatCurrency((parseFloat(formData.amount) || 0) * (formData.alert_threshold / 100), currency)}
                       </span>
@@ -480,18 +483,18 @@ export default function NewBudgetPage() {
                         {isCreating ? (
                           <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                            Creating...
+                            {t('form.creating')}...
                           </>
                         ) : (
                           <>
                             <Plus className="w-4 h-4 mr-2" />
-                            Create Budget
+                            {t('form.createBudget')}
                           </>
                         )}
                       </Button>
 
                       <Button type="button" variant="outline" className="w-full" asChild>
-                        <Link href="/dashboard/budget">Cancel</Link>
+                        <Link href="/dashboard/budget">{tCommon('cancel')}</Link>
                       </Button>
                     </div>
                   </div>

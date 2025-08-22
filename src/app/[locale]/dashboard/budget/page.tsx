@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import { useBudgets } from '@/hooks/useBudgets';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,8 @@ const staggerContainer = {
 };
 
 export default function BudgetPage() {
+  const t = useTranslations('budget');
+  const tCommon = useTranslations('common');
   const { profile } = useAuth();
   const {
     currentBudgets,
@@ -64,19 +67,19 @@ export default function BudgetPage() {
       status: 'over', 
       color: 'text-red-600', 
       bgColor: 'bg-red-100 dark:bg-red-900/20',
-      label: 'Over Budget'
+      label: t('status.overBudget')
     };
     if (percentage > 80) return { 
       status: 'warning', 
       color: 'text-yellow-600', 
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-      label: 'At Risk'
+      label: t('status.atRisk')
     };
     return { 
       status: 'good', 
       color: 'text-green-600', 
       bgColor: 'bg-green-100 dark:bg-green-900/20',
-      label: 'On Track'
+      label: t('status.onTrack')
     };
   };
 
@@ -134,10 +137,10 @@ export default function BudgetPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
             <Target className="w-8 h-8 mr-3 text-orange-600" />
-            Budget Management
+            {t('management.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Set and track your spending limits to achieve your financial goals
+            {t('management.subtitle')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -148,18 +151,18 @@ export default function BudgetPage() {
             disabled={currentBudgetsLoading}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${currentBudgetsLoading ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('management.refresh')}
           </Button>
           <Link href="/dashboard/budget/recurring">
             <Button variant="outline">
               <Calendar className="w-4 h-4 mr-2" />
-              Recurring
+              {t('management.recurring')}
             </Button>
           </Link>
           <Link href="/dashboard/budget/new">
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Create Budget
+              {t('management.createNew')}
             </Button>
           </Link>
         </div>
@@ -176,7 +179,7 @@ export default function BudgetPage() {
             <CardHeader>
               <CardTitle className="flex items-center text-orange-700 dark:text-orange-300">
                 <AlertTriangle className="w-5 h-5 mr-2" />
-                Budget Alerts ({budgetAlerts.length})
+                {t('alerts.title', { count: budgetAlerts.length })}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -196,14 +199,14 @@ export default function BudgetPage() {
                     <div className="text-right">
                       <p className="text-sm font-semibold">{formatPercentage(alert.percentage / 100)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatCurrency(alert.remaining, currency)} left
+                        {formatCurrency(alert.remaining, currency)} {t('alerts.left')}
                       </p>
                     </div>
                   </div>
                 ))}
                 {budgetAlerts.length > 3 && (
                   <p className="text-sm text-muted-foreground text-center pt-2">
-                    +{budgetAlerts.length - 3} more alerts
+                    +{budgetAlerts.length - 3} {t('alerts.viewAll')}
                   </p>
                 )}
               </div>
@@ -224,7 +227,7 @@ export default function BudgetPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Budget</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('totalBudgeted')}</p>
                   <p className="text-2xl font-bold text-foreground">
                     {formatCurrency(stats.totalBudgetAmount, currency)}
                   </p>
@@ -242,12 +245,12 @@ export default function BudgetPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Spent</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('totalSpent')}</p>
                   <p className="text-2xl font-bold text-red-600">
                     {formatCurrency(stats.totalSpentAmount, currency)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatPercentage(stats.overallProgress / 100)} of budget
+                    {formatPercentage(stats.overallProgress / 100)} {t('of')} {t('title')}
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
@@ -263,7 +266,7 @@ export default function BudgetPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Remaining</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('remaining')}</p>
                   <p className={`text-2xl font-bold ${stats.totalRemainingAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(stats.totalRemainingAmount, currency)}
                   </p>
@@ -287,7 +290,7 @@ export default function BudgetPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Budget Status</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('overview.title')}</p>
                   <div className="flex items-center space-x-2 mt-2">
                     <div className="flex items-center space-x-1">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -320,16 +323,16 @@ export default function BudgetPage() {
       >
         <Card>
           <CardHeader>
-            <CardTitle>Overall Budget Progress</CardTitle>
+            <CardTitle>{t('budgetProgress')}</CardTitle>
             <CardDescription>
-              Your total spending across all budgets for this period
+              {t('spendingVsBudget')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">
-                  {formatCurrency(stats.totalSpentAmount, currency)} of {formatCurrency(stats.totalBudgetAmount, currency)}
+                  {formatCurrency(stats.totalSpentAmount, currency)} {t('of')} {formatCurrency(stats.totalBudgetAmount, currency)}
                 </span>
                 <span className={`text-sm font-medium ${
                   stats.overallProgress > 100 ? 'text-red-600' : stats.overallProgress > 80 ? 'text-yellow-600' : 'text-green-600'
@@ -361,20 +364,20 @@ export default function BudgetPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Your Budgets</CardTitle>
+                <CardTitle>{t('overview.budgets')}</CardTitle>
                 <CardDescription>
-                  Manage your spending limits and track progress
+                  {t('manageBudgets')}
                 </CardDescription>
               </div>
               <div className="flex items-center space-x-2">
                 <Badge variant="secondary" className="text-green-600">
-                  {stats.onTrackCount} On Track
+                  {stats.onTrackCount} {t('status.onTrack')}
                 </Badge>
                 <Badge variant="secondary" className="text-yellow-600">
-                  {stats.atRiskCount} At Risk
+                  {stats.atRiskCount} {t('status.atRisk')}
                 </Badge>
                 <Badge variant="secondary" className="text-red-600">
-                  {stats.overBudgetCount} Over Budget
+                  {stats.overBudgetCount} {t('status.overBudget')}
                 </Badge>
               </div>
             </div>
@@ -431,14 +434,14 @@ export default function BudgetPage() {
                             <div className="flex justify-between text-xs text-muted-foreground">
                               <span>
                                 {budget.remaining >= 0 
-                                  ? `${formatCurrency(budget.remaining, currency)} remaining`
-                                  : `${formatCurrency(Math.abs(budget.remaining), currency)} over budget`
+                                  ? `${formatCurrency(budget.remaining, currency)} ${t('remaining')}`
+                                  : `${formatCurrency(Math.abs(budget.remaining), currency)} ${t('overBudget')}`
                                 }
                               </span>
                               <div className="flex items-center space-x-2">
                                 <span className="capitalize">{budget.period}</span>
                                 <span>•</span>
-                                <span>{budget.days_remaining} days left</span>
+                                <span>{budget.days_remaining} {t('daysLeft')}</span>
                               </div>
                             </div>
                           </div>
@@ -447,14 +450,14 @@ export default function BudgetPage() {
 
                       <div className="flex items-center space-x-2 ml-4">
                         <Link href={`/dashboard/budget/${budget.id}/edit`}>
-                          <Button variant="ghost" size="sm" title="Edit Budget">
+                          <Button variant="ghost" size="sm" title={t('actions.edit')}>
                             <Edit className="w-4 h-4" />
                           </Button>
                         </Link>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          title="Duplicate Budget"
+                          title={t('actions.duplicate')}
                           onClick={() => handleDuplicateBudget(budget.id)}
                           disabled={isDuplicating}
                         >
@@ -464,7 +467,7 @@ export default function BudgetPage() {
                           variant="ghost" 
                           size="sm" 
                           className="text-red-600 hover:text-red-700"
-                          title="Delete Budget"
+                          title={t('actions.delete')}
                           onClick={() => handleDeleteBudget(budget.id)}
                           disabled={isDeleting}
                         >
@@ -477,14 +480,14 @@ export default function BudgetPage() {
               ) : (
                 <div className="text-center py-12">
                   <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">No budgets created yet</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-2">{t('empty.title')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    Create your first budget to start tracking your spending limits
+                    {t('empty.description')}
                   </p>
                   <Link href="/dashboard/budget/new">
                     <Button>
                       <Plus className="w-4 h-4 mr-2" />
-                      Create Budget
+                      {t('empty.createFirst')}
                     </Button>
                   </Link>
                 </div>
@@ -502,46 +505,46 @@ export default function BudgetPage() {
       >
         <Card>
           <CardHeader>
-            <CardTitle>Budget Tips</CardTitle>
+            <CardTitle>{t('tips.title')}</CardTitle>
             <CardDescription>
-              Smart suggestions to help you manage your budgets better
+              {t('tips.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                  Set Realistic Goals
+                  {t('tips.realisticGoals.title')}
                 </h4>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Base your budgets on your actual spending patterns from the last 3 months.
+                  {t('tips.realisticGoals.description')}
                 </p>
               </div>
               
               <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">
-                  Use the 50/30/20 Rule
+                  {t('tips.rule503020.title')}
                 </h4>
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  Allocate 50% for needs, 30% for wants, and 20% for savings and debt repayment.
+                  {t('tips.rule503020.description')}
                 </p>
               </div>
               
               <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                 <h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">
-                  Review Regularly
+                  {t('tips.reviewRegularly.title')}
                 </h4>
                 <p className="text-sm text-purple-700 dark:text-purple-300">
-                  Check your budget progress weekly to stay on track and make adjustments.
+                  {t('tips.reviewRegularly.description')}
                 </p>
               </div>
               
               <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                 <h4 className="font-medium text-orange-900 dark:text-orange-100 mb-2">
-                  Plan for Unexpected
+                  {t('tips.planUnexpected.title')}
                 </h4>
                 <p className="text-sm text-orange-700 dark:text-orange-300">
-                  Add a buffer of 10-15% to your budgets for unexpected expenses.
+                  {t('tips.planUnexpected.description')}
                 </p>
               </div>
             </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -52,6 +53,8 @@ const fadeInUp = {
 
 export default function RecurringBudgetPage() {
   const router = useRouter();
+  const t = useTranslations('budget');
+  const tCommon = useTranslations('common');
   const { profile } = useAuth();
   const { budgetCategories, isLoading: categoriesLoading } = useCategories('expense');
   const { 
@@ -109,15 +112,15 @@ export default function RecurringBudgetPage() {
     const newErrors: Record<string, string> = {};
 
     if (!customTemplate.name.trim()) {
-      newErrors.name = 'Budget name is required';
+      newErrors.name = t('form.errors.nameRequired');
     }
 
     if (!customTemplate.amount || customTemplate.amount <= 0) {
-      newErrors.amount = 'Budget amount must be greater than 0';
+      newErrors.amount = t('form.errors.amountMustBeGreater');
     }
 
     if (customTemplate.alert_percentage < 1 || customTemplate.alert_percentage > 100) {
-      newErrors.alert_percentage = 'Alert threshold must be between 1 and 100';
+      newErrors.alert_percentage = t('form.errors.alertThresholdRange');
     }
 
     setErrors(newErrors);
@@ -132,7 +135,7 @@ export default function RecurringBudgetPage() {
     
     createRecurringBudget({ template, months: recurringMonths }, {
       onSuccess: () => {
-        toast.success(`Created ${recurringMonths} recurring budgets successfully!`);
+        toast.success(t('recurring.createdSuccessfully', { count: recurringMonths }));
         router.push('/dashboard/budget');
       }
     });
@@ -141,7 +144,7 @@ export default function RecurringBudgetPage() {
   const handleCreateFromPrevious = () => {
     createFromPreviousMonth(undefined, {
       onSuccess: (budgets) => {
-        toast.success(`Created ${budgets.length} budgets from previous month!`);
+        toast.success(t('recurring.createdFromPrevious', { count: budgets.length }));
         router.push('/dashboard/budget');
       }
     });
@@ -149,7 +152,7 @@ export default function RecurringBudgetPage() {
 
   const handleCreateCustomRecurring = () => {
     if (!validateCustomTemplate()) {
-      toast.error('Please fix the form errors');
+      toast.error(t('form.errors.fixErrors'));
       return;
     }
 
@@ -165,7 +168,7 @@ export default function RecurringBudgetPage() {
     }
 
     if (!validateCustomTemplate()) {
-      toast.error('Please fix the form errors');
+      toast.error(t('form.errors.fixErrors'));
       return;
     }
     
@@ -262,16 +265,16 @@ export default function RecurringBudgetPage() {
         <Link href="/dashboard/budget">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Budgets
+            {t('form.backToBudgets')}
           </Button>
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
             <Zap className="w-8 h-8 mr-3 text-purple-600" />
-            Recurring Budgets
+            {t('recurring.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Automate your budget creation with templates and recurring setups
+            {t('recurring.subtitle')}
           </p>
         </div>
       </motion.div>
@@ -288,19 +291,19 @@ export default function RecurringBudgetPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <RefreshCw className="w-5 h-5 mr-2 text-green-600" />
-                Quick Actions
+                {t('recurring.quickActions')}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Fast ways to create budgets based on existing patterns
+                {t('recurring.quickActionsSubtitle')}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="font-medium">Copy from Previous Month</h3>
+                    <h3 className="font-medium">{t('recurring.copyFromPrevious')}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Create budgets identical to last month's setup
+                      {t('recurring.copyFromPreviousDescription')}
                     </p>
                   </div>
                   <Copy className="w-5 h-5 text-blue-600" />
@@ -313,12 +316,12 @@ export default function RecurringBudgetPage() {
                   {isCreatingFromPrevious ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Creating...
+                      {t('form.creating')}...
                     </>
                   ) : (
                     <>
                       <Copy className="w-4 h-4 mr-2" />
-                      Copy Previous Month
+                      {t('recurring.copyFromPrevious')}
                     </>
                   )}
                 </Button>
@@ -327,8 +330,7 @@ export default function RecurringBudgetPage() {
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  This will create budgets for the current month based on your previous month's budget settings, 
-                  maintaining the same amounts and categories.
+                  {t('recurring.copyFromPreviousLongDescription')}
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -339,11 +341,11 @@ export default function RecurringBudgetPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Target className="w-5 h-5 mr-2 text-orange-600" />
-                Budget Templates
+                {t('recurring.budgetTemplates')}
               </CardTitle>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Choose from your saved templates or global templates
+                  {t('recurring.budgetTemplatesDescription')}
                 </p>
                 <div className="relative">
                   <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
