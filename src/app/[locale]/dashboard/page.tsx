@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useAuth, usePermissions } from '@/hooks/useAuth';
 import { useEnhancedDashboard } from '@/hooks/useEnhancedDashboard';
 import { useAppStore } from '@/lib/stores/useAppStore';
@@ -71,6 +72,8 @@ const staggerContainer = {
 };
 
 export default function DashboardPage() {
+  const t = useTranslations('dashboard');
+  const tCommon = useTranslations('common');
   const { user, profile } = useAuth();
   const { canCreateTransactions } = usePermissions();
   const { formatAmount, getCurrencySymbol } = useAppStore();
@@ -94,13 +97,13 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   const periodOptions = [
-    { value: '7d', label: 'Last 7 days' },
-    { value: '30d', label: 'Last 30 days' },
-    { value: '90d', label: 'Last 3 months' },
-    { value: '6m', label: 'Last 6 months' },
-    { value: '1y', label: 'Last year' },
-    { value: 'ytd', label: 'Year to date' },
-    { value: 'all', label: 'All time' }
+    { value: '7d', label: t('periods.last7Days') },
+    { value: '30d', label: t('periods.last30Days') },
+    { value: '90d', label: t('periods.last3Months') },
+    { value: '6m', label: t('periods.last6Months') },
+    { value: '1y', label: t('periods.lastYear') },
+    { value: 'ytd', label: t('periods.yearToDate') },
+    { value: 'all', label: t('periods.allTime') }
   ];
 
   const getHealthColor = (score: number) => {
@@ -123,20 +126,20 @@ export default function DashboardPage() {
     const budgetUsage = stats.budget_used_percentage;
     const savingsRate = stats.total_income > 0 ? ((stats.total_income - stats.total_expenses) / stats.total_income) * 100 : 0;
 
-    if (budgetUsage <= 80) factors.push("✓ Excellent budget control");
-    else if (budgetUsage <= 100) factors.push("⚠ Close to budget limit");
-    else factors.push("✗ Over budget");
+    if (budgetUsage <= 80) factors.push(t('health.excellentBudgetControl'));
+    else if (budgetUsage <= 100) factors.push(t('health.closeToBudgetLimit'));
+    else factors.push(t('health.overBudget'));
 
-    if (savingsRate >= 20) factors.push("✓ Great savings rate");
-    else if (savingsRate >= 10) factors.push("⚠ Good savings rate");
-    else if (savingsRate >= 0) factors.push("⚠ Low savings rate");
-    else factors.push("✗ Spending more than earning");
+    if (savingsRate >= 20) factors.push(t('health.greatSavingsRate'));
+    else if (savingsRate >= 10) factors.push(t('health.goodSavingsRate'));
+    else if (savingsRate >= 0) factors.push(t('health.lowSavingsRate'));
+    else factors.push(t('health.spendingMoreThanEarning'));
 
-    if (stats.investment_value > 0) factors.push("✓ Active investor");
-    else factors.push("⚠ No investments");
+    if (stats.investment_value > 0) factors.push(t('health.activeInvestor'));
+    else factors.push(t('health.noInvestments'));
 
-    if (stats.pending_emis === 0) factors.push("✓ No pending EMIs");
-    else factors.push("⚠ Has pending payments");
+    if (stats.pending_emis === 0) factors.push(t('health.noPendingEmis'));
+    else factors.push(t('health.hasPendingPayments'));
 
     return factors;
   };
@@ -161,7 +164,7 @@ export default function DashboardPage() {
           className="text-center space-y-4"
         >
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto"></div>
-          <p className="text-muted-foreground">Loading your financial dashboard...</p>
+          <p className="text-muted-foreground">{t('overview.loadingDashboard')}</p>
         </motion.div>
       </div>
     );
@@ -176,11 +179,11 @@ export default function DashboardPage() {
           className="text-center space-y-4"
         >
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
-          <h2 className="text-2xl font-bold text-foreground">Something went wrong</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t('overview.somethingWentWrong')}</h2>
           <p className="text-muted-foreground max-w-md">{error}</p>
           <Button onClick={handleRefresh} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Try Again
+            {t('overview.tryAgain')}
           </Button>
         </motion.div>
       </div>
@@ -198,10 +201,10 @@ export default function DashboardPage() {
         >
           <div className="space-y-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || 'there'}! 👋
+              {t('greeting.' + (new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'))}, {profile?.full_name || tCommon('user')}! 👋
             </h1>
             <p className="text-muted-foreground text-lg">
-              Here's your complete financial overview • {getCurrencySymbol()} {periodOptions.find(p => p.value === currentPeriod)?.label}
+              {t('overview.financialOverview')} • {getCurrencySymbol()} {periodOptions.find(p => p.value === currentPeriod)?.label}
             </p>
           </div>
           
@@ -234,7 +237,7 @@ export default function DashboardPage() {
               <Link href="/dashboard/transactions/new">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all">
                   <Plus className="h-4 w-4 mr-2" />
-                  Quick Add
+                  {t('overview.quickAdd')}
                 </Button>
               </Link>
             )}
@@ -253,7 +256,7 @@ export default function DashboardPage() {
               <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border-blue-200 dark:border-blue-800 hover:scale-105">
                 <CardContent className="p-4 text-center">
                   <Plus className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Add Transaction</p>
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">{t('overview.addTransaction')}</p>
                 </CardContent>
               </Card>
             </Link>
@@ -263,7 +266,7 @@ export default function DashboardPage() {
               <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200 dark:border-green-800 hover:scale-105">
                 <CardContent className="p-4 text-center">
                   <Target className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-green-700 dark:text-green-300">Create Budget</p>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-300">{t('overview.createBudget')}</p>
                 </CardContent>
               </Card>
             </Link>
@@ -273,7 +276,7 @@ export default function DashboardPage() {
               <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border-orange-200 dark:border-orange-800 hover:scale-105">
                 <CardContent className="p-4 text-center">
                   <CreditCard className="h-8 w-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Manage Loans</p>
+                  <p className="text-sm font-medium text-orange-700 dark:text-orange-300">{t('overview.manageLoans')}</p>
                 </CardContent>
               </Card>
             </Link>
@@ -283,7 +286,7 @@ export default function DashboardPage() {
               <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border-purple-200 dark:border-purple-800 hover:scale-105">
                 <CardContent className="p-4 text-center">
                   <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Investments</p>
+                  <p className="text-sm font-medium text-purple-700 dark:text-purple-300">{t('overview.investments')}</p>
                 </CardContent>
               </Card>
             </Link>
@@ -301,7 +304,7 @@ export default function DashboardPage() {
             <Card className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900/50 dark:via-blue-950/30 dark:to-indigo-950/30 border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center">
-                  Account Balance
+                  {t('stats.accountBalance')}
                   <Info className="h-3 w-3 ml-1 opacity-60" />
                 </CardTitle>
                 <div className="flex items-center space-x-2">
@@ -322,7 +325,7 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-xs text-slate-600/80 dark:text-slate-400/80 flex items-center mt-1">
                   <Banknote className="h-3 w-3 mr-1" />
-                  {stats.total_accounts} accounts • Live
+                  {stats.total_accounts} {t('stats.accounts')} • {t('stats.live')}
                 </p>
               </CardContent>
             </Card>
@@ -331,7 +334,7 @@ export default function DashboardPage() {
           <motion.div variants={fadeInUp}>
             <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-900/30 dark:via-green-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Income</CardTitle>
+                <CardTitle className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{t('stats.income')}</CardTitle>
                 <TrendingUpIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </CardHeader>
               <CardContent>
@@ -348,7 +351,7 @@ export default function DashboardPage() {
           <motion.div variants={fadeInUp}>
             <Card className="bg-gradient-to-br from-rose-50 via-red-50 to-pink-50 dark:from-rose-900/30 dark:via-red-950/30 dark:to-pink-950/30 border-rose-200 dark:border-rose-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold text-rose-700 dark:text-rose-300">Expenses</CardTitle>
+                <CardTitle className="text-sm font-semibold text-rose-700 dark:text-rose-300">{t('stats.expenses')}</CardTitle>
                 <TrendingDownIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               </CardHeader>
               <CardContent>
@@ -365,7 +368,7 @@ export default function DashboardPage() {
           <motion.div variants={fadeInUp}>
             <Card className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-900/30 dark:via-purple-950/30 dark:to-fuchsia-950/30 border-violet-200 dark:border-violet-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold text-violet-700 dark:text-violet-300">Net Balance</CardTitle>
+                <CardTitle className="text-sm font-semibold text-violet-700 dark:text-violet-300">{t('stats.netBalance')}</CardTitle>
                 {stats.net_balance >= 0 ? (
                   <ArrowUpRight className="h-4 w-4 text-green-600 dark:text-green-400" />
                 ) : (
@@ -378,7 +381,7 @@ export default function DashboardPage() {
                 </div>
                 <p className={`text-xs flex items-center ${stats.net_balance >= 0 ? 'text-emerald-600/80 dark:text-emerald-400/80' : 'text-rose-600/80 dark:text-rose-400/80'}`}>
                   <PiggyBank className="h-3 w-3 mr-1" />
-                  {stats.total_income > 0 ? ((stats.net_balance / stats.total_income) * 100).toFixed(1) : '0'}% savings rate
+                  {stats.total_income > 0 ? ((stats.net_balance / stats.total_income) * 100).toFixed(1) : '0'}% {t('stats.savingsRate')}
                 </p>
               </CardContent>
             </Card>
@@ -396,7 +399,7 @@ export default function DashboardPage() {
           <motion.div variants={fadeInUp}>
             <Card className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/30 dark:via-yellow-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-base font-semibold text-amber-700 dark:text-amber-300">Investment Portfolio</CardTitle>
+                <CardTitle className="text-base font-semibold text-amber-700 dark:text-amber-300">{t('stats.investmentPortfolio')}</CardTitle>
                 <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </CardHeader>
               <CardContent>
@@ -406,16 +409,16 @@ export default function DashboardPage() {
                       {formatAmount(stats.total_investment_value)}
                     </div>
                     <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-1">
-                      Total Investment Value
+                      {t('stats.totalInvestmentValue')}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-muted-foreground">Active Investments</p>
+                      <p className="text-xs text-muted-foreground">{t('stats.activeInvestments')}</p>
                       <p className="text-lg font-semibold text-amber-700 dark:text-amber-300">{stats.total_investments}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Returns</p>
+                      <p className="text-xs text-muted-foreground">{t('stats.returns')}</p>
                       <p className={`text-lg font-semibold ${stats.investment_return >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         {stats.investment_return >= 0 ? '+' : ''}{stats.investment_return.toFixed(1)}%
                       </p>
@@ -429,7 +432,7 @@ export default function DashboardPage() {
           <motion.div variants={fadeInUp}>
             <Card className="bg-gradient-to-br from-cyan-50 via-teal-50 to-blue-50 dark:from-cyan-900/30 dark:via-teal-950/30 dark:to-blue-950/30 border-cyan-200 dark:border-cyan-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-base font-semibold text-cyan-700 dark:text-cyan-300">Loan & Credit</CardTitle>
+                <CardTitle className="text-base font-semibold text-cyan-700 dark:text-cyan-300">{t('stats.loanCredit')}</CardTitle>
                 <CreditCard className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
               </CardHeader>
               <CardContent>
@@ -439,16 +442,16 @@ export default function DashboardPage() {
                       {formatAmount(stats.total_loan_amount)}
                     </div>
                     <p className="text-sm text-cyan-600/80 dark:text-cyan-400/80 mt-1">
-                      Outstanding Loans
+                      {t('stats.outstandingLoans')}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-muted-foreground">Active Loans</p>
+                      <p className="text-xs text-muted-foreground">{t('stats.activeLoans')}</p>
                       <p className="text-lg font-semibold text-cyan-700 dark:text-cyan-300">{stats.total_loans}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Pending EMIs</p>
+                      <p className="text-xs text-muted-foreground">{t('stats.pendingEmis')}</p>
                       <p className={`text-lg font-semibold ${stats.pending_emis > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                         {stats.pending_emis}
                       </p>
@@ -471,13 +474,13 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="text-amber-800 dark:text-amber-200 flex items-center">
                   <AlertTriangle className="h-5 w-5 mr-2 text-amber-600 dark:text-amber-400" />
-                  Smart Financial Alerts
+                  {t('alerts.smartFinancialAlerts')}
                   <Badge variant="outline" className="ml-2 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-200 bg-amber-100/50 dark:bg-amber-900/30">
                     {(stats.pending_emis || 0) + (stats.overdue_lendings || 0) + budgetAlerts.length}
                   </Badge>
                 </CardTitle>
                 <CardDescription className="text-amber-700 dark:text-amber-300">
-                  Items requiring your immediate attention
+                  {t('alerts.immediateAttention')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -486,12 +489,12 @@ export default function DashboardPage() {
                     <div className="p-4 bg-white/80 dark:bg-slate-900/40 rounded-xl border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
                       <div className="flex items-center space-x-2 mb-2">
                         <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <p className="font-semibold text-amber-800 dark:text-amber-200">Pending EMIs</p>
+                        <p className="font-semibold text-amber-800 dark:text-amber-200">{t('alerts.pendingEmis')}</p>
                       </div>
                       <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending_emis}</p>
                       <Link href="/dashboard/credit/loans">
                         <Button size="sm" variant="outline" className="mt-2 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30">
-                          Manage Loans
+                          {t('alerts.manageLoans')}
                         </Button>
                       </Link>
                     </div>
@@ -501,12 +504,12 @@ export default function DashboardPage() {
                     <div className="p-4 bg-white/80 dark:bg-slate-900/40 rounded-xl border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
                       <div className="flex items-center space-x-2 mb-2">
                         <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <p className="font-semibold text-amber-800 dark:text-amber-200">Overdue Lendings</p>
+                        <p className="font-semibold text-amber-800 dark:text-amber-200">{t('alerts.overdueLendings')}</p>
                       </div>
                       <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.overdue_lendings}</p>
                       <Link href="/dashboard/credit/personal-lending">
                         <Button size="sm" variant="outline" className="mt-2 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30">
-                          Review Lendings
+                          {t('alerts.reviewLendings')}
                         </Button>
                       </Link>
                     </div>
@@ -550,14 +553,14 @@ export default function DashboardPage() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <BarChart3 className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                    Monthly Trends
+                    {t('analytics.monthlyTrends')}
                   </div>
                   <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300">
-                    Dynamic Data • {periodOptions.find(p => p.value === currentPeriod)?.label}
+                    {t('analytics.dynamicData')} • {periodOptions.find(p => p.value === currentPeriod)?.label}
                   </Badge>
                 </CardTitle>
                 <CardDescription>
-                  Income vs expenses vs budget over time • All amounts in {getCurrencySymbol()}
+                  {t('analytics.incomeVsExpenses')} • {t('analytics.allAmountsIn')} {getCurrencySymbol()}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -593,7 +596,7 @@ export default function DashboardPage() {
                       stroke="#10B981" 
                       strokeWidth={3}
                       dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                      name="Income"
+                      name={t('stats.income')}
                     />
                     <Line 
                       type="monotone" 
@@ -601,7 +604,7 @@ export default function DashboardPage() {
                       stroke="#EF4444" 
                       strokeWidth={3}
                       dot={{ fill: '#EF4444', strokeWidth: 2, r: 4 }}
-                      name="Expenses"
+                      name={t('stats.expenses')}
                     />
                     <Line 
                       type="monotone" 
@@ -610,7 +613,7 @@ export default function DashboardPage() {
                       strokeWidth={2}
                       strokeDasharray="5 5"
                       dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 3 }}
-                      name="Budget"
+                      name={tCommon('budget')}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -629,14 +632,14 @@ export default function DashboardPage() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <PieChart className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
-                    Spending Breakdown
+                    {t('analytics.categoryBreakdown')}
                   </div>
                   <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300">
-                    Top {categoryExpenses.length} Categories
+                    {t('analytics.topCategories')} {categoryExpenses.length}
                   </Badge>
                 </CardTitle>
                 <CardDescription>
-                  {periodOptions.find(p => p.value === currentPeriod)?.label} expense categories • {getCurrencySymbol()}
+                  {periodOptions.find(p => p.value === currentPeriod)?.label} {t('analytics.expensesByCategory')} • {getCurrencySymbol()}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -692,12 +695,12 @@ export default function DashboardPage() {
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     <PieChart className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-                    <h3 className="text-lg font-semibold mb-2">No Expenses Found</h3>
-                    <p className="mb-4">Start adding expense transactions to see spending breakdown</p>
+                    <h3 className="text-lg font-semibold mb-2">{tCommon('noExpensesFound')}</h3>
+                    <p className="mb-4">{tCommon('startAddingExpenses')}</p>
                     <Link href="/dashboard/transactions/new">
                       <Button>
                         <Plus className="h-4 w-4 mr-2" />
-                        Add Expense
+                        {tCommon('addExpense')}
                       </Button>
                     </Link>
                   </div>
@@ -719,13 +722,13 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center text-green-800 dark:text-green-300">
                   <Shield className="h-5 w-5 mr-2" />
-                  Financial Health
+                  {t('analytics.financialHealth')}
                   <Badge variant="outline" className="ml-2 bg-white/60 border-green-300">
-                    Live Score
+                    {t('analytics.healthScore')}
                   </Badge>
                 </CardTitle>
                 <CardDescription className="text-green-700 dark:text-green-400">
-                  AI-powered wellness analysis based on your financial habits
+                  {tCommon('aiPoweredWellnessAnalysis')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -735,19 +738,19 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Score</span>
+                      <span className="text-sm font-medium">{t('analytics.healthScore')}</span>
                       <span className="text-sm text-muted-foreground">{stats.financial_health_score}/100</span>
                     </div>
                     <Progress value={stats.financial_health_score} className="h-3 mb-2" />
                     <p className="text-xs text-muted-foreground">
-                      {stats.financial_health_score >= 80 ? 'Excellent' : 
-                       stats.financial_health_score >= 60 ? 'Good' : 
-                       stats.financial_health_score >= 40 ? 'Fair' : 'Needs Improvement'} financial health
+                      {stats.financial_health_score >= 80 ? t('analytics.excellent') : 
+                       stats.financial_health_score >= 60 ? t('analytics.good') : 
+                       stats.financial_health_score >= 40 ? t('analytics.average') : t('analytics.poor')} {t('analytics.financialHealth')}
                     </p>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Key Factors:</h4>
+                  <h4 className="font-medium text-sm">{t('analytics.keyFinancialMetrics')}:</h4>
                   {getHealthFactors(stats.financial_health_score).slice(0, 4).map((factor, index) => (
                     <p key={index} className="text-xs text-muted-foreground flex items-center">
                       <span className="mr-2">{factor}</span>
@@ -768,15 +771,15 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Activity className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                  Advanced Analytics
+                  {t('analytics.advancedAnalytics')}
                 </CardTitle>
-                <CardDescription>Key financial metrics and insights</CardDescription>
+                <CardDescription>{t('analytics.keyFinancialMetrics')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Banknote className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm">Avg. Transaction</span>
+                    <span className="text-sm">{t('analytics.avgTransaction')}</span>
                   </div>
                   <span className="font-medium">
                     {formatAmount(recentTransactions.length > 0 ? (stats.total_income + stats.total_expenses) / recentTransactions.length : 0)}
@@ -786,7 +789,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <PiggyBank className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    <span className="text-sm">Savings Rate</span>
+                    <span className="text-sm">{t('analytics.savingsRate')}</span>
                   </div>
                   <span className="font-medium text-green-600 dark:text-green-400">
                     {stats.total_income > 0 ? ((stats.net_balance / stats.total_income) * 100).toFixed(1) : '0'}%
@@ -796,7 +799,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span className="text-sm">Budget Usage</span>
+                    <span className="text-sm">{t('analytics.budgetUsage')}</span>
                   </div>
                   <span className="font-medium">{stats.budget_used_percentage.toFixed(1)}%</span>
                 </div>
@@ -804,7 +807,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span className="text-sm">Investment Return</span>
+                    <span className="text-sm">{t('analytics.investmentReturn')}</span>
                   </div>
                   <span className={`font-medium ${stats.investment_return >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {stats.investment_return >= 0 ? '+' : ''}{stats.investment_return.toFixed(2)}%
@@ -825,15 +828,15 @@ export default function DashboardPage() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Activity className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                    Recent Activity
+                    {t('activity.recentActivity')}
                   </div>
                   <Link href="/dashboard/transactions">
                     <Button variant="ghost" size="sm" className="text-xs">
-                      View All ({recentTransactions.length})
+                      {t('activity.viewAll')} ({recentTransactions.length})
                     </Button>
                   </Link>
                 </CardTitle>
-                <CardDescription>Latest financial transactions</CardDescription>
+                <CardDescription>{t('activity.latestTransactions')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-80 overflow-y-auto">
@@ -875,12 +878,12 @@ export default function DashboardPage() {
                   {recentTransactions.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
                       <Activity className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                      <h4 className="text-sm font-semibold mb-2">No Recent Activity</h4>
-                      <p className="text-xs mb-3">Start adding transactions to see activity</p>
+                      <h4 className="text-sm font-semibold mb-2">{t('activity.noRecentActivity')}</h4>
+                      <p className="text-xs mb-3">{t('activity.startAddingTransactions')}</p>
                       <Link href="/dashboard/transactions/new">
                         <Button variant="outline" size="sm">
                           <Plus className="h-3 w-3 mr-1" />
-                          Add Transaction
+                          {tCommon('addTransaction')}
                         </Button>
                       </Link>
                     </div>
@@ -902,13 +905,13 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center text-cyan-800 dark:text-cyan-300">
                   <Calendar className="h-5 w-5 mr-2" />
-                  Upcoming Reminders
+                  {t('reminders.upcomingReminders')}
                   <Badge variant="outline" className="ml-2 bg-white/60 border-cyan-300">
-                    {upcomingReminders.length} items
+                    {upcomingReminders.length} {t('reminders.items')}
                   </Badge>
                 </CardTitle>
                 <CardDescription className="text-cyan-700 dark:text-cyan-400">
-                  Don't miss these important financial deadlines
+                  {t('reminders.financialDeadlines')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -927,7 +930,7 @@ export default function DashboardPage() {
                           variant={reminder.priority === 'high' ? 'destructive' : reminder.priority === 'medium' ? 'outline' : 'secondary'}
                           className="text-xs"
                         >
-                          {reminder.days_until_due === 0 ? 'Today' : `${reminder.days_until_due}d`}
+                          {reminder.days_until_due === 0 ? t('reminders.today') : `${reminder.days_until_due}d`}
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mb-2">{reminder.description}</p>
@@ -959,10 +962,10 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center text-indigo-800 dark:text-indigo-300">
                   <Target className="h-5 w-5 mr-2" />
-                  Monthly Goals Progress
+                  {t('goals.monthlyGoalsProgress')}
                 </CardTitle>
                 <CardDescription className="text-indigo-700 dark:text-indigo-400">
-                  Track your progress towards financial goals
+                  {t('goals.trackProgress')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -970,18 +973,18 @@ export default function DashboardPage() {
                   {monthlyGoals.map(goal => (
                     <div key={goal.id} className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-sm">{goal.title}</h4>
+                        <h4 className="font-medium text-sm">{t(`goals.titles.${goal.id}`)}</h4>
                         <Badge variant={
                           goal.status === 'achieved' ? 'default' :
                           goal.status === 'on-track' ? 'secondary' :
                           goal.status === 'warning' ? 'outline' : 'destructive'
                         } className="text-xs">
-                          {goal.status.replace('-', ' ')}
+                          {t(`goals.status.${goal.status.replace('-', '_')}`)}
                         </Badge>
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Progress</span>
+                          <span>{t('goals.progress')}</span>
                           <span>{Math.min(goal.progress, goal.target).toFixed(1)}/{goal.target}</span>
                         </div>
                         <Progress 

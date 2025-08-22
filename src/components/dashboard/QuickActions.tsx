@@ -25,116 +25,120 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslations } from 'next-intl';
 
-const quickActions = [
-  {
-    category: "Transactions",
-    items: [
-      {
-        label: "Add Expense",
-        href: "/transactions/new?type=expense",
-        icon: Receipt,
-        description: "Record a new expense",
-        color: "text-red-600",
-      },
-      {
-        label: "Add Income",
-        href: "/transactions/new?type=income",
-        icon: TrendingUp,
-        description: "Record new income",
-        color: "text-green-600",
-      },
-      {
-        label: "Quick Transfer",
-        href: "/transactions/transfer",
-        icon: CreditCard,
-        description: "Transfer between accounts",
-        color: "text-blue-600",
-      },
-    ],
-  },
-  {
-    category: "Financial Planning",
-    items: [
-      {
-        label: "New Investment",
-        href: "/investments/new",
-        icon: PiggyBank,
-        description: "Add investment record",
-        color: "text-purple-600",
-      },
-      {
-        label: "Set Budget",
-        href: "/budget/new",
-        icon: Target,
-        description: "Create budget plan",
-        color: "text-orange-600",
-      },
-      {
-        label: "Calculate EMI",
-        href: "/loans/calculator",
-        icon: Calculator,
-        description: "EMI calculator",
-        color: "text-indigo-600",
-      },
-    ],
-  },
-  {
-    category: "Lending & Borrowing",
-    items: [
-      {
-        label: "Money Lent",
-        href: "/lending/new?type=lent",
-        icon: Users,
-        description: "Record money lent",
-        color: "text-cyan-600",
-      },
-      {
-        label: "Money Borrowed",
-        href: "/lending/new?type=borrowed",
-        icon: Users,
-        description: "Record money borrowed",
-        color: "text-pink-600",
-      },
-    ],
-  },
-  {
-    category: "Data Management",
-    items: [
-      {
-        label: "Import Data",
-        href: "/import",
-        icon: Upload,
-        description: "Import bank statements",
-        color: "text-gray-600",
-      },
-      {
-        label: "Export Report",
-        href: "/export",
-        icon: Download,
-        description: "Export financial data",
-        color: "text-gray-600",
-      },
-      {
-        label: "View Reports",
-        href: "/reports",
-        icon: BarChart3,
-        description: "Financial reports",
-        color: "text-gray-600",
-      },
-    ],
-  },
-];
 
 export function QuickActions() {
   const [isOpen, setIsOpen] = useState(false);
+  const t = useTranslations('dashboard.quickActions');
+  const tCategories = useTranslations('dashboard.categories');
+
+  const quickActions = [
+    {
+      category: tCategories('transactions'),
+      items: [
+        {
+          label: t('addExpense'),
+          href: "/transactions/new?type=expense",
+          icon: Receipt,
+          description: t('descriptions.addExpense'),
+          color: "text-red-600",
+        },
+        {
+          label: t('addIncome'),
+          href: "/transactions/new?type=income",
+          icon: TrendingUp,
+          description: t('descriptions.addIncome'),
+          color: "text-green-600",
+        },
+        {
+          label: t('quickTransfer'),
+          href: "/transactions/transfer",
+          icon: CreditCard,
+          description: t('descriptions.quickTransfer'),
+          color: "text-blue-600",
+        },
+      ],
+    },
+    {
+      category: tCategories('financialPlanning'),
+      items: [
+        {
+          label: t('newInvestment'),
+          href: "/investments/new",
+          icon: PiggyBank,
+          description: t('descriptions.newInvestment'),
+          color: "text-purple-600",
+        },
+        {
+          label: t('setBudget'),
+          href: "/budget/new",
+          icon: Target,
+          description: t('descriptions.setBudget'),
+          color: "text-orange-600",
+        },
+        {
+          label: t('calculateEMI'),
+          href: "/loans/calculator",
+          icon: Calculator,
+          description: t('descriptions.calculateEMI'),
+          color: "text-indigo-600",
+        },
+      ],
+    },
+    {
+      category: tCategories('lendingBorrowing'),
+      items: [
+        {
+          label: t('moneyLent'),
+          href: "/lending/new?type=lent",
+          icon: Users,
+          description: t('descriptions.moneyLent'),
+          color: "text-cyan-600",
+        },
+        {
+          label: t('moneyBorrowed'),
+          href: "/lending/new?type=borrowed",
+          icon: Users,
+          description: t('descriptions.moneyBorrowed'),
+          color: "text-pink-600",
+        },
+      ],
+    },
+    {
+      category: tCategories('dataManagement'),
+      items: [
+        {
+          label: t('importData'),
+          href: "/import",
+          icon: Upload,
+          description: t('descriptions.importData'),
+          color: "text-gray-600",
+        },
+        {
+          label: t('exportReport'),
+          href: "/export",
+          icon: Download,
+          description: t('descriptions.exportReport'),
+          color: "text-gray-600",
+        },
+        {
+          label: t('viewReports'),
+          href: "/reports",
+          icon: BarChart3,
+          description: t('descriptions.viewReports'),
+          color: "text-gray-600",
+        },
+      ],
+    },
+  ];
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
           <Plus className="w-4 h-4 mr-2" />
-          Quick Actions
+          {t('title')}
           <ChevronDown className="w-4 h-4 ml-2" />
         </Button>
       </DropdownMenuTrigger>
@@ -182,7 +186,7 @@ export function QuickActions() {
 
         {/* Recently used actions */}
         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Recently Used
+          {t('recentlyUsed')}
         </DropdownMenuLabel>
 
         <DropdownMenuItem asChild className="cursor-pointer">
@@ -195,8 +199,8 @@ export function QuickActions() {
               <Receipt className="w-4 h-4" />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-sm">Add Expense</p>
-              <p className="text-xs text-muted-foreground">Used 2 hours ago</p>
+              <p className="font-medium text-sm">{t('addExpense')}</p>
+              <p className="text-xs text-muted-foreground">{t('usedTimeAgo.twoHoursAgo')}</p>
             </div>
           </Link>
         </DropdownMenuItem>
@@ -211,8 +215,8 @@ export function QuickActions() {
               <TrendingUp className="w-4 h-4" />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-sm">Add Income</p>
-              <p className="text-xs text-muted-foreground">Used yesterday</p>
+              <p className="font-medium text-sm">{t('addIncome')}</p>
+              <p className="text-xs text-muted-foreground">{t('usedTimeAgo.yesterday')}</p>
             </div>
           </Link>
         </DropdownMenuItem>

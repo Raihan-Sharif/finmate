@@ -12,6 +12,7 @@ import { storage } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Download, Plus, Share, Smartphone, Wallet, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslations } from 'next-intl';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -19,6 +20,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAPrompt() {
+  const t = useTranslations('pwa');
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -154,9 +156,9 @@ export function PWAPrompt() {
                       <Wallet className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Install FinMate</CardTitle>
+                      <CardTitle className="text-lg">{t('title')}</CardTitle>
                       <CardDescription className="text-sm">
-                        Get the full app experience
+                        {t('subtitle')}
                       </CardDescription>
                     </div>
                   </div>
@@ -176,15 +178,15 @@ export function PWAPrompt() {
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li className="flex items-center space-x-2">
                       <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                      <span>Works offline</span>
+                      <span>{t('benefits.worksOffline')}</span>
                     </li>
                     <li className="flex items-center space-x-2">
                       <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                      <span>Faster loading</span>
+                      <span>{t('benefits.fasterLoading')}</span>
                     </li>
                     <li className="flex items-center space-x-2">
                       <div className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
-                      <span>Push notifications</span>
+                      <span>{t('benefits.pushNotifications')}</span>
                     </li>
                   </ul>
 
@@ -195,7 +197,7 @@ export function PWAPrompt() {
                       size="sm"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Install
+                      {t('buttons.install')}
                     </Button>
                     <Button
                       variant="outline"
@@ -203,7 +205,7 @@ export function PWAPrompt() {
                       size="sm"
                       className="px-3"
                     >
-                      Later
+                      {t('buttons.later')}
                     </Button>
                   </div>
                 </div>
@@ -231,9 +233,9 @@ export function PWAPrompt() {
                       <Smartphone className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Install FinMate</CardTitle>
+                      <CardTitle className="text-lg">{t('ios.title')}</CardTitle>
                       <CardDescription className="text-sm">
-                        Add to your home screen
+                        {t('ios.addToHomeScreen')}
                       </CardDescription>
                     </div>
                   </div>
@@ -251,27 +253,27 @@ export function PWAPrompt() {
               <CardContent className="pt-0">
                 <div className="space-y-3">
                   <div className="text-sm text-muted-foreground space-y-2">
-                    <p className="font-medium">To install FinMate:</p>
+                    <p className="font-medium">{t('ios.title')}:</p>
                     <ol className="space-y-1 ml-4">
                       <li className="flex items-start space-x-2">
                         <span className="font-medium">1.</span>
                         <div className="flex items-center space-x-1">
-                          <span>Tap the</span>
+                          <span>{t('ios.step1')}</span>
                           <Share className="w-4 h-4 text-blue-500" />
-                          <span>share button</span>
+                          <span>{t('ios.shareButton')}</span>
                         </div>
                       </li>
                       <li className="flex items-start space-x-2">
                         <span className="font-medium">2.</span>
                         <div className="flex items-center space-x-1">
-                          <span>Select</span>
+                          <span>{t('ios.step2')}</span>
                           <Plus className="w-4 h-4 text-blue-500" />
-                          <span>"Add to Home Screen"</span>
+                          <span>"{t('ios.addToHomeScreen')}"</span>
                         </div>
                       </li>
                       <li className="flex items-start space-x-2">
                         <span className="font-medium">3.</span>
-                        <span>Tap "Add" to confirm</span>
+                        <span>{t('ios.step3')}</span>
                       </li>
                     </ol>
                   </div>

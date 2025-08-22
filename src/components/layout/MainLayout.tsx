@@ -78,42 +78,42 @@ interface NavigationItemConfig {
 function getNavigationItems(t: (key: string) => string): NavigationItem[] {
   const navigationConfig: NavigationItemConfig[] = [
     {
-      translationKey: 'navigation.dashboard',
+      translationKey: 'dashboard',
       href: '/dashboard',
       icon: LayoutDashboard,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
-      translationKey: 'navigation.transactions',
+      translationKey: 'transactions',
       href: '/dashboard/transactions',
       icon: Receipt,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       children: [
         {
-          translationKey: 'navigation.allTransactions',
+          translationKey: 'allTransactions',
           href: '/dashboard/transactions',
           icon: Receipt,
           color: 'text-green-600',
           bgColor: 'bg-green-50',
         },
         {
-          translationKey: 'navigation.addTransaction',
+          translationKey: 'addTransaction',
           href: '/dashboard/transactions/new',
           icon: Plus,
           color: 'text-emerald-600',
           bgColor: 'bg-emerald-50',
         },
         {
-          translationKey: 'navigation.recurringTransactions',
+          translationKey: 'recurringTransactions',
           href: '/dashboard/transactions/recurring',
           icon: Clock,
           color: 'text-emerald-600',
           bgColor: 'bg-emerald-50',
         },
         {
-          translationKey: 'navigation.importExport',
+          translationKey: 'importExport',
           href: '/dashboard/transactions/import-export',
           icon: Upload,
           color: 'text-teal-600',
@@ -122,28 +122,28 @@ function getNavigationItems(t: (key: string) => string): NavigationItem[] {
       ],
     },
     {
-      translationKey: 'navigation.budget',
+      translationKey: 'budget',
       href: '/dashboard/budget',
       icon: Target,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
       children: [
         {
-          translationKey: 'navigation.currentBudget',
+          translationKey: 'currentBudget',
           href: '/dashboard/budget',
           icon: Target,
           color: 'text-orange-600',
           bgColor: 'bg-orange-50',
         },
         {
-          translationKey: 'navigation.createBudget',
+          translationKey: 'createBudget',
           href: '/dashboard/budget/new',
           icon: Plus,
           color: 'text-amber-600',
           bgColor: 'bg-amber-50',
         },
         {
-          translationKey: 'navigation.recurringBudget',
+          translationKey: 'recurringBudget',
           href: '/dashboard/budget/recurring',
           icon: Clock,
           color: 'text-yellow-600',
@@ -152,35 +152,35 @@ function getNavigationItems(t: (key: string) => string): NavigationItem[] {
       ],
     },
     {
-      translationKey: 'navigation.investments',
+      translationKey: 'investments',
       href: '/dashboard/investments',
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
       children: [
         {
-          translationKey: 'navigation.portfolioOverview',
+          translationKey: 'portfolioOverview',
           href: '/dashboard/investments',
           icon: TrendingUp,
           color: 'text-purple-600',
           bgColor: 'bg-purple-50',
         },
         {
-          translationKey: 'navigation.addInvestment',
+          translationKey: 'addInvestment',
           href: '/dashboard/investments/new',
           icon: Plus,
           color: 'text-violet-600',
           bgColor: 'bg-violet-50',
         },
         {
-          translationKey: 'navigation.sipManagement',
+          translationKey: 'sipManagement',
           href: '/dashboard/investments/sips',
           icon: Clock,
           color: 'text-indigo-600',
           bgColor: 'bg-indigo-50',
         },
         {
-          translationKey: 'navigation.analytics',
+          translationKey: 'analytics',
           href: '/dashboard/investments/analytics',
           icon: BarChart3,
           color: 'text-purple-700',
@@ -189,42 +189,42 @@ function getNavigationItems(t: (key: string) => string): NavigationItem[] {
       ],
     },
     {
-      translationKey: 'navigation.creditLending',
+      translationKey: 'creditLending',
       href: '/dashboard/credit',
       icon: CreditCard,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       children: [
         {
-          translationKey: 'navigation.overview',
+          translationKey: 'overview',
           href: '/dashboard/credit',
           icon: LayoutDashboard,
           color: 'text-red-600',
           bgColor: 'bg-red-50',
         },
         {
-          translationKey: 'navigation.bankLoans',
+          translationKey: 'bankLoans',
           href: '/dashboard/credit/loans',
           icon: Building,
           color: 'text-blue-600',
           bgColor: 'bg-blue-50',
         },
         {
-          translationKey: 'navigation.purchaseEMI',
+          translationKey: 'purchaseEMI',
           href: '/dashboard/credit/purchase-emi',
           icon: ShoppingCart,
           color: 'text-purple-600',
           bgColor: 'bg-purple-50',
         },
         {
-          translationKey: 'navigation.personalLending',
+          translationKey: 'personalLending',
           href: '/dashboard/credit/personal-lending',
           icon: Users,
           color: 'text-green-600',
           bgColor: 'bg-green-50',
         },
         {
-          translationKey: 'navigation.analytics',
+          translationKey: 'analytics',
           href: '/dashboard/credit/analytics',
           icon: BarChart3,
           color: 'text-orange-600',
@@ -233,28 +233,28 @@ function getNavigationItems(t: (key: string) => string): NavigationItem[] {
       ],
     },
     {
-      translationKey: 'navigation.calculators',
+      translationKey: 'calculators',
       href: '/dashboard/calculators',
       icon: Calculator,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
       children: [
         {
-          translationKey: 'navigation.loanEmiCalculator',
+          translationKey: 'loanEmiCalculator',
           href: '/dashboard/calculators/loan-emi',
           icon: Calculator,
           color: 'text-indigo-600',
           bgColor: 'bg-indigo-50',
         },
         {
-          translationKey: 'navigation.taxCalculator',
+          translationKey: 'taxCalculator',
           href: '/dashboard/calculators/tax',
           icon: Receipt,
           color: 'text-blue-600',
           bgColor: 'bg-blue-50',
         },
         {
-          translationKey: 'navigation.zakatCalculator',
+          translationKey: 'zakatCalculator',
           href: '/dashboard/calculators/zakat',
           icon: Target,
           color: 'text-green-600',
@@ -263,42 +263,42 @@ function getNavigationItems(t: (key: string) => string): NavigationItem[] {
       ],
     },
     {
-      translationKey: 'navigation.analytics',
+      translationKey: 'analytics',
       href: '/dashboard/analytics',
       icon: BarChart3,
       color: 'text-cyan-600',
       bgColor: 'bg-cyan-50',
     },
     {
-      translationKey: 'navigation.settings',
+      translationKey: 'settings',
       href: '/dashboard/settings',
       icon: Settings,
       color: 'text-gray-600',
       bgColor: 'bg-gray-50',
       children: [
         {
-          translationKey: 'navigation.general',
+          translationKey: 'general',
           href: '/dashboard/settings',
           icon: Settings,
           color: 'text-gray-600',
           bgColor: 'bg-gray-50',
         },
         {
-          translationKey: 'navigation.accounts',
+          translationKey: 'accounts',
           href: '/dashboard/settings/accounts',
           icon: CreditCard,
           color: 'text-pink-600',
           bgColor: 'bg-pink-50',
         },
         {
-          translationKey: 'navigation.categories',
+          translationKey: 'categories',
           href: '/dashboard/settings/categories',
           icon: Receipt,
           color: 'text-indigo-600',
           bgColor: 'bg-indigo-50',
         },
         {
-          translationKey: 'navigation.exportData',
+          translationKey: 'exportData',
           href: '/dashboard/settings/export',
           icon: Download,
           color: 'text-slate-600',
@@ -329,35 +329,35 @@ function getNavigationItems(t: (key: string) => string): NavigationItem[] {
 function getAdminNavigationItems(t: (key: string) => string): NavigationItem[] {
   const adminNavigationConfig: NavigationItemConfig[] = [
     {
-      translationKey: 'navigation.adminPanel',
+      translationKey: 'adminPanel',
       href: '/admin',
       icon: Shield,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       children: [
         {
-          translationKey: 'navigation.dashboard',
+          translationKey: 'dashboard',
           href: '/admin',
           icon: LayoutDashboard,
           color: 'text-red-600',
           bgColor: 'bg-red-50',
         },
         {
-          translationKey: 'navigation.userManagement',
+          translationKey: 'userManagement',
           href: '/admin/users',
           icon: Users,
           color: 'text-rose-600',
           bgColor: 'bg-rose-50',
         },
         {
-          translationKey: 'navigation.systemSettings',
+          translationKey: 'systemSettings',
           href: '/admin/settings',
           icon: Settings,
           color: 'text-pink-600',
           bgColor: 'bg-pink-50',
         },
         {
-          translationKey: 'navigation.auditLogs',
+          translationKey: 'auditLogs',
           href: '/admin/audit-logs',
           icon: Receipt,
           color: 'text-red-700',
@@ -388,25 +388,25 @@ function getAdminNavigationItems(t: (key: string) => string): NavigationItem[] {
 function getQuickActions(t: (key: string) => string) {
   return [
     {
-      name: t('dashboard.quickActions.addTransaction'),
+      name: t('quickActions.addTransaction'),
       href: '/dashboard/transactions/new',
       icon: Plus,
       color: 'text-green-600',
     },
     {
-      name: t('dashboard.quickActions.createBudget'),
+      name: t('quickActions.createBudget'),
       href: '/dashboard/budget/new',
       icon: Target,
       color: 'text-blue-600',
     },
     {
-      name: t('dashboard.quickActions.viewAnalytics'),
+      name: t('quickActions.viewAnalytics'),
       href: '/dashboard/analytics',
       icon: BarChart3,
       color: 'text-purple-600',
     },
     {
-      name: t('dashboard.quickActions.helpCenter'),
+      name: t('quickActions.helpCenter'),
       href: '/help',
       icon: HelpCircle,
       color: 'text-gray-600',
@@ -416,8 +416,10 @@ function getQuickActions(t: (key: string) => string) {
 
 // Default export function
 export default function MainLayout({ children }: MainLayoutProps) {
-  const t = useTranslations();
+  const t = useTranslations('common');
+  const tNav = useTranslations('navigation');
   const tDashboard = useTranslations('dashboard');
+  const tAuth = useTranslations('auth');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedItems, setExpandedItems] = useState<string[]>([]); // No menu expanded by default
@@ -432,9 +434,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const { pendingReminders, dueTodayCount, overdueCount } = usePaymentStatus();
   
   // Get navigation items with translations
-  const navigation = getNavigationItems(t);
-  const adminNavigation = getAdminNavigationItems(t);
-  const quickActions = getQuickActions(t);
+  const navigation = getNavigationItems(tNav);
+  const adminNavigation = getAdminNavigationItems(tNav);
+  const quickActions = getQuickActions(tDashboard);
 
   // Close sidebar on route change and auto-expand parent menu if child is active
   useEffect(() => {
@@ -730,7 +732,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <>
               <div className="my-4 border-t border-border pt-4">
                 <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('navigation.administration') || 'Administration'}
+                  {tNav('administration') || 'Administration'}
                 </p>
               </div>
               {adminNavigation.map((item) => (
@@ -1088,7 +1090,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </DropdownMenu>
 
               {/* Language Switcher */}
-              <LanguageSwitcher variant="icon-only" size="sm" />
+              <LanguageSwitcher variant="minimal" size="sm" />
 
               {/* Theme toggle */}
               <Button variant="ghost" size="sm" onClick={toggleTheme}>
@@ -1099,7 +1101,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 )}
               </Button>
 
-              {/* Enhanced User menu with role display */}
+              {/* Enhanced User menu with role display and Language Switcher */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-auto px-2 space-x-2">
@@ -1176,7 +1178,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard">
                       <ArrowRight className="mr-2 h-4 w-4" />
-                      <span>{t('navigation.dashboard')}</span>
+                      <span>{tNav('dashboard')}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -1188,21 +1190,28 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/settings">
                       <Settings className="mr-2 h-4 w-4" />
-                      <span>{t('navigation.settings')}</span>
+                      <span>{tNav('settings')}</span>
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin() && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin">
                         <Shield className="mr-2 h-4 w-4" />
-                        <span>{t('navigation.adminPanel')}</span>
+                        <span>{tNav('adminPanel')}</span>
                       </Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
+                  <div className="px-2 py-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                      {t('language')}
+                    </p>
+                    <LanguageSwitcher variant="minimal" size="sm" />
+                  </div>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>{t('auth.signOut')}</span>
+                    <span>{tAuth('signOut')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
