@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +54,8 @@ const fadeInUp = {
 };
 
 export default function EditTransactionPage() {
+  const t = useTranslations('transactions');
+  const tCommon = useTranslations('common');
   const { user, profile } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -95,7 +98,7 @@ export default function EditTransactionPage() {
         const transactionWithRecurring = await TransactionService.getTransactionWithRecurringById(transactionId, user.id);
         
         if (!transactionWithRecurring) {
-          toast.error('Transaction not found');
+          toast.error(t('form.errors.transactionNotFound') || 'Transaction not found');
           router.push('/dashboard/transactions');
           return;
         }
@@ -135,7 +138,7 @@ export default function EditTransactionPage() {
         });
       } catch (error) {
         console.error('Error loading transaction:', error);
-        toast.error('Failed to load transaction');
+        toast.error('Failed to load transaction'); // Keep English for system error
         router.push('/dashboard/transactions');
       } finally {
         setLoadingTransaction(false);
@@ -162,7 +165,7 @@ export default function EditTransactionPage() {
         setAccounts(accountsData);
       } catch (error) {
         console.error('Error loading data:', error);
-        toast.error('Failed to load categories and accounts');
+        toast.error('Failed to load categories and accounts'); // Keep English for system error
       } finally {
         setLoadingData(false);
       }
@@ -193,7 +196,7 @@ export default function EditTransactionPage() {
 
   const onSubmit = async (data: TransactionForm) => {
     if (!user || !transactionId) {
-      toast.error('You must be logged in to update transactions');
+      toast.error(t('form.errors.loginRequired'));
       return;
     }
 
@@ -289,20 +292,20 @@ export default function EditTransactionPage() {
       // Show appropriate success message
       if (data.recurring && data.recurringFrequency) {
         if (recurringTransactionId) {
-          toast.success('Transaction and recurring schedule updated successfully!');
+          toast.success(t('form.success.recurringUpdated') || 'Transaction and recurring schedule updated successfully!');
         } else {
-          toast.success('Transaction updated and recurring schedule created!');
+          toast.success(t('form.success.recurringCreated'));
         }
       } else if (recurringTransactionId && !data.recurring) {
-        toast.success('Transaction updated and recurring schedule removed!');
+        toast.success(t('form.success.recurringRemoved') || 'Transaction updated and recurring schedule removed!');
       } else {
-        toast.success('Transaction updated successfully!');
+        toast.success(t('form.success.transactionUpdated'));
       }
       
       router.push('/dashboard/transactions');
     } catch (error: any) {
       console.error('Error updating transaction:', error);
-      toast.error(error.message || 'Failed to update transaction');
+      toast.error(error.message || t('form.errors.updateFailed') || 'Failed to update transaction');
     } finally {
       setIsLoading(false);
     }
@@ -350,16 +353,16 @@ export default function EditTransactionPage() {
           <Link href="/dashboard/transactions">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Transactions
+              {t('form.backToTransactions')}
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
               <Receipt className="w-8 h-8 mr-3 text-blue-600" />
-              Edit Transaction
+              {t('form.editTransaction')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Update your {watchedType} transaction details
+              {t('form.updateTransaction', { type: watchedType === 'income' ? tCommon('income') : tCommon('expense') }) || `Update your ${watchedType} transaction details`}
             </p>
           </div>
         </div>
@@ -375,14 +378,14 @@ export default function EditTransactionPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <DollarSign className="w-5 h-5 mr-2" />
-                    Transaction Details
+                    {t('form.transactionDetails')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Type Selection */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Transaction Type</Label>
+                      <Label>{t('form.transactionType')}</Label>
                       <div className="grid grid-cols-2 gap-2">
                         <Button
                           type="button"
@@ -391,7 +394,7 @@ export default function EditTransactionPage() {
                           className="h-12"
                         >
                           <Receipt className="w-4 h-4 mr-2" />
-                          Expense
+                          {t('form.expense')}
                         </Button>
                         <Button
                           type="button"
@@ -400,14 +403,14 @@ export default function EditTransactionPage() {
                           className="h-12"
                         >
                           <DollarSign className="w-4 h-4 mr-2" />
-                          Income
+                          {t('form.income')}
                         </Button>
                       </div>
                     </div>
 
                     {/* Amount */}
                     <div className="space-y-2">
-                      <Label htmlFor="amount">Amount</Label>
+                      <Label htmlFor="amount">{t('form.amount')}</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-3 text-muted-foreground">
                           {currency === 'USD' ? '$' : currency}
@@ -416,11 +419,11 @@ export default function EditTransactionPage() {
                           id="amount"
                           type="number"
                           step="0.01"
-                          placeholder="0.00"
+                          placeholder={t('form.amountPlaceholder')}
                           className="pl-10 text-lg font-semibold h-12"
                           {...register('amount', {
-                            required: 'Amount is required',
-                            min: { value: 0.01, message: 'Amount must be greater than 0' }
+                            required: t('form.errors.amountRequired'),
+                            min: { value: 0.01, message: t('form.errors.amountMustBeGreater') }
                           })}
                         />
                       </div>
@@ -437,11 +440,11 @@ export default function EditTransactionPage() {
 
                   {/* Description */}
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">{t('form.description')}</Label>
                     <Input
                       id="description"
-                      placeholder="What was this transaction for?"
-                      {...register('description', { required: 'Description is required' })}
+                      placeholder={t('form.descriptionPlaceholder')}
+                      {...register('description', { required: t('form.errors.descriptionRequired') })}
                     />
                     {errors.description && (
                       <p className="text-sm text-red-600">{errors.description.message}</p>
@@ -451,7 +454,7 @@ export default function EditTransactionPage() {
                   {/* Category, Subcategory and Account */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Category</Label>
+                      <Label>{t('form.category')}</Label>
                       <Select 
                         value={watch('category') || ''} 
                         onValueChange={(value) => {
@@ -461,7 +464,7 @@ export default function EditTransactionPage() {
                         disabled={loadingData}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={loadingData ? 'Loading...' : `Select ${watchedType} category`} />
+                          <SelectValue placeholder={loadingData ? t('form.loadingCategories') : t('form.selectCategory', { type: watchedType === 'income' ? tCommon('income') : tCommon('expense') })} />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.length > 0 ? (
@@ -472,7 +475,7 @@ export default function EditTransactionPage() {
                             ))
                           ) : (
                             <SelectItem value="none" disabled>
-                              No categories found
+                              {t('form.noCategoriesFound')}
                             </SelectItem>
                           )}
                         </SelectContent>
@@ -480,7 +483,7 @@ export default function EditTransactionPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Subcategory</Label>
+                      <Label>{t('form.subcategory')}</Label>
                       <Select 
                         value={watch('subcategory') || ''} 
                         onValueChange={(value) => setValue('subcategory', value)} 
@@ -489,10 +492,10 @@ export default function EditTransactionPage() {
                         <SelectTrigger>
                           <SelectValue placeholder={
                             !watchedCategory 
-                              ? 'Select category first' 
+                              ? t('form.selectCategoryFirst') 
                               : subcategories.length === 0 
-                                ? 'No subcategories' 
-                                : 'Select subcategory'
+                                ? t('form.noSubcategories') 
+                                : t('form.selectSubcategory')
                           } />
                         </SelectTrigger>
                         <SelectContent>
@@ -504,7 +507,7 @@ export default function EditTransactionPage() {
                             ))
                           ) : (
                             <SelectItem value="none" disabled>
-                              No subcategories available
+                              {t('form.noSubcategoriesAvailable')}
                             </SelectItem>
                           )}
                         </SelectContent>
@@ -512,14 +515,14 @@ export default function EditTransactionPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Account</Label>
+                      <Label>{t('form.account')}</Label>
                       <Select 
                         value={watch('account') || ''} 
                         onValueChange={(value) => setValue('account', value)} 
                         disabled={loadingData}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={loadingData ? 'Loading...' : 'Select account'} />
+                          <SelectValue placeholder={loadingData ? t('form.loadingAccounts') : t('form.selectAccount')} />
                         </SelectTrigger>
                         <SelectContent>
                           {accounts.length > 0 ? (
@@ -530,7 +533,7 @@ export default function EditTransactionPage() {
                             ))
                           ) : (
                             <SelectItem value="none" disabled>
-                              No accounts found
+                              {t('form.noAccountsFound')}
                             </SelectItem>
                           )}
                         </SelectContent>
@@ -540,14 +543,14 @@ export default function EditTransactionPage() {
 
                   {/* Date */}
                   <div className="space-y-2">
-                    <Label htmlFor="date">Transaction Date</Label>
+                    <Label htmlFor="date">{t('form.transactionDate')}</Label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="date"
                         type="date"
                         className="pl-10"
-                        {...register('date', { required: 'Date is required' })}
+                        {...register('date', { required: t('form.errors.dateRequired') })}
                       />
                     </div>
                     {errors.date && (
@@ -569,28 +572,28 @@ export default function EditTransactionPage() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle>Additional Details</CardTitle>
+                  <CardTitle>{t('form.additionalDetails')}</CardTitle>
                   <CardDescription>
-                    Optional information to help organize your transaction
+                    {t('form.additionalDetailsDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Vendor/Location */}
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="vendor">Vendor/Payee</Label>
+                      <Label htmlFor="vendor">{t('form.vendor')}</Label>
                       <Input
                         id="vendor"
-                        placeholder="Who did you pay or receive from?"
+                        placeholder={t('form.vendorPlaceholder')}
                         {...register('vendor')}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
+                      <Label htmlFor="location">{t('form.location')}</Label>
                       <Input
                         id="location"
-                        placeholder="Where did this transaction happen?"
+                        placeholder={t('form.locationPlaceholder')}
                         {...register('location')}
                       />
                     </div>
@@ -598,12 +601,12 @@ export default function EditTransactionPage() {
 
                   {/* Tags */}
                   <div className="space-y-2">
-                    <Label>Tags</Label>
+                    <Label>{t('form.tags')}</Label>
                     <div className="flex items-center space-x-2">
                       <div className="relative flex-1">
                         <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          placeholder="Add tags to categorize this transaction"
+                          placeholder={t('form.tagsPlaceholder')}
                           value={tagInput}
                           onChange={(e) => setTagInput(e.target.value)}
                           onKeyPress={handleKeyPress}
@@ -611,7 +614,7 @@ export default function EditTransactionPage() {
                         />
                       </div>
                       <Button type="button" onClick={addTag} size="sm">
-                        Add
+                        {t('form.addTag')}
                       </Button>
                     </div>
                     {watchedTags.length > 0 && (
@@ -634,10 +637,10 @@ export default function EditTransactionPage() {
 
                   {/* Notes */}
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Notes</Label>
+                    <Label htmlFor="notes">{t('form.notes')}</Label>
                     <Textarea
                       id="notes"
-                      placeholder="Any additional notes about this transaction..."
+                      placeholder={t('form.notesPlaceholder')}
                       rows={3}
                       {...register('notes')}
                     />
@@ -650,25 +653,25 @@ export default function EditTransactionPage() {
                         checked={watchedRecurring}
                         onCheckedChange={(checked) => setValue('recurring', checked)}
                       />
-                      <Label>This is a recurring transaction</Label>
+                      <Label>{t('form.recurringLabel')}</Label>
                     </div>
 
                     {watchedRecurring && (
                       <div className="space-y-2">
-                        <Label>Frequency</Label>
+                        <Label>{t('form.repeatFrequency')}</Label>
                         <Select 
                           value={watch('recurringFrequency') || ''} 
                           onValueChange={(value) => setValue('recurringFrequency', value)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="How often does this repeat?" />
+                            <SelectValue placeholder={t('form.repeatFrequencyPlaceholder')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="weekly">Weekly</SelectItem>
-                            <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                            <SelectItem value="quarterly">Quarterly</SelectItem>
-                            <SelectItem value="yearly">Yearly</SelectItem>
+                            <SelectItem value="weekly">{t('form.weekly')}</SelectItem>
+                            <SelectItem value="biweekly">{t('form.biweekly')}</SelectItem>
+                            <SelectItem value="monthly">{t('form.monthly')}</SelectItem>
+                            <SelectItem value="quarterly">{t('form.quarterly')}</SelectItem>
+                            <SelectItem value="yearly">{t('form.yearly')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -690,7 +693,7 @@ export default function EditTransactionPage() {
         >
           <Link href="/dashboard/transactions">
             <Button type="button" variant="outline">
-              Cancel
+              {tCommon('cancel')}
             </Button>
           </Link>
           
@@ -698,12 +701,12 @@ export default function EditTransactionPage() {
             {isLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                Updating...
+                {t('form.updating') || 'Updating...'}
               </>
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Update Transaction
+                {t('form.updateTransactionButton')}
               </>
             )}
           </Button>

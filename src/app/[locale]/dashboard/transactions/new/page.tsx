@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,6 +80,8 @@ const buttonScale = {
 };
 
 export default function NewTransactionPage() {
+  const t = useTranslations('transactions');
+  const tCommon = useTranslations('common');
   const { user, profile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -152,10 +155,10 @@ export default function NewTransactionPage() {
             setCategories(newCategoriesData);
             setAccounts(newAccountsData);
             
-            toast.success('Default categories and accounts created!');
+            toast.success(t('form.success.defaultDataCreated'));
           } catch (createError) {
             console.error('Error creating default data:', createError);
-            toast.error('Failed to create default data');
+            toast.error('Failed to create default data'); // Keep English for system error
             setCategories(categoriesData);
             setAccounts(accountsData);
           }
@@ -165,7 +168,7 @@ export default function NewTransactionPage() {
         }
       } catch (error) {
         console.error('Error loading data:', error);
-        toast.error('Failed to load categories and accounts');
+        toast.error('Failed to load categories and accounts'); // Keep English for system error
       } finally {
         setLoadingData(false);
       }
@@ -200,7 +203,7 @@ export default function NewTransactionPage() {
 
   const onSubmit = async (data: TransactionForm) => {
     if (!user) {
-      toast.error('You must be logged in to create transactions');
+      toast.error(t('form.errors.loginRequired'));
       return;
     }
 
@@ -269,15 +272,15 @@ export default function NewTransactionPage() {
       const savedTransaction = await TransactionService.createTransaction(transactionData);
 
       if (data.recurring && data.recurringFrequency) {
-        toast.success('Transaction and recurring schedule created successfully!');
+        toast.success(t('form.success.recurringCreated'));
       } else {
-        toast.success('Transaction created successfully!');
+        toast.success(t('form.success.transactionCreated'));
       }
       
       router.push('/dashboard/transactions');
     } catch (error: any) {
       console.error('Error saving transaction:', error);
-      toast.error(error.message || 'Failed to save transaction');
+      toast.error(error.message || t('form.errors.saveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -322,16 +325,16 @@ export default function NewTransactionPage() {
           <Link href="/dashboard/transactions">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Transactions
+              {t('form.backToTransactions')}
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
               <Plus className="w-8 h-8 mr-3 text-blue-600" />
-              Add New Transaction
+              {t('form.newTransaction')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Record a new {watchedType} transaction
+              {t('form.recordTransaction', { type: watchedType === 'income' ? tCommon('income') : tCommon('expense') })}
             </p>
           </div>
         </div>
@@ -363,14 +366,14 @@ export default function NewTransactionPage() {
                       >
                         <DollarSign className="w-5 h-5" />
                       </motion.div>
-                      Transaction Details
+                      {t('form.transactionDetails')}
                     </CardTitle>
                   </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Type Selection */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Transaction Type</Label>
+                      <Label>{t('form.transactionType')}</Label>
                       <div className="grid grid-cols-2 gap-2">
                         <motion.div variants={buttonScale} whileHover="whileHover" whileTap="whileTap">
                           <Button
@@ -391,7 +394,7 @@ export default function NewTransactionPage() {
                             >
                               <Receipt className="w-4 h-4" />
                             </motion.div>
-                            Expense
+                            {t('form.expense')}
                           </Button>
                         </motion.div>
                         
@@ -414,7 +417,7 @@ export default function NewTransactionPage() {
                             >
                               <Plus className="w-4 h-4" />
                             </motion.div>
-                            Income
+                            {t('form.income')}
                           </Button>
                         </motion.div>
                       </div>
@@ -422,7 +425,7 @@ export default function NewTransactionPage() {
 
                     {/* Amount */}
                     <div className="space-y-2">
-                      <Label htmlFor="amount">Amount</Label>
+                      <Label htmlFor="amount">{t('form.amount')}</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-3 text-muted-foreground">
                           {currency === 'USD' ? '$' : currency}
@@ -431,11 +434,11 @@ export default function NewTransactionPage() {
                           id="amount"
                           type="number"
                           step="0.01"
-                          placeholder="0.00"
+                          placeholder={t('form.amountPlaceholder')}
                           className="pl-10 text-lg font-semibold h-12"
                           {...register('amount', {
-                            required: 'Amount is required',
-                            min: { value: 0.01, message: 'Amount must be greater than 0' }
+                            required: t('form.errors.amountRequired'),
+                            min: { value: 0.01, message: t('form.errors.amountMustBeGreater') }
                           })}
                         />
                       </div>
@@ -452,11 +455,11 @@ export default function NewTransactionPage() {
 
                   {/* Description */}
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">{t('form.description')}</Label>
                     <Input
                       id="description"
-                      placeholder="What was this transaction for?"
-                      {...register('description', { required: 'Description is required' })}
+                      placeholder={t('form.descriptionPlaceholder')}
+                      {...register('description', { required: t('form.errors.descriptionRequired') })}
                     />
                     {errors.description && (
                       <p className="text-sm text-red-600">{errors.description.message}</p>
@@ -466,10 +469,10 @@ export default function NewTransactionPage() {
                   {/* Category, Subcategory and Account */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Category</Label>
+                      <Label>{t('form.category')}</Label>
                       <Select onValueChange={(value) => setValue('category', value)} disabled={loadingData}>
                         <SelectTrigger className="h-12">
-                          <SelectValue placeholder={loadingData ? 'Loading categories...' : `Select ${watchedType} category`} />
+                          <SelectValue placeholder={loadingData ? t('form.loadingCategories') : t('form.selectCategory', { type: watchedType === 'income' ? tCommon('income') : tCommon('expense') })} />
                         </SelectTrigger>
                         <SelectContent>
                           {availableCategories.length > 0 ? (
@@ -496,7 +499,7 @@ export default function NewTransactionPage() {
                             <SelectItem value="none" disabled>
                               <div className="flex items-center space-x-2">
                                 <div className="w-4 h-4 bg-gray-300 rounded-full animate-pulse" />
-                                <span>No categories found</span>
+                                <span>{t('form.noCategoriesFound')}</span>
                               </div>
                             </SelectItem>
                           )}
@@ -505,7 +508,7 @@ export default function NewTransactionPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Subcategory</Label>
+                      <Label>{t('form.subcategory')}</Label>
                       <Select 
                         onValueChange={(value) => setValue('subcategory', value)} 
                         disabled={!watchedCategory || subcategories.length === 0}
@@ -513,10 +516,10 @@ export default function NewTransactionPage() {
                         <SelectTrigger className="h-12">
                           <SelectValue placeholder={
                             !watchedCategory 
-                              ? 'Select category first' 
+                              ? t('form.selectCategoryFirst') 
                               : subcategories.length === 0 
-                                ? 'No subcategories' 
-                                : 'Select subcategory'
+                                ? t('form.noSubcategories') 
+                                : t('form.selectSubcategory')
                           } />
                         </SelectTrigger>
                         <SelectContent>
@@ -536,7 +539,7 @@ export default function NewTransactionPage() {
                             <SelectItem value="none" disabled>
                               <div className="flex items-center space-x-2 text-muted-foreground">
                                 <div className="w-3 h-3 bg-gray-300 rounded-full" />
-                                <span>No subcategories available</span>
+                                <span>{t('form.noSubcategoriesAvailable')}</span>
                               </div>
                             </SelectItem>
                           )}
@@ -545,10 +548,10 @@ export default function NewTransactionPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Account</Label>
+                      <Label>{t('form.account')}</Label>
                       <Select onValueChange={(value) => setValue('account', value)} disabled={loadingData}>
                         <SelectTrigger className="h-12">
-                          <SelectValue placeholder={loadingData ? 'Loading accounts...' : 'Select account'} />
+                          <SelectValue placeholder={loadingData ? t('form.loadingAccounts') : t('form.selectAccount')} />
                         </SelectTrigger>
                         <SelectContent>
                           {accounts.length > 0 ? (
@@ -577,7 +580,7 @@ export default function NewTransactionPage() {
                             ))
                           ) : (
                             <SelectItem value="none" disabled>
-                              No accounts found
+                              {t('form.noAccountsFound')}
                             </SelectItem>
                           )}
                         </SelectContent>
@@ -587,14 +590,14 @@ export default function NewTransactionPage() {
 
                   {/* Date */}
                   <div className="space-y-2">
-                    <Label htmlFor="date">Transaction Date</Label>
+                    <Label htmlFor="date">{t('form.transactionDate')}</Label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="date"
                         type="date"
                         className="pl-10"
-                        {...register('date', { required: 'Date is required' })}
+                        {...register('date', { required: t('form.errors.dateRequired') })}
                       />
                     </div>
                     {errors.date && (
@@ -615,28 +618,28 @@ export default function NewTransactionPage() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle>Additional Details</CardTitle>
+                  <CardTitle>{t('form.additionalDetails')}</CardTitle>
                   <CardDescription>
-                    Optional information to help organize your transaction
+                    {t('form.additionalDetailsDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Vendor/Location */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="vendor">Vendor/Payee</Label>
+                      <Label htmlFor="vendor">{t('form.vendor')}</Label>
                       <Input
                         id="vendor"
-                        placeholder="Who did you pay or receive from?"
+                        placeholder={t('form.vendorPlaceholder')}
                         {...register('vendor')}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
+                      <Label htmlFor="location">{t('form.location')}</Label>
                       <Input
                         id="location"
-                        placeholder="Where did this transaction happen?"
+                        placeholder={t('form.locationPlaceholder')}
                         {...register('location')}
                       />
                     </div>
@@ -644,12 +647,12 @@ export default function NewTransactionPage() {
 
                   {/* Tags */}
                   <div className="space-y-2">
-                    <Label>Tags</Label>
+                    <Label>{t('form.tags')}</Label>
                     <div className="flex items-center space-x-2">
                       <div className="relative flex-1">
                         <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          placeholder="Add tags to categorize this transaction"
+                          placeholder={t('form.tagsPlaceholder')}
                           value={tagInput}
                           onChange={(e) => setTagInput(e.target.value)}
                           onKeyPress={handleKeyPress}
@@ -657,7 +660,7 @@ export default function NewTransactionPage() {
                         />
                       </div>
                       <Button type="button" onClick={addTag} size="sm">
-                        Add
+                        {t('form.addTag')}
                       </Button>
                     </div>
                     {watchedTags.length > 0 && (
@@ -680,10 +683,10 @@ export default function NewTransactionPage() {
 
                   {/* Notes */}
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Notes</Label>
+                    <Label htmlFor="notes">{t('form.notes')}</Label>
                     <Textarea
                       id="notes"
-                      placeholder="Any additional notes about this transaction..."
+                      placeholder={t('form.notesPlaceholder')}
                       rows={3}
                       {...register('notes')}
                     />
@@ -703,10 +706,10 @@ export default function NewTransactionPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Calculator className="w-5 h-5 mr-2" />
-                    Recurring Transaction
+                    {t('form.recurringTransaction')}
                   </CardTitle>
                   <CardDescription>
-                    Set up this transaction to repeat automatically
+                    {t('form.recurringDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -717,15 +720,15 @@ export default function NewTransactionPage() {
                         onCheckedChange={(checked) => setValue('recurring', checked)}
                       />
                       <div>
-                        <Label className="text-base font-medium">Recurring Transaction</Label>
+                        <Label className="text-base font-medium">{t('form.recurringLabel')}</Label>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Automatically create this transaction on a schedule
+                          {t('form.recurringHelp')}
                         </p>
                       </div>
                     </div>
                     {watchedRecurring && (
                       <Badge variant="secondary" className="ml-4">
-                        Active
+                        {t('form.active')}
                       </Badge>
                     )}
                   </div>
@@ -738,40 +741,40 @@ export default function NewTransactionPage() {
                       className="space-y-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800"
                     >
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">Repeat Frequency</Label>
+                        <Label className="text-sm font-medium">{t('form.repeatFrequency')}</Label>
                         <Select onValueChange={(value) => setValue('recurringFrequency', value)}>
                           <SelectTrigger className="h-11">
-                            <SelectValue placeholder="How often should this repeat?" />
+                            <SelectValue placeholder={t('form.repeatFrequencyPlaceholder')} />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="weekly">
                               <div className="flex items-center space-x-2">
                                 <Calendar className="w-4 h-4" />
-                                <span>Weekly (Every 7 days)</span>
+                                <span>{t('form.weekly')}</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="biweekly">
                               <div className="flex items-center space-x-2">
                                 <Calendar className="w-4 h-4" />
-                                <span>Bi-weekly (Every 14 days)</span>
+                                <span>{t('form.biweekly')}</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="monthly">
                               <div className="flex items-center space-x-2">
                                 <Calendar className="w-4 h-4" />
-                                <span>Monthly</span>
+                                <span>{t('form.monthly')}</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="quarterly">
                               <div className="flex items-center space-x-2">
                                 <Calendar className="w-4 h-4" />
-                                <span>Quarterly (Every 3 months)</span>
+                                <span>{t('form.quarterly')}</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="yearly">
                               <div className="flex items-center space-x-2">
                                 <Calendar className="w-4 h-4" />
-                                <span>Yearly</span>
+                                <span>{t('form.yearly')}</span>
                               </div>
                             </SelectItem>
                           </SelectContent>
@@ -780,9 +783,7 @@ export default function NewTransactionPage() {
 
                       {watchedRecurring && (
                         <div className="mt-3 p-3 rounded-md bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
-                          <p className="text-xs text-blue-700 dark:text-blue-300">
-                            💡 <strong>Tip:</strong> The first transaction will be created immediately, then future transactions will be generated automatically based on your selected frequency.
-                          </p>
+                          <p className="text-xs text-blue-700 dark:text-blue-300" dangerouslySetInnerHTML={{ __html: t('form.recurringTip') }} />
                         </div>
                       )}
                     </motion.div>
@@ -805,10 +806,10 @@ export default function NewTransactionPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Receipt className="w-5 h-5 mr-2" />
-                    Receipt
+                    {t('form.receipt')}
                   </CardTitle>
                   <CardDescription>
-                    Upload a photo or scan of your receipt
+                    {t('form.receiptDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -830,17 +831,17 @@ export default function NewTransactionPage() {
                                 {receipt.name}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                Click to change
+                                {t('form.clickToChange')}
                               </p>
                             </>
                           ) : (
                             <>
                               <Upload className="w-8 h-8 text-muted-foreground mx-auto" />
                               <p className="text-sm font-medium">
-                                Upload Receipt
+                                {t('form.uploadReceipt')}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                PNG, JPG, PDF up to 10MB
+                                {t('form.fileTypes')}
                               </p>
                             </>
                           )}
@@ -851,7 +852,7 @@ export default function NewTransactionPage() {
                     <div className="flex space-x-2">
                       <Button type="button" variant="outline" size="sm" className="flex-1">
                         <Camera className="w-4 h-4 mr-2" />
-                        Take Photo
+                        {t('form.takePhoto')}
                       </Button>
                       {receipt && (
                         <Button
@@ -878,20 +879,20 @@ export default function NewTransactionPage() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
+                  <CardTitle>{t('form.quickActions')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Button type="button" variant="outline" size="sm" className="w-full justify-start">
                     <Calculator className="w-4 h-4 mr-2" />
-                    Split Transaction
+                    {t('form.splitTransaction')}
                   </Button>
                   <Button type="button" variant="outline" size="sm" className="w-full justify-start">
                     <Receipt className="w-4 h-4 mr-2" />
-                    Duplicate Transaction
+                    {t('form.duplicateTransaction')}
                   </Button>
                   <Button type="button" variant="outline" size="sm" className="w-full justify-start">
                     <Tag className="w-4 h-4 mr-2" />
-                    Save as Template
+                    {t('form.saveAsTemplate')}
                   </Button>
                 </CardContent>
               </Card>
@@ -909,24 +910,24 @@ export default function NewTransactionPage() {
         >
           <Link href="/dashboard/transactions">
             <Button type="button" variant="outline">
-              Cancel
+              {tCommon('cancel')}
             </Button>
           </Link>
           
           <div className="flex space-x-3">
             <Button type="button" variant="outline">
-              Save & Add Another
+              {t('form.saveAndAddAnother')}
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  Saving...
+                  {t('form.saving')}
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  Save Transaction
+                  {t('form.saveTransaction')}
                 </>
               )}
             </Button>

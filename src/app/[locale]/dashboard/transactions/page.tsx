@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,8 @@ const staggerContainer = {
 };
 
 export default function TransactionsPage() {
+  const t = useTranslations('transactions');
+  const tCommon = useTranslations('common');
   const { user, profile } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -80,8 +83,8 @@ export default function TransactionsPage() {
           user?.id ? AccountService.getAccountsForDropdown(user.id) : Promise.resolve([])
         ]);
         
-        setCategories([{ value: 'all', label: 'All Categories', level: 0 }, ...categoriesData]);
-        setAccounts([{ value: 'all', label: 'All Accounts' }, ...accountsData]);
+        setCategories([{ value: 'all', label: t('filters.allCategories'), level: 0 }, ...categoriesData]);
+        setAccounts([{ value: 'all', label: t('filters.allAccounts') }, ...accountsData]);
       } catch (err) {
         console.error('Error loading dropdown data:', err);
       }
@@ -178,25 +181,25 @@ export default function TransactionsPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
             <Receipt className="w-8 h-8 mr-3 text-blue-600" />
-            Transactions
+            {t('title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Track and manage all your financial transactions
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" size="sm">
             <Upload className="w-4 h-4 mr-2" />
-            Import
+            {t('actions.import')}
           </Button>
           <Button variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
-            Export
+            {t('actions.export')}
           </Button>
           <Link href="/dashboard/transactions/new">
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Transaction
+              {t('actions.addTransaction')}
             </Button>
           </Link>
         </div>
@@ -214,7 +217,7 @@ export default function TransactionsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Income</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('stats.totalIncome')}</p>
                   <p className="text-2xl font-bold text-green-600">
                     {formatCurrency(totalIncome, currency)}
                   </p>
@@ -232,7 +235,7 @@ export default function TransactionsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Expenses</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('stats.totalExpenses')}</p>
                   <p className="text-2xl font-bold text-red-600">
                     {formatCurrency(totalExpenses, currency)}
                   </p>
@@ -250,7 +253,7 @@ export default function TransactionsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Net Amount</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('stats.netAmount')}</p>
                   <p className={`text-2xl font-bold ${netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(netAmount, currency)}
                   </p>
@@ -280,7 +283,7 @@ export default function TransactionsPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Filter className="w-5 h-5 mr-2" />
-              Filters & Search
+              {t('filters.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -289,7 +292,7 @@ export default function TransactionsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search transactions..."
+                  placeholder={t('filters.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -297,14 +300,14 @@ export default function TransactionsPage() {
               </div>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t('filters.sortBy')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date-desc">Date (Newest First)</SelectItem>
-                  <SelectItem value="date-asc">Date (Oldest First)</SelectItem>
-                  <SelectItem value="amount-desc">Amount (Highest First)</SelectItem>
-                  <SelectItem value="amount-asc">Amount (Lowest First)</SelectItem>
-                  <SelectItem value="description">Description (A-Z)</SelectItem>
+                  <SelectItem value="date-desc">{t('sorting.dateNewest')}</SelectItem>
+                  <SelectItem value="date-asc">{t('sorting.dateOldest')}</SelectItem>
+                  <SelectItem value="amount-desc">{t('sorting.amountHighest')}</SelectItem>
+                  <SelectItem value="amount-asc">{t('sorting.amountLowest')}</SelectItem>
+                  <SelectItem value="description">{t('sorting.descriptionAZ')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -313,16 +316,30 @@ export default function TransactionsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Category" />
+                  <SelectValue placeholder={t('filters.category')} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem 
                       key={category.value} 
                       value={category.value}
-                      className={category.level === 1 ? 'pl-6 text-sm text-muted-foreground' : ''}
+                      className={
+                        category.level === 1 
+                          ? 'pl-8 text-sm text-muted-foreground border-l-2 border-l-muted ml-4' 
+                          : category.level === 0 && category.value !== 'all'
+                          ? 'font-medium text-foreground'
+                          : ''
+                      }
                     >
-                      {category.label}
+                      <div className="flex items-center gap-2">
+                        {category.icon && category.level === 0 && category.value !== 'all' && (
+                          <span className="text-lg">{category.icon}</span>
+                        )}
+                        {category.level === 1 && <span className="text-muted-foreground mr-1">↳</span>}
+                        <span className={category.level === 1 ? 'text-sm' : ''}>
+                          {category.displayLabel || category.label}
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -330,12 +347,21 @@ export default function TransactionsPage() {
 
               <Select value={selectedAccount} onValueChange={setSelectedAccount}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Account" />
+                  <SelectValue placeholder={t('filters.account')} />
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map((account) => (
-                    <SelectItem key={account.value || account} value={account.value || account}>
-                      {account.label || account}
+                    <SelectItem 
+                      key={account.value || account} 
+                      value={account.value || account}
+                      className={account.value === 'all' ? '' : 'pl-4'}
+                    >
+                      <div className="flex items-center gap-2">
+                        {account.icon && account.value !== 'all' && (
+                          <span className="text-sm">{account.icon}</span>
+                        )}
+                        <span>{account.label || account}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -343,12 +369,12 @@ export default function TransactionsPage() {
 
               <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Type" />
+                  <SelectValue placeholder={t('filters.type')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="income">Income</SelectItem>
-                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="all">{t('filters.allTypes')}</SelectItem>
+                  <SelectItem value="income">{tCommon('income')}</SelectItem>
+                  <SelectItem value="expense">{tCommon('expense')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -356,10 +382,10 @@ export default function TransactionsPage() {
             {/* Active Filters */}
             {(searchQuery || selectedCategory !== 'all' || selectedAccount !== 'all' || selectedType !== 'all') && (
               <div className="flex items-center space-x-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">Active filters:</span>
+                <span className="text-sm text-muted-foreground">{t('filters.activeFilters')}:</span>
                 {searchQuery && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>Search: "{searchQuery}"</span>
+                    <span>{t('filters.search')}: "{searchQuery}"</span>
                     <button onClick={() => setSearchQuery('')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
@@ -367,7 +393,7 @@ export default function TransactionsPage() {
                 )}
                 {selectedCategory !== 'all' && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>Category: {categories.find(c => c.value === selectedCategory)?.label || selectedCategory}</span>
+                    <span>{t('filters.category')}: {categories.find(c => c.value === selectedCategory)?.label || selectedCategory}</span>
                     <button onClick={() => setSelectedCategory('all')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
@@ -375,7 +401,7 @@ export default function TransactionsPage() {
                 )}
                 {selectedAccount !== 'all' && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>Account: {accounts.find(a => a.value === selectedAccount)?.label || selectedAccount}</span>
+                    <span>{t('filters.account')}: {accounts.find(a => a.value === selectedAccount)?.label || selectedAccount}</span>
                     <button onClick={() => setSelectedAccount('all')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
@@ -383,7 +409,7 @@ export default function TransactionsPage() {
                 )}
                 {selectedType !== 'all' && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>Type: {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}</span>
+                    <span>{t('filters.type')}: {selectedType === 'income' ? tCommon('income') : selectedType === 'expense' ? tCommon('expense') : selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}</span>
                     <button onClick={() => setSelectedType('all')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
@@ -405,13 +431,13 @@ export default function TransactionsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Transactions</CardTitle>
+                <CardTitle>{t('list.title')}</CardTitle>
                 <CardDescription>
-                  {sortedTransactions.length} transactions
+                  {sortedTransactions.length} {t('list.transactions')}
                 </CardDescription>
               </div>
               <div className="text-sm text-muted-foreground">
-                {sortedTransactions.length} results
+                {sortedTransactions.length} {t('list.results')}
               </div>
             </div>
           </CardHeader>
@@ -505,7 +531,7 @@ export default function TransactionsPage() {
                         <DropdownMenuItem asChild>
                           <Link href={`/dashboard/transactions/${transaction.id}/edit`}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            {tCommon('edit')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
@@ -513,7 +539,7 @@ export default function TransactionsPage() {
                           className="text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          {tCommon('delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -524,14 +550,14 @@ export default function TransactionsPage() {
               {sortedTransactions.length === 0 && (
                 <div className="text-center py-12">
                   <Receipt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">No transactions found</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-2">{t('empty.title')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    {error ? 'Failed to load transactions' : 'Start by adding your first transaction'}
+                    {error ? t('empty.error') : t('empty.description')}
                   </p>
                   <Link href="/dashboard/transactions/new">
                     <Button>
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Transaction
+                      {t('actions.addTransaction')}
                     </Button>
                   </Link>
                 </div>

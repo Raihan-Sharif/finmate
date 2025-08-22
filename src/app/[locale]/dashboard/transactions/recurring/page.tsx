@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,6 +33,8 @@ const fadeInUp = {
 };
 
 export default function RecurringTransactionsPage() {
+  const t = useTranslations('transactions.recurring');
+  const tCommon = useTranslations('common');
   const { user, profile } = useAuth();
   const router = useRouter();
   const [recurringTransactions, setRecurringTransactions] = useState<any[]>([]);
@@ -56,7 +59,7 @@ export default function RecurringTransactionsPage() {
         setStats(statsData);
       } catch (error) {
         console.error('Error loading recurring transactions:', error);
-        toast.error('Failed to load recurring transactions');
+        toast.error(t('messages.loadFailed'));
       } finally {
         setIsLoading(false);
       }
@@ -76,15 +79,15 @@ export default function RecurringTransactionsPage() {
         prev.map(rt => rt.id === id ? { ...rt, is_active: isActive } : rt)
       );
       
-      toast.success(isActive ? 'Recurring transaction activated' : 'Recurring transaction paused');
+      toast.success(isActive ? t('messages.activated') : t('messages.paused'));
     } catch (error) {
       console.error('Error toggling recurring transaction:', error);
-      toast.error('Failed to update recurring transaction');
+      toast.error(t('messages.updateFailed'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!user || !confirm('Are you sure you want to delete this recurring transaction?')) return;
+    if (!user || !confirm(t('messages.deleteConfirm'))) return;
     
     try {
       await RecurringTransactionService.deleteRecurringTransaction(id, user.id);
@@ -92,10 +95,10 @@ export default function RecurringTransactionsPage() {
       // Update local state
       setRecurringTransactions(prev => prev.filter(rt => rt.id !== id));
       
-      toast.success('Recurring transaction deleted');
+      toast.success(t('messages.deleted'));
     } catch (error) {
       console.error('Error deleting recurring transaction:', error);
-      toast.error('Failed to delete recurring transaction');
+      toast.error(t('messages.deleteFailed'));
     }
   };
 
@@ -113,11 +116,11 @@ export default function RecurringTransactionsPage() {
 
   const getFrequencyText = (frequency: string) => {
     const texts = {
-      weekly: 'Weekly',
-      biweekly: 'Bi-weekly',
-      monthly: 'Monthly',
-      quarterly: 'Quarterly',
-      yearly: 'Yearly'
+      weekly: t('frequency.weekly'),
+      biweekly: t('frequency.biweekly'),
+      monthly: t('frequency.monthly'),
+      quarterly: t('frequency.quarterly'),
+      yearly: t('frequency.yearly')
     };
     
     return texts[frequency as keyof typeof texts] || frequency;
@@ -129,10 +132,10 @@ export default function RecurringTransactionsPage() {
     const diffTime = date.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Tomorrow';
-    if (diffDays < 0) return `${Math.abs(diffDays)} days overdue`;
-    return `In ${diffDays} days`;
+    if (diffDays === 0) return t('timing.today');
+    if (diffDays === 1) return t('timing.tomorrow');
+    if (diffDays < 0) return t('timing.daysOverdue', { days: Math.abs(diffDays) });
+    return t('timing.inDays', { days: diffDays });
   };
 
   if (isLoading) {
@@ -167,26 +170,34 @@ export default function RecurringTransactionsPage() {
           <Link href="/dashboard/transactions">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Transactions
+              {t('backToTransactions')}
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
               <Clock className="w-8 h-8 mr-3 text-blue-600" />
-              Recurring Transactions
+              {t('title')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage your automatic recurring transactions
+              {t('subtitle')}
             </p>
           </div>
         </div>
         
-        <Link href="/dashboard/transactions/new?recurring=true">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Recurring
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/dashboard/transactions/new?recurring=true">
+            <Button variant="outline">
+              <Plus className="w-4 h-4 mr-2" />
+              {t('addRecurring')}
+            </Button>
+          </Link>
+          <Link href="/dashboard/transactions/recurring/templates">
+            <Button>
+              <Edit className="w-4 h-4 mr-2" />
+              {t('manageTemplates')}
+            </Button>
+          </Link>
+        </div>
       </motion.div>
 
       {/* Stats Cards */}
@@ -201,7 +212,7 @@ export default function RecurringTransactionsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-sm text-muted-foreground">{t('stats.total')}</p>
                   <p className="text-2xl font-bold">{stats.total}</p>
                 </div>
                 <Calendar className="w-8 h-8 text-blue-500" />
@@ -213,7 +224,7 @@ export default function RecurringTransactionsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Active</p>
+                  <p className="text-sm text-muted-foreground">{t('stats.active')}</p>
                   <p className="text-2xl font-bold text-green-600">{stats.active}</p>
                 </div>
                 <Play className="w-8 h-8 text-green-500" />
@@ -225,7 +236,7 @@ export default function RecurringTransactionsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Paused</p>
+                  <p className="text-sm text-muted-foreground">{t('stats.paused')}</p>
                   <p className="text-2xl font-bold text-orange-600">{stats.inactive}</p>
                 </div>
                 <Pause className="w-8 h-8 text-orange-500" />
@@ -237,7 +248,7 @@ export default function RecurringTransactionsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Monthly Impact</p>
+                  <p className="text-sm text-muted-foreground">{t('stats.monthlyImpact')}</p>
                   <p className={`text-2xl font-bold ${stats.totalMonthlyAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(stats.totalMonthlyAmount, currency)}
                   </p>
@@ -261,14 +272,14 @@ export default function RecurringTransactionsPage() {
           <Card>
             <CardContent className="p-8 text-center">
               <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Recurring Transactions</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('empty.title')}</h3>
               <p className="text-muted-foreground mb-4">
-                Set up automatic transactions to save time on repeated income and expenses.
+                {t('empty.description')}
               </p>
               <Link href="/dashboard/transactions/new?recurring=true">
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create First Recurring Transaction
+                  {t('empty.createFirst')}
                 </Button>
               </Link>
             </CardContent>
@@ -296,7 +307,7 @@ export default function RecurringTransactionsPage() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <h3 className="font-semibold">
-                            {recurring.transaction_template?.description || 'Untitled Transaction'}
+                            {recurring.transaction_template?.description || t('labels.untitledTransaction')}
                           </h3>
                           <Badge 
                             variant={recurring.transaction_template?.type === 'income' ? 'default' : 'destructive'}
@@ -311,16 +322,16 @@ export default function RecurringTransactionsPage() {
                           </Badge>
                           {!recurring.is_active && (
                             <Badge variant="outline" className="text-xs">
-                              Paused
+                              {t('status.paused')}
                             </Badge>
                           )}
                         </div>
                         
                         <p className="text-sm text-muted-foreground mt-1">
-                          Amount: {formatCurrency(recurring.transaction_template?.amount || 0, currency)}
+                          {t('labels.amount')}: {formatCurrency(recurring.transaction_template?.amount || 0, currency)}
                           {recurring.next_execution && (
                             <span className="ml-3">
-                              Next: {formatNextExecution(recurring.next_execution)}
+                              {t('labels.next')}: {formatNextExecution(recurring.next_execution)}
                             </span>
                           )}
                         </p>
@@ -352,7 +363,7 @@ export default function RecurringTransactionsPage() {
                               router.push(`/dashboard/transactions/${recentTransactions[0]?.id}/edit`);
                             } else {
                               // If no transactions found, show an informative message with option to create first transaction
-                              if (confirm('No transactions found for this recurring template. Would you like to create the first transaction now?')) {
+                              if (confirm(t('messages.noTransactionsFound'))) {
                                 // Create the first transaction manually using the template
                                 try {
                                   const template = recurring.transaction_template;
@@ -380,17 +391,17 @@ export default function RecurringTransactionsPage() {
 
                                   if (createError) throw createError;
                                   
-                                  toast.success('First transaction created successfully!');
+                                  toast.success(t('messages.firstTransactionCreated'));
                                   router.push(`/dashboard/transactions/${newTransaction.id}/edit`);
                                 } catch (createError) {
                                   console.error('Error creating first transaction:', createError);
-                                  toast.error('Failed to create first transaction');
+                                  toast.error(t('messages.createFirstFailed'));
                                 }
                               }
                             }
                           } catch (error) {
                             console.error('Error finding transaction for recurring pattern:', error);
-                            toast.error('Could not find transaction to edit');
+                            toast.error(t('messages.findTransactionFailed'));
                           }
                         }}
                         title="Edit recurring transaction (opens most recent transaction)"
