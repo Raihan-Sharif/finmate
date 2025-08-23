@@ -350,7 +350,7 @@ export default function RecurringBudgetPage() {
                 <div className="relative">
                   <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search templates..."
+                    placeholder={t('recurring.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-8 w-64"
@@ -376,7 +376,7 @@ export default function RecurringBudgetPage() {
                     <div>
                       <div className="flex items-center mb-3">
                         <Star className="w-4 h-4 mr-1 text-yellow-500" />
-                        <h4 className="font-medium text-sm">Your Templates</h4>
+                        <h4 className="font-medium text-sm">{t('recurring.myTemplates')}</h4>
                       </div>
                       <div className="space-y-2">
                         {userTemplates.map((template) => (
@@ -451,7 +451,7 @@ export default function RecurringBudgetPage() {
                                 ))}
                                 {template.categories.length > 3 && (
                                   <div className="px-2 py-1 rounded-full text-xs bg-muted text-muted-foreground">
-                                    +{template.categories.length - 3} more
+                                    +{template.categories.length - 3} {t('recurring.more')}
                                   </div>
                                 )}
                               </div>
@@ -459,9 +459,9 @@ export default function RecurringBudgetPage() {
                             
                             <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                               <span className="capitalize">{template.period}</span>
-                              <span>Alert at {template.alert_percentage}%</span>
+                              <span>{t('form.alertAt')} {template.alert_percentage}%</span>
                               {template.usage_count && template.usage_count > 0 && (
-                                <span>Used {template.usage_count}x</span>
+                                <span>{t('recurring.used')} {template.usage_count}x</span>
                               )}
                             </div>
                           </div>
@@ -476,7 +476,7 @@ export default function RecurringBudgetPage() {
                       {!searchQuery && userTemplates.length > 0 && <Separator className="my-4" />}
                       <div className="flex items-center mb-3">
                         <Zap className="w-4 h-4 mr-1 text-purple-500" />
-                        <h4 className="font-medium text-sm">Global Templates</h4>
+                        <h4 className="font-medium text-sm">{t('recurring.globalTemplates')}</h4>
                       </div>
                       <div className="space-y-2">
                         {displayedTemplates.filter(t => t.is_global).map((template) => (
@@ -493,7 +493,7 @@ export default function RecurringBudgetPage() {
                               <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg">
                                 <div className="flex items-center space-x-2 text-sm">
                                   <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                                  <span>Loading template...</span>
+                                  <span>{t('recurring.loadingTemplate')}...</span>
                                 </div>
                               </div>
                             )}
@@ -587,7 +587,7 @@ export default function RecurringBudgetPage() {
                                 ))}
                                 {template.categories.length > 3 && (
                                   <div className="px-2 py-1 rounded-full text-xs bg-muted text-muted-foreground">
-                                    +{template.categories.length - 3} more
+                                    +{template.categories.length - 3} {t('recurring.more')}
                                   </div>
                                 )}
                               </div>
@@ -596,7 +596,7 @@ export default function RecurringBudgetPage() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                                 <span className="capitalize">{template.period}</span>
-                                <span>Alert at {template.alert_percentage}%</span>
+                                <span>{t('form.alertAt')} {template.alert_percentage}%</span>
                                 <span className="text-purple-600">Global</span>
                               </div>
                               {template.usage_count && template.usage_count > 0 && (
@@ -612,7 +612,7 @@ export default function RecurringBudgetPage() {
                   {displayedTemplates.length === 0 && searchQuery && (
                     <div className="text-center py-6">
                       <p className="text-sm text-muted-foreground">
-                        No templates found matching "{searchQuery}"
+                        {t('recurring.noTemplatesFound', { query: searchQuery })}
                       </p>
                     </div>
                   )}
@@ -623,7 +623,7 @@ export default function RecurringBudgetPage() {
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="months">Create for how many months?</Label>
+                  <Label htmlFor="months">{t('recurring.createForMonths')}</Label>
                   <div className="flex items-center space-x-2 mt-1">
                     <Input
                       id="months"
@@ -634,7 +634,7 @@ export default function RecurringBudgetPage() {
                       onChange={(e) => setRecurringMonths(parseInt(e.target.value) || 1)}
                       className="w-20"
                     />
-                    <span className="text-sm text-muted-foreground">months</span>
+                    <span className="text-sm text-muted-foreground">{t('recurring.months')}</span>
                   </div>
                 </div>
 
@@ -646,12 +646,12 @@ export default function RecurringBudgetPage() {
                   {isCreatingRecurring ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Creating...
+                      {t('form.creating')}...
                     </>
                   ) : (
                     <>
                       <Zap className="w-4 h-4 mr-2" />
-                      Create Recurring Budget
+                      {t('recurring.createRecurring')}
                     </>
                   )}
                 </Button>
@@ -671,15 +671,15 @@ export default function RecurringBudgetPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Plus className="w-5 h-5 mr-2 text-blue-600" />
-                Custom Template
+                {t('recurring.customTemplate')}
                 {!canCreateCustom && !canManageGlobal && (
                   <Badge variant="secondary" className="ml-2">
-                    Paid Users Only
+                    {t('recurring.paidUsersOnly')}
                   </Badge>
                 )}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Create a custom recurring budget template
+                {t('recurring.customTemplateDescription')}
                 {!canCreateCustom && !canManageGlobal && (
                   <span className="block mt-1 text-xs text-amber-600">
                     ⭐ Upgrade to paid plan to create custom templates
@@ -699,7 +699,7 @@ export default function RecurringBudgetPage() {
                       Upgrade your account to create your own templates.
                     </p>
                     <Button size="sm" className="mt-2">
-                      Upgrade Now
+                      {t('recurring.upgradeNow')}
                     </Button>
                   </div>
                 </div>
@@ -716,8 +716,8 @@ export default function RecurringBudgetPage() {
                     >
                       <Zap className="w-8 h-8 text-purple-600" />
                     </motion.div>
-                    <p className="text-sm font-medium">Loading template data...</p>
-                    <p className="text-xs text-muted-foreground">This will pre-fill the form</p>
+                    <p className="text-sm font-medium">{t('recurring.loadingTemplateData')}...</p>
+                    <p className="text-xs text-muted-foreground">{t('recurring.preFillForm')}</p>
                   </div>
                 </div>
               )}
@@ -725,11 +725,11 @@ export default function RecurringBudgetPage() {
               {/* Basic Information */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="template-name">Template Name *</Label>
+                  <Label htmlFor="template-name">{t('recurring.templateName')} *</Label>
                   <Input
                     id="template-name"
                     type="text"
-                    placeholder="e.g., Monthly Essentials"
+                    placeholder={t('recurring.templateNamePlaceholder')}
                     value={customTemplate.name}
                     onChange={(e) => setCustomTemplate(prev => ({ ...prev, name: e.target.value }))}
                     className={errors.name ? 'border-red-500' : ''}
@@ -738,10 +738,10 @@ export default function RecurringBudgetPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="template-description">Description</Label>
+                  <Label htmlFor="template-description">{t('form.description')}</Label>
                   <Textarea
                     id="template-description"
-                    placeholder="Brief description of this budget template..."
+                    placeholder={t('recurring.templateDescriptionPlaceholder')}
                     value={customTemplate.description}
                     onChange={(e) => setCustomTemplate(prev => ({ ...prev, description: e.target.value }))}
                     rows={2}
@@ -750,14 +750,14 @@ export default function RecurringBudgetPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="template-amount">Amount *</Label>
+                    <Label htmlFor="template-amount">{t('form.amount')} *</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="template-amount"
                         type="number"
                         step="0.01"
-                        placeholder="0.00"
+                        placeholder={t('form.amountPlaceholder')}
                         value={customTemplate.amount || ''}
                         onChange={(e) => setCustomTemplate(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                         className={`pl-10 ${errors.amount ? 'border-red-500' : ''}`}
@@ -767,7 +767,7 @@ export default function RecurringBudgetPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="template-period">Period</Label>
+                    <Label htmlFor="template-period">{t('form.period')}</Label>
                     <Select 
                       value={customTemplate.period} 
                       onValueChange={(value) => setCustomTemplate(prev => ({ ...prev, period: value as BudgetPeriod }))}
@@ -776,9 +776,9 @@ export default function RecurringBudgetPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
+                        <SelectItem value="weekly">{t('period.weekly')}</SelectItem>
+                        <SelectItem value="monthly">{t('period.monthly')}</SelectItem>
+                        <SelectItem value="yearly">{t('period.yearly')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -787,9 +787,9 @@ export default function RecurringBudgetPage() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Enable Budget Alerts</Label>
+                      <Label className="text-base">{t('form.enableBudgetAlerts')}</Label>
                       <p className="text-sm text-muted-foreground">
-                        Receive notifications when approaching budget limit
+                        {t('form.alertsDescription')}
                       </p>
                     </div>
                     <Switch
@@ -801,7 +801,7 @@ export default function RecurringBudgetPage() {
                   {customTemplate.alert_enabled && (
                     <div>
                       <Label htmlFor="template-threshold">
-                        Alert Threshold ({customTemplate.alert_percentage}%)
+                        {t('form.alertThreshold')} ({customTemplate.alert_percentage}%)
                       </Label>
                       <Input
                         id="template-threshold"
@@ -828,10 +828,10 @@ export default function RecurringBudgetPage() {
                     <div className="space-y-0.5">
                       <Label className="text-base flex items-center">
                         <Star className="w-4 h-4 mr-1 text-yellow-600" />
-                        Make Global Template
+                        {t('recurring.makeGlobalTemplate')}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        This template will be available to all users
+                        {t('recurring.globalTemplateDescription')}
                       </p>
                     </div>
                     <Switch
@@ -844,9 +844,9 @@ export default function RecurringBudgetPage() {
 
               {/* Category Selection */}
               <div>
-                <Label>Categories (Optional)</Label>
+                <Label>{t('recurring.categoriesOptional')}</Label>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Select categories for this budget template
+                  {t('recurring.selectCategoriesForTemplate')}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {budgetCategories.map((category) => (
@@ -879,7 +879,7 @@ export default function RecurringBudgetPage() {
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4 text-purple-600" />
-                  <Label htmlFor="custom-months">Recurring Duration</Label>
+                  <Label htmlFor="custom-months">{t('recurring.recurringDuration')}</Label>
                 </div>
                 
                 <div className="flex items-center space-x-2">
@@ -892,14 +892,16 @@ export default function RecurringBudgetPage() {
                     onChange={(e) => setRecurringMonths(parseInt(e.target.value) || 1)}
                     className="w-20"
                   />
-                  <span className="text-sm text-muted-foreground">months</span>
+                  <span className="text-sm text-muted-foreground">{t('recurring.months')}</span>
                 </div>
 
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    This will create {recurringMonths} budgets starting from next month, 
-                    each with the amount of {formatCurrency(customTemplate.amount, currency)}.
+                    {t('recurring.willCreateBudgets', { 
+                      months: recurringMonths, 
+                      amount: formatCurrency(customTemplate.amount, currency) 
+                    })}
                   </AlertDescription>
                 </Alert>
               </div>
@@ -913,12 +915,12 @@ export default function RecurringBudgetPage() {
                   {isCreatingRecurring ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Creating...
+                      {t('form.creating')}...
                     </>
                   ) : (
                     <>
                       <Zap className="w-4 h-4 mr-2" />
-                      Create Recurring Budget
+                      {t('recurring.createRecurring')}
                     </>
                   )}
                 </Button>
@@ -932,12 +934,12 @@ export default function RecurringBudgetPage() {
                   {isSaving ? (
                     <>
                       <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                      Saving...
+                      {t('form.saving')}...
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      {editingTemplate ? 'Update Template' : 'Save as Template'}
+                      {editingTemplate ? t('recurring.updateTemplate') : t('recurring.saveAsTemplate')}
                     </>
                   )}
                 </Button>
@@ -960,7 +962,7 @@ export default function RecurringBudgetPage() {
                     variant="ghost"
                     className="w-full"
                   >
-                    Cancel Edit
+                    {t('recurring.cancelEdit')}
                   </Button>
                 )}
               </div>

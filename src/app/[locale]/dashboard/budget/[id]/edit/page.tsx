@@ -301,13 +301,13 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
                 className="bg-red-600 hover:bg-red-700"
                 disabled={isDeleting}
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? t('form.deleting') : t('actions.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -642,7 +642,7 @@ export default function EditBudgetPage({ params }: EditBudgetPageProps) {
                       </Button>
 
                       <Button type="button" variant="outline" className="w-full" asChild>
-                        <Link href="/dashboard/budget">Cancel</Link>
+                        <Link href="/dashboard/budget">{tCommon('cancel')}</Link>
                       </Button>
                     </div>
                   </div>

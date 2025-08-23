@@ -289,219 +289,6 @@
     "createAccountButton": "Create Account"
   },
   "dashboard": {
-    "greeting": {
-      "morning": "Good morning",
-      "afternoon": "Good afternoon",
-      "evening": "Good evening"
-    },
-    "overview": {
-      "financialOverview": "Here's your complete financial overview",
-      "loadingDashboard": "Loading your financial dashboard...",
-      "somethingWentWrong": "Something went wrong",
-      "tryAgain": "Try Again",
-      "quickAdd": "Quick Add",
-      "manageBudgets": "Manage Budgets",
-      "manageLoans": "Manage Loans",
-      "investments": "Investments",
-      "addTransaction": "Add Transaction",
-      "createBudget": "Create Budget",
-      "viewReports": "View Reports",
-      "addInvestment": "Add Investment"
-    },
-    "stats": {
-      "accountBalance": "Account Balance",
-      "income": "Income",
-      "expenses": "Expenses",
-      "netBalance": "Net Balance",
-      "totalBalance": "Total Balance",
-      "monthlyIncome": "Monthly Income",
-      "monthlyExpenses": "Monthly Expenses",
-      "investmentPortfolio": "Investment Portfolio",
-      "loanCredit": "Loan & Credit",
-      "savingsRate": "savings rate",
-      "accounts": "accounts",
-      "live": "Live",
-      "totalInvestmentValue": "Total Investment Value",
-      "activeInvestments": "Active Investments",
-      "returns": "Returns",
-      "outstandingLoans": "Outstanding Loans",
-      "activeLoans": "Active Loans",
-      "pendingEmis": "Pending EMIs"
-    },
-    "charts": {
-      "monthlyTrends": "Monthly Trends",
-      "dynamicData": "Dynamic Data",
-      "incomeVsExpenses": "Income vs expenses vs budget over time",
-      "allAmountsIn": "All amounts in",
-      "spendingBreakdown": "Spending Breakdown",
-      "topCategories": "Top {count} Categories",
-      "expenseCategories": "{period} expense categories",
-      "transactions": "transactions",
-      "noExpensesFound": "No Expenses Found",
-      "startAddingExpenses": "Start adding expense transactions to see spending breakdown",
-      "addExpense": "Add Expense",
-      "monthlySpendingTrend": "Monthly Spending Trend",
-      "spendingPattern": "Your spending pattern over the last 6 months",
-      "spendingByCategory": "Spending by Category",
-      "expenseBreakdown": "This month's expense breakdown"
-    },
-    "alerts": {
-      "smartFinancialAlerts": "Smart Financial Alerts",
-      "immediateAttention": "Items requiring your immediate attention",
-      "pendingEmis": "Pending EMIs",
-      "overduePayments": "Overdue Payment{count, plural, one {} other {s}}",
-      "dueToday": "Payment{count, plural, one {} other {s}} Due Today",
-      "unreadReminders": "Unread Reminder{count, plural, one {} other {s}}",
-      "overduePayments": "Overdue Payments",
-      "overdueLendings": "Overdue Lendings",
-      "manageLoans": "Manage Loans",
-      "reviewLendings": "Review Lendings",
-      "used": "used",
-      "remaining": "remaining",
-      "of": "of"
-    },
-    "health": {
-      "financialHealth": "Financial Health",
-      "liveScore": "Live Score",
-      "aiPoweredAnalysis": "AI-powered wellness analysis based on your financial habits",
-      "score": "Score",
-      "excellent": "Excellent",
-      "good": "Good",
-      "fair": "Fair",
-      "needsImprovement": "Needs Improvement",
-      "financialHealth": "financial health",
-      "keyFactors": "Key Factors:",
-      "excellentBudgetControl": "✓ Excellent budget control",
-      "closeToBudgetLimit": "⚠ Close to budget limit",
-      "overBudget": "✗ Over budget",
-      "greatSavingsRate": "✓ Great savings rate",
-      "goodSavingsRate": "⚠ Good savings rate",
-      "lowSavingsRate": "⚠ Low savings rate",
-      "spendingMoreThanEarning": "✗ Spending more than earning",
-      "activeInvestor": "✓ Active investor",
-      "noInvestments": "⚠ No investments",
-      "noPendingEmis": "✓ No pending EMIs",
-      "hasPendingPayments": "⚠ Has pending payments"
-    },
-    "analytics": {
-      "advancedAnalytics": "Advanced Analytics",
-      "keyFinancialMetrics": "Key financial metrics and insights",
-      "avgTransaction": "Avg. Transaction",
-      "savingsRate": "Savings Rate",
-      "budgetUsage": "Budget Usage",
-      "investmentReturn": "Investment Return",
-      "monthlyTrends": "Monthly Trends",
-      "dynamicData": "Dynamic Data",
-      "incomeVsExpenses": "Income vs expenses vs budget over time",
-      "allAmountsIn": "All amounts in",
-      "categoryBreakdown": "Category Breakdown",
-      "topCategories": "Top {count} Categories",
-      "expensesByCategory": "expense categories",
-      "financialHealth": "Financial Health",
-      "healthScore": "Health Score",
-      "excellent": "Excellent",
-      "good": "Good",
-      "average": "Average",
-      "poor": "Poor"
-    },
-    "activity": {
-      "recentActivity": "Recent Activity",
-      "latestTransactions": "Latest financial transactions",
-      "viewAll": "View All",
-      "noRecentActivity": "No Recent Activity",
-      "startAddingTransactions": "Start adding transactions to see activity"
-    },
-    "reminders": {
-      "upcomingReminders": "Upcoming Reminders",
-      "financialDeadlines": "Don't miss these important financial deadlines",
-      "items": "items",
-      "today": "Today",
-      "daysRemaining": "{days}d"
-    },
-    "goals": {
-      "monthlyGoalsProgress": "Monthly Goals Progress",
-      "trackProgress": "Track your progress towards financial goals",
-      "progress": "Progress",
-      "titles": {
-        "budget": "Stay within budget",
-        "savings": "Save 20% of income",
-        "investments": "Invest 15% of income"
-      },
-      "status": {
-        "achieved": "achieved",
-        "on_track": "on track",
-        "warning": "warning",
-        "over_budget": "over budget",
-        "needs_attention": "needs attention"
-      }
-    },
-    "quickActions": {
-      "title": "Quick Actions",
-      "addTransaction": "Add Transaction",
-      "createBudget": "Create Budget",
-      "viewAnalytics": "View Analytics",
-      "helpCenter": "Help Center",
-      "addExpense": "Add Expense",
-      "addIncome": "Add Income",
-      "quickTransfer": "Quick Transfer",
-      "newInvestment": "New Investment",
-      "setBudget": "Set Budget",
-      "calculateEMI": "Calculate EMI",
-      "moneyLent": "Money Lent",
-      "moneyBorrowed": "Money Borrowed",
-      "importData": "Import Data",
-      "exportReport": "Export Report",
-      "viewReports": "View Reports",
-      "recentlyUsed": "Recently Used",
-      "usedTimeAgo": {
-        "twoHoursAgo": "Used 2 hours ago",
-        "yesterday": "Used yesterday"
-      },
-      "descriptions": {
-        "addExpense": "Quick expense entry",
-        "addIncome": "Record income transaction",
-        "quickTransfer": "Transfer between accounts",
-        "newInvestment": "Add new investment",
-        "setBudget": "Create monthly budget",
-        "calculateEMI": "EMI calculator tool",
-        "moneyLent": "Track money given to others",
-        "moneyBorrowed": "Track money borrowed",
-        "importData": "Import financial data",
-        "exportReport": "Download financial reports",
-        "viewReports": "View detailed reports"
-      }
-    },
-    "categories": {
-      "transactions": "Transactions",
-      "financialPlanning": "Financial Planning",
-      "lendingBorrowing": "Lending & Borrowing",
-      "dataManagement": "Data Management"
-    },
-    "notifications": {
-      "paymentAlerts": "Payment Alerts",
-      "overduePayments": "Overdue Payment{count, plural, one {} other {s}}",
-      "dueToday": "Payment{count, plural, one {} other {s}} Due Today",
-      "unreadReminders": "Unread Reminder{count, plural, one {} other {s}}",
-      "immediateAttention": "Immediate attention required",
-      "dontForgetEmi": "Don't forget your EMI payments",
-      "checkNotificationCenter": "Check your notification center",
-      "allCaughtUp": "All caught up!",
-      "noPendingPayments": "No pending payments or reminders",
-      "viewCreditDashboard": "View Credit Dashboard"
-    },
-    "periods": {
-      "last7Days": "Last 7 days",
-      "last30Days": "Last 30 days",
-      "last3Months": "Last 3 months",
-      "last6Months": "Last 6 months",
-      "lastYear": "Last year",
-      "yearToDate": "Year to date",
-      "allTime": "All time"
-    },
-    "searchPlaceholder": "Search transactions, categories...",
-    "profile": "Profile"
-  },
-  "dashboard": {
     "periods": {
       "last7Days": "Last 7 days",
       "last30Days": "Last 30 days",
@@ -594,7 +381,19 @@
     "goals": {
       "monthlyGoalsProgress": "Monthly Goals Progress",
       "trackProgress": "Track progress",
-      "progress": "Progress"
+      "progress": "Progress",
+      "titles": {
+        "budget": "Stay within budget",
+        "savings": "Save 20% of income",
+        "investments": "Invest 15% of income"
+      },
+      "status": {
+        "achieved": "Achieved",
+        "on_track": "On Track",
+        "warning": "Warning",
+        "over_budget": "Over Budget",
+        "needs_attention": "Needs Attention"
+      }
     },
     "health": {
       "excellentBudgetControl": "Excellent budget control",
@@ -608,7 +407,63 @@
       "noInvestments": "No investments",
       "noPendingEmis": "No pending EMIs",
       "hasPendingPayments": "Has pending payments"
-    }
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "addTransaction": "Add Transaction",
+      "createBudget": "Create Budget",
+      "viewAnalytics": "View Analytics",
+      "helpCenter": "Help Center",
+      "addExpense": "Add Expense",
+      "addIncome": "Add Income",
+      "quickTransfer": "Quick Transfer",
+      "newInvestment": "New Investment",
+      "setBudget": "Set Budget",
+      "calculateEMI": "Calculate EMI",
+      "moneyLent": "Money Lent",
+      "moneyBorrowed": "Money Borrowed",
+      "importData": "Import Data",
+      "exportReport": "Export Report",
+      "viewReports": "View Reports",
+      "recentlyUsed": "Recently Used",
+      "usedTimeAgo": {
+        "twoHoursAgo": "Used 2 hours ago",
+        "yesterday": "Used yesterday"
+      },
+      "descriptions": {
+        "addExpense": "Quick expense entry",
+        "addIncome": "Record income transaction",
+        "quickTransfer": "Transfer between accounts",
+        "newInvestment": "Add new investment",
+        "setBudget": "Create monthly budget",
+        "calculateEMI": "EMI calculator tool",
+        "moneyLent": "Track money given to others",
+        "moneyBorrowed": "Track money borrowed",
+        "importData": "Import financial data",
+        "exportReport": "Download financial reports",
+        "viewReports": "View detailed reports"
+      }
+    },
+    "categories": {
+      "transactions": "Transactions",
+      "financialPlanning": "Financial Planning",
+      "lendingBorrowing": "Lending & Borrowing",
+      "dataManagement": "Data Management"
+    },
+    "notifications": {
+      "paymentAlerts": "Payment Alerts",
+      "overduePayments": "Overdue Payments",
+      "dueToday": "Due Today",
+      "unreadReminders": "Unread Reminders",
+      "immediateAttention": "Immediate attention required",
+      "dontForgetEmi": "Don't forget your EMI payments",
+      "checkNotificationCenter": "Check your notification center",
+      "allCaughtUp": "All caught up!",
+      "noPendingPayments": "No pending payments or reminders",
+      "viewCreditDashboard": "View Credit Dashboard"
+    },
+    "searchPlaceholder": "Search transactions, categories...",
+    "profile": "Profile"
   },
   "transactions": {
     "title": "Transactions",
@@ -950,7 +805,9 @@
       "createBudget": "Create Budget",
       "updating": "Updating",
       "updateBudget": "Update Budget",
+      "deleting": "Deleting",
       "currentSpent": "Current Spent",
+      "saving": "Saving",
       "errors": {
         "nameRequired": "Budget name is required",
         "amountRequired": "Amount is required",
@@ -997,7 +854,33 @@
       "monthsPlaceholder": "How many months?",
       "createRecurring": "Create Recurring Budget",
       "onlyPaidUsers": "Only paid users can create custom templates. Please upgrade your account.",
-      "cannotDeleteGlobal": "You cannot delete global templates"
+      "cannotDeleteGlobal": "You cannot delete global templates",
+      "copyFromPrevious": "Copy from Previous Month",
+      "copyFromPreviousDescription": "Create budgets identical to last month's setup",
+      "copyFromPreviousLongDescription": "This will create budgets for the current month based on your previous month's budget settings, maintaining the same amounts and categories.",
+      "budgetTemplates": "Budget Templates",
+      "budgetTemplatesDescription": "Choose from your saved templates or global templates",
+      "more": "more",
+      "used": "Used",
+      "loadingTemplate": "Loading template",
+      "noTemplatesFound": "No templates found matching \"{query}\"",
+      "createForMonths": "Create for how many months?",
+      "customTemplateDescription": "Create a custom recurring budget template",
+      "paidUsersOnly": "Paid Users Only",
+      "upgradeNow": "Upgrade Now",
+      "loadingTemplateData": "Loading template data",
+      "preFillForm": "This will pre-fill the form",
+      "templateName": "Template Name",
+      "templateNamePlaceholder": "e.g., Monthly Essentials",
+      "templateDescriptionPlaceholder": "Brief description of this budget template...",
+      "makeGlobalTemplate": "Make Global Template",
+      "globalTemplateDescription": "This template will be available to all users",
+      "categoriesOptional": "Categories (Optional)",
+      "selectCategoriesForTemplate": "Select categories for this budget template",
+      "recurringDuration": "Recurring Duration",
+      "willCreateBudgets": "This will create {months} budgets starting from next month, each with the amount of {amount}.",
+      "updateTemplate": "Update Template",
+      "cancelEdit": "Cancel Edit"
     },
     "tips": {
       "title": "Budget Tips",
