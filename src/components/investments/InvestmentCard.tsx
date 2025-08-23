@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Investment, INVESTMENT_TYPES } from '@/types/investments';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,8 @@ export function InvestmentCard({
   isDeleting = false,
   className
 }: InvestmentCardProps) {
+  const t = useTranslations('investments');
+  const tCommon = useTranslations('common');
   const userCurrency = useUserCurrency();
   const { theme } = useTheme();
   const displayCurrency = investment.currency || userCurrency;
@@ -181,7 +184,7 @@ export function InvestmentCard({
                     className="cursor-pointer"
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    View Details
+                    {t('individual.viewInvestment')}
                   </DropdownMenuItem>
                 )}
                 {onEdit && (
@@ -194,15 +197,15 @@ export function InvestmentCard({
                     className="cursor-pointer"
                   >
                     <Edit className="h-4 w-4 mr-2" />
-                    Edit
+                    {t('individual.editInvestment')}
                   </DropdownMenuItem>
                 )}
                 {(onDelete || onConfirmDelete) && (
                   <ConfirmationDialog
-                    title="Delete Investment"
-                    description={`Are you sure you want to delete "${investment.name}"? This action cannot be undone and will remove all associated data including transactions and performance history.`}
-                    confirmText="Delete Investment"
-                    cancelText="Keep Investment"
+                    title={t('individual.deleteInvestment')}
+                    description={t('individual.confirmDelete')}
+                    confirmText={t('individual.deleteInvestment')}
+                    cancelText={tCommon('cancel')}
                     variant="destructive"
                     isLoading={isDeleting}
                     onConfirm={() => {
@@ -223,7 +226,7 @@ export function InvestmentCard({
                       className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      {t('individual.deleteInvestment')}
                     </DropdownMenuItem>
                   </ConfirmationDialog>
                 )}

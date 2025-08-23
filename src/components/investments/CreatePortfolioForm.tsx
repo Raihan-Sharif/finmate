@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,18 +42,18 @@ import { CURRENCIES } from '@/types';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
-const portfolioSchema = z.object({
-  name: z.string().min(1, 'Portfolio name is required'),
+const createPortfolioSchema = (t: any) => z.object({
+  name: z.string().min(1, t('errors.nameRequired')),
   description: z.string().optional(),
   risk_level: z.enum(['low', 'medium', 'high']),
   target_amount: z.number().optional(),
   target_date: z.string().optional(),
-  currency: z.string().min(1, 'Currency is required'),
+  currency: z.string().min(1, t('errors.currencyRequired')),
   color: z.string().min(1, 'Color is required'),
   icon: z.string().min(1, 'Icon is required'),
 });
 
-type PortfolioFormData = z.infer<typeof portfolioSchema>;
+type PortfolioFormData = z.infer<ReturnType<typeof createPortfolioSchema>>;
 
 interface CreatePortfolioFormProps {
   onSubmit: (data: CreateInvestmentPortfolioInput) => Promise<void>;
@@ -90,10 +91,12 @@ export function CreatePortfolioForm({
   className
 }: CreatePortfolioFormProps) {
   const { theme } = useTheme();
+  const t = useTranslations('investments.forms.portfolio');
+  const tCommon = useTranslations('common');
   const [step, setStep] = useState<'basic' | 'details' | 'goals'>('basic');
 
   const form = useForm<PortfolioFormData>({
-    resolver: zodResolver(portfolioSchema),
+    resolver: zodResolver(createPortfolioSchema(t)),
     defaultValues: {
       name: '',
       description: '',
@@ -494,7 +497,7 @@ export function CreatePortfolioForm({
               "text-2xl font-bold mb-2",
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             )}>
-              Create Investment Portfolio
+              {t('createTitle')}
             </CardTitle>
             <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
               Build a new portfolio to organize your investments
@@ -591,7 +594,7 @@ export function CreatePortfolioForm({
                       disabled={isLoading}
                       className="px-8 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                     >
-                      {isLoading ? 'Creating...' : 'Create Portfolio'}
+                      {isLoading ? t('creating') : t('createButton')}
                     </Button>
                   )}
                 </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -176,6 +177,7 @@ export function InvestmentDashboardStats({
   currency, 
   isLoading 
 }: InvestmentDashboardStatsProps) {
+  const t = useTranslations('investments.stats');
   const userCurrency = useUserCurrency();
   const { theme } = useTheme();
   const displayCurrency = currency || userCurrency;
@@ -199,36 +201,36 @@ export function InvestmentDashboardStats({
 
   const statsConfig = [
     {
-      title: "Total Portfolio",
+      title: t('totalCurrentValue'),
       value: formatCurrency(stats.total_current_value, displayCurrency),
       change: `${totalReturnIsPositive ? '+' : ''}${formatCurrency(stats.total_gain_loss, displayCurrency)}`,
       changePercentage: stats.total_return_percentage,
       icon: DollarSign,
       color: "#3B82F6",
       isPositive: totalReturnIsPositive,
-      description: `${stats.total_investments} investments`
+      description: `${stats.total_investments} ${t('investments')}`
     },
     {
-      title: "Total Invested",
+      title: t('totalInvested'),
       value: formatCurrency(stats.total_invested, displayCurrency),
       icon: Briefcase,
       color: "#8B5CF6",
-      description: `${stats.total_portfolios} portfolios`
+      description: `${stats.total_portfolios} ${t('portfolios')}`
     },
     {
-      title: "Active SIPs",
+      title: t('activeSips'),
       value: stats.active_sips.toString(),
       change: formatCurrency(stats.monthly_sip_amount, displayCurrency),
       icon: Zap,
       color: "#10B981",
-      description: "Monthly SIP amount"
+      description: t('monthlySipAmount')
     },
     {
-      title: "Dividend Income",
+      title: t('dividendIncome'),
       value: formatCurrency(stats.dividend_income, displayCurrency),
       icon: Activity,
       color: "#F59E0B",
-      description: "Total earned"
+      description: t('totalEarned')
     }
   ];
 
@@ -272,7 +274,7 @@ export function InvestmentDashboardStats({
                       "text-sm font-medium uppercase tracking-wide",
                       theme === 'dark' ? 'text-green-300' : 'text-green-700'
                     )}>
-                      Top Performer
+                      {t('topPerformer')}
                     </h3>
                     <p className={cn(
                       "text-lg font-bold",
@@ -318,7 +320,7 @@ export function InvestmentDashboardStats({
                       "text-sm font-medium uppercase tracking-wide",
                       theme === 'dark' ? 'text-red-300' : 'text-red-700'
                     )}>
-                      Needs Attention
+                      {t('needsAttention')}
                     </h3>
                     <p className={cn(
                       "text-lg font-bold",

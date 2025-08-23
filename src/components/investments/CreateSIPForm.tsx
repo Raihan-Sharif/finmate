@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,8 +47,8 @@ import { CURRENCIES } from '@/types';
 import { cn, getInvestmentIcon } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
-const sipSchema = z.object({
-  name: z.string().min(1, 'SIP name is required'),
+const createSIPSchema = (t: any) => z.object({
+  name: z.string().min(1, t('errors.nameRequired')),
   description: z.string().optional(),
   portfolio_id: z.string().min(1, 'Portfolio is required'),
   investment_type: z.string().refine(
@@ -83,7 +84,7 @@ const sipSchema = z.object({
   notes: z.string().optional(),
 });
 
-type SIPFormData = z.infer<typeof sipSchema>;
+type SIPFormData = z.infer<ReturnType<typeof createSIPSchema>>;
 
 interface CreateSIPFormProps {
   portfolios: { id: string; name: string; currency: string }[];
@@ -101,13 +102,15 @@ export function CreateSIPForm({
   className
 }: CreateSIPFormProps) {
   const { theme } = useTheme();
+  const t = useTranslations('investments.forms.sip');
+  const tCommon = useTranslations('common');
   const [step, setStep] = useState<'basic' | 'schedule' | 'settings'>('basic');
   
   console.log('🔍 SIP FORM: Current step:', step);
   console.log('🔍 SIP FORM: Show submit button:', step === 'settings');
 
   const form = useForm<SIPFormData>({
-    resolver: zodResolver(sipSchema),
+    resolver: zodResolver(createSIPSchema(t)),
     defaultValues: {
       name: '',
       description: '',
@@ -1048,7 +1051,7 @@ export function CreateSIPForm({
                         // Try manual validation and submission
                         try {
                           const values = form.getValues();
-                          const validatedData = sipSchema.parse(values);
+                          const validatedData = createSIPSchema(t).parse(values);
                           console.log('🚨 SIP FORM: Manual validation passed!', validatedData);
                           
                           // If validation passes, call handleSubmit manually

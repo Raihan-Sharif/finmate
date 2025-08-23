@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -70,6 +71,8 @@ import { useInvestmentTransactions } from '@/hooks/useInvestmentTransactions';
 
 export default function InvestmentDashboardPage() {
   const router = useRouter();
+  const t = useTranslations('investments');
+  const tCommon = useTranslations('common');
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateForm, setShowCreateForm] = useState<'investment' | 'portfolio' | 'sip' | false>(false);
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
@@ -218,7 +221,7 @@ export default function InvestmentDashboardPage() {
         className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300"
       >
         <Plus className="h-4 w-4 mr-2" />
-        New Investment
+        {t('dashboard.quickActions.newInvestment')}
       </Button>
       <Button 
         variant="outline" 
@@ -226,7 +229,7 @@ export default function InvestmentDashboardPage() {
         onClick={() => setShowCreateForm('portfolio')}
       >
         <Plus className="h-4 w-4 mr-2" />
-        Create Portfolio
+        {t('dashboard.quickActions.createPortfolio')}
       </Button>
       <Button 
         variant="outline" 
@@ -240,7 +243,7 @@ export default function InvestmentDashboardPage() {
         }}
       >
         <Zap className="h-4 w-4 mr-2" />
-        Setup SIP
+        {t('dashboard.quickActions.setupSip')}
       </Button>
       <Button 
         variant="ghost" 
@@ -251,11 +254,11 @@ export default function InvestmentDashboardPage() {
           "h-4 w-4 mr-2 transition-transform duration-300",
           (portfoliosLoading || investmentsLoading || sipsLoading || transactionsLoading) && "animate-spin"
         )} />
-        Refresh
+        {t('dashboard.quickActions.refresh')}
       </Button>
       <Button variant="ghost">
         <Download className="h-4 w-4 mr-2" />
-        Export
+        {t('dashboard.quickActions.export')}
       </Button>
     </motion.div>
   );
@@ -354,10 +357,10 @@ export default function InvestmentDashboardPage() {
       return (
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <h2>No Portfolios Available</h2>
-            <p>Please create a portfolio first before setting up a SIP.</p>
-            <button onClick={() => setShowCreateForm('portfolio')}>Create Portfolio</button>
-            <button onClick={() => setShowCreateForm(false)}>Go Back</button>
+            <h2>{t('forms.investment.noPortfolioAvailable')}</h2>
+            <p>{t('forms.investment.createPortfolioFirst')}</p>
+            <button onClick={() => setShowCreateForm('portfolio')}>{t('portfolios.createPortfolio')}</button>
+            <button onClick={() => setShowCreateForm(false)}>{tCommon('back')}</button>
           </div>
         </div>
       );
@@ -394,9 +397,9 @@ export default function InvestmentDashboardPage() {
       return (
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <h2>Error Loading SIP Form</h2>
-            <p>There was an error loading the SIP creation form: {String(error)}</p>
-            <button onClick={() => setShowCreateForm(false)}>Go Back</button>
+            <h2>{t('forms.sip.loadFailed')}</h2>
+            <p>{t('forms.sip.loadFailed')}: {String(error)}</p>
+            <button onClick={() => setShowCreateForm(false)}>{tCommon('back')}</button>
           </div>
         </div>
       );
@@ -442,10 +445,10 @@ export default function InvestmentDashboardPage() {
           <h1 className={cn(
             "text-3xl font-bold mb-2",
             theme === 'dark' ? 'text-white' : 'text-gray-900'
-          )}>Investment Dashboard</h1>
+          )}>{t('dashboard.title')}</h1>
           <p className={cn(
             theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-          )}>Track and manage your investment portfolio</p>
+          )}>{t('dashboard.subtitle')}</p>
         </div>
         <QuickActions />
       </motion.div>
@@ -480,7 +483,7 @@ export default function InvestmentDashboardPage() {
               )}
             >
               <Eye className="h-4 w-4 mr-2" />
-              Overview
+              {t('overview.title')}
             </TabsTrigger>
             <TabsTrigger 
               value="portfolios" 
@@ -492,7 +495,7 @@ export default function InvestmentDashboardPage() {
               )}
             >
               <Briefcase className="h-4 w-4 mr-2" />
-              Portfolios
+              {t('portfolios.title')}
             </TabsTrigger>
             <TabsTrigger 
               value="investments" 
@@ -504,7 +507,7 @@ export default function InvestmentDashboardPage() {
               )}
             >
               <TrendingUp className="h-4 w-4 mr-2" />
-              Investments
+              {t('individual.title')}
             </TabsTrigger>
             <TabsTrigger 
               value="sips" 
@@ -516,7 +519,7 @@ export default function InvestmentDashboardPage() {
               )}
             >
               <Zap className="h-4 w-4 mr-2" />
-              SIPs
+              {t('sips.title')}
             </TabsTrigger>
             <TabsTrigger 
               value="transactions" 
@@ -528,7 +531,7 @@ export default function InvestmentDashboardPage() {
               )}
             >
               <Activity className="h-4 w-4 mr-2" />
-              Transactions
+              {t('transactions.title')}
             </TabsTrigger>
           </TabsList>
         </motion.div>
@@ -563,14 +566,14 @@ export default function InvestmentDashboardPage() {
               <h3 className={cn(
                 "text-lg font-medium mb-2",
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
-              )}>Failed to load analytics data</h3>
+              )}>{t('overview.failedToLoad')}</h3>
               <p className={cn(
                 "mb-4",
                 theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-              )}>There was an error loading your investment analytics. Please try again.</p>
+              )}>{t('overview.errorMessage')}</p>
               <Button onClick={() => overview.refetchAll()} variant="outline">
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Retry
+                {t('overview.retry')}
               </Button>
             </div>
           ) : (
@@ -619,7 +622,7 @@ export default function InvestmentDashboardPage() {
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               )}>
                 <Activity className="h-5 w-5" />
-                <span>Recent Activity</span>
+                <span>{t('overview.recentActivity')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -760,8 +763,8 @@ export default function InvestmentDashboardPage() {
                     theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                   )}>
                     <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No recent investment transactions</p>
-                    <p className="text-xs mt-1">Start investing to see activity here</p>
+                    <p className="text-sm">{t('overview.noRecentTransactions')}</p>
+                    <p className="text-xs mt-1">{t('overview.startInvesting')}</p>
                   </div>
                 )}
               </div>
@@ -804,17 +807,17 @@ export default function InvestmentDashboardPage() {
                 <h3 className={cn(
                   "text-lg font-medium mb-2",
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
-                )}>No portfolios yet</h3>
+                )}>{t('portfolios.noPortfolios')}</h3>
                 <p className={cn(
                   "mb-4",
                   theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                )}>Create your first investment portfolio</p>
+                )}>{t('portfolios.createFirst')}</p>
                 <Button 
                   onClick={() => setShowCreateForm('portfolio')}
                   className="bg-gradient-to-r from-blue-500 to-indigo-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Portfolio
+                  {t('portfolios.createPortfolio')}
                 </Button>
               </motion.div>
             )}
@@ -858,17 +861,17 @@ export default function InvestmentDashboardPage() {
                 <h3 className={cn(
                   "text-lg font-medium mb-2",
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
-                )}>No investments yet</h3>
+                )}>{t('individual.noInvestments')}</h3>
                 <p className={cn(
                   "mb-4",
                   theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                )}>Start your investment journey</p>
+                )}>{t('individual.startJourney')}</p>
                 <Button 
                   onClick={() => setShowCreateForm('investment')}
                   className="bg-gradient-to-r from-blue-500 to-indigo-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Investment
+                  {t('individual.addInvestment')}
                 </Button>
               </motion.div>
             )}
@@ -927,17 +930,17 @@ export default function InvestmentDashboardPage() {
                 <h3 className={cn(
                   "text-lg font-medium mb-2",
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
-                )}>No SIP plans yet</h3>
+                )}>{t('sips.noSips')}</h3>
                 <p className={cn(
                   "mb-4",
                   theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                )}>Set up systematic investment plans</p>
+                )}>{t('sips.setupPlans')}</p>
                 <Button 
                   onClick={() => setShowCreateForm('sip')}
                   className="bg-gradient-to-r from-green-500 to-emerald-600"
                 >
                   <Zap className="h-4 w-4 mr-2" />
-                  Create SIP
+                  {t('sips.createSip')}
                 </Button>
               </motion.div>
             )}
@@ -966,25 +969,25 @@ export default function InvestmentDashboardPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>
                 {deleteConfirmation.type === 'sip' 
-                  ? (deleteConfirmation.item?.is_active ? 'Pause SIP Plan?' : 'Remove SIP Plan?')
+                  ? (deleteConfirmation.item?.is_active ? t('sips.pauseSip') + '?' : t('sips.deleteSip') + '?')
                   : deleteConfirmation.type === 'portfolio'
-                  ? 'Delete Portfolio?'
-                  : 'Delete Investment?'
+                  ? t('portfolios.deletePortfolio') + '?'
+                  : t('individual.deleteInvestment') + '?'
                 }
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {deleteConfirmation.type === 'sip'
                   ? deleteConfirmation.item?.is_active 
-                    ? `Are you sure you want to pause "${deleteConfirmation.item?.name}"? You can resume it later.`
-                    : `Are you sure you want to remove "${deleteConfirmation.item?.name}"? This will make it inactive.`
+                    ? t('sips.confirmPause')
+                    : t('sips.confirmDelete')
                   : deleteConfirmation.type === 'portfolio'
-                  ? `Are you sure you want to delete "${deleteConfirmation.item?.name}" portfolio? This will also delete all investments within this portfolio. This action cannot be undone.`
-                  : `Are you sure you want to delete "${deleteConfirmation.item?.name}"? This action cannot be undone.`
+                  ? t('portfolios.confirmDelete')
+                  : t('individual.confirmDelete')
                 }
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={async () => {
                   try {
@@ -1011,8 +1014,8 @@ export default function InvestmentDashboardPage() {
                 disabled={updateSIPMutation.isPending || deleteInvestmentMutation.isPending || deletePortfolioMutation.isPending}
               >
                 {updateSIPMutation.isPending || deleteInvestmentMutation.isPending || deletePortfolioMutation.isPending
-                  ? (deleteConfirmation.type === 'sip' ? 'Pausing...' : 'Deleting...') 
-                  : (deleteConfirmation.type === 'sip' ? 'Pause' : 'Delete')
+                  ? (deleteConfirmation.type === 'sip' ? t('sips.pauseSip') + '...' : tCommon('delete') + '...') 
+                  : (deleteConfirmation.type === 'sip' ? t('sips.pauseSip') : tCommon('delete'))
                 }
               </AlertDialogAction>
             </AlertDialogFooter>

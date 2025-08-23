@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +41,8 @@ import { useInvestmentAnalytics, useInvestmentDashboard } from '@/hooks/useInves
 import { formatCurrency } from '@/lib/utils';
 
 export default function InvestmentAnalyticsPage() {
+  const t = useTranslations('investments.analytics');
+  const tCommon = useTranslations('common');
   const [selectedPeriod, setSelectedPeriod] = useState('1y');
   const [selectedMetric, setSelectedMetric] = useState('all');
   const [activeTab, setActiveTab] = useState('performance');
@@ -254,8 +257,8 @@ export default function InvestmentAnalyticsPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Investment Analytics</h1>
-          <p className="text-gray-600">Deep insights into your investment performance</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
+          <p className="text-gray-600">{t('subtitle')}</p>
         </div>
         <div className="flex space-x-3">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>

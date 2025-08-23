@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import {
   LineChart,
   Line,
@@ -310,6 +311,7 @@ export function InvestmentChart({
   className,
   isLoading = false
 }: InvestmentChartProps) {
+  const t = useTranslations('investments.stats');
   const [selectedPeriod, setSelectedPeriod] = useState('6m');
   const [selectedMetric, setSelectedMetric] = useState('value');
   const { theme } = useTheme();
@@ -351,9 +353,9 @@ export function InvestmentChart({
   const getChartTitle = () => {
     if (title) return title;
     switch (chartType) {
-      case 'performance': return 'Portfolio Performance';
-      case 'allocation': return 'Asset Allocation';
-      case 'trend': return 'Monthly Trend';
+      case 'performance': return t('portfolioPerformance');
+      case 'allocation': return t('assetAllocation');
+      case 'trend': return t('monthlyTrend');
       case 'comparison': return 'Investment Comparison';
       default: return 'Investment Chart';
     }
@@ -424,7 +426,7 @@ export function InvestmentChart({
             "text-sm",
             theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
           )}>
-            Top: {topAsset.name} ({topAsset.percentage.toFixed(1)}%)
+            {t('top')}: {topAsset.name} ({topAsset.percentage.toFixed(1)}%)
           </p>
         </div>
       );
@@ -590,11 +592,11 @@ export function InvestmentChart({
                 <h3 className={cn(
                   "text-lg font-medium mb-2",
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
-                )}>No data available</h3>
+                )}>{t('noDataAvailable')}</h3>
                 <p className={cn(
                   theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                 )}>
-                  Start investing to see your performance charts
+                  {t('startInvestingToSeeCharts')}
                 </p>
               </div>
             </div>

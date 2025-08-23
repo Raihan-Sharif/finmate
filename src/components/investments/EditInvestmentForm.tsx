@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,11 +45,11 @@ import { CURRENCIES } from '@/types';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
-const editInvestmentSchema = z.object({
-  name: z.string().min(1, 'Investment name is required'),
+const createEditInvestmentSchema = (t: any) => z.object({
+  name: z.string().min(1, t('errors.nameRequired')),
   symbol: z.string().optional(),
   type: z.enum(['stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension', 'other']),
-  current_price: z.number().min(0.01, 'Current price must be greater than 0'),
+  current_price: z.number().min(0.01, t('errors.currentPricePositive')),
   platform: z.string().optional(),
   account_number: z.string().optional(),
   folio_number: z.string().optional(),
@@ -59,7 +60,7 @@ const editInvestmentSchema = z.object({
   tags: z.string().optional()
 });
 
-type EditInvestmentFormData = z.infer<typeof editInvestmentSchema>;
+type EditInvestmentFormData = z.infer<ReturnType<typeof createEditInvestmentSchema>>;
 
 interface EditInvestmentFormProps {
   investment: Investment;
@@ -77,10 +78,12 @@ export function EditInvestmentForm({
   className
 }: EditInvestmentFormProps) {
   const { theme } = useTheme();
+  const t = useTranslations('investments.forms.investment');
+  const tCommon = useTranslations('common');
   const [selectedTags, setSelectedTags] = useState<string[]>(investment.tags || []);
 
   const form = useForm<EditInvestmentFormData>({
-    resolver: zodResolver(editInvestmentSchema),
+    resolver: zodResolver(createEditInvestmentSchema(t)),
     defaultValues: {
       name: investment.name,
       symbol: investment.symbol || '',
@@ -186,12 +189,12 @@ export function EditInvestmentForm({
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             )}>
               <Edit3 className="h-6 w-6" />
-              <span>Edit Investment</span>
+              <span>{t('editTitle')}</span>
             </CardTitle>
             <p className={cn(
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             )}>
-              Update investment details for "{investment.name}"
+              {t('editTitle')} - {investment.name}
             </p>
           </motion.div>
         </CardHeader>
@@ -210,7 +213,7 @@ export function EditInvestmentForm({
                   "text-lg font-semibold border-b pb-2",
                   theme === 'dark' ? 'text-white border-gray-700' : 'text-gray-900 border-gray-200'
                 )}>
-                  Basic Information
+                  {t('steps.basicInfo')}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -220,10 +223,10 @@ export function EditInvestmentForm({
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Investment Name</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('name')}</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="e.g., IFIC Bank DPS, Grameen Phone Share"
+                            placeholder={t('namePlaceholder')}
                             className="h-12 text-base"
                             {...field} 
                           />
@@ -239,10 +242,10 @@ export function EditInvestmentForm({
                     name="symbol"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Symbol/Code</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('symbol')}</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="e.g., GP, IFIC, DBBL"
+                            placeholder={t('symbolPlaceholder')}
                             className="h-12 text-base"
                             {...field} 
                           />
@@ -258,11 +261,11 @@ export function EditInvestmentForm({
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Investment Type</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('investmentType')}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-12 text-base">
-                              <SelectValue placeholder="Select investment type" />
+                              <SelectValue placeholder={t('selectType')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -270,10 +273,7 @@ export function EditInvestmentForm({
                               <SelectItem key={key} value={key} className="text-base py-3">
                                 <div className="flex items-center space-x-3">
                                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                                    {(() => {
-                                      const IconComponent = getInvestmentTypeIcon(type.icon);
-                                      return <IconComponent className="h-4 w-4 text-white" />;
-                                    })()}
+                                    <TrendingUp className="h-4 w-4 text-white" />
                                   </div>
                                   <div>
                                     <p className="font-medium">{type.label}</p>
@@ -533,7 +533,7 @@ export function EditInvestmentForm({
                     <h3 className={cn(
                       "font-semibold",
                       theme === 'dark' ? 'text-blue-300' : 'text-blue-900'
-                    )}>Investment Summary</h3>
+                    )}>{t('title')}</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -569,7 +569,7 @@ export function EditInvestmentForm({
                   className="px-6"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Cancel
+                  {tCommon('cancel')}
                 </Button>
 
                 <Button 
@@ -578,7 +578,7 @@ export function EditInvestmentForm({
                   className="px-8 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  {isLoading ? 'Updating...' : 'Update Investment'}
+                  {isLoading ? t('updating') : t('updateButton')}
                 </Button>
               </div>
             </form>

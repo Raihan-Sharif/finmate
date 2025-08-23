@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,16 +55,17 @@ import { CURRENCIES } from '@/types';
 import { cn, getInvestmentIcon } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
-const investmentFormSchema = z.object({
-  name: z.string().min(1, 'Investment name is required'),
+// Create validation schema function to use translated error messages
+const createInvestmentFormSchema = (t: any) => z.object({
+  name: z.string().min(1, t('errors.nameRequired')),
   symbol: z.string().optional(),
   type: z.enum(['stock', 'mutual_fund', 'crypto', 'bond', 'fd', 'sip', 'dps', 'shanchay_potro', 'recurring_fd', 'gold', 'real_estate', 'pf', 'pension', 'other']),
-  portfolio_id: z.string().min(1, 'Portfolio is required'),
-  initial_amount: z.number().min(0.01, 'Initial amount must be greater than 0'),
-  current_price: z.number().min(0.01, 'Current price must be greater than 0'),
+  portfolio_id: z.string().min(1, t('errors.portfolioRequired')),
+  initial_amount: z.number().min(0.01, t('errors.averageCostPositive')),
+  current_price: z.number().min(0.01, t('errors.currentPricePositive')),
   currency: z.string().min(1, 'Currency is required'),
   risk_level: z.string().min(1, 'Risk level is required'),
-  purchase_date: z.string().min(1, 'Purchase date is required'),
+  purchase_date: z.string().min(1, t('errors.purchaseDateRequired')),
   platform: z.string().optional(),
   account_number: z.string().optional(),
   folio_number: z.string().optional(),
@@ -76,7 +78,7 @@ const investmentFormSchema = z.object({
   tags: z.string().optional()
 });
 
-type InvestmentFormData = z.infer<typeof investmentFormSchema>;
+type InvestmentFormData = z.infer<ReturnType<typeof createInvestmentFormSchema>>;
 
 interface CreateInvestmentFormProps {
   portfolios: { id: string; name: string; currency: string }[];
@@ -94,6 +96,9 @@ export function CreateInvestmentForm({
   className
 }: CreateInvestmentFormProps) {
   const { theme } = useTheme();
+  const t = useTranslations('investments.forms.investment');
+  const tCommon = useTranslations('common');
+  const tTags = useTranslations('tags');
   const [step, setStep] = useState<'basic' | 'details' | 'targets'>('basic');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -101,7 +106,7 @@ export function CreateInvestmentForm({
   console.log('🔥 FORM: Current step:', step);
 
   const form = useForm<InvestmentFormData>({
-    resolver: zodResolver(investmentFormSchema),
+    resolver: zodResolver(createInvestmentFormSchema(t)),
     mode: 'onChange', // Enable real-time validation
     defaultValues: {
       name: '',
@@ -205,7 +210,14 @@ export function CreateInvestmentForm({
     form.setValue('tags', newTags.join(', '));
   };
 
-  const suggestedTags = ['Long Term', 'Retirement', 'Emergency Fund', 'Growth', 'Income', 'Diversification'];
+  const suggestedTags = [
+    tTags('longTerm'),
+    tTags('retirement'),
+    tTags('emergencyFund'),
+    tTags('growth'),
+    tTags('income'),
+    tTags('diversification')
+  ];
 
   const getStepIcon = (currentStep: string) => {
     switch (currentStep) {
@@ -232,16 +244,16 @@ export function CreateInvestmentForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Investment Name</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('name')}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g., IFIC Bank DPS, Grameen Phone Share"
+                      placeholder={t('namePlaceholder')}
                       className="h-12 text-base"
                       {...field} 
                     />
                   </FormControl>
                   <FormDescription>
-                    Choose a descriptive name for your investment
+                    {t('nameDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -254,16 +266,16 @@ export function CreateInvestmentForm({
               name="symbol"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Symbol/Code (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('symbol')}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g., GP, IFIC, DBBL"
+                      placeholder={t('symbolPlaceholder')}
                       className="h-12 text-base"
                       {...field} 
                     />
                   </FormControl>
                   <FormDescription>
-                    Stock symbol or fund code if applicable
+                    {t('symbolDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -276,11 +288,11 @@ export function CreateInvestmentForm({
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Investment Type</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('investmentType')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-12 text-base">
-                        <SelectValue placeholder="Select investment type" />
+                        <SelectValue placeholder={t('selectType')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -318,11 +330,11 @@ export function CreateInvestmentForm({
               name="portfolio_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Portfolio</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('portfolio')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-12 text-base">
-                        <SelectValue placeholder="Select a portfolio" />
+                        <SelectValue placeholder={t('selectPortfolio')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -339,7 +351,7 @@ export function CreateInvestmentForm({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Choose which portfolio this investment belongs to
+                    {t('portfolioDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -362,13 +374,13 @@ export function CreateInvestmentForm({
               name="initial_amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Initial Investment Amount</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('averageCost')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
                       <Input 
                         type="number"
-                        placeholder="10000"
+                        placeholder={t('averageCostPlaceholder')}
                         className="h-12 text-base pl-11"
                         {...field}
                         onChange={(e) => {
@@ -386,7 +398,7 @@ export function CreateInvestmentForm({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    The amount you're investing initially
+                    {t('averageCostDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -399,14 +411,14 @@ export function CreateInvestmentForm({
               name="current_price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Current Price per Unit</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('currentPrice')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
                       <Input 
                         type="number"
                         step="0.01"
-                        placeholder="100.00"
+                        placeholder={t('currentPricePlaceholder')}
                         className="h-12 text-base pl-11"
                         {...field}
                         onChange={(e) => {
@@ -424,7 +436,7 @@ export function CreateInvestmentForm({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Current market price per unit/share
+                    {t('currentPriceDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -437,7 +449,7 @@ export function CreateInvestmentForm({
               name="purchase_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Purchase Date *</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('purchaseDate')} *</FormLabel>
                   <FormControl>
                     <Input 
                       type="date"
@@ -446,7 +458,7 @@ export function CreateInvestmentForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Date when you purchased this investment
+                    {t('purchaseDateDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -459,7 +471,7 @@ export function CreateInvestmentForm({
               name="currency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Currency</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('currency')}</FormLabel>
                   <Select 
                     onValueChange={(value) => {
                       field.onChange(value);
@@ -468,7 +480,7 @@ export function CreateInvestmentForm({
                   >
                     <FormControl>
                       <SelectTrigger className="h-12 text-base">
-                        <SelectValue placeholder="Select currency" />
+                        <SelectValue placeholder={tCommon('selectCurrency')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -490,11 +502,11 @@ export function CreateInvestmentForm({
               name="risk_level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Risk Level</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('riskLevel')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-12 text-base">
-                        <SelectValue placeholder="Select risk level" />
+                        <SelectValue placeholder={tCommon('selectRiskLevel')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -526,7 +538,7 @@ export function CreateInvestmentForm({
                 name="platform"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-semibold">Platform/Broker (Optional)</FormLabel>
+                    <FormLabel className="text-base font-semibold">{t('platform')}</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="e.g., IFIC Securities, Dhaka Stock Exchange"
@@ -544,7 +556,7 @@ export function CreateInvestmentForm({
                 name="account_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-semibold">Account Number (Optional)</FormLabel>
+                    <FormLabel className="text-base font-semibold">{t('accountNumber')}</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Your account number"
@@ -562,7 +574,7 @@ export function CreateInvestmentForm({
                 name="folio_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-semibold">Folio Number (Optional)</FormLabel>
+                    <FormLabel className="text-base font-semibold">{t('folioNumber')}</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Folio/certificate number"
@@ -582,7 +594,7 @@ export function CreateInvestmentForm({
                 name="maturity_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-semibold">Maturity Date (Optional)</FormLabel>
+                    <FormLabel className="text-base font-semibold">{t('maturityDate')}</FormLabel>
                     <FormControl>
                       <Input 
                         type="date"
@@ -591,7 +603,7 @@ export function CreateInvestmentForm({
                       />
                     </FormControl>
                     <FormDescription>
-                      For fixed deposits, bonds, or time-bound investments
+                      {t('maturityDateDescription')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -603,7 +615,7 @@ export function CreateInvestmentForm({
                 name="interest_rate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-semibold">Interest Rate % (Optional)</FormLabel>
+                    <FormLabel className="text-base font-semibold">{t('interestRate')}</FormLabel>
                     <FormControl>
                       <Input 
                         type="number"
@@ -625,7 +637,7 @@ export function CreateInvestmentForm({
                       />
                     </FormControl>
                     <FormDescription>
-                      Annual interest rate for fixed income investments
+                      {t('interestRateDescription')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -638,7 +650,7 @@ export function CreateInvestmentForm({
               name="exchange"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Exchange (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('exchange')}</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="e.g., DSE, CSE, NYSE, NASDAQ"
@@ -647,7 +659,7 @@ export function CreateInvestmentForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Stock exchange where the investment is traded
+                    {t('exchangeDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -660,7 +672,7 @@ export function CreateInvestmentForm({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Notes (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('notes')}</FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Any additional notes about this investment..."
@@ -669,7 +681,7 @@ export function CreateInvestmentForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Add any relevant information about this investment
+                    {t('notesDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -692,7 +704,7 @@ export function CreateInvestmentForm({
               name="target_amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Target Amount (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('targetAmount')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
@@ -716,7 +728,7 @@ export function CreateInvestmentForm({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Set a target value for this investment
+                    {t('targetAmountDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -729,7 +741,7 @@ export function CreateInvestmentForm({
               name="target_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Target Date (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('targetDate')}</FormLabel>
                   <FormControl>
                     <Input 
                       type="date"
@@ -738,7 +750,7 @@ export function CreateInvestmentForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    When do you want to reach your target?
+                    {t('targetDateDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -751,7 +763,7 @@ export function CreateInvestmentForm({
               name="tags"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Tags (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('tags')}</FormLabel>
                   <FormControl>
                     <div className="space-y-3">
                       <Input 
@@ -782,7 +794,7 @@ export function CreateInvestmentForm({
 
                       {/* Suggested Tags */}
                       <div className="space-y-2">
-                        <p className="text-sm text-gray-600">Suggested tags:</p>
+                        <p className="text-sm text-gray-600">{t('suggestedTags')}</p>
                         <div className="flex flex-wrap gap-2">
                           {suggestedTags.map((tag) => (
                             <Badge
@@ -800,7 +812,7 @@ export function CreateInvestmentForm({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Add tags to categorize and organize your investments
+                    {t('tagsDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -832,21 +844,21 @@ export function CreateInvestmentForm({
               "text-2xl font-bold mb-2",
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             )}>
-              Create New Investment
+              {t('createTitle')}
             </CardTitle>
             <p className={cn(
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             )}>
-              Add a new investment to your portfolio
+              {t('createSubtitle')}
             </p>
           </motion.div>
           
           {/* Step Indicator */}
           <div className="flex items-center justify-center space-x-8 mt-6">
             {[
-              { key: 'basic', label: 'Basic Info', icon: <Briefcase className="h-4 w-4" /> },
-              { key: 'details', label: 'Details', icon: <TrendingUp className="h-4 w-4" /> },
-              { key: 'targets', label: 'Targets', icon: <Target className="h-4 w-4" /> }
+              { key: 'basic', label: t('steps.basicInfo'), icon: <Briefcase className="h-4 w-4" /> },
+              { key: 'details', label: t('steps.details'), icon: <TrendingUp className="h-4 w-4" /> },
+              { key: 'targets', label: t('steps.targets'), icon: <Target className="h-4 w-4" /> }
             ].map((stepInfo, index) => {
               const isCurrent = step === stepInfo.key;
               const isCompleted = ['basic', 'details', 'targets'].indexOf(stepInfo.key) < ['basic', 'details', 'targets'].indexOf(step);
@@ -948,13 +960,13 @@ export function CreateInvestmentForm({
                       }}
                       className="px-6"
                     >
-                      Previous
+                      {t('navigation.previous')}
                     </Button>
                   )}
                   
                   {onCancel && (
                     <Button type="button" variant="ghost" onClick={onCancel}>
-                      Cancel
+                      {t('cancel')}
                     </Button>
                   )}
                 </div>
@@ -994,7 +1006,7 @@ export function CreateInvestmentForm({
                       }}
                       className="px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                     >
-                      Next
+                      {t('navigation.next')}
                     </Button>
                   ) : (
                     <Button 
@@ -1002,7 +1014,7 @@ export function CreateInvestmentForm({
                       disabled={isLoading}
                       className="px-8 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                     >
-                      {isLoading ? 'Creating...' : 'Create Investment'}
+                      {isLoading ? t('creating') : t('createButton')}
                     </Button>
                   )}
                 </div>
