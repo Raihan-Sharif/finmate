@@ -38,6 +38,7 @@ import {
 import { cn } from '@/lib/utils';
 import { SIPTemplateCard } from '@/components/investments/SIPTemplateCard';
 import { CreateSIPForm } from '@/components/investments/CreateSIPForm';
+import { useTranslations } from 'next-intl';
 // EditSIPForm now handled by dedicated page
 import { useSIPTemplates, useCreateInvestmentTemplate, useUpdateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentPortfolios } from '@/hooks/useInvestmentPortfolios';
@@ -46,6 +47,8 @@ import { formatCurrency } from '@/lib/utils';
 
 export default function SIPManagementPage() {
   const router = useRouter();
+  const t = useTranslations('investments.sips');
+  const tCommon = useTranslations('common');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
   const [activeTab, setActiveTab] = useState('overview');
@@ -214,7 +217,7 @@ export default function SIPManagementPage() {
         }}
       >
         <Plus className="h-4 w-4 mr-2" />
-        Create SIP
+        {t('management.quickActions.createSip')}
       </Button>
       <Button 
         variant="outline" 
@@ -236,7 +239,7 @@ export default function SIPManagementPage() {
         disabled={updateSIPMutation.isPending}
       >
         <Play className="h-4 w-4 mr-2" />
-        Bulk Resume
+        {t('management.quickActions.bulkResume')}
       </Button>
       <Button 
         variant="outline" 
@@ -258,7 +261,7 @@ export default function SIPManagementPage() {
         disabled={updateSIPMutation.isPending}
       >
         <Pause className="h-4 w-4 mr-2" />
-        Bulk Pause
+        {t('management.quickActions.bulkPause')}
       </Button>
       <Button 
         variant="ghost"
@@ -280,7 +283,7 @@ export default function SIPManagementPage() {
           "h-4 w-4 mr-2 transition-transform duration-300",
           (isLoading || portfoliosLoading) && "animate-spin"
         )} />
-        Refresh
+        {t('management.quickActions.refresh')}
       </Button>
     </motion.div>
   );
@@ -294,8 +297,8 @@ export default function SIPManagementPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">SIP Management</h1>
-          <p className="text-gray-600">Manage your systematic investment plans</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('management.title')}</h1>
+          <p className="text-gray-600">{t('management.subtitle')}</p>
         </div>
         <QuickActions />
       </motion.div>
@@ -303,33 +306,33 @@ export default function SIPManagementPage() {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
-          title="Total SIPs"
+          title={t('management.stats.totalSips')}
           value={stats.totalSIPs}
-          subtitle={`${stats.activeSIPs} active, ${stats.pausedSIPs} paused`}
+          subtitle={`${stats.activeSIPs} ${t('activePlans')}, ${stats.pausedSIPs} ${t('pausedPlans')}`}
           icon={Zap}
           color="from-blue-500 to-indigo-600"
           delay={0}
         />
         <StatsCard
-          title="Monthly Investment"
+          title={t('management.stats.monthlyInvestment')}
           value={formatCurrency(stats.monthlyAmount, 'BDT')}
-          subtitle="Active SIP amount"
+          subtitle={t('activeSipAmount')}
           icon={Calendar}
           color="from-green-500 to-emerald-600"
           delay={0.1}
         />
         <StatsCard
-          title="Total Invested"
+          title={t('management.stats.totalInvested')}
           value={formatCurrency(stats.totalInvested, 'BDT')}
-          subtitle="Via SIP executions"
+          subtitle={t('viaExecutions')}
           icon={DollarSign}
           color="from-purple-500 to-violet-600"
           delay={0.2}
         />
         <StatsCard
-          title="Upcoming (7 days)"
+          title={t('management.stats.upcoming')}
           value={stats.upcomingExecutions}
-          subtitle="Executions due"
+          subtitle={t('executionsDue')}
           icon={Clock}
           color="from-orange-500 to-red-600"
           delay={0.3}
@@ -346,15 +349,15 @@ export default function SIPManagementPage() {
           <TabsList className="grid w-full grid-cols-3 bg-white/50 backdrop-blur-sm border border-gray-200">
             <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
               <Activity className="h-4 w-4 mr-2" />
-              SIP Overview
+              {t('management.tabs.overview')}
             </TabsTrigger>
             <TabsTrigger value="active" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
               <Play className="h-4 w-4 mr-2" />
-              Active SIPs
+              {t('management.tabs.active')}
             </TabsTrigger>
             <TabsTrigger value="paused" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
               <Pause className="h-4 w-4 mr-2" />
-              Paused SIPs
+              {t('management.tabs.paused')}
             </TabsTrigger>
           </TabsList>
         </motion.div>
@@ -370,7 +373,7 @@ export default function SIPManagementPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search SIP plans..."
+                placeholder={t('management.search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 w-80"
@@ -380,19 +383,19 @@ export default function SIPManagementPage() {
             <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
               <SelectTrigger className="w-40">
                 <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t('management.search.filterByStatus')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All SIPs</SelectItem>
-                <SelectItem value="active">Active Only</SelectItem>
-                <SelectItem value="paused">Paused Only</SelectItem>
+                <SelectItem value="all">{t('management.search.allSips')}</SelectItem>
+                <SelectItem value="active">{t('management.search.activeOnly')}</SelectItem>
+                <SelectItem value="paused">{t('management.search.pausedOnly')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="text-sm">
-              {filteredSIPs.length} SIPs found
+              {filteredSIPs.length} {t('sipsFound')}
             </Badge>
           </div>
         </motion.div>
@@ -441,11 +444,11 @@ export default function SIPManagementPage() {
                 className="col-span-full text-center py-12"
               >
                 <Zap className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No SIP plans found</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('management.empty.title')}</h3>
                 <p className="text-gray-500 mb-4">
                   {searchQuery || statusFilter !== 'all' 
-                    ? 'Try adjusting your search or filters' 
-                    : 'Create your first systematic investment plan'}
+                    ? t('management.empty.adjustFilters')
+                    : t('management.empty.createFirst')}
                 </p>
                 <Button 
                   className="bg-gradient-to-r from-green-500 to-emerald-600"
@@ -455,7 +458,7 @@ export default function SIPManagementPage() {
                   }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create SIP
+                  {t('createSip')}
                 </Button>
               </motion.div>
             )}

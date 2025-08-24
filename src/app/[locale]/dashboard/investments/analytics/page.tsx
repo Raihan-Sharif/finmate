@@ -157,15 +157,15 @@ export default function InvestmentAnalyticsPage() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Shield className="h-5 w-5 text-blue-600" />
-          <span>Risk Analysis</span>
+          <span>{t('riskAnalysis.title')}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Portfolio Risk Score</span>
+            <span className="text-sm font-medium">{t('riskAnalysis.portfolioRiskScore')}</span>
             <Badge className="bg-gradient-to-r from-yellow-500 to-orange-600">
-              6.2 / 10 (Medium)
+              6.2 / 10 ({t('riskAnalysis.medium')})
             </Badge>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -178,15 +178,15 @@ export default function InvestmentAnalyticsPage() {
         
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Diversification Score</span>
+            <span className="text-gray-600">{t('riskAnalysis.diversificationScore')}</span>
             <span className="font-semibold text-green-600">8.4 / 10</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Volatility</span>
-            <span className="font-semibold text-orange-600">Medium</span>
+            <span className="text-gray-600">{t('metrics.volatility')}</span>
+            <span className="font-semibold text-orange-600">{t('riskAnalysis.medium')}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Beta</span>
+            <span className="text-gray-600">{t('riskAnalysis.beta')}</span>
             <span className="font-semibold text-blue-600">1.15</span>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function InvestmentAnalyticsPage() {
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-4 w-4 text-yellow-500" />
             <span className="text-xs text-gray-600">
-              Consider reducing high-risk investments to 60% of portfolio
+              {t('riskAnalysis.considerReducing')}
             </span>
           </div>
         </div>
@@ -208,32 +208,32 @@ export default function InvestmentAnalyticsPage() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Zap className="h-5 w-5 text-green-600" />
-          <span>SIP Performance</span>
+          <span>{t('sipAnalysis.title')}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center p-3 bg-green-50 rounded-lg">
             <p className="text-2xl font-bold text-green-600">5</p>
-            <p className="text-xs text-green-700">Active SIPs</p>
+            <p className="text-xs text-green-700">{t('sipAnalysis.activeSips')}</p>
           </div>
           <div className="text-center p-3 bg-blue-50 rounded-lg">
             <p className="text-2xl font-bold text-blue-600">₹12,000</p>
-            <p className="text-xs text-blue-700">Monthly Amount</p>
+            <p className="text-xs text-blue-700">{t('sipAnalysis.monthlyAmount')}</p>
           </div>
         </div>
         
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Avg. SIP Return</span>
+            <span className="text-gray-600">{t('sipAnalysis.avgSipReturn')}</span>
             <span className="font-semibold text-green-600">+14.2%</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Best Performing SIP</span>
+            <span className="text-gray-600">{t('sipAnalysis.bestPerformingSip')}</span>
             <span className="font-semibold text-green-600">+22.1%</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Total SIP Invested</span>
+            <span className="text-gray-600">{t('sipAnalysis.totalSipInvested')}</span>
             <span className="font-semibold text-gray-900">₹45,000</span>
           </div>
         </div>
@@ -241,7 +241,7 @@ export default function InvestmentAnalyticsPage() {
         <div className="pt-3 border-t border-gray-100">
           <Button variant="outline" size="sm" className="w-full">
             <Target className="h-4 w-4 mr-2" />
-            View SIP Details
+            {t('sipAnalysis.viewSipDetails')}
           </Button>
         </div>
       </CardContent>
@@ -266,20 +266,20 @@ export default function InvestmentAnalyticsPage() {
               <SelectValue placeholder="Period" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1m">1 Month</SelectItem>
-              <SelectItem value="3m">3 Months</SelectItem>
-              <SelectItem value="6m">6 Months</SelectItem>
-              <SelectItem value="1y">1 Year</SelectItem>
-              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="1m">{t('period.1m')}</SelectItem>
+              <SelectItem value="3m">{t('period.3m')}</SelectItem>
+              <SelectItem value="6m">{t('period.6m')}</SelectItem>
+              <SelectItem value="1y">{t('period.1y')}</SelectItem>
+              <SelectItem value="all">{t('period.all')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            {t('buttons.export')}
           </Button>
           <Button variant="ghost">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            {t('buttons.refresh')}
           </Button>
         </div>
       </motion.div>
@@ -292,40 +292,40 @@ export default function InvestmentAnalyticsPage() {
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
       >
         <AnalyticsCard
-          title="Total Return"
+          title={t('metrics.totalReturn')}
           value="₹11,000"
           change="16.42%"
           changeType="positive"
           icon={TrendingUp}
           color="from-green-500 to-emerald-600"
-          description="Overall portfolio gain"
+          description={t('metrics.overallPortfolioGain')}
         />
         <AnalyticsCard
-          title="Annual Return"
+          title={t('metrics.annualReturn')}
           value="18.7%"
           change="2.3%"
           changeType="positive"
           icon={BarChart3}
           color="from-blue-500 to-indigo-600"
-          description="Year-over-year return"
+          description={t('metrics.yearOverYearReturn')}
         />
         <AnalyticsCard
-          title="Dividend Earned"
+          title={t('dividendIncome')}
           value="₹3,500"
           change="₹450"
           changeType="positive"
           icon={DollarSign}
           color="from-purple-500 to-violet-600"
-          description="This quarter"
+          description={t('metrics.thisQuarter')}
         />
         <AnalyticsCard
-          title="Portfolio Beta"
+          title={t('metrics.portfolioBeta')}
           value="1.15"
           change="0.08"
           changeType="neutral"
           icon={Activity}
           color="from-orange-500 to-red-600"
-          description="Market correlation"
+          description={t('metrics.marketCorrelation')}
         />
       </motion.div>
 
@@ -339,19 +339,19 @@ export default function InvestmentAnalyticsPage() {
           <TabsList className="grid w-full grid-cols-4 bg-white/50 backdrop-blur-sm border border-gray-200">
             <TabsTrigger value="performance" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
               <TrendingUp className="h-4 w-4 mr-2" />
-              Performance
+              {t('tabs.performance')}
             </TabsTrigger>
             <TabsTrigger value="allocation" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
               <PieChart className="h-4 w-4 mr-2" />
-              Allocation
+              {t('tabs.allocation')}
             </TabsTrigger>
             <TabsTrigger value="trends" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
               <BarChart3 className="h-4 w-4 mr-2" />
-              Trends
+              {t('tabs.trends')}
             </TabsTrigger>
             <TabsTrigger value="analysis" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
               <Shield className="h-4 w-4 mr-2" />
-              Risk Analysis
+              {t('tabs.analysis')}
             </TabsTrigger>
           </TabsList>
         </motion.div>
@@ -363,7 +363,7 @@ export default function InvestmentAnalyticsPage() {
             performanceData={mockPerformanceData}
             currency="BDT"
             height={400}
-            title="Portfolio Performance Over Time"
+            title={t('charts.portfolioPerformanceOverTime')}
           />
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -380,12 +380,12 @@ export default function InvestmentAnalyticsPage() {
               assetAllocation={mockAssetAllocation}
               currency="BDT"
               height={400}
-              title="Asset Allocation"
+              title={t('charts.assetAllocation')}
             />
             
             <Card className="border-0 bg-gradient-to-br from-white via-white/95 to-white/90 backdrop-blur-md shadow-lg">
               <CardHeader>
-                <CardTitle>Allocation Details</CardTitle>
+                <CardTitle>{t('charts.allocationDetails')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {mockAssetAllocation.map((asset, index) => (
@@ -424,30 +424,30 @@ export default function InvestmentAnalyticsPage() {
             monthlyTrend={mockMonthlyTrend}
             currency="BDT"
             height={400}
-            title="Monthly Investment Trends"
+            title={t('charts.monthlyInvestmentTrends')}
           />
           
           <Card className="border-0 bg-gradient-to-br from-white via-white/95 to-white/90 backdrop-blur-md shadow-lg">
             <CardHeader>
-              <CardTitle>Trend Analysis</CardTitle>
+              <CardTitle>{t('trendAnalysis.title')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
                   <p className="text-lg font-bold text-blue-600">+16.4%</p>
-                  <p className="text-xs text-blue-700">Best Month</p>
+                  <p className="text-xs text-blue-700">{t('metrics.bestMonth')}</p>
                 </div>
                 <div className="text-center p-3 bg-red-50 rounded-lg">
                   <p className="text-lg font-bold text-red-600">-2.0%</p>
-                  <p className="text-xs text-red-700">Worst Month</p>
+                  <p className="text-xs text-red-700">{t('metrics.worstMonth')}</p>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
                   <p className="text-lg font-bold text-green-600">9.2%</p>
-                  <p className="text-xs text-green-700">Avg Monthly</p>
+                  <p className="text-xs text-green-700">{t('metrics.avgMonthly')}</p>
                 </div>
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
                   <p className="text-lg font-bold text-purple-600">3.8%</p>
-                  <p className="text-xs text-purple-700">Volatility</p>
+                  <p className="text-xs text-purple-700">{t('metrics.volatility')}</p>
                 </div>
               </div>
             </CardContent>
@@ -463,22 +463,22 @@ export default function InvestmentAnalyticsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Target className="h-5 w-5 text-green-600" />
-                  <span>Investment Recommendations</span>
+                  <span>{t('recommendations.title')}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-                    <p className="text-sm font-medium text-green-800">Increase Fixed Income</p>
-                    <p className="text-xs text-green-600">Consider adding 10% more bonds for stability</p>
+                    <p className="text-sm font-medium text-green-800">{t('recommendations.increaseFixedIncome')}</p>
+                    <p className="text-xs text-green-600">{t('recommendations.considerAdding')}</p>
                   </div>
                   <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                    <p className="text-sm font-medium text-blue-800">Rebalance Portfolio</p>
-                    <p className="text-xs text-blue-600">Equity allocation is slightly high at 45%</p>
+                    <p className="text-sm font-medium text-blue-800">{t('recommendations.rebalancePortfolio')}</p>
+                    <p className="text-xs text-blue-600">{t('recommendations.equityAllocationHigh')}</p>
                   </div>
                   <div className="p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
-                    <p className="text-sm font-medium text-yellow-800">Monitor SIP Performance</p>
-                    <p className="text-xs text-yellow-600">Review underperforming SIP plans</p>
+                    <p className="text-sm font-medium text-yellow-800">{t('recommendations.monitorSipPerformance')}</p>
+                    <p className="text-xs text-yellow-600">{t('recommendations.reviewUnderperforming')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -487,24 +487,24 @@ export default function InvestmentAnalyticsPage() {
           
           <Card className="border-0 bg-gradient-to-br from-white via-white/95 to-white/90 backdrop-blur-md shadow-lg">
             <CardHeader>
-              <CardTitle>Tax Planning Overview</CardTitle>
+              <CardTitle>{t('taxPlanning.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <p className="text-2xl font-bold text-blue-600">₹1,200</p>
-                  <p className="text-sm text-blue-700">Estimated Tax Liability</p>
-                  <p className="text-xs text-gray-600">On capital gains</p>
+                  <p className="text-sm text-blue-700">{t('taxPlanning.estimatedTaxLiability')}</p>
+                  <p className="text-xs text-gray-600">{t('taxPlanning.onCapitalGains')}</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <p className="text-2xl font-bold text-green-600">₹8,500</p>
-                  <p className="text-sm text-green-700">Tax Saved (80C)</p>
-                  <p className="text-xs text-gray-600">Through investments</p>
+                  <p className="text-sm text-green-700">{t('taxPlanning.taxSaved')}</p>
+                  <p className="text-xs text-gray-600">{t('taxPlanning.throughInvestments')}</p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
                   <p className="text-2xl font-bold text-purple-600">₹2,100</p>
-                  <p className="text-sm text-purple-700">Potential Savings</p>
-                  <p className="text-xs text-gray-600">With optimization</p>
+                  <p className="text-sm text-purple-700">{t('taxPlanning.potentialSavings')}</p>
+                  <p className="text-xs text-gray-600">{t('taxPlanning.withOptimization')}</p>
                 </div>
               </div>
             </CardContent>

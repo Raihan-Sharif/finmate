@@ -78,7 +78,7 @@ export function EditInvestmentForm({
   className
 }: EditInvestmentFormProps) {
   const { theme } = useTheme();
-  const t = useTranslations('investments.forms.investment');
+  const t = useTranslations('investments.investment.form');
   const tCommon = useTranslations('common');
   const [selectedTags, setSelectedTags] = useState<string[]>(investment.tags || []);
 
@@ -302,7 +302,7 @@ export function EditInvestmentForm({
                             <Input 
                               type="number"
                               step="0.01"
-                              placeholder="100.00"
+                              placeholder={t('currentPricePlaceholder')}
                               className="h-12 text-base pl-11"
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
@@ -338,7 +338,7 @@ export function EditInvestmentForm({
                       <FormItem>
                         <FormLabel>Platform/Broker</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., IFIC Securities" {...field} />
+                          <Input placeholder={t('platformPlaceholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -352,7 +352,7 @@ export function EditInvestmentForm({
                       <FormItem>
                         <FormLabel>Account Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="Account number" {...field} />
+                          <Input placeholder={t('accountNumberPlaceholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -366,7 +366,7 @@ export function EditInvestmentForm({
                       <FormItem>
                         <FormLabel>Folio Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="Folio number" {...field} />
+                          <Input placeholder={t('folioNumberPlaceholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -414,7 +414,7 @@ export function EditInvestmentForm({
                           <Input 
                             type="number" 
                             step="0.01" 
-                            placeholder="5.5"
+                            placeholder={t('interestRatePlaceholder')}
                             {...field}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           />
@@ -432,7 +432,7 @@ export function EditInvestmentForm({
                     <FormItem>
                       <FormLabel>Exchange (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., DSE, CSE" {...field} />
+                        <Input placeholder={t('exchangePlaceholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -447,7 +447,7 @@ export function EditInvestmentForm({
                       <FormLabel>Notes (Optional)</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Any additional notes about this investment..."
+                          placeholder={t('notesPlaceholder')}
                           className="min-h-[100px]"
                           {...field} 
                         />
@@ -467,7 +467,7 @@ export function EditInvestmentForm({
                       <FormControl>
                         <div className="space-y-3">
                           <Input 
-                            placeholder="Enter tags separated by commas"
+                            placeholder={t('tagsPlaceholder')}
                             {...field}
                             onChange={(e) => {
                               field.onChange(e.target.value);

@@ -96,7 +96,7 @@ export function CreateInvestmentForm({
   className
 }: CreateInvestmentFormProps) {
   const { theme } = useTheme();
-  const t = useTranslations('investments.forms.investment');
+  const t = useTranslations('investments.investment.form');
   const tCommon = useTranslations('common');
   const tTags = useTranslations('tags');
   const [step, setStep] = useState<'basic' | 'details' | 'targets'>('basic');
@@ -541,7 +541,7 @@ export function CreateInvestmentForm({
                     <FormLabel className="text-base font-semibold">{t('platform')}</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g., IFIC Securities, Dhaka Stock Exchange"
+                        placeholder={t('platformPlaceholder')}
                         className="h-12 text-base"
                         {...field} 
                       />
@@ -559,7 +559,7 @@ export function CreateInvestmentForm({
                     <FormLabel className="text-base font-semibold">{t('accountNumber')}</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Your account number"
+                        placeholder={t('accountNumberPlaceholder')}
                         className="h-12 text-base"
                         {...field} 
                       />
@@ -577,7 +577,7 @@ export function CreateInvestmentForm({
                     <FormLabel className="text-base font-semibold">{t('folioNumber')}</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Folio/certificate number"
+                        placeholder={t('folioNumberPlaceholder')}
                         className="h-12 text-base"
                         {...field} 
                       />
@@ -620,7 +620,7 @@ export function CreateInvestmentForm({
                       <Input 
                         type="number"
                         step="0.01"
-                        placeholder="5.5"
+                        placeholder={t('interestRatePlaceholder')}
                         className="h-12 text-base"
                         {...field}
                         onChange={(e) => {
@@ -653,7 +653,7 @@ export function CreateInvestmentForm({
                   <FormLabel className="text-base font-semibold">{t('exchange')}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g., DSE, CSE, NYSE, NASDAQ"
+                      placeholder={t('exchangePlaceholder')}
                       className="h-12 text-base"
                       {...field} 
                     />
@@ -675,7 +675,7 @@ export function CreateInvestmentForm({
                   <FormLabel className="text-base font-semibold">{t('notes')}</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Any additional notes about this investment..."
+                      placeholder={t('notesPlaceholder')}
                       className="min-h-[100px] text-base"
                       {...field} 
                     />
@@ -710,7 +710,7 @@ export function CreateInvestmentForm({
                       <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
                       <Input 
                         type="number"
-                        placeholder="100000"
+                        placeholder={t('targetAmountPlaceholder')}
                         className="h-12 text-base pl-11"
                         value={field.value || ''}
                         onChange={(e) => {
@@ -767,7 +767,7 @@ export function CreateInvestmentForm({
                   <FormControl>
                     <div className="space-y-3">
                       <Input 
-                        placeholder="Enter tags separated by commas"
+                        placeholder={t('tagsPlaceholder')}
                         className="h-12 text-base"
                         {...field}
                         onChange={(e) => {

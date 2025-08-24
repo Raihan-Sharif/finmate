@@ -47,21 +47,22 @@ import { useTheme } from 'next-themes';
 import { useInvestmentTemplate, useUpdateInvestmentTemplate } from '@/hooks/useInvestmentTemplates';
 import { useInvestmentPortfolios } from '@/hooks/useInvestmentPortfolios';
 import toast from 'react-hot-toast';
+import { useTranslations } from 'next-intl';
 
-const editSipSchema = z.object({
-  name: z.string().min(1, 'SIP name is required'),
+const editSipSchema = (t: any) => z.object({
+  name: z.string().min(1, t('errors.nameRequired')),
   description: z.string().optional(),
-  portfolio_id: z.string().min(1, 'Portfolio is required'),
-  amount_per_investment: z.number().min(1, 'Investment amount must be greater than 0'),
+  portfolio_id: z.string().min(1, t('errors.portfolioRequired')),
+  amount_per_investment: z.number().min(1, t('errors.amountPositive')),
   currency: z.string().min(1, 'Currency is required'),
   platform: z.string().optional(),
   account_number: z.string().optional(),
   frequency: z.string().refine(
     (value) => ['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'].includes(value),
-    { message: "Frequency is required" }
+    { message: t('errors.frequencyRequired') }
   ),
   interval_value: z.number().min(1).default(1),
-  start_date: z.string().min(1, 'Start date is required'),
+  start_date: z.string().min(1, t('errors.startDateRequired')),
   end_date: z.string().optional(),
   target_amount: z.number().optional(),
   auto_execute: z.boolean().default(true),
@@ -71,20 +72,21 @@ const editSipSchema = z.object({
   notes: z.string().optional(),
 });
 
-type EditSIPFormData = z.infer<typeof editSipSchema>;
+type EditSIPFormData = z.infer<ReturnType<typeof editSipSchema>>;
 
 export default function EditSIPPage() {
   const router = useRouter();
   const params = useParams();
   const sipId = params.id as string;
   const { theme } = useTheme();
+  const t = useTranslations('investments.sip.form');
   
   const { data: template, isLoading: templateLoading } = useInvestmentTemplate(sipId);
   const { data: portfolios = [], isLoading: portfoliosLoading } = useInvestmentPortfolios();
   const updateSIPMutation = useUpdateInvestmentTemplate();
 
   const form = useForm<EditSIPFormData>({
-    resolver: zodResolver(editSipSchema),
+    resolver: zodResolver(editSipSchema(t)),
     defaultValues: {
       name: '',
       description: '',
@@ -192,11 +194,11 @@ export default function EditSIPPage() {
         updates: requestData 
       });
       
-      toast.success('SIP updated successfully!');
+      toast.success(t('success.updated'));
       router.push('/dashboard/investments/sips');
     } catch (error) {
       console.error('🔥 SIP EDIT: Update failed:', error);
-      toast.error('Failed to update SIP');
+      toast.error(t('errors.updateFailed'));
     }
   };
 
@@ -220,14 +222,14 @@ export default function EditSIPPage() {
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              SIP Not Found
+              {t('errors.sipNotFound')}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              The SIP you're looking for doesn't exist or has been deleted.
+              {t('errors.sipNotFoundDescription')}
             </p>
             <Button onClick={handleCancel} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to SIPs
+              {t('navigation.backToSips')}
             </Button>
           </div>
         </div>
@@ -247,14 +249,14 @@ export default function EditSIPPage() {
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
+            <span>{t('navigation.previous')}</span>
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Edit SIP Plan
+              {t('navigation.editSipPlan')}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Update your systematic investment plan
+              {t('navigation.editSipPlanDescription')}
             </p>
           </div>
         </div>
@@ -269,11 +271,11 @@ export default function EditSIPPage() {
             {/* Active Status Toggle */}
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold">SIP Status</h3>
+                <h3 className="text-lg font-semibold">{t('sipStatus')}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {isActive ? 
-                    "SIP is currently active and will execute as scheduled" : 
-                    "SIP is paused and will not execute until reactivated"
+                    t('activeDescription') : 
+                    t('pausedDescription')
                   }
                 </p>
               </div>
@@ -282,7 +284,7 @@ export default function EditSIPPage() {
                   "text-sm font-medium transition-colors",
                   isActive ? "text-green-600" : "text-gray-500"
                 )}>
-                  {isActive ? "Active" : "Paused"}
+                  {isActive ? t('active') : t('paused')}
                 </span>
                 <Switch
                   checked={isActive}
@@ -299,7 +301,7 @@ export default function EditSIPPage() {
 
             {/* Investment Type Display */}
             <div className="space-y-2">
-              <label className="text-base font-semibold text-gray-700 dark:text-gray-300">Investment Type</label>
+              <label className="text-base font-semibold text-gray-700 dark:text-gray-300">{t('investmentType')}</label>
               <div className={cn(
                 "h-12 px-3 flex items-center rounded-md border bg-gray-50",
                 theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'
@@ -312,7 +314,7 @@ export default function EditSIPPage() {
                         {IconComponent && <IconComponent className="h-5 w-5 text-blue-500" />}
                         <div>
                           <p className="font-medium">{selectedType?.label || template.investment_type}</p>
-                          <p className="text-sm text-gray-500">Investment type cannot be changed</p>
+                          <p className="text-sm text-gray-500">{t('investmentTypeReadonly')}</p>
                         </div>
                       </>
                     );
@@ -332,16 +334,16 @@ export default function EditSIPPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">SIP Plan Name</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('name')}</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="e.g., Monthly Stock SIP, DPS Plan"
+                            placeholder={t('namePlaceholder')}
                             className="h-12 text-base"
                             {...field} 
                           />
                         </FormControl>
                         <FormDescription>
-                          Update the name of your SIP plan
+                          {t('nameDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -354,11 +356,11 @@ export default function EditSIPPage() {
                     name="portfolio_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Portfolio</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('portfolio')}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-12 text-base">
-                              <SelectValue placeholder="Select a portfolio" />
+                              <SelectValue placeholder={t('portfolioPlaceholder')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -375,7 +377,7 @@ export default function EditSIPPage() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Choose which portfolio this SIP belongs to
+                          {t('portfolioDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -388,13 +390,13 @@ export default function EditSIPPage() {
                     name="amount_per_investment"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Investment Amount</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('amount')}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
                             <Input 
                               type="number"
-                              placeholder="5000"
+                              placeholder={t('amountPlaceholder')}
                               className="h-12 text-base pl-11"
                               {...field}
                               onChange={(e) => {
@@ -412,7 +414,7 @@ export default function EditSIPPage() {
                           </div>
                         </FormControl>
                         <FormDescription>
-                          Amount to invest per execution
+                          {t('amountDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -425,11 +427,11 @@ export default function EditSIPPage() {
                     name="currency"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Currency</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('currency')}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-12 text-base">
-                              <SelectValue placeholder="Select currency" />
+                              <SelectValue placeholder={t('currencyPlaceholder')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -454,11 +456,11 @@ export default function EditSIPPage() {
                     name="frequency"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Frequency</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('frequency')}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-12 text-base">
-                              <SelectValue placeholder="Select frequency" />
+                              <SelectValue placeholder={t('frequencyPlaceholder')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -488,11 +490,11 @@ export default function EditSIPPage() {
                     name="interval_value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Interval Value</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('intervalValue')}</FormLabel>
                         <FormControl>
                           <Input 
                             type="number"
-                            placeholder="1"
+                            placeholder={t('intervalPlaceholder')}
                             min="1"
                             className="h-12 text-base"
                             value={field.value}
@@ -505,7 +507,7 @@ export default function EditSIPPage() {
                           />
                         </FormControl>
                         <FormDescription>
-                          Execute every N intervals (e.g., 2 for every 2 months if frequency is monthly)
+                          {t('intervalDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -518,7 +520,7 @@ export default function EditSIPPage() {
                     name="start_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Start Date</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('startDate')}</FormLabel>
                         <FormControl>
                           <Input 
                             type="date"
@@ -527,7 +529,7 @@ export default function EditSIPPage() {
                           />
                         </FormControl>
                         <FormDescription>
-                          When should the SIP start/restart executing?
+                          {t('startDateDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -540,7 +542,7 @@ export default function EditSIPPage() {
                     name="end_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">End Date (Optional)</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('endDate')}</FormLabel>
                         <FormControl>
                           <Input 
                             type="date"
@@ -549,7 +551,7 @@ export default function EditSIPPage() {
                           />
                         </FormControl>
                         <FormDescription>
-                          Leave empty for indefinite SIP
+                          {t('endDateDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -559,7 +561,7 @@ export default function EditSIPPage() {
 
                 {/* Advanced Settings */}
                 <div className="space-y-6 pt-6 border-t">
-                  <h3 className="text-lg font-semibold">Advanced Settings</h3>
+                  <h3 className="text-lg font-semibold">{t('navigation.steps.settings')}</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Platform */}
@@ -568,19 +570,19 @@ export default function EditSIPPage() {
                       name="platform"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-semibold">Platform/Broker (Optional)</FormLabel>
+                          <FormLabel className="text-base font-semibold">{t('platform')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                               <Input 
-                                placeholder="e.g., BRAC EPL, EBL Securities"
+                                placeholder={t('platformPlaceholder')}
                                 className="h-12 text-base pl-10"
                                 {...field} 
                               />
                             </div>
                           </FormControl>
                           <FormDescription>
-                            Investment platform or brokerage name
+                            {t('platformDescription')}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -593,16 +595,16 @@ export default function EditSIPPage() {
                       name="account_number"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-semibold">Account Number (Optional)</FormLabel>
+                          <FormLabel className="text-base font-semibold">{t('accountNumber')}</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="e.g., 1234567890"
+                              placeholder={t('accountNumberPlaceholder')}
                               className="h-12 text-base"
                               {...field} 
                             />
                           </FormControl>
                           <FormDescription>
-                            Your account number with the platform
+                            {t('accountNumberDescription')}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -615,13 +617,13 @@ export default function EditSIPPage() {
                       name="target_amount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-semibold">Target Amount (Optional)</FormLabel>
+                          <FormLabel className="text-base font-semibold">{t('targetAmount')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
                               <Input 
                                 type="number"
-                                placeholder="100000"
+                                placeholder={t('targetAmountPlaceholder')}
                                 className="h-12 text-base pl-11"
                                 value={field.value || ''}
                                 onChange={(e) => {
@@ -639,7 +641,7 @@ export default function EditSIPPage() {
                             </div>
                           </FormControl>
                           <FormDescription>
-                            SIP will stop when this total invested amount is reached
+                            {t('targetAmountDescription')}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -656,9 +658,9 @@ export default function EditSIPPage() {
                         <FormItem>
                           <div className="flex items-center justify-between">
                             <div>
-                              <FormLabel className="text-base font-semibold">Auto Execute</FormLabel>
+                              <FormLabel className="text-base font-semibold">{t('autoExecute')}</FormLabel>
                               <FormDescription>
-                                Automatically execute investments on schedule
+                                {t('autoExecuteDescription')}
                               </FormDescription>
                             </div>
                             <FormControl>
@@ -680,9 +682,9 @@ export default function EditSIPPage() {
                         <FormItem>
                           <div className="flex items-center justify-between">
                             <div>
-                              <FormLabel className="text-base font-semibold">Market Order</FormLabel>
+                              <FormLabel className="text-base font-semibold">{t('marketOrder')}</FormLabel>
                               <FormDescription>
-                                Execute at market price (vs limit order)
+                                {t('marketOrderDescription')}
                               </FormDescription>
                             </div>
                             <FormControl>
@@ -704,16 +706,16 @@ export default function EditSIPPage() {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Notes (Optional)</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('notes')}</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Any additional notes about this SIP plan..."
+                            placeholder={t('notesPlaceholder')}
                             className="min-h-[80px] text-base resize-none"
                             {...field} 
                           />
                         </FormControl>
                         <FormDescription>
-                          Add any relevant information about this SIP
+                          {t('notesDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -745,7 +747,7 @@ export default function EditSIPPage() {
                           ? theme === 'dark' ? 'text-green-300' : 'text-green-800'
                           : theme === 'dark' ? 'text-orange-300' : 'text-orange-800'
                       )}>
-                        Updated SIP Plan Summary
+                        {t('summary.title')}
                       </h3>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm">
@@ -763,7 +765,7 @@ export default function EditSIPPage() {
                             ? theme === 'dark' ? 'text-green-400' : 'text-green-700'
                             : theme === 'dark' ? 'text-orange-400' : 'text-orange-700'
                         )}>
-                          {selectedType?.label} • {isActive ? 'Active' : 'Paused'}
+                          {selectedType?.label} • {isActive ? t('active') : t('paused')}
                         </p>
                       </div>
                       <div>
@@ -780,7 +782,7 @@ export default function EditSIPPage() {
                             ? theme === 'dark' ? 'text-green-400' : 'text-green-700'
                             : theme === 'dark' ? 'text-orange-400' : 'text-orange-700'
                         )}>
-                          Every {form.watch('interval_value')} {selectedFrequency?.label?.toLowerCase()}
+                          {t('summary.every')} {form.watch('interval_value')} {selectedFrequency?.label?.toLowerCase()}
                         </p>
                       </div>
                     </div>
@@ -790,7 +792,7 @@ export default function EditSIPPage() {
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between pt-6 border-t">
                   <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancel
+                    {t('navigation.cancel')}
                   </Button>
                   <Button 
                     type="submit" 
@@ -798,7 +800,7 @@ export default function EditSIPPage() {
                     className="px-8 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    {updateSIPMutation.isPending ? 'Updating...' : 'Update SIP Plan'}
+                    {updateSIPMutation.isPending ? t('updating') : t('updateButton')}
                   </Button>
                 </div>
               </form>
