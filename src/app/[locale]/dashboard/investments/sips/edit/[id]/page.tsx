@@ -80,6 +80,8 @@ export default function EditSIPPage() {
   const sipId = params.id as string;
   const { theme } = useTheme();
   const t = useTranslations('investments.sip.form');
+  const tCommon = useTranslations('common');
+  const tFreq = useTranslations('investments.frequencies');
   
   const { data: template, isLoading: templateLoading } = useInvestmentTemplate(sipId);
   const { data: portfolios = [], isLoading: portfoliosLoading } = useInvestmentPortfolios();
@@ -357,7 +359,7 @@ export default function EditSIPPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-base font-semibold">{t('portfolio')}</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || template?.portfolio_id || ''}>
                           <FormControl>
                             <SelectTrigger className="h-12 text-base">
                               <SelectValue placeholder={t('portfolioPlaceholder')} />
@@ -464,19 +466,22 @@ export default function EditSIPPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.entries(INVESTMENT_FREQUENCIES).map(([key, freq]) => (
-                              <SelectItem key={key} value={key} className="text-base py-3">
-                                <div className="flex items-center space-x-3">
-                                  <Repeat className="h-4 w-4 text-blue-500" />
-                                  <div>
-                                    <p className="font-medium">{freq.label}</p>
-                                    <p className="text-sm text-gray-500">
-                                      Every {freq.days} days
-                                    </p>
+                            {Object.entries(INVESTMENT_FREQUENCIES).map(([key, freq]) => {
+                              const translatedLabel = tFreq(key as any) || freq.label;
+                              return (
+                                <SelectItem key={key} value={key} className="text-base py-3">
+                                  <div className="flex items-center space-x-3">
+                                    <Repeat className="h-4 w-4 text-blue-500" />
+                                    <div>
+                                      <p className="font-medium">{translatedLabel}</p>
+                                      <p className="text-sm text-gray-500">
+                                        {t('everyDays', { days: freq.days })}
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
-                              </SelectItem>
-                            ))}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -792,7 +797,7 @@ export default function EditSIPPage() {
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between pt-6 border-t">
                   <Button type="button" variant="outline" onClick={handleCancel}>
-                    {t('navigation.cancel')}
+                    {tCommon('cancel')}
                   </Button>
                   <Button 
                     type="submit" 

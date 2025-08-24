@@ -80,6 +80,7 @@ export function EditInvestmentForm({
   const { theme } = useTheme();
   const t = useTranslations('investments.investment.form');
   const tCommon = useTranslations('common');
+  const tTypes = useTranslations('investments.types');
   const [selectedTags, setSelectedTags] = useState<string[]>(investment.tags || []);
 
   const form = useForm<EditInvestmentFormData>({
@@ -269,19 +270,22 @@ export function EditInvestmentForm({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.entries(INVESTMENT_TYPES).map(([key, type]) => (
-                              <SelectItem key={key} value={key} className="text-base py-3">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                                    <TrendingUp className="h-4 w-4 text-white" />
+                            {Object.entries(INVESTMENT_TYPES).map(([key, type]) => {
+                              const translatedLabel = tTypes(key as any) || type.label;
+                              return (
+                                <SelectItem key={key} value={key} className="text-base py-3">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                                      <TrendingUp className="h-4 w-4 text-white" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{translatedLabel}</p>
+                                      <p className="text-sm text-gray-500">{type.description}</p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="font-medium">{type.label}</p>
-                                    <p className="text-sm text-gray-500">{type.description}</p>
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -295,7 +299,7 @@ export function EditInvestmentForm({
                     name="current_price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Current Price per Unit</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('currentPrice')}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
@@ -327,7 +331,7 @@ export function EditInvestmentForm({
                   "text-lg font-semibold border-b pb-2",
                   theme === 'dark' ? 'text-white border-gray-700' : 'text-gray-900 border-gray-200'
                 )}>
-                  Platform & Account Details
+                  {t('platformAccountDetails')}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -336,7 +340,7 @@ export function EditInvestmentForm({
                     name="platform"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Platform/Broker</FormLabel>
+                        <FormLabel>{t('platform')}</FormLabel>
                         <FormControl>
                           <Input placeholder={t('platformPlaceholder')} {...field} />
                         </FormControl>
@@ -350,7 +354,7 @@ export function EditInvestmentForm({
                     name="account_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Account Number</FormLabel>
+                        <FormLabel>{t('accountNumber')}</FormLabel>
                         <FormControl>
                           <Input placeholder={t('accountNumberPlaceholder')} {...field} />
                         </FormControl>
@@ -364,7 +368,7 @@ export function EditInvestmentForm({
                     name="folio_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Folio Number</FormLabel>
+                        <FormLabel>{t('folioNumber')}</FormLabel>
                         <FormControl>
                           <Input placeholder={t('folioNumberPlaceholder')} {...field} />
                         </FormControl>
@@ -386,7 +390,7 @@ export function EditInvestmentForm({
                   "text-lg font-semibold border-b pb-2",
                   theme === 'dark' ? 'text-white border-gray-700' : 'text-gray-900 border-gray-200'
                 )}>
-                  Additional Details
+                  {t('additionalDetails')}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -395,7 +399,7 @@ export function EditInvestmentForm({
                     name="maturity_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Maturity Date (Optional)</FormLabel>
+                        <FormLabel>{t('maturityDate')}</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -409,7 +413,7 @@ export function EditInvestmentForm({
                     name="interest_rate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Interest Rate % (Optional)</FormLabel>
+                        <FormLabel>{t('interestRate')}</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -430,7 +434,7 @@ export function EditInvestmentForm({
                   name="exchange"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Exchange (Optional)</FormLabel>
+                      <FormLabel>{t('exchange')}</FormLabel>
                       <FormControl>
                         <Input placeholder={t('exchangePlaceholder')} {...field} />
                       </FormControl>
@@ -444,7 +448,7 @@ export function EditInvestmentForm({
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes (Optional)</FormLabel>
+                      <FormLabel>{t('notes')}</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder={t('notesPlaceholder')}
@@ -463,7 +467,7 @@ export function EditInvestmentForm({
                   name="tags"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tags (Optional)</FormLabel>
+                      <FormLabel>{t('tags')}</FormLabel>
                       <FormControl>
                         <div className="space-y-3">
                           <Input 
@@ -493,7 +497,7 @@ export function EditInvestmentForm({
 
                           {/* Suggested Tags */}
                           <div className="space-y-2">
-                            <p className="text-sm text-gray-600">Suggested tags:</p>
+                            <p className="text-sm text-gray-600">{t('suggestedTags')}</p>
                             <div className="flex flex-wrap gap-2">
                               {suggestedTags.map((tag) => (
                                 <Badge

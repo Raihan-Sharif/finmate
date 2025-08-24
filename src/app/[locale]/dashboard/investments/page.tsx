@@ -77,7 +77,7 @@ export default function InvestmentDashboardPage() {
   const [showCreateForm, setShowCreateForm] = useState<'investment' | 'portfolio' | 'sip' | false>(false);
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
   const [editingSIPTemplate, setEditingSIPTemplate] = useState<InvestmentTemplate | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{type: 'investment' | 'sip' | 'portfolio' | null, item: any}>({type: null, item: null});
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{type: 'investment' | 'sip' | 'portfolio' | 'transaction' | null, item: any}>({type: null, item: null});
   const [refreshKey, setRefreshKey] = useState(0);
   const userCurrency = useUserCurrency();
   const { theme } = useTheme();
@@ -836,7 +836,11 @@ export default function InvestmentDashboardPage() {
               >
                 <InvestmentCard
                   investment={investment}
-                  onView={(i) => console.log('View investment:', i)}
+                  onView={(investment) => {
+                    console.log('View investment:', investment);
+                    // Navigate to edit page as view for now - could create dedicated view page later
+                    handleEditInvestment(investment);
+                  }}
                   onEdit={handleEditInvestment}
                   onDelete={(investment) => {
                     console.log('Delete triggered for:', investment.name);
@@ -951,9 +955,29 @@ export default function InvestmentDashboardPage() {
         <TabsContent value="transactions" className="mt-8">
           <InvestmentTransactionList
             transactions={memoizedTransactions}
-            onView={(t) => console.log('View transaction:', t)}
-            onEdit={(t) => console.log('Edit transaction:', t)}
-            onDelete={(t) => console.log('Delete transaction:', t)}
+            onView={(transaction) => {
+              console.log('View transaction:', transaction);
+              // Navigate to main transaction edit page since investment transactions
+              // are linked to main transactions via main_transaction_id
+              if (transaction.main_transaction_id) {
+                router.push(`/dashboard/transactions/${transaction.main_transaction_id}/edit`);
+              } else {
+                console.warn('No main transaction ID found for investment transaction:', transaction.id);
+              }
+            }}
+            onEdit={(transaction) => {
+              console.log('Edit transaction:', transaction);
+              // Navigate to main transaction edit page
+              if (transaction.main_transaction_id) {
+                router.push(`/dashboard/transactions/${transaction.main_transaction_id}/edit`);
+              } else {
+                console.warn('No main transaction ID found for investment transaction:', transaction.id);
+              }
+            }}
+            onDelete={(transaction) => {
+              console.log('Delete transaction:', transaction);
+              setDeleteConfirmation({ type: 'transaction', item: transaction });
+            }}
             isLoading={transactionsLoading}
           />
         </TabsContent>
@@ -972,6 +996,8 @@ export default function InvestmentDashboardPage() {
                   ? (deleteConfirmation.item?.is_active ? t('sips.pauseSip') + '?' : t('sips.deleteSip') + '?')
                   : deleteConfirmation.type === 'portfolio'
                   ? t('portfolios.deletePortfolio') + '?'
+                  : deleteConfirmation.type === 'transaction'
+                  ? 'Delete Transaction?'
                   : t('individual.deleteInvestment') + '?'
                 }
               </AlertDialogTitle>
@@ -982,6 +1008,8 @@ export default function InvestmentDashboardPage() {
                     : t('sips.confirmDelete')
                   : deleteConfirmation.type === 'portfolio'
                   ? t('portfolios.confirmDelete')
+                  : deleteConfirmation.type === 'transaction'
+                  ? 'Are you sure you want to delete this investment transaction? This action cannot be undone.'
                   : t('individual.confirmDelete')
                 }
               </AlertDialogDescription>
@@ -1004,6 +1032,10 @@ export default function InvestmentDashboardPage() {
                     } else if (deleteConfirmation.type === 'portfolio') {
                       await deletePortfolioMutation.mutateAsync(deleteConfirmation.item.id);
                       console.log('Portfolio deleted successfully');
+                    } else if (deleteConfirmation.type === 'transaction') {
+                      // TODO: Implement investment transaction deletion
+                      console.log('Transaction deletion not implemented yet');
+                      alert('Transaction deletion is not implemented yet. Please use the main transactions page to delete transactions.');
                     }
                     setDeleteConfirmation({type: null, item: null});
                   } catch (error) {

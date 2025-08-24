@@ -93,6 +93,7 @@ export function CreatePortfolioForm({
   const { theme } = useTheme();
   const t = useTranslations('investments.forms.portfolio');
   const tCommon = useTranslations('common');
+  const tRisk = useTranslations('investments.forms.portfolio.riskLevels');
   const [step, setStep] = useState<'basic' | 'details' | 'goals'>('basic');
 
   const form = useForm<PortfolioFormData>({
@@ -146,10 +147,10 @@ export function CreatePortfolioForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Portfolio Name</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('name')}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g., My Growth Portfolio, Retirement Fund"
+                      placeholder={t('namePlaceholder')}
                       className={cn(
                         "h-12 text-base",
                         theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
@@ -158,7 +159,7 @@ export function CreatePortfolioForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Choose a descriptive name for your portfolio
+                    {t('nameDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -171,10 +172,10 @@ export function CreatePortfolioForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Description (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('description')}</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Brief description of your investment strategy..."
+                      placeholder={t('descriptionPlaceholder')}
                       className={cn(
                         "min-h-[100px] text-base resize-none",
                         theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
@@ -183,7 +184,7 @@ export function CreatePortfolioForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Describe your investment goals and strategy
+                    {t('descriptionDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -196,14 +197,14 @@ export function CreatePortfolioForm({
               name="currency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Currency</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('currency')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className={cn(
                         "h-12 text-base",
                         theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
                       )}>
-                        <SelectValue placeholder="Select currency" />
+                        <SelectValue placeholder={t('selectCurrency')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white'}>
@@ -228,36 +229,39 @@ export function CreatePortfolioForm({
               name="risk_level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Risk Level</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('riskLevel')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className={cn(
                         "h-12 text-base",
                         theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
                       )}>
-                        <SelectValue placeholder="Select risk level" />
+                        <SelectValue placeholder={t('selectRiskLevel')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className={theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white'}>
-                      {Object.entries(RISK_LEVELS).map(([key, risk]) => (
-                        <SelectItem key={key} value={key} className="text-base py-3">
-                          <div className="flex items-center space-x-3">
-                            <div 
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: risk.color }}
-                            />
-                            <div>
-                              <p className="font-medium">{risk.label}</p>
-                              <p className={cn(
-                                "text-sm",
-                                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                              )}>
-                                {risk.description}
-                              </p>
+                      {Object.entries(RISK_LEVELS).map(([key, risk]) => {
+                        const translatedLabel = tRisk(key as any);
+                        return (
+                          <SelectItem key={key} value={key} className="text-base py-3">
+                            <div className="flex items-center space-x-3">
+                              <div 
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: risk.color }}
+                              />
+                              <div>
+                                <p className="font-medium">{translatedLabel}</p>
+                                <p className={cn(
+                                  "text-sm",
+                                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                )}>
+                                  {risk.description}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -281,7 +285,7 @@ export function CreatePortfolioForm({
               name="color"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Portfolio Color</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('portfolioColor')}</FormLabel>
                   <FormControl>
                     <div className="grid grid-cols-4 gap-3 mt-3">
                       {PORTFOLIO_COLORS.map((color) => (
@@ -307,7 +311,7 @@ export function CreatePortfolioForm({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Choose a color theme for your portfolio
+                    {t('portfolioColorDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -320,7 +324,7 @@ export function CreatePortfolioForm({
               name="icon"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Portfolio Icon</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('portfolioIcon')}</FormLabel>
                   <FormControl>
                     <div className="grid grid-cols-4 gap-3 mt-3">
                       {PORTFOLIO_ICONS.map((iconItem) => (
@@ -350,7 +354,7 @@ export function CreatePortfolioForm({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Pick an icon to represent your portfolio
+                    {t('portfolioIconDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -373,13 +377,13 @@ export function CreatePortfolioForm({
               name="target_amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Target Amount (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('targetAmount')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
                       <Input 
                         type="number"
-                        placeholder="100000"
+                        placeholder={t('targetAmountPlaceholder')}
                         className={cn(
                           "h-12 text-base pl-11",
                           theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
@@ -390,7 +394,7 @@ export function CreatePortfolioForm({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Set a target value for this portfolio
+                    {t('targetAmountDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -403,7 +407,7 @@ export function CreatePortfolioForm({
               name="target_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Target Date (Optional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">{t('targetDate')}</FormLabel>
                   <FormControl>
                     <Input 
                       type="date"
@@ -415,7 +419,7 @@ export function CreatePortfolioForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    When do you want to reach your target?
+                    {t('targetDateDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -440,7 +444,7 @@ export function CreatePortfolioForm({
                     "font-semibold",
                     theme === 'dark' ? 'text-white' : 'text-gray-900'
                   )}>
-                    Portfolio Preview
+                    {t('portfolioPreview')}
                   </h3>
                 </div>
                 <div className="flex items-center space-x-4">
@@ -461,7 +465,7 @@ export function CreatePortfolioForm({
                     </h4>
                     <div className="flex items-center space-x-2 text-sm">
                       <Badge variant="outline" style={{ borderColor: selectedRisk.color, color: selectedRisk.color }}>
-                        {selectedRisk.label}
+                        {tRisk(form.watch('risk_level') as any)}
                       </Badge>
                       <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
                         {form.watch('currency')}
@@ -500,16 +504,16 @@ export function CreatePortfolioForm({
               {t('createTitle')}
             </CardTitle>
             <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-              Build a new portfolio to organize your investments
+              {t('createSubtitle')}
             </p>
           </motion.div>
           
           {/* Step Indicator */}
           <div className="flex items-center justify-center space-x-8 mt-6">
             {[
-              { key: 'basic', label: 'Basic Info', icon: <Briefcase className="h-4 w-4" /> },
-              { key: 'details', label: 'Appearance', icon: <Palette className="h-4 w-4" /> },
-              { key: 'goals', label: 'Goals', icon: <Target className="h-4 w-4" /> }
+              { key: 'basic', label: t('steps.basicInfo'), icon: <Briefcase className="h-4 w-4" /> },
+              { key: 'details', label: t('steps.appearance'), icon: <Palette className="h-4 w-4" /> },
+              { key: 'goals', label: t('steps.goals'), icon: <Target className="h-4 w-4" /> }
             ].map((stepInfo, index) => {
               const isCurrent = step === stepInfo.key;
               const isCompleted = ['basic', 'details', 'goals'].indexOf(stepInfo.key) < ['basic', 'details', 'goals'].indexOf(step);
@@ -565,13 +569,13 @@ export function CreatePortfolioForm({
                         theme === 'dark' ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''
                       )}
                     >
-                      Previous
+                      {t('navigation.previous')}
                     </Button>
                   )}
                   
                   {onCancel && (
                     <Button type="button" variant="ghost" onClick={onCancel}>
-                      Cancel
+                      {tCommon('cancel')}
                     </Button>
                   )}
                 </div>
@@ -586,7 +590,7 @@ export function CreatePortfolioForm({
                       }}
                       className="px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                     >
-                      Next
+                      {t('navigation.next')}
                     </Button>
                   ) : (
                     <Button 

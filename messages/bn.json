@@ -1041,6 +1041,8 @@
         "createButton": "বিনিয়োগ তৈরি করুন",
         "updateButton": "বিনিয়োগ আপডেট করুন",
         "cancel": "বাতিল",
+        "platformAccountDetails": "প্ল্যাটফর্ম এবং অ্যাকাউন্টের বিবরণ",
+        "additionalDetails": "অতিরিক্ত বিবরণ",
         "errors": {
           "nameRequired": "বিনিয়োগের নাম প্রয়োজন",
           "typeRequired": "বিনিয়োগের ধরন প্রয়োজন",
@@ -1136,6 +1138,7 @@
         "intervalValuePlaceholder": "1",
         "intervalPlaceholder": "1",
         "currencyPlaceholder": "মুদ্রা নির্বাচন করুন",
+        "everyDays": "প্রতি {days} দিন",
         "frequencyPlaceholder": "ফ্রিকোয়েন্সি নির্বাচন করুন",
         "startDate": "শুরুর তারিখ",
         "startDateDescription": "এসআইপি কখন এক্সিকিউট করা শুরু করবে?",
@@ -1149,6 +1152,7 @@
         "platformPlaceholder": "যেমন, Zerodha, Groww",
         "platformDescription": "বিনিয়োগ প্ল্যাটফর্ম বা ব্রোকারেজের নাম",
         "accountNumber": "অ্যাকাউন্ট নম্বর (ঐচ্ছিক)",
+        "accountNumberPlaceholder": "আপনার অ্যাকাউন্ট নম্বর",
         "accountNumberDescription": "প্ল্যাটফর্মে আপনার অ্যাকাউন্ট নম্বর",
         "autoExecute": "অটো এক্সিকিউট",
         "autoExecuteHelp": "সময়সূচি অনুযায়ী স্বয়ংক্রিয়ভাবে বিনিয়োগ এক্সিকিউট করুন",
@@ -1474,6 +1478,8 @@
         "createButton": "বিনিয়োগ তৈরি করুন",
         "updateButton": "বিনিয়োগ আপডেট করুন",
         "cancel": "বাতিল",
+        "platformAccountDetails": "প্ল্যাটফর্ম এবং অ্যাকাউন্টের বিবরণ",
+        "additionalDetails": "অতিরিক্ত বিবরণ",
         "errors": {
           "nameRequired": "বিনিয়োগের নাম প্রয়োজন",
           "typeRequired": "বিনিয়োগের ধরন প্রয়োজন",
@@ -1502,8 +1508,8 @@
         "backToPortfolios": "পোর্টফোলিওতে ফিরে যান",
         "name": "পোর্টফোলিওর নাম",
         "namePlaceholder": "যেমন, গ্রোথ পোর্টফোলিও, ডিভিডেন্ড পোর্টফোলিও",
-        "description": "বর্ণনা",
-        "descriptionPlaceholder": "এই পোর্টফোলিওর সংক্ষিপ্ত বিবরণ",
+        "description": "বর্ণনা (ঐচ্ছিক)",
+        "descriptionPlaceholder": "আপনার বিনিয়োগ কৌশলের সংক্ষিপ্ত বিবরণ...",
         "currency": "বেস কারেন্সি",
         "selectCurrency": "কারেন্সি নির্বাচন করুন",
         "investmentStrategy": "বিনিয়োগ কৌশল",
@@ -1515,10 +1521,33 @@
           "medium": "মধ্যম ঝুঁকি",
           "high": "উচ্চ ঝুঁকি"
         },
-        "targetAmount": "লক্ষ্য পরিমাণ",
-        "targetAmountPlaceholder": "বিনিয়োগের লক্ষ্য পরিমাণ",
+        "targetAmount": "লক্ষ্য পরিমাণ (ঐচ্ছিক)",
+        "targetAmountPlaceholder": "১০০০০০",
+        "targetAmountDescription": "এই পোর্টফোলিওর জন্য একটি লক্ষ্য মূল্য নির্ধারণ করুন",
+        "targetDate": "লক্ষ্য তারিখ (ঐচ্ছিক)",
+        "targetDateDescription": "আপনি কখন আপনার লক্ষ্য পৌঁছাতে চান?",
+        "portfolioColor": "পোর্টফোলিওর রঙ",
+        "portfolioColorDescription": "আপনার পোর্টফোলিওর জন্য একটি রঙের থিম বেছে নিন",
+        "portfolioIcon": "পোর্টফোলিওর আইকন",
+        "portfolioIconDescription": "আপনার পোর্টফোলিওর প্রতিনিধিত্ব করার জন্য একটি আইকন বেছে নিন",
+        "portfolioPreview": "পোর্টফোলিও প্রিভিউ",
+        "createSubtitle": "আপনার বিনিয়োগ সংগঠিত করার জন্য একটি নতুন পোর্টফোলিও তৈরি করুন",
         "notes": "নোটস",
         "notesPlaceholder": "পোর্টফোলিওর অতিরিক্ত তথ্য",
+        "nameDescription": "আপনার পোর্টফোলিওর জন্য একটি বর্ণনামূলক নাম বেছে নিন",
+        "descriptionDescription": "আপনার বিনিয়োগের লক্ষ্য এবং কৌশল বর্ণনা করুন",
+        "steps": {
+          "basicInfo": "মৌলিক তথ্য",
+          "appearance": "চেহারা",
+          "goals": "লক্ষ্য"
+        },
+        "navigation": {
+          "next": "পরবর্তী",
+          "previous": "পূর্ববর্তী"
+        },
+        "editSubtitle": "আপনার বিনিয়োগ পোর্টফোলিও সেটিংস আপডেট করুন",
+        "editDescription": "আপনার পোর্টফোলিও সেটিংস আপডেট করুন",
+        "currencyReadOnlyDescription": "বিদ্যমান পোর্টফোলিওর জন্য মুদ্রা পরিবর্তন করা যাবে না",
         "creating": "পোর্টফোলিও তৈরি করা হচ্ছে...",
         "updating": "পোর্টফোলিও আপডেট করা হচ্ছে...",
         "createButton": "পোর্টফোলিও তৈরি করুন",
@@ -1529,7 +1558,9 @@
           "currencyRequired": "বেস কারেন্সি প্রয়োজন",
           "createFailed": "পোর্টফোলিও তৈরি করতে ব্যর্থ",
           "updateFailed": "পোর্টফোলিও আপডেট করতে ব্যর্থ",
-          "loadFailed": "পোর্টফোলিওর বিবরণ লোড করতে ব্যর্থ"
+          "loadFailed": "পোর্টফোলিওর বিবরণ লোড করতে ব্যর্থ",
+          "portfolioNotFound": "পোর্টফোলিও পাওয়া যায়নি",
+          "portfolioNotFoundDescription": "আপনি যে পোর্টফোলিও খুঁজছেন তা বিদ্যমান নেই বা মুছে ফেলা হয়েছে।"
         },
         "success": {
           "created": "পোর্টফোলিও সফলভাবে তৈরি হয়েছে!",
@@ -1601,6 +1632,7 @@
         "platformPlaceholder": "যেমন, Zerodha, Groww",
         "platformDescription": "বিনিয়োগ প্ল্যাটফর্ম বা ব্রোকারেজের নাম",
         "accountNumber": "অ্যাকাউন্ট নম্বর (ঐচ্ছিক)",
+        "accountNumberPlaceholder": "আপনার অ্যাকাউন্ট নম্বর",
         "accountNumberDescription": "প্ল্যাটফর্মে আপনার অ্যাকাউন্ট নম্বর",
         "autoExecute": "অটো এক্সিকিউট",
         "autoExecuteHelp": "সময়সূচি অনুযায়ী স্বয়ংক্রিয়ভাবে বিনিয়োগ এক্সিকিউট করুন",
@@ -1713,7 +1745,31 @@
     "loading": "বিনিয়োগ লোড হচ্ছে...",
     "refreshing": "রিফ্রেশ হচ্ছে...",
     "noData": "কোন তথ্য উপলব্ধ নেই",
-    "errorLoading": "তথ্য লোড করতে ত্রুটি"
+    "errorLoading": "তথ্য লোড করতে ত্রুটি",
+    "types": {
+      "stock": "স্টক",
+      "mutual_fund": "মিউচুয়াল ফান্ড",
+      "crypto": "ক্রিপ্টো",
+      "bond": "বন্ড",
+      "fd": "ফিক্সড ডিপোজিট",
+      "sip": "এসআইপি",
+      "dps": "ডিপিএস",
+      "shanchay_potro": "সঞ্চয়পত্র",
+      "recurring_fd": "রিকারিং এফডি",
+      "gold": "স্বর্ণ",
+      "real_estate": "রিয়েল এস্টেট",
+      "pf": "প্রভিডেন্ট ফান্ড",
+      "pension": "পেনশন",
+      "other": "অন্যান্য"
+    },
+    "frequencies": {
+      "daily": "দৈনিক",
+      "weekly": "সাপ্তাহিক", 
+      "biweekly": "দ্বি-সাপ্তাহিক",
+      "monthly": "মাসিক",
+      "quarterly": "ত্রৈমাসিক",
+      "yearly": "বার্ষিক"
+    }
   },
   "credit": {
     "title": "ঋণ ও ধার",

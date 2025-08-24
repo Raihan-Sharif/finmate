@@ -417,7 +417,11 @@ export default function SIPManagementPage() {
                 >
                   <SIPTemplateCard
                     template={template}
-                    onView={(t) => console.log('View SIP:', t)}
+                    onView={(t) => {
+                      console.log('View SIP:', t);
+                      // Navigate to edit page as view for now since there's no dedicated view page
+                      router.push(`/dashboard/investments/sips/edit/${t.id}`);
+                    }}
                     onEdit={(t) => {
                       console.log('Edit SIP:', t);
                       router.push(`/dashboard/investments/sips/edit/${t.id}`);
@@ -478,7 +482,11 @@ export default function SIPManagementPage() {
                 >
                   <SIPTemplateCard
                     template={template}
-                    onView={(t) => console.log('View SIP:', t)}
+                    onView={(t) => {
+                      console.log('View SIP:', t);
+                      // Navigate to edit page as view for now since there's no dedicated view page
+                      router.push(`/dashboard/investments/sips/edit/${t.id}`);
+                    }}
                     onEdit={(t) => {
                       console.log('Edit SIP:', t);
                       router.push(`/dashboard/investments/sips/edit/${t.id}`);
@@ -514,7 +522,11 @@ export default function SIPManagementPage() {
                 >
                   <SIPTemplateCard
                     template={template}
-                    onView={(t) => console.log('View SIP:', t)}
+                    onView={(t) => {
+                      console.log('View SIP:', t);
+                      // Navigate to edit page as view for now since there's no dedicated view page
+                      router.push(`/dashboard/investments/sips/edit/${t.id}`);
+                    }}
                     onEdit={(t) => {
                       console.log('Edit SIP:', t);
                       router.push(`/dashboard/investments/sips/edit/${t.id}`);

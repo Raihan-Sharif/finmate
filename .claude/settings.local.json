@@ -32,8 +32,12 @@
       "WebSearch",
       "WebFetch(domain:next-intl.dev)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:phrase.com)"
+      "WebFetch(domain:phrase.com)",
+      "Bash(timeout 300s npm run build)"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "D:\\"
+    ]
   }
 }

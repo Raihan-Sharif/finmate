@@ -119,7 +119,7 @@ const TransactionRow = ({
                     "font-semibold group-hover:text-blue-600 transition-colors duration-300",
                     theme === 'dark' ? 'text-white' : 'text-gray-900'
                   )}>
-                    {transaction.investment_name || 'Unknown Investment'}
+                    {transaction.investment_name || transaction.investment?.name || 'Unknown Investment'}
                   </h3>
                   <Badge 
                     variant="outline"

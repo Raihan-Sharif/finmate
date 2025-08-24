@@ -222,12 +222,11 @@ export class InvestmentAnalyticsService {
       });
 
       if (error) {
-        console.error('❌ ANALYTICS: Database function error details:', {
+        console.warn('⚠️ ANALYTICS: Database function not available, falling back to legacy method:', {
           message: error.message || 'No message',
           details: error.details || 'No details', 
           hint: error.hint || 'No hint',
-          code: error.code || 'No code',
-          fullError: error
+          code: error.code || 'No code'
         });
         
         // Check if function doesn't exist or has permission issues
@@ -273,7 +272,7 @@ export class InvestmentAnalyticsService {
         upcoming_executions: summary.recent_transactions?.slice(0, 5) || []
       };
     } catch (error) {
-      console.error('❌ ANALYTICS: Failed to fetch dashboard stats:', error);
+      console.warn('⚠️ ANALYTICS: Failed to fetch dashboard stats, using defaults:', error);
       return this.getDefaultDashboardStats();
     }
   }

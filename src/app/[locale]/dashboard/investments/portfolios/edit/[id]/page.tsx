@@ -39,11 +39,12 @@ import { RISK_LEVELS, UpdateInvestmentPortfolioInput } from '@/types/investments
 import { CURRENCIES } from '@/types';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
+import { useTranslations } from 'next-intl';
 import { useInvestmentPortfolio, useUpdateInvestmentPortfolio } from '@/hooks/useInvestmentPortfolios';
 import toast from 'react-hot-toast';
 
-const editPortfolioSchema = z.object({
-  name: z.string().min(1, 'Portfolio name is required'),
+const createEditPortfolioSchema = (t: any) => z.object({
+  name: z.string().min(1, t('errors.nameRequired')),
   description: z.string().optional(),
   risk_level: z.enum(['low', 'medium', 'high']),
   target_amount: z.number().optional(),
@@ -52,7 +53,8 @@ const editPortfolioSchema = z.object({
   icon: z.string().min(1, 'Icon is required'),
 });
 
-type EditPortfolioFormData = z.infer<typeof editPortfolioSchema>;
+type EditPortfolioFormData = z.infer<ReturnType<typeof createEditPortfolioSchema>>;
+
 
 const PORTFOLIO_COLORS = [
   { name: 'Blue', value: '#3B82F6', bg: 'bg-blue-500' },
@@ -81,12 +83,14 @@ export default function EditPortfolioPage() {
   const params = useParams();
   const portfolioId = params.id as string;
   const { theme } = useTheme();
+  const t = useTranslations('investments.forms.portfolio');
+  const tCommon = useTranslations('common');
   
   const { data: portfolio, isLoading: portfolioLoading } = useInvestmentPortfolio(portfolioId);
   const updatePortfolioMutation = useUpdateInvestmentPortfolio();
 
   const form = useForm<EditPortfolioFormData>({
-    resolver: zodResolver(editPortfolioSchema),
+    resolver: zodResolver(createEditPortfolioSchema(t)),
     defaultValues: {
       name: '',
       description: '',
@@ -148,11 +152,11 @@ export default function EditPortfolioPage() {
         updates: requestData 
       });
       
-      toast.success('Portfolio updated successfully!');
+      toast.success(t('success.updated'));
       router.push('/dashboard/investments');
     } catch (error) {
       console.error('🔥 PORTFOLIO EDIT: Update failed:', error);
-      toast.error('Failed to update portfolio');
+      toast.error(t('errors.updateFailed'));
     }
   };
 
@@ -176,14 +180,14 @@ export default function EditPortfolioPage() {
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Portfolio Not Found
+              {t('errors.portfolioNotFound') || 'Portfolio Not Found'}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              The portfolio you're looking for doesn't exist or has been deleted.
+              {t('errors.portfolioNotFoundDescription') || "The portfolio you're looking for doesn't exist or has been deleted."}
             </p>
             <Button onClick={handleCancel} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Investments
+              {t('backToPortfolios')}
             </Button>
           </div>
         </div>
@@ -203,14 +207,14 @@ export default function EditPortfolioPage() {
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
+            <span>{tCommon('back')}</span>
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Edit Portfolio
+              {t('editTitle')}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Update your investment portfolio settings
+              {t('editSubtitle') || 'Update your investment portfolio settings'}
             </p>
           </div>
         </div>
@@ -225,9 +229,9 @@ export default function EditPortfolioPage() {
             <div className="flex items-center space-x-3 mb-4">
               <Edit className="h-6 w-6 text-blue-500" />
               <div>
-                <h3 className="text-lg font-semibold">Portfolio Details</h3>
+                <h3 className="text-lg font-semibold">{t('title')}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Update your "{portfolio.name}" portfolio settings
+                  {t('editDescription') || `Update your "${portfolio.name}" portfolio settings`}
                 </p>
               </div>
             </div>
@@ -243,16 +247,16 @@ export default function EditPortfolioPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Portfolio Name</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('name')}</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="e.g., My Growth Portfolio, Retirement Fund"
+                            placeholder={t('namePlaceholder')}
                             className="h-12 text-base"
                             {...field} 
                           />
                         </FormControl>
                         <FormDescription>
-                          Update the name of your portfolio
+                          {t('nameDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -261,7 +265,7 @@ export default function EditPortfolioPage() {
 
                   {/* Currency (Read-only) */}
                   <div>
-                    <label className="text-base font-semibold text-gray-700 dark:text-gray-300">Currency</label>
+                    <label className="text-base font-semibold text-gray-700 dark:text-gray-300">{t('currency')}</label>
                     <div className={cn(
                       "h-12 px-3 flex items-center rounded-md border bg-gray-50 mt-2",
                       theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'
@@ -272,7 +276,7 @@ export default function EditPortfolioPage() {
                       </div>
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
-                      Currency cannot be changed for existing portfolios
+                      {t('currencyReadOnlyDescription') || 'Currency cannot be changed for existing portfolios'}
                     </p>
                   </div>
 
@@ -282,11 +286,11 @@ export default function EditPortfolioPage() {
                     name="risk_level"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Risk Level</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('riskLevel')}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-12 text-base">
-                              <SelectValue placeholder="Select risk level" />
+                              <SelectValue placeholder={t('selectRiskLevel')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -319,13 +323,13 @@ export default function EditPortfolioPage() {
                     name="target_amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Target Amount (Optional)</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('targetAmount')}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
                             <Input 
                               type="number"
-                              placeholder="100000"
+                              placeholder={t('targetAmountPlaceholder')}
                               className="h-12 text-base pl-11"
                               value={field.value || ''}
                               onChange={(e) => {
@@ -343,7 +347,7 @@ export default function EditPortfolioPage() {
                           </div>
                         </FormControl>
                         <FormDescription>
-                          Set a target value for this portfolio
+                          {t('targetAmountDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -356,7 +360,7 @@ export default function EditPortfolioPage() {
                     name="target_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Target Date (Optional)</FormLabel>
+                        <FormLabel className="text-base font-semibold">{t('targetDate')}</FormLabel>
                         <FormControl>
                           <Input 
                             type="date"
@@ -365,7 +369,7 @@ export default function EditPortfolioPage() {
                           />
                         </FormControl>
                         <FormDescription>
-                          When do you want to reach your target?
+                          {t('targetDateDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -379,16 +383,16 @@ export default function EditPortfolioPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">Description (Optional)</FormLabel>
+                      <FormLabel className="text-base font-semibold">{t('description')}</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Brief description of your investment strategy..."
+                          placeholder={t('descriptionPlaceholder')}
                           className="min-h-[100px] text-base resize-none"
                           {...field} 
                         />
                       </FormControl>
                       <FormDescription>
-                        Describe your investment goals and strategy
+                        {t('descriptionDescription')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -397,7 +401,7 @@ export default function EditPortfolioPage() {
 
                 {/* Color and Icon Selection */}
                 <div className="space-y-6 pt-6 border-t">
-                  <h3 className="text-lg font-semibold">Appearance</h3>
+                  <h3 className="text-lg font-semibold">{t('steps.appearance')}</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Color Selection */}
@@ -406,7 +410,7 @@ export default function EditPortfolioPage() {
                       name="color"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-semibold">Portfolio Color</FormLabel>
+                          <FormLabel className="text-base font-semibold">{t('portfolioColor')}</FormLabel>
                           <FormControl>
                             <div className="grid grid-cols-4 gap-3 mt-3">
                               {PORTFOLIO_COLORS.map((color) => (
@@ -434,7 +438,7 @@ export default function EditPortfolioPage() {
                             </div>
                           </FormControl>
                           <FormDescription>
-                            Choose a color theme for your portfolio
+                            {t('portfolioColorDescription')}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -447,7 +451,7 @@ export default function EditPortfolioPage() {
                       name="icon"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-semibold">Portfolio Icon</FormLabel>
+                          <FormLabel className="text-base font-semibold">{t('portfolioIcon')}</FormLabel>
                           <FormControl>
                             <div className="grid grid-cols-4 gap-3 mt-3">
                               {PORTFOLIO_ICONS.map((iconItem) => (
@@ -479,7 +483,7 @@ export default function EditPortfolioPage() {
                             </div>
                           </FormControl>
                           <FormDescription>
-                            Pick an icon to represent your portfolio
+                            {t('portfolioIconDescription')}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -503,7 +507,7 @@ export default function EditPortfolioPage() {
                     <div className="flex items-center space-x-2 mb-3">
                       <Sparkles className="h-5 w-5 text-blue-500" />
                       <h3 className="font-semibold text-gray-900 dark:text-white">
-                        Updated Portfolio Preview
+                        {t('portfolioPreview')}
                       </h3>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -540,7 +544,7 @@ export default function EditPortfolioPage() {
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between pt-6 border-t">
                   <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancel
+                    {tCommon('cancel')}
                   </Button>
                   <Button 
                     type="submit" 
@@ -548,7 +552,7 @@ export default function EditPortfolioPage() {
                     className="px-8 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    {updatePortfolioMutation.isPending ? 'Updating...' : 'Update Portfolio'}
+                    {updatePortfolioMutation.isPending ? t('updating') : t('updateButton')}
                   </Button>
                 </div>
               </form>
