@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { LOAN_TYPES, Loan } from '@/types/emi'
 import { useAppStore } from '@/lib/stores/useAppStore'
+import { useTranslations } from 'next-intl'
 
 const loanTypeIcons = {
   personal: CreditCard,
@@ -60,6 +61,8 @@ interface LoanViewModalProps {
 
 export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete }: LoanViewModalProps) {
   const { formatAmount } = useAppStore()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
 
   if (!loan) return null
 
@@ -82,23 +85,23 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
               </div>
               <div>
                 <h3 className="text-xl font-bold">{loan.lender}</h3>
-                <p className="text-sm text-muted-foreground">{loanTypeLabel}</p>
+                <p className="text-sm text-muted-foreground">{t(`common.types.${loan.type}`) || loanTypeLabel}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Badge className={statusColors[loan.status]}>
-                {loan.status}
+                {t(`common.status.${loan.status}`) || loan.status}
               </Badge>
               {isOverdue && (
                 <Badge variant="destructive" className="flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  Overdue
+                  {tCommon('overdue')}
                 </Badge>
               )}
             </div>
           </DialogTitle>
           <DialogDescription>
-            Detailed information about your {loanTypeLabel?.toLowerCase()} loan
+            {t('bankLoans.viewLoan')} - {t(`common.types.${loan.type}`) || loanTypeLabel?.toLowerCase()}
           </DialogDescription>
         </DialogHeader>
 
@@ -117,7 +120,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                   </div>
                   <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center justify-center">
                     <Calendar className="h-4 w-4 mr-1" />
-                    Monthly EMI
+                    {tCommon('monthlyEmi')}
                   </p>
                 </CardContent>
               </Card>
@@ -135,7 +138,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                   </div>
                   <p className="text-sm text-green-800 dark:text-green-300 flex items-center justify-center">
                     <DollarSign className="h-4 w-4 mr-1" />
-                    Outstanding
+                    {tCommon('outstanding')}
                   </p>
                 </CardContent>
               </Card>
@@ -153,7 +156,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                   </div>
                   <p className="text-sm text-orange-800 dark:text-orange-300 flex items-center justify-center">
                     <Percent className="h-4 w-4 mr-1" />
-                    Interest Rate
+                    {tCommon('interestRate')}
                   </p>
                 </CardContent>
               </Card>
@@ -170,14 +173,14 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <Calculator className="h-5 w-5 mr-2 text-primary" />
-                  Loan Progress
+                  {tCommon('loanProgress')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm">
-                    <span>Amount Paid: {formatAmount(totalPaid)}</span>
-                    <span>Outstanding: {formatAmount(loan.outstanding_amount)}</span>
+                    <span>{tCommon('amountPaid')}: {formatAmount(totalPaid)}</span>
+                    <span>{tCommon('outstanding')}: {formatAmount(loan.outstanding_amount)}</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-3">
                     <motion.div
@@ -188,7 +191,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                     />
                   </div>
                   <div className="text-center text-sm text-muted-foreground">
-                    {progress.toFixed(1)}% completed
+                    {progress.toFixed(1)}% {tCommon('completed')}
                   </div>
                 </div>
               </CardContent>
@@ -207,48 +210,48 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center">
                     <Building className="h-5 w-5 mr-2 text-primary" />
-                    Loan Details
+                    {tCommon('loanDetails')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Principal Amount</p>
+                      <p className="text-muted-foreground">{tCommon('principalAmount')}</p>
                       <p className="font-semibold">{formatAmount(loan.principal_amount)}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Tenure</p>
-                      <p className="font-semibold">{loan.tenure_months} months</p>
+                      <p className="text-muted-foreground">{tCommon('tenure')}</p>
+                      <p className="font-semibold">{loan.tenure_months} {tCommon('months')}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Start Date</p>
+                      <p className="text-muted-foreground">{tCommon('startDate')}</p>
                       <p className="font-semibold">{new Date(loan.start_date).toLocaleDateString()}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Payment Day</p>
+                      <p className="text-muted-foreground">{tCommon('paymentDay')}</p>
                       <p className="font-semibold">{loan.payment_day || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Auto Debit</p>
+                      <p className="text-muted-foreground">{tCommon('autoDebit')}</p>
                       <p className="font-semibold flex items-center">
                         {loan.auto_debit ? (
                           <>
                             <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
-                            Enabled
+                            {tCommon('enabled')}
                           </>
                         ) : (
                           <>
                             <X className="h-4 w-4 mr-1 text-red-600" />
-                            Disabled
+                            {tCommon('disabled')}
                           </>
                         )}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Reminder Days</p>
+                      <p className="text-muted-foreground">{tCommon('reminderDays')}</p>
                       <p className="font-semibold flex items-center">
                         <Bell className="h-4 w-4 mr-1" />
-                        {loan.reminder_days || 0} days
+                        {loan.reminder_days || 0} {t('common.days') || 'days'}
                       </p>
                     </div>
                   </div>
@@ -266,30 +269,30 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center">
                     <Calendar className="h-5 w-5 mr-2 text-primary" />
-                    Payment Information
+                    {tCommon('paymentInformation')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Next Due Date</p>
+                      <p className="text-muted-foreground">{tCommon('nextDueDate')}</p>
                       <p className={`font-semibold ${isOverdue ? 'text-red-600' : ''}`}>
                         {loan.next_due_date ? new Date(loan.next_due_date).toLocaleDateString() : 'N/A'}
                         {isOverdue && (
-                          <span className="ml-2 text-red-600 text-xs">(Overdue)</span>
+                          <span className="ml-2 text-red-600 text-xs">({tCommon('overdue')})</span>
                         )}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Last Payment</p>
+                      <p className="text-muted-foreground">{tCommon('lastPayment')}</p>
                       <p className="font-semibold">
-                        {loan.last_payment_date ? new Date(loan.last_payment_date).toLocaleDateString() : 'No payments yet'}
+                        {loan.last_payment_date ? new Date(loan.last_payment_date).toLocaleDateString() : tCommon('noPaymentsYet')}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Prepayment Amount</p>
+                      <p className="text-muted-foreground">{tCommon('prepaymentAmount')}</p>
                       <p className="font-semibold">
-                        {loan.prepayment_amount ? formatAmount(loan.prepayment_amount) : 'None'}
+                        {loan.prepayment_amount ? formatAmount(loan.prepayment_amount) : tCommon('none')}
                       </p>
                     </div>
                   </div>
@@ -297,12 +300,12 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                   <Separator />
 
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Total Interest Cost</p>
+                    <p className="text-sm font-medium">{tCommon('totalInterestCost')}</p>
                     <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
                       {formatAmount((loan.emi_amount * loan.tenure_months) - loan.principal_amount)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Total repayment: {formatAmount(loan.emi_amount * loan.tenure_months)}
+                      {tCommon('totalRepayment')}: {formatAmount(loan.emi_amount * loan.tenure_months)}
                     </p>
                   </div>
                 </CardContent>
@@ -321,7 +324,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-primary" />
-                    Notes
+                    {tCommon('notes')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -342,16 +345,16 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
           >
             {onEdit && (
               <Button variant="outline" onClick={onEdit}>
-                Edit Loan
+                {tCommon('editLoan')}
               </Button>
             )}
             {onDelete && (
               <Button variant="destructive" onClick={onDelete}>
-                Delete Loan
+                {tCommon('deleteLoan')}
               </Button>
             )}
             <Button onClick={onClose}>
-              Close
+              {tCommon('closeLoan')}
             </Button>
           </motion.div>
         </div>

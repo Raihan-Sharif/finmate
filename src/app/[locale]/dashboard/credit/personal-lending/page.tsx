@@ -65,6 +65,7 @@ import DeleteLendingDialog from '@/components/personal-lending/DeleteLendingDial
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { useTranslations } from 'next-intl'
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -104,6 +105,8 @@ export default function PersonalLendingPage() {
     addPayment,
     getLendingPayments
   } = useLending()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
 
   // Separate lending types from raw data (not filtered by tab) for stats
   const allLentMoney = lendings?.filter(l => l.type === 'lent') || []
@@ -300,15 +303,15 @@ export default function PersonalLendingPage() {
             <Link href="/dashboard/credit">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
+                {tCommon('back')}
               </Button>
             </Link>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Personal Lending
+                {t('personalLending.title')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Track money you've lent to friends/family and borrowed from them
+                {t('personalLending.subtitle')}
               </p>
             </div>
           </div>
@@ -319,12 +322,12 @@ export default function PersonalLendingPage() {
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Lending/Borrowing
+              {t('personalLending.addLendingBorrowing')}
             </Button>
             {selectedLendings.length > 0 && (
               <Button variant="destructive" onClick={handleBulkDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete {selectedLendings.length}
+                {tCommon('delete')} {selectedLendings.length}
               </Button>
             )}
           </div>
@@ -344,7 +347,7 @@ export default function PersonalLendingPage() {
                   <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Money Lent (Pending)</p>
+                  <p className="text-sm text-muted-foreground">{t('personalLending.moneyLentPending')}</p>
                   <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {formatAmount(totalLentPending)}
                   </p>
@@ -360,7 +363,7 @@ export default function PersonalLendingPage() {
                   <TrendingDown className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Money Borrowed (Pending)</p>
+                  <p className="text-sm text-muted-foreground">{t('personalLending.moneyBorrowedPending')}</p>
                   <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {formatAmount(totalBorrowedPending)}
                   </p>
@@ -469,8 +472,8 @@ export default function PersonalLendingPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="all">All Records ({(lendings || []).length})</TabsTrigger>
-              <TabsTrigger value="lent">Money Lent ({allLentMoney.length})</TabsTrigger>
-              <TabsTrigger value="borrowed">Money Borrowed ({allBorrowedMoney.length})</TabsTrigger>
+              <TabsTrigger value="lent">{t('personalLending.moneyLent')} ({allLentMoney.length})</TabsTrigger>
+              <TabsTrigger value="borrowed">{t('personalLending.moneyBorrowed')} ({allBorrowedMoney.length})</TabsTrigger>
             </TabsList>
           </Tabs>
         </motion.div>
@@ -488,8 +491,8 @@ export default function PersonalLendingPage() {
                   <Users className="h-5 w-5" />
                   <span>
                     {activeTab === 'all' ? 'All Lending Records' :
-                     activeTab === 'lent' ? 'Money Lent to Others' :
-                     'Money Borrowed from Others'} ({filteredLendings.length})
+                     activeTab === 'lent' ? t('personalLending.moneyLentToOthers') :
+                     t('personalLending.moneyBorrowedFromOthers')} ({filteredLendings.length})
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -697,7 +700,7 @@ export default function PersonalLendingPage() {
                   <h3 className="text-lg font-semibold mb-2">
                     {searchTerm || filterStatus !== 'all' 
                       ? 'No lending records match your criteria' 
-                      : 'No Personal Lending Records'}
+                      : t('personalLending.noRecords')}
                   </h3>
                   <p className="mb-4">
                     {searchTerm || filterStatus !== 'all'

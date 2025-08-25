@@ -42,6 +42,7 @@ import { useAppStore } from '@/lib/stores/useAppStore'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useCategories } from '@/hooks/useCategories'
 import { renderIcon } from '@/lib/utils/iconMapping'
+import { useTranslations } from 'next-intl'
 
 const personalLendingSchema = z.object({
   person_name: z.string().min(1, 'Person name is required'),
@@ -83,6 +84,8 @@ export default function PersonalLendingForm({
   const { accounts, loading: accountsLoading } = useAccounts()
   const { categories, isLoading: categoriesLoading, categoryOptions, dropdownOptions } = useCategories()
   const [selectedType, setSelectedType] = useState<'lent' | 'borrowed'>('lent')
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
 
   const {
     register,
@@ -209,12 +212,12 @@ export default function PersonalLendingForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {lending ? 'Edit Personal Lending' : 'Add Personal Lending/Borrowing'}
+            {lending ? t('personalLending.editPersonalLending') : t('personalLending.addPersonalLendingBorrowing')}
           </DialogTitle>
           <DialogDescription>
             {lending 
-              ? 'Update personal lending/borrowing information' 
-              : 'Track money you lent to or borrowed from friends and family'
+              ? t('personalLending.updatePersonalLending')
+              : t('personalLending.trackMoneyFriendsFamily')
             }
           </DialogDescription>
         </DialogHeader>
@@ -225,7 +228,7 @@ export default function PersonalLendingForm({
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Transaction Type
+                {tCommon('transactionType')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -244,8 +247,8 @@ export default function PersonalLendingForm({
                   <div className="flex items-center gap-3">
                     <HandHeart className="h-6 w-6 text-emerald-600" />
                     <div>
-                      <h3 className="font-semibold text-emerald-900 dark:text-emerald-200">Money Lent</h3>
-                      <p className="text-sm text-emerald-700 dark:text-emerald-300">You gave money to someone</p>
+                      <h3 className="font-semibold text-emerald-900 dark:text-emerald-200">{t('personalLending.moneyLent')}</h3>
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300">{t('personalLending.youGaveMoneyToSomeone')}</p>
                     </div>
                   </div>
                 </div>
@@ -264,8 +267,8 @@ export default function PersonalLendingForm({
                   <div className="flex items-center gap-3">
                     <Banknote className="h-6 w-6 text-orange-600" />
                     <div>
-                      <h3 className="font-semibold text-orange-900 dark:text-orange-200">Money Borrowed</h3>
-                      <p className="text-sm text-orange-700 dark:text-orange-300">You received money from someone</p>
+                      <h3 className="font-semibold text-orange-900 dark:text-orange-200">{t('personalLending.moneyBorrowed')}</h3>
+                      <p className="text-sm text-orange-700 dark:text-orange-300">{t('personalLending.youReceivedMoneyFromSomeone')}</p>
                     </div>
                   </div>
                 </div>
@@ -278,16 +281,16 @@ export default function PersonalLendingForm({
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Person & Amount Details
+                {tCommon('personAmountDetails')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="person_name">Person Name</Label>
+                  <Label htmlFor="person_name">{t('personalLending.personName')}</Label>
                   <Input
                     id="person_name"
-                    placeholder="e.g., John Doe, Sarah Smith"
+                    placeholder={t('personalLending.form.personNamePlaceholder') || 'e.g., John Doe, Sarah Smith'}
                     {...register('person_name')}
                     className={errors.person_name ? 'border-red-500' : ''}
                   />
@@ -297,7 +300,7 @@ export default function PersonalLendingForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount ({currency})</Label>
+                  <Label htmlFor="amount">{t('common.amount')} ({currency})</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -314,7 +317,7 @@ export default function PersonalLendingForm({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="interest_rate">Interest Rate (% per year) - Optional</Label>
+                  <Label htmlFor="interest_rate">{t('personalLending.interestRatePerYear')}</Label>
                   <Input
                     id="interest_rate"
                     type="number"
@@ -329,7 +332,7 @@ export default function PersonalLendingForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="date">{selectedType === 'lent' ? 'Lent Date' : 'Borrowed Date'}</Label>
+                  <Label htmlFor="date">{selectedType === 'lent' ? t('personalLending.lentDate') : t('personalLending.borrowedDate')}</Label>
                   <Input
                     id="date"
                     type="date"
@@ -342,7 +345,7 @@ export default function PersonalLendingForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="due_date">Due Date - Optional</Label>
+                  <Label htmlFor="due_date">{t('personalLending.dueDateOptional')}</Label>
                   <Input
                     id="due_date"
                     type="date"
@@ -358,12 +361,12 @@ export default function PersonalLendingForm({
                   animate={{ opacity: 1, y: 0 }}
                   className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
                 >
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-3">Interest Calculation</h4>
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-3">{t('personalLending.interestCalculation')}</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-blue-600 dark:text-blue-400 mb-1">
                         <DollarSign className="h-3 w-3" />
-                        Principal
+                        {t('personalLending.principal')}
                       </div>
                       <div className="font-bold text-blue-900 dark:text-blue-200">
                         {formatAmount(watch('amount') || 0)}
@@ -372,7 +375,7 @@ export default function PersonalLendingForm({
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-blue-600 dark:text-blue-400 mb-1">
                         <Percent className="h-3 w-3" />
-                        Interest
+                        {t('personalLending.interest')}
                       </div>
                       <div className="font-bold text-blue-900 dark:text-blue-200">
                         {formatAmount(interestAmount)}
@@ -381,7 +384,7 @@ export default function PersonalLendingForm({
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-blue-600 dark:text-blue-400 mb-1">
                         <Calculator className="h-3 w-3" />
-                        Total
+                        {t('personalLending.total')}
                       </div>
                       <div className="font-bold text-blue-900 dark:text-blue-200">
                         {formatAmount(totalAmount)}
@@ -398,13 +401,13 @@ export default function PersonalLendingForm({
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                Contact Information - Optional
+                {tCommon('contactInformation')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="contact_phone">Phone Number</Label>
+                  <Label htmlFor="contact_phone">{t('personalLending.phoneNumber')}</Label>
                   <Input
                     id="contact_phone"
                     placeholder="+1 (555) 123-4567"
@@ -413,7 +416,7 @@ export default function PersonalLendingForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="contact_email">Email Address</Label>
+                  <Label htmlFor="contact_email">{t('personalLending.emailAddress')}</Label>
                   <Input
                     id="contact_email"
                     type="email"
@@ -428,7 +431,7 @@ export default function PersonalLendingForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="contact_address">Address</Label>
+                <Label htmlFor="contact_address">{t('personalLending.address')}</Label>
                 <Textarea
                   id="contact_address"
                   placeholder="123 Main St, City, State, ZIP"
@@ -442,21 +445,21 @@ export default function PersonalLendingForm({
           {/* Account & Category */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Account & Category</CardTitle>
+              <CardTitle className="text-lg">{tCommon('accountCategory')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="account_id">Account - Optional</Label>
+                  <Label htmlFor="account_id">{t('personalLending.accountOptional')}</Label>
                   <Select 
                     value={watch('account_id') || 'none'} 
                     onValueChange={(value) => setValue('account_id', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={accountsLoading ? "Loading accounts..." : "Select account"} />
+                      <SelectValue placeholder={accountsLoading ? `${tCommon('loading')}...` : `${tCommon('selectAccount') || 'Select account'}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No Account</SelectItem>
+                      <SelectItem value="none">{t('common.noAccount') || 'No Account'}</SelectItem>
                       {accounts?.map((account) => (
                         <SelectItem key={account.id} value={account.id}>
                           <div className="flex items-center justify-between w-full">
@@ -473,16 +476,16 @@ export default function PersonalLendingForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category_selection">Category - Optional</Label>
+                  <Label htmlFor="category_selection">{t('personalLending.categoryOptional')}</Label>
                   <Select 
                     value={watch('category_selection') || 'none'} 
                     onValueChange={(value) => setValue('category_selection', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select category or subcategory"} />
+                      <SelectValue placeholder={categoriesLoading ? `${tCommon('loading')}...` : `${tCommon('selectCategorySubcategory') || 'Select category or subcategory'}`} />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-y-auto">
-                      <SelectItem value="none">No Category</SelectItem>
+                      <SelectItem value="none">{t('common.noCategory') || 'No Category'}</SelectItem>
                       {dropdownOptions?.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           <div className="flex items-center space-x-2">
@@ -507,14 +510,14 @@ export default function PersonalLendingForm({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Choose a main category or specific subcategory for better organization
+                    {t('common.chooseCategoryHelp') || 'Choose a main category or specific subcategory for better organization'}
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reminder_days">Reminder Days Before Due Date</Label>
+                  <Label htmlFor="reminder_days">{t('personalLending.reminderDaysBeforeDueDate')}</Label>
                   <Input
                     id="reminder_days"
                     type="number"
@@ -533,12 +536,12 @@ export default function PersonalLendingForm({
                     className="rounded border-border"
                   />
                   <Label htmlFor="auto_debit" className="text-sm">
-                    Enable Auto-Processing
+                    {t('personalLending.enableAutoProcessing')}
                   </Label>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Auto-processing will automatically create transactions for scheduled payments when due date arrives
+                {t('personalLending.autoProcessingDescription')}
               </p>
             </CardContent>
           </Card>
@@ -546,14 +549,14 @@ export default function PersonalLendingForm({
           {/* Additional Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Additional Notes</CardTitle>
+              <CardTitle className="text-lg">{tCommon('additionalNotes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes - Optional</Label>
+                <Label htmlFor="notes">{t('personalLending.notesOptional')}</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Add any additional information about this lending/borrowing..."
+                  placeholder={t('personalLending.form.notesPlaceholder') || 'Add any additional information about this lending/borrowing...'}
                   {...register('notes')}
                   rows={3}
                 />
@@ -569,7 +572,7 @@ export default function PersonalLendingForm({
               onClick={handleClose}
               disabled={isLoading}
             >
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button
               type="submit"
@@ -583,10 +586,10 @@ export default function PersonalLendingForm({
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Saving...</span>
+                  <span>{t('personalLending.saving')}</span>
                 </div>
               ) : (
-                lending ? 'Update Record' : `Add ${selectedType === 'lent' ? 'Lending' : 'Borrowing'} Record`
+                lending ? t('personalLending.updateRecord') : (selectedType === 'lent' ? t('personalLending.addLendingRecord') : t('personalLending.addBorrowingRecord'))
               )}
             </Button>
           </div>

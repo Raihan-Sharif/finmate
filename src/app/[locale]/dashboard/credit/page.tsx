@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { useTranslations } from 'next-intl'
 import { 
   Calculator,
   CreditCard,
@@ -71,6 +72,8 @@ export default function CreditOverviewPage() {
   const [editingPurchaseEMI, setEditingPurchaseEMI] = useState(null)
   
   const { formatAmount, getCurrencySymbol, profile } = useAppStore()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
   
   const { 
     emiOverview, 
@@ -122,6 +125,7 @@ export default function CreditOverviewPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="ml-4 text-muted-foreground">{tCommon('loading')}</p>
       </div>
     )
   }
@@ -137,10 +141,10 @@ export default function CreditOverviewPage() {
         >
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Credit & Lending Management
+              {t('overview.title')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage your loans, EMIs, and personal lending efficiently
+              {t('overview.subtitle')}
             </p>
           </div>
           
@@ -148,19 +152,19 @@ export default function CreditOverviewPage() {
             <Link href="/dashboard/credit/loans">
               <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 dark:from-blue-500 dark:to-purple-500">
                 <Building className="h-4 w-4 mr-2" />
-                Manage Loans
+                {t('bankLoans.manageLoan')}
               </Button>
             </Link>
             <Link href="/dashboard/credit/purchase-emi">
               <Button variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950">
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                Purchase EMI
+                {t('purchaseEmi.title')}
               </Button>
             </Link>
             <Link href="/dashboard/credit/personal-lending">
               <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-950">
                 <Users className="h-4 w-4 mr-2" />
-                Personal Lending
+                {t('personalLending.title')}
               </Button>
             </Link>
           </div>
@@ -180,7 +184,7 @@ export default function CreditOverviewPage() {
                   <CreditCard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Outstanding</p>
+                  <p className="text-sm text-muted-foreground">{t('overview.totalOutstanding')}</p>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {formatAmount(totalOutstanding)}
                   </p>
@@ -196,7 +200,7 @@ export default function CreditOverviewPage() {
                   <Calendar className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Monthly EMIs</p>
+                  <p className="text-sm text-muted-foreground">{t('overview.monthlyEmis')}</p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {formatAmount(totalMonthlyCommitments)}
                   </p>
@@ -212,7 +216,7 @@ export default function CreditOverviewPage() {
                   <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Overdue Payments</p>
+                  <p className="text-sm text-muted-foreground">{t('overview.overduePayments')}</p>
                   <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {emiOverview?.overdue_payments || 0}
                   </p>
@@ -228,7 +232,7 @@ export default function CreditOverviewPage() {
                   <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Loans</p>
+                  <p className="text-sm text-muted-foreground">{t('overview.activeLoans')}</p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {emiOverview?.total_active_loans || 0}
                   </p>
@@ -246,16 +250,16 @@ export default function CreditOverviewPage() {
               <CardTitle className="flex items-center justify-between text-white">
                 <div className="flex items-center">
                   <Building className="h-5 w-5 mr-2" />
-                  Bank Loans & EMIs
+                  {t('bankLoans.bankLoansEmis')}
                 </div>
                 <Link href="/dashboard/credit/loans">
                   <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                    View All
+                    {t('common.viewAll')}
                   </Button>
                 </Link>
               </CardTitle>
               <CardDescription className="text-blue-100">
-                Your active bank loans and EMI commitments
+                {t('bankLoans.yourActiveBankLoans')}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
@@ -292,21 +296,21 @@ export default function CreditOverviewPage() {
                                 <h4 className="font-bold text-foreground">{loan.lender}</h4>
                                 {isOverdue && (
                                   <Badge variant="destructive" className="text-xs">
-                                    Overdue
+                                    {t('common.overdue')}
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-muted-foreground">{LOAN_TYPES.find(t => t.value === loan.type)?.label}</p>
+                              <p className="text-sm text-muted-foreground">{t(`common.types.${loan.type}`) || LOAN_TYPES.find(type => type.value === loan.type)?.label}</p>
                               <p className="text-xs text-muted-foreground">
-                                {loan.tenure_months} months • {loan.interest_rate}% interest
+                                {loan.tenure_months} {t('common.months')} • {loan.interest_rate}% {t('common.interest')}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-2xl font-bold text-primary">{formatAmount(loan.emi_amount)}</p>
-                            <p className="text-sm text-muted-foreground">Monthly EMI</p>
+                            <p className="text-sm text-muted-foreground">{t('common.monthlyEmi')}</p>
                             <Badge variant={loan.status === 'active' ? 'default' : 'secondary'} className="mt-1">
-                              {loan.status}
+                              {t(`common.status.${loan.status}`) || loan.status}
                             </Badge>
                           </div>
                         </div>
@@ -317,7 +321,7 @@ export default function CreditOverviewPage() {
                     <div className="text-center pt-4">
                       <Link href="/dashboard/credit/loans">
                         <Button variant="outline">
-                          View All {loans.length} Loans
+                          {t('bankLoans.viewAllLoans', { count: loans.length })}
                         </Button>
                       </Link>
                     </div>
@@ -326,12 +330,12 @@ export default function CreditOverviewPage() {
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   <Building className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="text-lg font-semibold mb-2">No Bank Loans</h3>
-                  <p className="mb-4">Start tracking your bank loans and EMI payments</p>
+                  <h3 className="text-lg font-semibold mb-2">{t('bankLoans.noBankLoans')}</h3>
+                  <p className="mb-4">{t('bankLoans.startTrackingLoans')}</p>
                   <Link href="/dashboard/credit/loans">
                     <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add First Loan
+                      {t('bankLoans.addFirstLoan')}
                     </Button>
                   </Link>
                 </div>
@@ -347,16 +351,16 @@ export default function CreditOverviewPage() {
                 <CardTitle className="flex items-center justify-between text-white">
                   <div className="flex items-center">
                     <Users className="h-5 w-5 mr-2" />
-                    Personal Lending
+                    {t('personalLending.personalLendingTitle')}
                   </div>
                   <Link href="/dashboard/credit/personal-lending">
                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                      View All
+                      {t('common.viewAll')}
                     </Button>
                   </Link>
                 </CardTitle>
                 <CardDescription className="text-green-100">
-                  Money lent to or borrowed from friends & family
+                  {t('personalLending.moneyLentBorrowed')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
@@ -391,7 +395,7 @@ export default function CreditOverviewPage() {
                             <div>
                               <p className="font-semibold text-sm">{lending.person_name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {lending.type === 'lent' ? 'Lent to' : 'Borrowed from'}
+                                {lending.type === 'lent' ? t('personalLending.lentTo') : t('personalLending.borrowedFrom')}
                               </p>
                             </div>
                           </div>
@@ -402,7 +406,7 @@ export default function CreditOverviewPage() {
                                      lending.status === 'overdue' ? 'destructive' : 'secondary'}
                               className="text-xs"
                             >
-                              {lending.status}
+                              {t(`common.status.${lending.status}`) || lending.status}
                             </Badge>
                           </div>
                         </div>
@@ -412,12 +416,12 @@ export default function CreditOverviewPage() {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                    <h4 className="text-sm font-semibold mb-2">No Personal Lending</h4>
-                    <p className="text-xs mb-3">Track personal loans with friends & family</p>
+                    <h4 className="text-sm font-semibold mb-2">{t('personalLending.noPersonalLending')}</h4>
+                    <p className="text-xs mb-3">{t('personalLending.trackPersonalLoans')}</p>
                     <Link href="/dashboard/credit/personal-lending">
                       <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-950">
                         <Plus className="h-3 w-3 mr-1" />
-                        Add Lending
+                        {t('personalLending.addFirstLending')}
                       </Button>
                     </Link>
                   </div>
@@ -430,26 +434,26 @@ export default function CreditOverviewPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Target className="h-5 w-5 mr-2 text-primary" />
-                  Quick Actions
+                  {t('overview.quickActions')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Link href="/dashboard/calculators/loan-emi" className="block">
                   <Button variant="outline" className="w-full justify-start">
                     <Calculator className="h-4 w-4 mr-2" />
-                    Loan Calculator
+                    {t('common.loanCalculator')}
                   </Button>
                 </Link>
                 <Link href="/dashboard/credit/purchase-emi" className="block">
                   <Button variant="outline" className="w-full justify-start">
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    Purchase EMI
+                    {t('purchaseEmi.title')}
                   </Button>
                 </Link>
                 <Link href="/dashboard/credit/analytics" className="block">
                   <Button variant="outline" className="w-full justify-start">
                     <TrendingUp className="h-4 w-4 mr-2" />
-                    Analytics
+                    {t('analytics.title')}
                   </Button>
                 </Link>
               </CardContent>

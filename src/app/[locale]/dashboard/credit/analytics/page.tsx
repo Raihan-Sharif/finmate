@@ -63,6 +63,7 @@ import { useLending } from '@/hooks/useLending'
 import { useAppStore } from '@/lib/stores/useAppStore'
 import { useTransactions } from '@/hooks/useTransactions'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C']
 
@@ -73,6 +74,8 @@ export default function CreditAnalyticsPage() {
   const { loans, loading: loansLoading } = useLoans()
   const { lendings, loading: lendingsLoading } = useLending()
   const { transactions } = useTransactions()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
 
   const [analyticsData, setAnalyticsData] = useState({
     totalLoans: 0,
@@ -293,15 +296,15 @@ export default function CreditAnalyticsPage() {
             <Link href="/dashboard/credit">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
+                {t('analytics.back')}
               </Button>
             </Link>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Credit Analytics
+                {t('analytics.title')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Comprehensive insights into your loans, EMIs, and lending activities
+                {t('analytics.subtitle')}
               </p>
             </div>
           </div>
@@ -312,14 +315,14 @@ export default function CreditAnalyticsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="6months">Last 6 Months</SelectItem>
-                <SelectItem value="12months">Last 12 Months</SelectItem>
-                <SelectItem value="ytd">Year to Date</SelectItem>
+                <SelectItem value="6months">{t('analytics.last6Months')}</SelectItem>
+                <SelectItem value="12months">{t('analytics.last12Months')}</SelectItem>
+                <SelectItem value="ytd">{t('analytics.yearToDate')}</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
-              Export Report
+              {t('analytics.exportReport')}
             </Button>
           </div>
         </motion.div>
@@ -338,7 +341,7 @@ export default function CreditAnalyticsPage() {
                   <CreditCard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Loans</p>
+                  <p className="text-sm text-muted-foreground">{t('analytics.activeLoans')}</p>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {analyticsData.totalLoans}
                   </p>
@@ -354,7 +357,7 @@ export default function CreditAnalyticsPage() {
                   <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Lending Records</p>
+                  <p className="text-sm text-muted-foreground">{t('analytics.lendingRecords')}</p>
                   <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {analyticsData.totalLendings}
                   </p>
@@ -370,7 +373,7 @@ export default function CreditAnalyticsPage() {
                   <DollarSign className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Monthly EMI</p>
+                  <p className="text-sm text-muted-foreground">{t('analytics.monthlyEmi')}</p>
                   <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                     {formatAmount(analyticsData.totalEMIAmount)}
                   </p>
@@ -386,7 +389,7 @@ export default function CreditAnalyticsPage() {
                   <TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Outstanding</p>
+                  <p className="text-sm text-muted-foreground">{tCommon('outstanding')}</p>
                   <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {formatAmount(analyticsData.totalOutstanding)}
                   </p>
@@ -408,7 +411,7 @@ export default function CreditAnalyticsPage() {
                   <Activity className={`h-6 w-6 ${getRiskColor(analyticsData.riskLevel)}`} />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Credit Score</p>
+                  <p className="text-sm text-muted-foreground">{t('analytics.creditScore')}</p>
                   <p className={`text-2xl font-bold ${getCreditScoreColor(analyticsData.creditScore)}`}>
                     {analyticsData.creditScore}
                   </p>
@@ -426,10 +429,10 @@ export default function CreditAnalyticsPage() {
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="trends">Trends</TabsTrigger>
-              <TabsTrigger value="distribution">Distribution</TabsTrigger>
-              <TabsTrigger value="projections">Projections</TabsTrigger>
+              <TabsTrigger value="overview">{t('analytics.overview')}</TabsTrigger>
+              <TabsTrigger value="trends">{t('analytics.trends')}</TabsTrigger>
+              <TabsTrigger value="distribution">{t('analytics.distribution')}</TabsTrigger>
+              <TabsTrigger value="projections">{t('analytics.projections')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -439,25 +442,25 @@ export default function CreditAnalyticsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Target className="h-5 w-5" />
-                      Payment Efficiency
+                      {t('analytics.paymentEfficiency')}
                     </CardTitle>
-                    <CardDescription>Your payment performance score</CardDescription>
+                    <CardDescription>{t('analytics.paymentPerformanceScore')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between text-sm">
-                        <span>Efficiency Score</span>
+                        <span>{t('analytics.efficiencyScore')}</span>
                         <span>{analyticsData.paymentEfficiency.toFixed(1)}%</span>
                       </div>
                       <Progress value={analyticsData.paymentEfficiency} className="h-3" />
                       <div className="grid grid-cols-2 gap-4 text-center">
                         <div>
                           <p className="text-2xl font-bold text-green-600">{analyticsData.totalLoans + analyticsData.totalLendings - analyticsData.overdueCount}</p>
-                          <p className="text-xs text-muted-foreground">On Time</p>
+                          <p className="text-xs text-muted-foreground">{t('analytics.onTime')}</p>
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-red-600">{analyticsData.overdueCount}</p>
-                          <p className="text-xs text-muted-foreground">Overdue</p>
+                          <p className="text-xs text-muted-foreground">{t('analytics.overdue')}</p>
                         </div>
                       </div>
                     </div>
@@ -469,14 +472,14 @@ export default function CreditAnalyticsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <AlertTriangle className="h-5 w-5" />
-                      Risk Assessment
+                      {t('analytics.riskAssessment')}
                     </CardTitle>
-                    <CardDescription>Current credit risk level</CardDescription>
+                    <CardDescription>{t('analytics.currentCreditRiskLevel')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span>Risk Level</span>
+                        <span>{t('analytics.riskLevel')}</span>
                         <Badge className={`${
                           analyticsData.riskLevel === 'low' 
                             ? 'bg-green-100 text-green-800' 
@@ -489,13 +492,13 @@ export default function CreditAnalyticsPage() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span>Credit Score</span>
+                          <span>{t('analytics.creditScore')}</span>
                           <span className={getCreditScoreColor(analyticsData.creditScore)}>
                             {analyticsData.creditScore}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span>Total Exposure</span>
+                          <span>{t('analytics.totalExposure')}</span>
                           <span>{formatAmount(analyticsData.totalOutstanding + analyticsData.totalBorrowedPending)}</span>
                         </div>
                       </div>
@@ -509,7 +512,7 @@ export default function CreditAnalyticsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
-                    Recent Payment Activity
+                    {t('analytics.recentPaymentActivity')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -525,15 +528,15 @@ export default function CreditAnalyticsPage() {
                             <p className="text-sm text-muted-foreground">{payment.type}</p>
                             <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
                               <span>💳</span>
-                              <span>Source: {payment.account_name || 'Primary Account'}</span>
-                              <span className="text-muted-foreground">• Auto-debit</span>
+                              <span>{t('analytics.source')}: {payment.account_name || t('analytics.primaryAccount')}</span>
+                              <span className="text-muted-foreground">• {tCommon('autoDebit')}</span>
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="font-bold">{formatAmount(payment.amount)}</p>
                           <p className="text-xs text-muted-foreground">{new Date(payment.date).toLocaleDateString()}</p>
-                          <p className="text-xs text-green-600 dark:text-green-400">Completed</p>
+                          <p className="text-xs text-green-600 dark:text-green-400">{tCommon('completed')}</p>
                         </div>
                       </div>
                     ))}
@@ -547,7 +550,7 @@ export default function CreditAnalyticsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <LineChartIcon className="h-5 w-5" />
-                    Monthly Activity Trends
+                    {t('analytics.monthlyActivityTrends')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -558,9 +561,9 @@ export default function CreditAnalyticsPage() {
                       <YAxis />
                       <Tooltip formatter={(value) => formatAmount(Number(value))} />
                       <Legend />
-                      <Line type="monotone" dataKey="emiPayments" stroke="#8884d8" name="EMI Payments" />
-                      <Line type="monotone" dataKey="lendingActivities" stroke="#82ca9d" name="Lending Activities" />
-                      <Line type="monotone" dataKey="totalActivity" stroke="#ffc658" name="Total Activity" />
+                      <Line type="monotone" dataKey="emiPayments" stroke="#8884d8" name={t('analytics.emiPayments')} />
+                      <Line type="monotone" dataKey="lendingActivities" stroke="#82ca9d" name={t('analytics.lendingActivities')} />
+                      <Line type="monotone" dataKey="totalActivity" stroke="#ffc658" name={t('analytics.totalActivity')} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -573,7 +576,7 @@ export default function CreditAnalyticsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <PieChartIcon className="h-5 w-5" />
-                      Loan Type Distribution
+                      {t('analytics.loanTypeDistribution')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -603,7 +606,7 @@ export default function CreditAnalyticsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <BarChart3 className="h-5 w-5" />
-                      Status Distribution
+                      {t('analytics.statusDistribution')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -626,9 +629,9 @@ export default function CreditAnalyticsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    6-Month Payment Projections
+                    {t('analytics.sixMonthPaymentProjections')}
                   </CardTitle>
-                  <CardDescription>Estimated future payment obligations</CardDescription>
+                  <CardDescription>{t('analytics.estimatedFuturePaymentObligations')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
@@ -638,8 +641,8 @@ export default function CreditAnalyticsPage() {
                       <YAxis />
                       <Tooltip formatter={(value) => formatAmount(Number(value))} />
                       <Legend />
-                      <Area type="monotone" dataKey="projectedEMI" stackId="1" stroke="#8884d8" fill="#8884d8" name="EMI Payments" />
-                      <Area type="monotone" dataKey="projectedLending" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="Lending Repayments" />
+                      <Area type="monotone" dataKey="projectedEMI" stackId="1" stroke="#8884d8" fill="#8884d8" name={t('analytics.emiPayments')} />
+                      <Area type="monotone" dataKey="projectedLending" stackId="1" stroke="#82ca9d" fill="#82ca9d" name={t('analytics.lendingRepayments')} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -648,31 +651,31 @@ export default function CreditAnalyticsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Next 30 Days</CardTitle>
+                    <CardTitle className="text-lg">{t('analytics.next30Days')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold text-blue-600">{formatAmount(analyticsData.totalEMIAmount)}</p>
-                    <p className="text-sm text-muted-foreground">Estimated payments</p>
+                    <p className="text-sm text-muted-foreground">{t('analytics.estimatedPayments')}</p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Next 90 Days</CardTitle>
+                    <CardTitle className="text-lg">{t('analytics.next90Days')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold text-purple-600">{formatAmount(analyticsData.totalEMIAmount * 3)}</p>
-                    <p className="text-sm text-muted-foreground">Estimated payments</p>
+                    <p className="text-sm text-muted-foreground">{t('analytics.estimatedPayments')}</p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Next 6 Months</CardTitle>
+                    <CardTitle className="text-lg">{t('analytics.next6Months')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold text-green-600">{formatAmount(analyticsData.totalEMIAmount * 6)}</p>
-                    <p className="text-sm text-muted-foreground">Estimated payments</p>
+                    <p className="text-sm text-muted-foreground">{t('analytics.estimatedPayments')}</p>
                   </CardContent>
                 </Card>
               </div>

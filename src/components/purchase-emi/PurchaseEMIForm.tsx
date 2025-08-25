@@ -43,23 +43,24 @@ import { useAppStore } from '@/lib/stores/useAppStore'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useCategories } from '@/hooks/useCategories'
 import { renderIcon } from '@/lib/utils/iconMapping'
+import { useTranslations } from 'next-intl'
 
-const purchaseEMISchema = z.object({
-  item_name: z.string().min(1, 'Item/Product name is required'),
-  lender: z.string().min(1, 'Store/Vendor name is required'),
-  principal_amount: z.number().min(1, 'Purchase amount must be greater than 0'),
-  interest_rate: z.number().min(0, 'Interest rate must be 0 or greater').max(50, 'Interest rate cannot exceed 50%'),
-  tenure_months: z.number().min(1, 'Tenure must be at least 1 month').max(120, 'Tenure cannot exceed 120 months'),
-  start_date: z.string().min(1, 'Purchase date is required'),
-  payment_day: z.number().min(1, 'Payment day must be between 1-31').max(31, 'Payment day must be between 1-31').optional(),
-  account_id: z.string().optional(),
-  category_selection: z.string().optional(), // This will contain either category_id or subcategory_id
-  auto_debit: z.boolean().optional(),
-  reminder_days: z.number().min(1).max(30).optional(),
-  notes: z.string().optional(),
-})
+// Schema will be created inside the component to access translations
 
-type PurchaseEMIFormSchema = z.infer<typeof purchaseEMISchema>
+type PurchaseEMIFormSchema = {
+  item_name: string
+  lender: string
+  principal_amount: number
+  interest_rate: number
+  tenure_months: number
+  start_date: string
+  payment_day?: number
+  account_id?: string
+  category_selection?: string
+  auto_debit?: boolean
+  reminder_days?: number
+  notes?: string
+}
 
 interface PurchaseEMIFormProps {
   emi?: any | null
@@ -89,6 +90,23 @@ export default function PurchaseEMIForm({
   const { formatAmount, currency } = useAppStore()
   const { accounts, loading: accountsLoading } = useAccounts()
   const { categories, isLoading: categoriesLoading, dropdownOptions } = useCategories('expense')
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
+
+  const purchaseEMISchema = z.object({
+    item_name: z.string().min(1, t('purchaseEmi.form.errors.itemNameRequired')),
+    lender: z.string().min(1, t('purchaseEmi.form.errors.vendorRequired')),
+    principal_amount: z.number().min(1, t('purchaseEmi.form.errors.totalAmountPositive')),
+    interest_rate: z.number().min(0, t('purchaseEmi.form.errors.interestRatePositive') || 'Interest rate must be 0 or greater').max(50, 'Interest rate cannot exceed 50%'),
+    tenure_months: z.number().min(1, t('purchaseEmi.form.errors.tenurePositive')).max(120, 'Tenure cannot exceed 120 months'),
+    start_date: z.string().min(1, t('purchaseEmi.form.errors.purchaseDateRequired')),
+    payment_day: z.number().min(1, 'Payment day must be between 1-31').max(31, 'Payment day must be between 1-31').optional(),
+    account_id: z.string().optional(),
+    category_selection: z.string().optional(),
+    auto_debit: z.boolean().optional(),
+    reminder_days: z.number().min(1).max(30).optional(),
+    notes: z.string().optional(),
+  })
   const [emiCalculation, setEmiCalculation] = useState({
     emi: 0,
     totalAmount: 0,
@@ -213,12 +231,12 @@ export default function PurchaseEMIForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
-            {emi ? 'Edit Purchase EMI' : 'Add Purchase EMI'}
+            {emi ? t('purchaseEmi.editPurchaseEmi') : t('purchaseEmi.addPurchaseEmi')}
           </DialogTitle>
           <DialogDescription>
             {emi 
-              ? 'Update purchase EMI information' 
-              : 'Set up EMI for your purchase with automatic payment tracking'
+              ? t('purchaseEmi.updatePurchaseEmi')
+              : t('purchaseEmi.subtitle')
             }
           </DialogDescription>
         </DialogHeader>
@@ -229,16 +247,16 @@ export default function PurchaseEMIForm({
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Purchase Information
+                {tCommon('purchaseDetails')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="item_name">Item/Product Name</Label>
+                  <Label htmlFor="item_name">{t('purchaseEmi.itemProductName')}</Label>
                   <Input
                     id="item_name"
-                    placeholder="e.g., iPhone 15 Pro, MacBook Air, Samsung TV"
+                    placeholder={t('purchaseEmi.form.itemNamePlaceholder') || 'e.g., iPhone 15 Pro, MacBook Air, Samsung TV'}
                     {...register('item_name')}
                     className={errors.item_name ? 'border-red-500' : ''}
                   />
@@ -248,10 +266,10 @@ export default function PurchaseEMIForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="lender">Store/Vendor Name</Label>
+                  <Label htmlFor="lender">{t('purchaseEmi.storeVendorName')}</Label>
                   <Input
                     id="lender"
-                    placeholder="e.g., Apple Store, Best Buy, Amazon"
+                    placeholder={t('purchaseEmi.form.vendorPlaceholder') || 'e.g., Apple Store, Best Buy, Amazon'}
                     {...register('lender')}
                     className={errors.lender ? 'border-red-500' : ''}
                   />
@@ -263,7 +281,7 @@ export default function PurchaseEMIForm({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="start_date">Purchase Date</Label>
+                  <Label htmlFor="start_date">{t('purchaseEmi.purchaseDate')}</Label>
                   <Input
                     id="start_date"
                     type="date"
@@ -276,7 +294,7 @@ export default function PurchaseEMIForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="payment_day">Monthly Payment Day</Label>
+                  <Label htmlFor="payment_day">{t('purchaseEmi.monthlyPaymentDay')}</Label>
                   <Input
                     id="payment_day"
                     type="number"
@@ -299,13 +317,13 @@ export default function PurchaseEMIForm({
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Calculator className="h-4 w-4" />
-                Financial Details
+                {tCommon('financialDetails')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="principal_amount">Total Purchase Amount ({currency})</Label>
+                  <Label htmlFor="principal_amount">{t('purchaseEmi.totalPurchaseAmount')} ({currency})</Label>
                   <Input
                     id="principal_amount"
                     type="number"
@@ -320,7 +338,7 @@ export default function PurchaseEMIForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="interest_rate">Interest Rate (% per annum)</Label>
+                  <Label htmlFor="interest_rate">{tCommon('interestRate')} (% {t('common.perAnnum') || 'per annum'})</Label>
                   <Input
                     id="interest_rate"
                     type="number"
@@ -337,7 +355,7 @@ export default function PurchaseEMIForm({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="tenure_months">EMI Tenure (Months)</Label>
+                  <Label htmlFor="tenure_months">{t('purchaseEmi.emiTenureMonths')}</Label>
                   <Input
                     id="tenure_months"
                     type="number"
@@ -360,12 +378,12 @@ export default function PurchaseEMIForm({
                   animate={{ opacity: 1, y: 0 }}
                   className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-800 rounded-lg"
                 >
-                  <h4 className="font-semibold text-purple-900 dark:text-purple-200 mb-3">EMI Calculation</h4>
+                  <h4 className="font-semibold text-purple-900 dark:text-purple-200 mb-3">{t('purchaseEmi.emiCalculation')}</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-purple-600 dark:text-purple-400 mb-1">
                         <CreditCard className="h-3 w-3" />
-                        Monthly EMI
+                        {tCommon('monthlyEmi')}
                       </div>
                       <div className="font-bold text-purple-900 dark:text-purple-200">
                         {formatAmount(emiCalculation.emi)}
@@ -374,7 +392,7 @@ export default function PurchaseEMIForm({
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-purple-600 dark:text-purple-400 mb-1">
                         <Percent className="h-3 w-3" />
-                        Total Interest
+                        {t('purchaseEmi.totalInterest')}
                       </div>
                       <div className="font-bold text-purple-900 dark:text-purple-200">
                         {formatAmount(emiCalculation.totalInterest)}
@@ -383,7 +401,7 @@ export default function PurchaseEMIForm({
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-purple-600 dark:text-purple-400 mb-1">
                         <Calendar className="h-3 w-3" />
-                        Total Amount
+                        {t('purchaseEmi.totalAmount')}
                       </div>
                       <div className="font-bold text-purple-900 dark:text-purple-200">
                         {formatAmount(emiCalculation.totalAmount)}
@@ -398,21 +416,21 @@ export default function PurchaseEMIForm({
           {/* Account & Category */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Account & Category</CardTitle>
+              <CardTitle className="text-lg">{tCommon('accountCategory')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="account_id">Account (Optional)</Label>
+                  <Label htmlFor="account_id">{t('purchaseEmi.accountOptional')}</Label>
                   <Select 
                     value={watch('account_id') || 'none'} 
                     onValueChange={(value) => setValue('account_id', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={accountsLoading ? "Loading accounts..." : "Select account"} />
+                      <SelectValue placeholder={accountsLoading ? `${tCommon('loading')}...` : `${tCommon('selectAccount') || 'Select account'}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No Account</SelectItem>
+                      <SelectItem value="none">{t('common.noAccount') || 'No Account'}</SelectItem>
                       {accounts?.map((account) => (
                         <SelectItem key={account.id} value={account.id}>
                           <div className="flex items-center justify-between w-full">
@@ -429,16 +447,16 @@ export default function PurchaseEMIForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category_selection">Category (Optional)</Label>
+                  <Label htmlFor="category_selection">{t('purchaseEmi.categoryOptional')}</Label>
                   <Select 
                     value={watch('category_selection') || 'none'} 
                     onValueChange={(value) => setValue('category_selection', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select category or subcategory"} />
+                      <SelectValue placeholder={categoriesLoading ? `${tCommon('loading')}...` : `${tCommon('selectCategorySubcategory') || 'Select category or subcategory'}`} />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-y-auto">
-                      <SelectItem value="none">No Category</SelectItem>
+                      <SelectItem value="none">{t('common.noCategory') || 'No Category'}</SelectItem>
                       {dropdownOptions?.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           <div className="flex items-center space-x-2">
@@ -463,14 +481,14 @@ export default function PurchaseEMIForm({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Choose a main category or specific subcategory for better organization
+                    {t('common.chooseCategoryHelp') || 'Choose a main category or specific subcategory for better organization'}
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reminder_days">Reminder Days Before Due</Label>
+                  <Label htmlFor="reminder_days">{t('purchaseEmi.reminderDaysBeforeDue')}</Label>
                   <Input
                     id="reminder_days"
                     type="number"
@@ -488,7 +506,7 @@ export default function PurchaseEMIForm({
                     {...register('auto_debit')}
                     className="rounded border-border"
                   />
-                  <Label htmlFor="auto_debit">Enable Auto-debit</Label>
+                  <Label htmlFor="auto_debit">{t('purchaseEmi.enableAutoDebit')}</Label>
                 </div>
               </div>
             </CardContent>
@@ -497,14 +515,14 @@ export default function PurchaseEMIForm({
           {/* Additional Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Additional Notes</CardTitle>
+              <CardTitle className="text-lg">{tCommon('additionalNotes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Label htmlFor="notes">{t('purchaseEmi.notesOptional')}</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Add any additional information about this purchase EMI..."
+                  placeholder={t('purchaseEmi.form.notesPlaceholder') || 'Add any additional information about this purchase EMI...'}
                   {...register('notes')}
                   rows={3}
                 />
@@ -520,7 +538,7 @@ export default function PurchaseEMIForm({
               onClick={handleClose}
               disabled={isLoading}
             >
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button
               type="submit"
@@ -530,10 +548,10 @@ export default function PurchaseEMIForm({
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Saving...</span>
+                  <span>{t('purchaseEmi.saving')}</span>
                 </div>
               ) : (
-                emi ? 'Update Purchase EMI' : 'Create Purchase EMI'
+                emi ? t('purchaseEmi.updatePurchaseEmi') : t('purchaseEmi.createPurchaseEmi')
               )}
             </Button>
           </div>

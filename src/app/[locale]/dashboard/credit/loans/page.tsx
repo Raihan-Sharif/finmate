@@ -57,6 +57,7 @@ import DeleteLoanDialog from '@/components/loans/DeleteLoanDialog'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { useTranslations } from 'next-intl'
 
 const loanTypeIcons = {
   personal: CreditCard,
@@ -92,6 +93,8 @@ export default function BankLoansPage() {
   const { formatAmount, getCurrencySymbol } = useAppStore()
   const { loans, loading, addLoan, editLoan, removeLoan } = useLoans()
   const { processLoanPayment, isProcessing: isAutoProcessing } = useAutoTransactions()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
 
   // Filter loans based on search and filters
   const filteredLoans = loans?.filter(loan => {
@@ -130,11 +133,11 @@ export default function BankLoansPage() {
         }
         const result = await editLoan(editingLoan.id, updateData)
         if (result.success) {
-          toast.success('Loan updated successfully!')
+          toast.success(t('bankLoans.form.success.updated') || 'Loan updated successfully!')
           setIsLoanFormOpen(false)
           setEditingLoan(null)
         } else {
-          toast.error(result.error || 'Failed to update loan')
+          toast.error(result.error || t('bankLoans.form.errors.updateFailed') || 'Failed to update loan')
         }
       } else {
         const { formatAmount, profile } = useAppStore.getState()
@@ -154,11 +157,11 @@ export default function BankLoansPage() {
         }
         const result = await addLoan(insertData)
         if (result.success) {
-          toast.success('Loan added successfully!')
+          toast.success(t('bankLoans.form.success.created') || 'Loan added successfully!')
           setIsLoanFormOpen(false)
           setEditingLoan(null)
         } else {
-          toast.error(result.error || 'Failed to add loan')
+          toast.error(result.error || t('bankLoans.form.errors.createFailed') || 'Failed to add loan')
         }
       }
     } catch (error) {
@@ -195,11 +198,11 @@ export default function BankLoansPage() {
     try {
       const result = await removeLoan(deletingLoan.id)
       if (result.success) {
-        toast.success('Loan deleted successfully!')
+        toast.success(t('bankLoans.form.success.deleted') || 'Loan deleted successfully!')
         setIsDeleteDialogOpen(false)
         setDeletingLoan(null)
       } else {
-        toast.error(result.error || 'Failed to delete loan')
+        toast.error(result.error || t('bankLoans.form.errors.deleteFailed') || 'Failed to delete loan')
       }
     } catch (error) {
       console.error('Error deleting loan:', error)
@@ -278,15 +281,15 @@ export default function BankLoansPage() {
             <Link href="/dashboard/credit">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
+                {tCommon('back')}
               </Button>
             </Link>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Bank Loans & EMIs
+                {t('bankLoans.title')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Manage your formal loans from banks and financial institutions
+                {t('bankLoans.subtitle')}
               </p>
             </div>
           </div>
@@ -297,12 +300,12 @@ export default function BankLoansPage() {
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add New Loan
+              {t('bankLoans.addNewLoan')}
             </Button>
             {selectedLoans.length > 0 && (
               <Button variant="destructive" onClick={handleBulkDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete {selectedLoans.length}
+                {t('common.delete')} {selectedLoans.length}
               </Button>
             )}
           </div>
@@ -322,7 +325,7 @@ export default function BankLoansPage() {
                   <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Outstanding</p>
+                  <p className="text-sm text-muted-foreground">{t('overview.totalOutstanding')}</p>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {formatAmount(totalOutstanding)}
                   </p>
@@ -338,7 +341,7 @@ export default function BankLoansPage() {
                   <Calendar className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Monthly EMI</p>
+                  <p className="text-sm text-muted-foreground">{tCommon('monthlyEmi')}</p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {formatAmount(totalMonthlyEMI)}
                   </p>
@@ -354,7 +357,7 @@ export default function BankLoansPage() {
                   <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Loans</p>
+                  <p className="text-sm text-muted-foreground">{t('overview.activeLoans')}</p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {activeLoans}
                   </p>
@@ -370,7 +373,7 @@ export default function BankLoansPage() {
                   <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Overdue</p>
+                  <p className="text-sm text-muted-foreground">{tCommon('overdue')}</p>
                   <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {overdueLoans}
                   </p>
@@ -390,7 +393,7 @@ export default function BankLoansPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search loans..."
+              placeholder={t('bankLoans.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -399,10 +402,10 @@ export default function BankLoansPage() {
           
           <Select value={filterType} onValueChange={setFilterType}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Loan Type" />
+              <SelectValue placeholder={t('common.loanType')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="all">{t('common.allTypes')}</SelectItem>
               {LOAN_TYPES.map(type => (
                 <SelectItem key={type.value} value={type.value}>
                   {type.label}
@@ -413,13 +416,13 @@ export default function BankLoansPage() {
 
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-full sm:w-32">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={tCommon('status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
-              <SelectItem value="defaulted">Defaulted</SelectItem>
+              <SelectItem value="all">{t('common.allStatus')}</SelectItem>
+              <SelectItem value="active">{t('common.status.active')}</SelectItem>
+              <SelectItem value="closed">{t('common.status.closed')}</SelectItem>
+              <SelectItem value="defaulted">{t('common.status.defaulted')}</SelectItem>
             </SelectContent>
           </Select>
         </motion.div>
@@ -435,16 +438,16 @@ export default function BankLoansPage() {
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Building className="h-5 w-5" />
-                  <span>Bank Loans ({filteredLoans.length})</span>
+                  <span>{t('bankLoans.title')} ({filteredLoans.length})</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" size="sm">
                     <Upload className="h-4 w-4 mr-2" />
-                    Import
+                    {tCommon('import')}
                   </Button>
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
-                    Export
+                    {tCommon('export')}
                   </Button>
                 </div>
               </CardTitle>
@@ -500,17 +503,17 @@ export default function BankLoansPage() {
                                 <h4 className="font-bold text-lg text-foreground">{loan.lender}</h4>
                                 {isOverdue && (
                                   <Badge variant="destructive" className="text-xs">
-                                    Overdue
+                                    {tCommon('overdue')}
                                   </Badge>
                                 )}
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                {LOAN_TYPES.find(t => t.value === loan.type)?.label}
+                                {t(`common.types.${loan.type}`) || LOAN_TYPES.find(t => t.value === loan.type)?.label}
                               </p>
                               <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                                 <span className="flex items-center space-x-1">
                                   <Clock className="h-3 w-3" />
-                                  <span>{loan.tenure_months} months</span>
+                                  <span>{loan.tenure_months} {t('common.months')}</span>
                                 </span>
                                 <span className="flex items-center space-x-1">
                                   <Percent className="h-3 w-3" />
@@ -523,9 +526,9 @@ export default function BankLoansPage() {
                           <div className="flex items-center space-x-6">
                             <div className="text-right space-y-1">
                               <p className="text-2xl font-bold text-primary">{formatAmount(loan.emi_amount)}</p>
-                              <p className="text-sm text-muted-foreground">Monthly EMI</p>
+                              <p className="text-sm text-muted-foreground">{tCommon('monthlyEmi')}</p>
                               <Badge className={statusColors[loan.status]}>
-                                {loan.status}
+                                {t(`common.status.${loan.status}`) || loan.status}
                               </Badge>
                             </div>
                             
@@ -536,13 +539,13 @@ export default function BankLoansPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuLabel>{tCommon('actions')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => handleViewLoan(loan)}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
-                                  View Details
+                                  {tCommon('viewDetails')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => {
@@ -551,7 +554,7 @@ export default function BankLoansPage() {
                                   }}
                                 >
                                   <Edit className="h-4 w-4 mr-2" />
-                                  Edit Loan
+                                  {t('bankLoans.editLoan')}
                                 </DropdownMenuItem>
                                 {loan.status === 'active' && (
                                   <DropdownMenuItem 
@@ -560,7 +563,7 @@ export default function BankLoansPage() {
                                     className="text-green-600 dark:text-green-400"
                                   >
                                     <DollarSign className="h-4 w-4 mr-2" />
-                                    {isAutoProcessing ? 'Processing...' : 'Process Payment'}
+                                    {isAutoProcessing ? tCommon('processing') : t('bankLoans.processPayment')}
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuSeparator />
@@ -569,7 +572,7 @@ export default function BankLoansPage() {
                                   className="text-red-600 dark:text-red-400"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Loan
+                                  {t('bankLoans.deleteLoan')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -579,15 +582,15 @@ export default function BankLoansPage() {
                         <div className="mt-4 pt-4 border-t border-border">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                             <div>
-                              <span className="text-muted-foreground">Outstanding: </span>
+                              <span className="text-muted-foreground">{t('bankLoans.outstanding')}: </span>
                               <span className="font-semibold">{formatAmount(loan.outstanding_amount)}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Principal: </span>
+                              <span className="text-muted-foreground">{t('bankLoans.principal')}: </span>
                               <span className="font-semibold">{formatAmount(loan.principal_amount)}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Next Due: </span>
+                              <span className="text-muted-foreground">{t('bankLoans.nextDue')}: </span>
                               <span className="font-semibold">
                                 {loan.next_due_date ? new Date(loan.next_due_date).toLocaleDateString() : 'N/A'}
                               </span>
@@ -603,13 +606,13 @@ export default function BankLoansPage() {
                   <Building className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
                   <h3 className="text-lg font-semibold mb-2">
                     {searchTerm || filterType !== 'all' || filterStatus !== 'all' 
-                      ? 'No loans match your criteria' 
-                      : 'No Bank Loans'}
+                      ? t('bankLoans.noLoansMatch') 
+                      : t('bankLoans.noBankLoans')}
                   </h3>
                   <p className="mb-4">
                     {searchTerm || filterType !== 'all' || filterStatus !== 'all'
-                      ? 'Try adjusting your search or filters'
-                      : 'Start tracking your bank loans and EMI payments'}
+                      ? t('bankLoans.adjustFilters')
+                      : t('bankLoans.startTrackingLoans')}
                   </p>
                   {!searchTerm && filterType === 'all' && filterStatus === 'all' && (
                     <Button 
@@ -617,7 +620,7 @@ export default function BankLoansPage() {
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Loan
+                      {t('bankLoans.addFirstLoan')}
                     </Button>
                   )}
                 </div>

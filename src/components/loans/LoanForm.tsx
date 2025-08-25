@@ -31,21 +31,22 @@ import { LOAN_TYPES, LoanFormData, Loan } from '@/types/emi'
 import { useAppStore } from '@/lib/stores/useAppStore'
 import { BANKS_BY_CURRENCY, getBanksByCategory, getBankCategories } from '@/lib/data/banks'
 import { calculateEMIDetails } from '@/lib/services/emi'
+import { useTranslations } from 'next-intl'
 
-const loanSchema = z.object({
-  lender: z.string().min(1, 'Lender name is required'),
-  principal_amount: z.number().min(1, 'Principal amount must be greater than 0'),
-  interest_rate: z.number().min(0, 'Interest rate must be 0 or greater').max(100, 'Interest rate cannot exceed 100%'),
-  tenure_months: z.number().min(1, 'Tenure must be at least 1 month').max(480, 'Tenure cannot exceed 40 years'),
-  start_date: z.string().min(1, 'Start date is required'),
-  payment_day: z.number().min(1, 'Payment day must be between 1-31').max(31, 'Payment day must be between 1-31').optional(),
-  type: z.enum(['personal', 'home', 'car', 'education', 'business', 'purchase_emi', 'credit_card', 'other']),
-  auto_debit: z.boolean().optional(),
-  reminder_days: z.number().min(0, 'Reminder days must be 0 or greater').max(30, 'Reminder days cannot exceed 30').optional(),
-  notes: z.string().optional(),
-})
+// Schema will be created inside the component to access translations
 
-type LoanFormSchema = z.infer<typeof loanSchema>
+type LoanFormSchema = {
+  lender: string
+  principal_amount: number
+  interest_rate: number
+  tenure_months: number
+  start_date: string
+  payment_day?: number
+  type: 'personal' | 'home' | 'car' | 'education' | 'business' | 'purchase_emi' | 'credit_card' | 'other'
+  auto_debit?: boolean
+  reminder_days?: number
+  notes?: string
+}
 
 interface LoanFormProps {
   loan?: Loan | null
@@ -61,6 +62,21 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
   const [selectedBankType, setSelectedBankType] = useState<'predefined' | 'custom'>('predefined')
   const [customBankName, setCustomBankName] = useState('')
   const { formatAmount, currency } = useAppStore()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
+
+  const loanSchema = z.object({
+    lender: z.string().min(1, t('bankLoans.form.errors.lenderRequired')),
+    principal_amount: z.number().min(1, t('bankLoans.form.errors.principalAmountPositive')),
+    interest_rate: z.number().min(0, t('bankLoans.form.errors.interestRatePositive')).max(100, 'Interest rate cannot exceed 100%'),
+    tenure_months: z.number().min(1, t('bankLoans.form.errors.tenurePositive')).max(480, 'Tenure cannot exceed 40 years'),
+    start_date: z.string().min(1, t('bankLoans.form.errors.startDateRequired')),
+    payment_day: z.number().min(1, 'Payment day must be between 1-31').max(31, 'Payment day must be between 1-31').optional(),
+    type: z.enum(['personal', 'home', 'car', 'education', 'business', 'purchase_emi', 'credit_card', 'other']),
+    auto_debit: z.boolean().optional(),
+    reminder_days: z.number().min(0, 'Reminder days must be 0 or greater').max(30, 'Reminder days cannot exceed 30').optional(),
+    notes: z.string().optional(),
+  })
 
   const {
     register,
@@ -190,10 +206,10 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            {loan ? 'Edit Loan' : 'Add New Loan'}
+            {loan ? t('bankLoans.form.editLoan') : t('bankLoans.form.createLoan')}
           </DialogTitle>
           <DialogDescription>
-            {loan ? 'Update loan information' : 'Add a new bank or institutional loan to track EMI payments'}
+            {loan ? t('bankLoans.form.editLoan') : t('bankLoans.form.loanDetails')}
           </DialogDescription>
         </DialogHeader>
 
@@ -201,12 +217,12 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Loan Details</CardTitle>
+              <CardTitle className="text-lg">{t('bankLoans.form.loanDetails')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="lender">Lender / Bank Name</Label>
+                  <Label htmlFor="lender">{t('bankLoans.form.lender')}</Label>
                   
                   {/* Bank Selection Toggle */}
                   <div className="flex items-center space-x-4 mb-3">
@@ -218,7 +234,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                         onChange={() => setSelectedBankType('predefined')}
                         className="text-primary"
                       />
-                      <Label htmlFor="predefined-bank" className="text-sm">Select Bank</Label>
+                      <Label htmlFor="predefined-bank" className="text-sm">{tCommon('selectBank') || 'Select Bank'}</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input
@@ -228,7 +244,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                         onChange={() => setSelectedBankType('custom')}
                         className="text-primary"
                       />
-                      <Label htmlFor="custom-bank" className="text-sm">Custom Name</Label>
+                      <Label htmlFor="custom-bank" className="text-sm">{tCommon('customName') || 'Custom Name'}</Label>
                     </div>
                   </div>
 
@@ -271,7 +287,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                         <SelectItem value="other">
                           <div className="flex items-center gap-2">
                             <Building className="h-4 w-4" />
-                            <span>Other Bank</span>
+                            <span>{t('bankLoans.form.otherBank') || 'Other Bank'}</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -282,7 +298,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                   {(selectedBankType === 'custom' || !BANKS_BY_CURRENCY[currency as keyof typeof BANKS_BY_CURRENCY]) && (
                     <Input
                       id="lender"
-                      placeholder="Enter bank/lender name"
+                      placeholder={t('bankLoans.form.lenderPlaceholder')}
                       {...register('lender')}
                       className={errors.lender ? 'border-red-500' : ''}
                     />
@@ -294,20 +310,20 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="type">Loan Type</Label>
+                  <Label htmlFor="type">{t('bankLoans.form.loanType')}</Label>
                   <Select 
                     value={watch('type')} 
                     onValueChange={(value) => setValue('type', value as any)}
                   >
                     <SelectTrigger className={errors.type ? 'border-red-500' : ''}>
-                      <SelectValue placeholder="Select loan type" />
+                      <SelectValue placeholder={t('bankLoans.form.selectLoanType')} />
                     </SelectTrigger>
                     <SelectContent>
                       {LOAN_TYPES.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           <div className="flex items-center gap-2">
                             <span>{type.icon}</span>
-                            <span>{type.label}</span>
+                            <span>{t(`common.types.${type.value}`) || type.label}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -321,12 +337,12 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="principal_amount">Principal Amount ({currency})</Label>
+                  <Label htmlFor="principal_amount">{t('bankLoans.form.principalAmount')} ({currency})</Label>
                   <Input
                     id="principal_amount"
                     type="number"
                     step="0.01"
-                    placeholder="0.00"
+                    placeholder={t('bankLoans.form.principalAmountPlaceholder')}
                     {...register('principal_amount', { valueAsNumber: true })}
                     className={errors.principal_amount ? 'border-red-500' : ''}
                   />
@@ -336,12 +352,12 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="interest_rate">Interest Rate (%)</Label>
+                  <Label htmlFor="interest_rate">{t('bankLoans.form.interestRate')}</Label>
                   <Input
                     id="interest_rate"
                     type="number"
                     step="0.01"
-                    placeholder="0.00"
+                    placeholder={t('bankLoans.form.interestRatePlaceholder')}
                     {...register('interest_rate', { valueAsNumber: true })}
                     className={errors.interest_rate ? 'border-red-500' : ''}
                   />
@@ -351,11 +367,11 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tenure_months">Tenure (Months)</Label>
+                  <Label htmlFor="tenure_months">{t('bankLoans.form.tenureMonths')}</Label>
                   <Input
                     id="tenure_months"
                     type="number"
-                    placeholder="12"
+                    placeholder={t('bankLoans.form.tenureMonthsPlaceholder')}
                     {...register('tenure_months', { valueAsNumber: true })}
                     className={errors.tenure_months ? 'border-red-500' : ''}
                   />
@@ -390,10 +406,10 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                     <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                       <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-300">
                         <AlertTriangle className="h-4 w-4" />
-                        <span className="text-sm font-medium">Very Short Tenure</span>
+                        <span className="text-sm font-medium">{t('bankLoans.form.veryShortTenure')}</span>
                       </div>
                       <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">
-                        A {tenure}-month loan will have very high monthly payments. Consider a longer tenure if this seems too high.
+                        {t('bankLoans.form.shortTenureWarning', { months: tenure }) || `A ${tenure}-month loan will have very high monthly payments. Consider a longer tenure if this seems too high.`}
                       </div>
                     </div>
                   )}
@@ -402,10 +418,10 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                     <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                       <div className="flex items-center gap-2 text-red-800 dark:text-red-300">
                         <AlertTriangle className="h-4 w-4" />
-                        <span className="text-sm font-medium">Very High Interest Rate</span>
+                        <span className="text-sm font-medium">{t('bankLoans.form.veryHighInterestRate')}</span>
                       </div>
                       <div className="text-xs text-red-700 dark:text-red-400 mt-1">
-                        {rate}% annual interest rate is unusually high. Please verify this is correct.
+                        {t('bankLoans.form.highInterestWarning', { rate }) || `${rate}% annual interest rate is unusually high. Please verify this is correct.`}
                       </div>
                     </div>
                   )}
@@ -414,10 +430,10 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                     <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
                       <div className="flex items-center gap-2 text-orange-800 dark:text-orange-300">
                         <AlertTriangle className="h-4 w-4" />
-                        <span className="text-sm font-medium">High EMI Amount</span>
+                        <span className="text-sm font-medium">{t('bankLoans.form.highEmiAmount')}</span>
                       </div>
                       <div className="text-xs text-orange-700 dark:text-orange-400 mt-1">
-                        Monthly EMI is {((emiDetails.emi / principal) * 100).toFixed(1)}% of loan amount. This suggests very short tenure or high interest rate.
+                        {t('bankLoans.form.highEmiWarning', { percentage: ((emiDetails.emi / principal) * 100).toFixed(1) }) || `Monthly EMI is ${((emiDetails.emi / principal) * 100).toFixed(1)}% of loan amount. This suggests very short tenure or high interest rate.`}
                       </div>
                     </div>
                   )}
@@ -426,7 +442,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
                         <Calculator className="h-5 w-5" />
-                        <span className="font-bold text-lg">Monthly EMI</span>
+                        <span className="font-bold text-lg">{tCommon('monthlyEmi')}</span>
                       </div>
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                         {formatAmount(emiDetails.emi)}
@@ -438,7 +454,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                       <div className="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
                         <div className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-green-600" />
-                          <span className="text-muted-foreground">Total Amount</span>
+                          <span className="text-muted-foreground">{t('bankLoans.form.totalAmount')}</span>
                         </div>
                         <span className="font-semibold text-green-600 dark:text-green-400">
                           {formatAmount(emiDetails.totalAmount)}
@@ -448,7 +464,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                       <div className="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
                         <div className="flex items-center gap-2">
                           <Percent className="h-4 w-4 text-orange-600" />
-                          <span className="text-muted-foreground">Total Interest</span>
+                          <span className="text-muted-foreground">{t('bankLoans.form.totalInterest')}</span>
                         </div>
                         <span className="font-semibold text-orange-600 dark:text-orange-400">
                           {formatAmount(emiDetails.totalInterest)}
@@ -458,7 +474,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                       <div className="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-purple-600" />
-                          <span className="text-muted-foreground">Interest %</span>
+                          <span className="text-muted-foreground">{t('bankLoans.form.interestPercentage')}</span>
                         </div>
                         <span className="font-semibold text-purple-600 dark:text-purple-400">
                           {emiDetails.interestPercentage.toFixed(1)}%
@@ -472,15 +488,18 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                     <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300">
                       <Info className="h-4 w-4 mt-0.5" />
                       <div className="text-sm">
-                        <p className="font-medium mb-1">Loan Summary</p>
+                        <p className="font-medium mb-1">{t('bankLoans.form.loanSummary')}</p>
                         <p>
-                          You'll pay <strong>{formatAmount(emiDetails.emi)}</strong> monthly for{' '}
-                          <strong>{tenure} months</strong> ({Math.round(tenure/12)} year{tenure !== 12 ? 's' : ''}), with total interest of{' '}
-                          <strong>{formatAmount(emiDetails.totalInterest)}</strong>.
+                          {t('bankLoans.form.summaryText', {
+                            emi: formatAmount(emiDetails.emi),
+                            months: tenure,
+                            years: Math.round(tenure/12),
+                            totalInterest: formatAmount(emiDetails.totalInterest)
+                          }) || `You'll pay ${formatAmount(emiDetails.emi)} monthly for ${tenure} months (${Math.round(tenure/12)} year${tenure !== 12 ? 's' : ''}), with total interest of ${formatAmount(emiDetails.totalInterest)}.`}
                         </p>
                         <p className="text-xs mt-1 opacity-75">
-                          Total repayment: {formatAmount(emiDetails.totalAmount)} | 
-                          Interest rate: {emiDetails.interestPercentage.toFixed(1)}% of total
+                          {t('bankLoans.form.totalRepayment')}: {formatAmount(emiDetails.totalAmount)} | 
+                          {t('bankLoans.form.interestRateOfTotal')}: {emiDetails.interestPercentage.toFixed(1)}% {t('common.ofTotal') || 'of total'}
                         </p>
                       </div>
                     </div>
@@ -493,12 +512,12 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
           {/* Additional Settings */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Payment Settings</CardTitle>
+              <CardTitle className="text-lg">{tCommon('paymentSettings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="start_date">Loan Start Date</Label>
+                  <Label htmlFor="start_date">{t('bankLoans.form.startDate')}</Label>
                   <Input
                     id="start_date"
                     type="date"
@@ -511,7 +530,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="payment_day">Payment Day of Month</Label>
+                  <Label htmlFor="payment_day">{tCommon('paymentDay') || 'Payment Day of Month'}</Label>
                   <Input
                     id="payment_day"
                     type="number"
@@ -527,13 +546,13 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="reminder_days">Reminder Days Before Due</Label>
+                  <Label htmlFor="reminder_days">{t('bankLoans.form.reminderDays')}</Label>
                   <Input
                     id="reminder_days"
                     type="number"
                     min="0"
                     max="30"
-                    placeholder="3"
+                    placeholder={t('bankLoans.form.reminderDaysPlaceholder')}
                     {...register('reminder_days', { valueAsNumber: true })}
                     className={errors.reminder_days ? 'border-red-500' : ''}
                   />
@@ -550,18 +569,18 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
                   onCheckedChange={(checked) => setValue('auto_debit', checked === true)}
                 />
                 <Label htmlFor="auto_debit" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Enable Auto Debit
+                  {t('bankLoans.form.autoDebit')}
                   <span className="text-xs text-muted-foreground ml-2">
-                    (Automatically create expense transactions on due dates)
+                    ({t('bankLoans.form.autoDebitHelp')})
                   </span>
                 </Label>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Label htmlFor="notes">{t('bankLoans.form.notes')}</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Add any additional notes about this loan..."
+                  placeholder={t('bankLoans.form.notesPlaceholder')}
                   {...register('notes')}
                   rows={3}
                 />
@@ -577,7 +596,7 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
               onClick={handleClose}
               disabled={isLoading}
             >
-              Cancel
+              {t('bankLoans.form.cancel')}
             </Button>
             <Button
               type="submit"
@@ -587,10 +606,10 @@ export default function LoanForm({ loan, isOpen, onClose, onSubmit, isLoading }:
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Saving...</span>
+                  <span>{loan ? t('bankLoans.form.updating') : t('bankLoans.form.creating')}</span>
                 </div>
               ) : (
-                loan ? 'Update Loan' : 'Add Loan'
+                loan ? t('bankLoans.form.updateButton') : t('bankLoans.form.createButton')
               )}
             </Button>
           </div>

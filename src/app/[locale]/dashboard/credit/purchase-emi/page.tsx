@@ -58,6 +58,7 @@ import DeleteLoanDialog from '@/components/loans/DeleteLoanDialog'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { useTranslations } from 'next-intl'
 
 const purchaseTypeIcons = {
   electronics: Smartphone,
@@ -102,6 +103,8 @@ export default function PurchaseEMIPage() {
   const { formatAmount, getCurrencySymbol } = useAppStore()
   const { loans, loading, addLoan, editLoan, removeLoan } = useLoans()
   const { processLoanPayment, isProcessing: isAutoProcessing } = useAutoTransactions()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
 
   // Filter purchase EMIs (loans with type 'purchase_emi')
   const purchaseEMIs = loans?.filter(loan => loan.type === 'purchase_emi') || []
@@ -320,15 +323,15 @@ export default function PurchaseEMIPage() {
             <Link href="/dashboard/credit">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
+                {tCommon('back')}
               </Button>
             </Link>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Purchase EMIs
+                {t('purchaseEmi.title')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Manage your purchase financing and installment payments
+                {t('purchaseEmi.subtitle')}
               </p>
             </div>
           </div>
@@ -339,12 +342,12 @@ export default function PurchaseEMIPage() {
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Purchase EMI
+              {t('purchaseEmi.addNewEmi')}
             </Button>
             {selectedEMIs.length > 0 && (
               <Button variant="destructive" onClick={handleBulkDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete {selectedEMIs.length}
+                {tCommon('delete')} {selectedEMIs.length}
               </Button>
             )}
           </div>
@@ -364,7 +367,7 @@ export default function PurchaseEMIPage() {
                   <DollarSign className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Outstanding</p>
+                  <p className="text-sm text-muted-foreground">{t('overview.totalOutstanding')}</p>
                   <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                     {formatAmount(totalOutstanding)}
                   </p>
@@ -380,7 +383,7 @@ export default function PurchaseEMIPage() {
                   <Calendar className="h-6 w-6 text-pink-600 dark:text-pink-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Monthly EMIs</p>
+                  <p className="text-sm text-muted-foreground">{t('purchaseEmi.monthlyEmis')}</p>
                   <p className="text-2xl font-bold text-pink-600 dark:text-pink-400">
                     {formatAmount(totalMonthlyEMI)}
                   </p>
@@ -396,7 +399,7 @@ export default function PurchaseEMIPage() {
                   <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Active EMIs</p>
+                  <p className="text-sm text-muted-foreground">{t('purchaseEmi.activeEmis')}</p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {activeEMIs}
                   </p>
@@ -412,7 +415,7 @@ export default function PurchaseEMIPage() {
                   <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Overdue</p>
+                  <p className="text-sm text-muted-foreground">{tCommon('overdue')}</p>
                   <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {overdueEMIs}
                   </p>
