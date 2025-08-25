@@ -33,11 +33,13 @@
       "WebFetch(domain:next-intl.dev)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:phrase.com)",
-      "Bash(timeout 300s npm run build)"
+      "Bash(timeout 300s npm run build)",
+      "Read(/D:\\d\\Projects\\NextJs/**)"
     ],
     "deny": [],
     "additionalDirectories": [
-      "D:\\"
+      "D:\\",
+      "D:\\d\\Projects\\NextJs"
     ]
   }
 }
