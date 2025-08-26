@@ -1,0 +1,21 @@
+{
+  "calculators": {
+    "title": "Calculators",
+    "subtitle": "Financial planning tools and calculators",
+    "loanEmiCalculator": "Loan & EMI Calculator",
+    "taxCalculator": "Tax Calculator",
+    "zakatCalculator": "Zakat Calculator",
+    "investmentCalculator": "Investment Calculator",
+    "calculate": "Calculate",
+    "reset": "Reset",
+    "principal": "Principal Amount",
+    "rateOfInterest": "Rate of Interest",
+    "timePeriod": "Time Period",
+    "monthlyEmi": "Monthly EMI",
+    "totalInterest": "Total Interest",
+    "totalAmount": "Total Amount",
+    "years": "Years",
+    "months": "Months",
+    "perAnnum": "Per Annum"
+  }
+}

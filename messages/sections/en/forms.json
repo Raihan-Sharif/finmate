@@ -1,0 +1,21 @@
+{
+  "forms": {
+    "required": "Required",
+    "optional": "Optional",
+    "selectOption": "Select an option",
+    "enterValue": "Enter value",
+    "chooseFile": "Choose file",
+    "dragDropFile": "Drag and drop file here or click to browse",
+    "invalidInput": "Invalid input",
+    "fieldRequired": "This field is required",
+    "invalidEmail": "Invalid email format",
+    "invalidNumber": "Invalid number format",
+    "invalidDate": "Invalid date format",
+    "minLength": "Minimum {min} characters required",
+    "maxLength": "Maximum {max} characters allowed",
+    "formSaved": "Form saved successfully",
+    "formError": "Error saving form",
+    "unsavedChanges": "You have unsaved changes",
+    "discardChanges": "Discard changes?"
+  }
+}

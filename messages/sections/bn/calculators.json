@@ -1,0 +1,21 @@
+{
+  "calculators": {
+    "title": "ক্যালকুলেটর",
+    "subtitle": "আর্থিক পরিকল্পনার সরঞ্জাম ও ক্যালকুলেটর",
+    "loanEmiCalculator": "ঋণ ও ইএমআই ক্যালকুলেটর",
+    "taxCalculator": "কর ক্যালকুলেটর",
+    "zakatCalculator": "যাকাত ক্যালকুলেটর",
+    "investmentCalculator": "বিনিয়োগ ক্যালকুলেটর",
+    "calculate": "গণনা করুন",
+    "reset": "রিসেট করুন",
+    "principal": "মূল অর্থ",
+    "rateOfInterest": "সুদের হার",
+    "timePeriod": "সমযকাল",
+    "monthlyEmi": "মাসিক ইএমআই",
+    "totalInterest": "মোট সুদ",
+    "totalAmount": "মোট অর্থ",
+    "years": "বছর",
+    "months": "মাস",
+    "perAnnum": "বার্ষিক"
+  }
+}

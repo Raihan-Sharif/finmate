@@ -1,0 +1,203 @@
+{
+  "dashboard": {
+    "periods": {
+      "last7Days": "গত ৭ দিন",
+      "last30Days": "গত ৩০ দিন",
+      "last3Months": "গত ৩ মাস",
+      "last6Months": "গত ৬ মাস",
+      "lastYear": "গত বছর",
+      "yearToDate": "বছরের শুরু থেকে এ পর্যন্ত",
+      "allTime": "সকল সময়",
+      "thisMonth": "এই মাস",
+      "thisYear": "এই বছর"
+    },
+    "greeting": {
+      "morning": "সুপ্রভাত",
+      "afternoon": "শুভ দুপুর",
+      "evening": "শুভ সন্ধ্যা"
+    },
+    "overview": {
+      "financialOverview": "এখানে আপনার সম্পূর্ণ আর্থিক অবস্থার সারসংক্ষেপ রয়েছে",
+      "loadingDashboard": "আপনার আর্থিক ড্যাশবোর্ড লোড হচ্ছে...",
+      "somethingWentWrong": "কিছু সমস্যা হয়েছে",
+      "tryAgain": "পুনরায় চেষ্টা করুন",
+      "quickAdd": "দ্রুত যোগ",
+      "manageBudgets": "বাজেট পরিচালনা",
+      "manageLoans": "ঋণ পরিচালনা",
+      "investments": "বিনিয়োগ",
+      "addTransaction": "লেনদেন যোগ করুন",
+      "createBudget": "বাজেট তৈরি করুন",
+      "viewReports": "রিপোর্ট দেখুন",
+      "addInvestment": "বিনিয়োগ যোগ করুন"
+    },
+    "stats": {
+      "accountBalance": "অ্যাকাউন্ট ব্যালেন্স",
+      "income": "আয়",
+      "expenses": "খরচ",
+      "netBalance": "নিট ব্যালেন্স",
+      "accounts": "অ্যাকাউন্ট",
+      "live": "লাইভ",
+      "savingsRate": "সঞ্চয় হার",
+      "investmentPortfolio": "বিনিয়োগ পোর্টফোলিও",
+      "totalInvestmentValue": "মোট বিনিয়োগের মূল্য",
+      "activeInvestments": "সক্রিয় বিনিয়োগ",
+      "returns": "রিটার্ন",
+      "loanCredit": "ঋণ ও ক্রেডিট",
+      "outstandingLoans": "বকেয়া ঋণ",
+      "activeLoans": "সক্রিয় ঋণ",
+      "pendingEmis": "পেন্ডিং ইএমআই"
+    },
+    "alerts": {
+      "smartFinancialAlerts": "স্মার্ট আর্থিক সতর্কবার্তা",
+      "immediateAttention": "তাৎক্ষণিক মনোযোগ প্রয়োজন",
+      "pendingEmis": "পেন্ডিং ইএমআই",
+      "manageLoans": "ঋণ ব্যবস্থাপনা",
+      "overdueLendings": "বকেয়া ধারদান",
+      "reviewLendings": "ধারদান পর্যালোচনা"
+    },
+    "analytics": {
+      "monthlyTrends": "মাসিক ট্রেন্ড",
+      "dynamicData": "ডাইনামিক ডেটা",
+      "incomeVsExpenses": "সময়ের সাথে আয় বনাম খরচ",
+      "allAmountsIn": "সকল পরিমাণ",
+      "categoryBreakdown": "বিভাগ অনুযায়ী ভাঙ্গন",
+      "topCategories": "শীর্ষ",
+      "expensesByCategory": "বিভাগ অনুযায়ী খরচ",
+      "financialHealth": "আর্থিক সুস্থতা",
+      "healthScore": "সুস্থতা স্কোর",
+      "excellent": "অসাধারণ",
+      "good": "ভালো",
+      "average": "গড়",
+      "poor": "খারাপ",
+      "keyFinancialMetrics": "প্রধান আর্থিক মেট্রিক্স",
+      "advancedAnalytics": "উন্নত বিশ্লেষণ",
+      "avgTransaction": "গড় লেনদেন",
+      "savingsRate": "সঞ্চয় হার",
+      "budgetUsage": "বাজেট ব্যবহার",
+      "investmentReturn": "বিনিয়োগ রিটার্ন"
+    },
+    "activity": {
+      "recentActivity": "সাম্প্রতিক কার্যক্রম",
+      "viewAll": "সব দেখুন",
+      "latestTransactions": "সর্বশেষ লেনদেন",
+      "noRecentActivity": "সাম্প্রতিক কোনো কার্যক্রম নেই",
+      "startAddingTransactions": "লেনদেন যোগ করা শুরু করুন"
+    },
+    "reminders": {
+      "upcomingReminders": "আসন্ন অনুস্মারক",
+      "items": "আইটেম",
+      "financialDeadlines": "আর্থিক সময়সীমা",
+      "today": "আজ"
+    },
+    "goals": {
+      "monthlyGoalsProgress": "মাসিক লক্ষ্যের অগ্রগতি",
+      "trackProgress": "অগ্রগতি ট্র্যাক করুন",
+      "progress": "অগ্রগতি",
+      "titles": {
+        "budget": "বাজেটের মধ্যে থাকুন",
+        "savings": "আয়ের ২০% সঞ্চয় করুন",
+        "investments": "আয়ের ১৫% বিনিয়োগ করুন"
+      },
+      "status": {
+        "achieved": "অর্জিত",
+        "on_track": "সঠিক পথে",
+        "warning": "সতর্কতা",
+        "over_budget": "বাজেট সীমা অতিক্রম",
+        "needs_attention": "মনোযোগ প্রয়োজন"
+      }
+    },
+    "health": {
+      "excellentBudgetControl": "চমৎকার বাজেট নিয়ন্ত্রণ",
+      "closeToBudgetLimit": "বাজেট সীমার কাছাকাছি",
+      "overBudget": "বাজেট অতিক্রম",
+      "greatSavingsRate": "দুর্দান্ত সঞ্চয় হার",
+      "goodSavingsRate": "ভালো সঞ্চয় হার",
+      "lowSavingsRate": "নিম্ন সঞ্চয় হার",
+      "spendingMoreThanEarning": "আয়ের চেয়ে বেশি খরচ",
+      "activeInvestor": "সক্রিয় বিনিয়োগকারী",
+      "noInvestments": "কোনো বিনিয়োগ নেই",
+      "noPendingEmis": "কোনো পেন্ডিং ইএমআই নেই",
+      "hasPendingPayments": "পেন্ডিং পেমেন্ট আছে"
+    },
+    "quickActions": {
+      "title": "দ্রুত কার্যক্রম",
+      "addTransaction": "লেনদেন যোগ করুন",
+      "createBudget": "বাজেট তৈরি করুন",
+      "viewAnalytics": "বিশ্লেষণ দেখুন",
+      "helpCenter": "সাহায্য কেন্দ্র",
+      "addExpense": "খরচ যোগ করুন",
+      "addIncome": "আয় যোগ করুন",
+      "quickTransfer": "দ্রুত স্থানান্তর",
+      "newInvestment": "নতুন বিনিয়োগ",
+      "setBudget": "বাজেট নির্ধারণ",
+      "calculateEMI": "ইএমআই গণনা",
+      "moneyLent": "ধার দেওয়া অর্থ",
+      "moneyBorrowed": "ধার নেওয়া অর্থ",
+      "importData": "ডেটা আমদানি",
+      "exportReport": "রিপোর্ট রপ্তানি",
+      "viewReports": "রিপোর্ট দেখুন",
+      "recentlyUsed": "সম্প্রতি ব্যবহৃত",
+      "usedTimeAgo": {
+        "twoHoursAgo": "২ ঘন্টা আগে ব্যবহৃত",
+        "yesterday": "গতকাল ব্যবহৃত"
+      },
+      "descriptions": {
+        "addExpense": "দ্রুত খরচ এন্ট্রি",
+        "addIncome": "আয়ের লেনদেন রেকর্ড করুন",
+        "quickTransfer": "অ্যাকাউন্টের মধ্যে স্থানান্তর",
+        "newInvestment": "নতুন বিনিয়োগ যোগ করুন",
+        "setBudget": "মাসিক বাজেট তৈরি করুন",
+        "calculateEMI": "ইএমআই ক্যালকুলেটর টুল",
+        "moneyLent": "অন্যদের দেওয়া অর্থ ট্র্যাক করুন",
+        "moneyBorrowed": "ধার নেওয়া অর্থ ট্র্যাক করুন",
+        "importData": "আর্থিক ডেটা আমদানি করুন",
+        "exportReport": "আর্থিক রিপোর্ট ডাউনলোড করুন",
+        "viewReports": "বিস্তারিত রিপোর্ট দেখুন"
+      }
+    },
+    "categories": {
+      "transactions": "লেনদেন",
+      "financialPlanning": "আর্থিক পরিকল্পনা",
+      "lendingBorrowing": "ধারদান ও ঋণ",
+      "dataManagement": "ডেটা ব্যবস্থাপনা"
+    },
+    "notifications": {
+      "paymentAlerts": "পেমেন্ট সতর্কতা",
+      "overduePayments": "অতিবাহিত পেমেন্ট",
+      "dueToday": "আজ পরিশোধ্য পেমেন্ট",
+      "unreadReminders": "অপঠিত রিমাইন্ডার",
+      "immediateAttention": "তাৎক্ষণিক মনোযোগ প্রয়োজন",
+      "dontForgetEmi": "আপনার ইএমআই পেমেন্ট ভুলবেন না",
+      "checkNotificationCenter": "আপনার নোটিফিকেশন সেন্টার চেক করুন",
+      "allCaughtUp": "সব আপডেট!",
+      "noPendingPayments": "কোনো পেন্ডিং পেমেন্ট বা রিমাইন্ডার নেই",
+      "viewCreditDashboard": "ক্রেডিট ড্যাশবোর্ড দেখুন"
+    },
+    "charts": {
+      "line": "লাইন",
+      "area": "এরিয়া",
+      "bar": "বার",
+      "pie": "পাই",
+      "income": "আয়",
+      "expenses": "ব্যয়",
+      "net": "নেট",
+      "amount": "পরিমাণ",
+      "percentage": "শতাংশ",
+      "transaction": "লেনদেন",
+      "transactions": "লেনদেন",
+      "categoryBreakdown": "বিভাগ ভিত্তিক বিভাজন",
+      "spendingByCategory": "বিভাগ অনুসারে ব্যয়",
+      "topSpendingCategories": "শীর্ষ ব্যয়ের বিভাগ",
+      "monthlyTrends": "মাসিক প্রবণতা",
+      "financialOverview": "আর্থিক পূর্ণাঙ্গ চিত্র",
+      "spendingAnalysis": "ব্যয় বিশ্লেষণ",
+      "incomeAnalysis": "আয় বিশ্লেষণ",
+      "budgetAnalysis": "বাজেট বিশ্লেষণ",
+      "viewType": "দৃশ্যের ধরন",
+      "listView": "তালিকা দৃশ্য",
+      "chartView": "চার্ট দৃশ্য"
+    },
+    "searchPlaceholder": "লেনদেন, বিভাগ খুঁজুন...",
+    "profile": "প্রোফাইল"
+  }
+}

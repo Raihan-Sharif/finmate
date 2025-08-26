@@ -1,0 +1,30 @@
+{
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account and preferences",
+    "general": "General",
+    "accounts": "Accounts",
+    "categories": "Categories",
+    "exportData": "Export Data",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "currency": "Currency",
+    "language": "Language",
+    "notifications": "Notifications",
+    "security": "Security",
+    "privacy": "Privacy",
+    "saveChanges": "Save Changes",
+    "accountSettings": "Account Settings",
+    "personalInformation": "Personal Information",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address",
+    "phoneNumber": "Phone Number",
+    "dateOfBirth": "Date of Birth",
+    "profilePicture": "Profile Picture",
+    "uploadPicture": "Upload Picture",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password"
+  }
+}

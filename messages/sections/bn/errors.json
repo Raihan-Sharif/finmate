@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "somethingWentWrong": "কিছু সমস্যা হয়েছে",
+    "tryAgain": "আবার চেষ্টা করুন",
+    "loading": "লোড হচ্ছে...",
+    "noData": "কোনো ডেটা নেই",
+    "networkError": "নেটওয়ার্ক সমস্যা হয়েছে",
+    "serverError": "সার্ভার সমস্যা হয়েছে",
+    "validationError": "ভ্যালিডেশন সমস্যা",
+    "unauthorized": "অনধিকৃত অ্যাক্সেস",
+    "notFound": "পাওয়া যায়নি",
+    "timeout": "রিকুয়েস্ট টাইমআউট"
+  }
+}

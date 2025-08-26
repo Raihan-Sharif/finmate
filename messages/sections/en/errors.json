@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "tryAgain": "Try again",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "networkError": "Network error occurred",
+    "serverError": "Server error occurred",
+    "validationError": "Validation error",
+    "unauthorized": "Unauthorized access",
+    "notFound": "Not found",
+    "timeout": "Request timeout"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "close": "Close",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "import": "Import",
+    "export": "Export",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "reset": "Reset"
+  }
+}

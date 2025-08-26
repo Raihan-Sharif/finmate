@@ -1,0 +1,215 @@
+{
+  "transactions": {
+    "title": "Transactions",
+    "subtitle": "Track and manage all your financial transactions",
+    "actions": {
+      "addTransaction": "Add Transaction",
+      "editTransaction": "Edit Transaction",
+      "deleteTransaction": "Delete Transaction",
+      "import": "Import",
+      "export": "Export"
+    },
+    "stats": {
+      "totalIncome": "Total Income",
+      "totalExpenses": "Total Expenses",
+      "netAmount": "Net Amount"
+    },
+    "filters": {
+      "title": "Filters & Search",
+      "searchPlaceholder": "Search transactions...",
+      "sortBy": "Sort by",
+      "category": "Category",
+      "allCategories": "All Categories",
+      "account": "Account",
+      "allAccounts": "All Accounts",
+      "type": "Type",
+      "allTypes": "All Types",
+      "activeFilters": "Active filters",
+      "search": "Search"
+    },
+    "sorting": {
+      "dateNewest": "Date (Newest First)",
+      "dateOldest": "Date (Oldest First)",
+      "amountHighest": "Amount (Highest First)",
+      "amountLowest": "Amount (Lowest First)",
+      "descriptionAZ": "Description (A-Z)"
+    },
+    "list": {
+      "title": "Transactions",
+      "transactions": "transactions",
+      "results": "results"
+    },
+    "empty": {
+      "title": "No transactions found",
+      "error": "Failed to load transactions",
+      "description": "Start by adding your first transaction"
+    },
+    "labels": {
+      "uncategorized": "Uncategorized",
+      "noAccount": "No Account"
+    },
+    "form": {
+      "newTransaction": "Add New Transaction",
+      "editTransaction": "Edit Transaction",
+      "backToTransactions": "Back to Transactions",
+      "recordTransaction": "Record a new {type} transaction",
+      "transactionDetails": "Transaction Details",
+      "transactionType": "Transaction Type",
+      "expense": "Expense",
+      "income": "Income",
+      "amount": "Amount",
+      "amountPlaceholder": "0.00",
+      "description": "Description",
+      "descriptionPlaceholder": "What was this transaction for?",
+      "category": "Category",
+      "selectCategory": "Select {type} category",
+      "loadingCategories": "Loading categories...",
+      "subcategory": "Subcategory",
+      "selectCategoryFirst": "Select category first",
+      "noSubcategories": "No subcategories",
+      "selectSubcategory": "Select subcategory",
+      "noSubcategoriesAvailable": "No subcategories available",
+      "account": "Account",
+      "selectAccount": "Select account",
+      "loadingAccounts": "Loading accounts...",
+      "noCategoriesFound": "No categories found",
+      "noAccountsFound": "No accounts found",
+      "transactionDate": "Transaction Date",
+      "additionalDetails": "Additional Details",
+      "additionalDetailsDescription": "Optional information to help organize your transaction",
+      "vendor": "Vendor/Payee",
+      "vendorPlaceholder": "Who did you pay or receive from?",
+      "location": "Location",
+      "locationPlaceholder": "Where did this transaction happen?",
+      "tags": "Tags",
+      "tagsPlaceholder": "Add tags to categorize this transaction",
+      "addTag": "Add",
+      "notes": "Notes",
+      "notesPlaceholder": "Any additional notes about this transaction...",
+      "recurringTransaction": "Recurring Transaction",
+      "recurringDescription": "Set up this transaction to repeat automatically",
+      "recurringLabel": "Recurring Transaction",
+      "recurringHelp": "Automatically create this transaction on a schedule",
+      "active": "Active",
+      "repeatFrequency": "Repeat Frequency",
+      "repeatFrequencyPlaceholder": "How often should this repeat?",
+      "weekly": "Weekly (Every 7 days)",
+      "biweekly": "Bi-weekly (Every 14 days)",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly (Every 3 months)",
+      "yearly": "Yearly",
+      "recurringTip": "💡 <strong>Tip:</strong> The first transaction will be created immediately, then future transactions will be generated automatically based on your selected frequency.",
+      "receipt": "Receipt",
+      "receiptDescription": "Upload a photo or scan of your receipt",
+      "uploadReceipt": "Upload Receipt",
+      "fileTypes": "PNG, JPG, PDF up to 10MB",
+      "clickToChange": "Click to change",
+      "takePhoto": "Take Photo",
+      "quickActions": "Quick Actions",
+      "splitTransaction": "Split Transaction",
+      "duplicateTransaction": "Duplicate Transaction",
+      "saveAsTemplate": "Save as Template",
+      "cancel": "Cancel",
+      "saveAndAddAnother": "Save & Add Another",
+      "saving": "Saving...",
+      "saveTransaction": "Save Transaction",
+      "updateTransactionButton": "Update Transaction",
+      "errors": {
+        "amountRequired": "Amount is required",
+        "amountMustBeGreater": "Amount must be greater than 0",
+        "descriptionRequired": "Description is required",
+        "dateRequired": "Date is required",
+        "loginRequired": "You must be logged in to create transactions",
+        "saveFailed": "Failed to save transaction",
+        "updateFailed": "Failed to update transaction",
+        "transactionNotFound": "Transaction not found"
+      },
+      "success": {
+        "transactionCreated": "Transaction created successfully!",
+        "recurringCreated": "Transaction and recurring schedule created successfully!",
+        "defaultDataCreated": "Default categories and accounts created!",
+        "transactionUpdated": "Transaction updated successfully!",
+        "recurringUpdated": "Transaction and recurring schedule updated successfully!",
+        "recurringRemoved": "Transaction updated and recurring schedule removed!"
+      },
+      "updateTransaction": "Update your {type} transaction details",
+      "updating": "Updating..."
+    },
+    "recurring": {
+      "title": "Recurring Transactions",
+      "subtitle": "Manage your automatic recurring transactions",
+      "backToTransactions": "Back to Transactions",
+      "addRecurring": "Add Recurring",
+      "stats": {
+        "total": "Total",
+        "active": "Active",
+        "paused": "Paused",
+        "monthlyImpact": "Monthly Impact"
+      },
+      "frequency": {
+        "weekly": "Weekly",
+        "biweekly": "Bi-weekly",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly"
+      },
+      "status": {
+        "active": "Active",
+        "paused": "Paused"
+      },
+      "timing": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "inDays": "In {days} days",
+        "daysOverdue": "{days} days overdue"
+      },
+      "empty": {
+        "title": "No Recurring Transactions",
+        "description": "Set up automatic transactions to save time on repeated income and expenses.",
+        "createFirst": "Create First Recurring Transaction"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "activate": "Activate",
+        "pause": "Pause"
+      },
+      "labels": {
+        "amount": "Amount",
+        "next": "Next",
+        "untitledTransaction": "Untitled Transaction"
+      },
+      "messages": {
+        "activated": "Recurring transaction activated",
+        "paused": "Recurring transaction paused",
+        "deleted": "Recurring transaction deleted",
+        "updateFailed": "Failed to update recurring transaction",
+        "deleteFailed": "Failed to delete recurring transaction",
+        "loadFailed": "Failed to load recurring transactions",
+        "deleteConfirm": "Are you sure you want to delete this recurring transaction?",
+        "noTransactionsFound": "No transactions found for this recurring template. Would you like to create the first transaction now?",
+        "firstTransactionCreated": "First transaction created successfully!",
+        "createFirstFailed": "Failed to create first transaction",
+        "findTransactionFailed": "Could not find transaction to edit"
+      },
+      "manageTemplates": "Manage Templates",
+      "backToRecurring": "Back to Recurring",
+      "templates": {
+        "title": "Recurring Transaction Templates",
+        "subtitle": "Create and manage templates for your recurring transactions",
+        "create": "Create Template",
+        "edit": "Edit Template",
+        "description": "Set up a template for recurring transactions",
+        "created": "Template created successfully!",
+        "updated": "Template updated successfully!",
+        "deleted": "Template deleted successfully!",
+        "saveFailed": "Failed to save template",
+        "deleteConfirm": "Are you sure you want to delete this template?",
+        "empty": {
+          "title": "No Templates",
+          "description": "Create your first template for recurring transactions."
+        }
+      }
+    }
+  }
+}

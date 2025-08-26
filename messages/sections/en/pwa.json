@@ -1,0 +1,23 @@
+{
+  "pwa": {
+    "title": "Install FinMate",
+    "subtitle": "Get the best experience with our app",
+    "benefits": {
+      "worksOffline": "Works offline",
+      "fasterLoading": "Faster loading",
+      "pushNotifications": "Push notifications"
+    },
+    "buttons": {
+      "install": "Install",
+      "later": "Later"
+    },
+    "ios": {
+      "title": "Install on iOS",
+      "step1": "Tap the",
+      "step2": "Select",
+      "step3": "Tap \"Add\" to confirm",
+      "addToHomeScreen": "Add to Home Screen",
+      "shareButton": "share button"
+    }
+  }
+}

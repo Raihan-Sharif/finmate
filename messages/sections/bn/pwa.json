@@ -1,0 +1,23 @@
+{
+  "pwa": {
+    "title": "FinMate ইনস্টল করুন",
+    "subtitle": "আমাদের অ্যাপের সাথে সেরা অভিজ্ঞতা পান",
+    "benefits": {
+      "worksOffline": "অফলাইনে কাজ করে",
+      "fasterLoading": "দ্রুত লোডিং",
+      "pushNotifications": "পুশ নোটিফিকেশন"
+    },
+    "buttons": {
+      "install": "ইনস্টল করুন",
+      "later": "পরে"
+    },
+    "ios": {
+      "title": "iOS-এ ইনস্টল করুন",
+      "step1": "টেপ করুন",
+      "step2": "নির্বাচন করুন",
+      "step3": "নিশ্চিত করতে \"Add\" টেপ করুন",
+      "addToHomeScreen": "হোম স্ক্রিনে যোগ করুন",
+      "shareButton": "শেয়ার বাটন"
+    }
+  }
+}

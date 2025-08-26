@@ -1,0 +1,30 @@
+{
+  "settings": {
+    "title": "সেটিংস",
+    "subtitle": "আপনার অ্যাকাউন্ট ও পছন্দ পরিচালনা করুন",
+    "general": "সাধারণ",
+    "accounts": "অ্যাকাউন্ট",
+    "categories": "বিভাগসমূহ",
+    "exportData": "ডেটা রপ্তানি",
+    "profile": "প্রোফাইল",
+    "preferences": "পছন্দ",
+    "currency": "মুদ্রা",
+    "language": "ভাষা",
+    "notifications": "নোটিফিকেশন",
+    "security": "নিরাপত্তা",
+    "privacy": "গোপনীয়তা",
+    "saveChanges": "পরিবর্তন সংরক্ষণ করুন",
+    "accountSettings": "অ্যাকাউন্ট সেটিংস",
+    "personalInformation": "ব্যক্তিগত তথ্য",
+    "fullName": "সম্পূর্ণ নাম",
+    "emailAddress": "ইমেইল ঠিকানা",
+    "phoneNumber": "ফোন নম্বর",
+    "dateOfBirth": "জন্ম তারিখ",
+    "profilePicture": "প্রোফাইল ছবি",
+    "uploadPicture": "ছবি আপলোড করুন",
+    "changePassword": "পাসওয়ার্ড পরিবর্তন করুন",
+    "currentPassword": "বর্তমান পাসওয়ার্ড",
+    "newPassword": "নতুন পাসওয়ার্ড",
+    "confirmPassword": "পাসওয়ার্ড নিশ্চিত করুন"
+  }
+}

@@ -136,7 +136,7 @@ export async function updateLoan(id: string, updates: LoanUpdate): Promise<{ dat
     if (updates.principal_amount || updates.interest_rate || updates.tenure_months) {
       const { data: currentLoan } = await supabase
         .from('loans')
-        .select('principal_amount, interest_rate, tenure_months')
+        .select('principal_amount, interest_rate, tenure_months, outstanding_amount, prepayment_amount')
         .eq('id', id)
         .single()
       
@@ -146,6 +146,21 @@ export async function updateLoan(id: string, updates: LoanUpdate): Promise<{ dat
         const tenure = updates.tenure_months || currentLoan.tenure_months
         
         finalUpdates.emi_amount = calculateEMI(principal, rate, tenure)
+        
+        // CRITICAL FIX: If principal amount is being updated, reset outstanding_amount appropriately
+        if (updates.principal_amount && updates.principal_amount !== currentLoan.principal_amount) {
+          // Calculate how much has been paid (original - current outstanding)
+          const paidAmount = currentLoan.principal_amount - (currentLoan.outstanding_amount || 0)
+          
+          // If no payments have been made (paid amount is 0), reset to new principal
+          if (paidAmount <= 0) {
+            finalUpdates.outstanding_amount = principal
+          } else {
+            // If payments have been made, adjust outstanding amount proportionally
+            // New outstanding = new principal - amount already paid
+            finalUpdates.outstanding_amount = Math.max(0, principal - paidAmount)
+          }
+        }
         
         // Regenerate schedule if loan structure changed
         await supabase.rpc('create_emi_schedule_entries', {

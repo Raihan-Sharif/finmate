@@ -1,0 +1,21 @@
+{
+  "forms": {
+    "required": "আবশ্যক",
+    "optional": "আবশ্যক নয়",
+    "selectOption": "একটি অপশন নির্বাচন করুন",
+    "enterValue": "মান লিখুন",
+    "chooseFile": "ফাইল বেছে নিন",
+    "dragDropFile": "ফাইল এখানে টেনে আনুন অথবা ব্রাউজ করতে ক্লিক করুন",
+    "invalidInput": "অবৈধ ইনপুট",
+    "fieldRequired": "এই ক্ষেত্রটি আবশ্যক",
+    "invalidEmail": "অবৈধ ইমেইল ফরম্যাট",
+    "invalidNumber": "অবৈধ সংখ্যা ফরম্যাট",
+    "invalidDate": "অবৈধ তারিখ ফরম্যাট",
+    "minLength": "সর্বনিম্ন {min}টি অক্ষর প্রয়োজন",
+    "maxLength": "সর্বোচ্চ {max}টি অক্ষর অনুমোদিত",
+    "formSaved": "ফর্ম সফলভাবে সংরক্ষিত হয়েছে",
+    "formError": "ফর্ম সংরক্ষণে সমস্যা",
+    "unsavedChanges": "আপনার অসংরক্ষিত পরিবর্তন রয়েছে",
+    "discardChanges": "পরিবর্তনগুলি বাতিল করবেন?"
+  }
+}
