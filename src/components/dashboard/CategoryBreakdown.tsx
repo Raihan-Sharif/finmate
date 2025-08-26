@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatPercentage } from "@/lib/utils";
 import { CategoryExpense, CurrencyType } from "@/types";
+import { useTranslations } from 'next-intl';
 import { ArrowUpRight, BarChart3, PieChart as PieIcon } from "lucide-react";
 import { useState } from "react";
 import {
@@ -30,6 +31,7 @@ export function CategoryBreakdown({
   currency,
 }: CategoryBreakdownProps) {
   const [viewType, setViewType] = useState<"pie" | "bar" | "list">("pie");
+  const t = useTranslations('dashboard');
 
   // Colors for the pie chart
   const COLORS = [
@@ -59,15 +61,14 @@ export function CategoryBreakdown({
             {data.category_name}
           </p>
           <p className="text-sm text-muted-foreground">
-            Amount:{" "}
+            {t('charts.amount')}:{" "}
             {showBalances ? formatCurrency(data.amount, currency) : "••••••"}
           </p>
           <p className="text-sm text-muted-foreground">
-            Percentage: {formatPercentage(data.percentage)}
+            {t('charts.percentage')}: {formatPercentage(data.percentage)}
           </p>
           <p className="text-xs text-muted-foreground">
-            {data.transactions_count} transaction
-            {data.transactions_count !== 1 ? "s" : ""}
+            {data.transactions_count} {t('charts.transaction', { count: data.transactions_count })}
           </p>
         </div>
       );

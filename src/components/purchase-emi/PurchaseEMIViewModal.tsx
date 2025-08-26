@@ -29,6 +29,7 @@ import {
   FileText
 } from 'lucide-react'
 import { useAppStore } from '@/lib/stores/useAppStore'
+import { useTranslations } from 'next-intl'
 
 interface PurchaseEMIViewModalProps {
   emi: any | null
@@ -46,6 +47,8 @@ export default function PurchaseEMIViewModal({
   onDelete
 }: PurchaseEMIViewModalProps) {
   const { formatAmount } = useAppStore()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
 
   if (!emi) return null
 
@@ -79,10 +82,10 @@ export default function PurchaseEMIViewModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
-            Purchase EMI Details
+            {t('purchaseEmi.viewDetails')}
           </DialogTitle>
           <DialogDescription>
-            Complete information about your purchase EMI
+            {t('purchaseEmi.completeInformation')}
           </DialogDescription>
         </DialogHeader>
 
@@ -94,18 +97,18 @@ export default function PurchaseEMIViewModal({
               <p className="text-muted-foreground">{emi.lender}</p>
               <div className="flex items-center gap-2 mt-1">
                 <Badge className={statusColors[emi.status as keyof typeof statusColors]}>
-                  {emi.status}
+                  {t(`common.status.${emi.status}`) || emi.status}
                 </Badge>
                 {isOverdue && (
                   <Badge variant="destructive">
-                    Overdue
+                    {tCommon('overdue')}
                   </Badge>
                 )}
               </div>
             </div>
             <div className="text-right">
               <p className="text-3xl font-bold text-primary">{formatAmount(emi.emi_amount)}</p>
-              <p className="text-sm text-muted-foreground">Monthly EMI</p>
+              <p className="text-sm text-muted-foreground">{tCommon('monthlyEmi')}</p>
             </div>
           </div>
 
@@ -114,28 +117,28 @@ export default function PurchaseEMIViewModal({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
-                Payment Progress
+                {t('purchaseEmi.paymentProgress')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between text-sm">
-                  <span>Progress</span>
-                  <span>{progressPercentage.toFixed(1)}% completed</span>
+                  <span>{tCommon('progress')}</span>
+                  <span>{progressPercentage.toFixed(1)}% {tCommon('completed')}</span>
                 </div>
                 <Progress value={progressPercentage} className="h-2" />
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-2xl font-bold text-green-600">{formatAmount(calculateTotalPaid())}</p>
-                    <p className="text-xs text-muted-foreground">Paid Amount</p>
+                    <p className="text-xs text-muted-foreground">{t('purchaseEmi.paidAmount')}</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-orange-600">{formatAmount(emi.outstanding_amount)}</p>
-                    <p className="text-xs text-muted-foreground">Outstanding</p>
+                    <p className="text-xs text-muted-foreground">{tCommon('outstanding')}</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-blue-600">{getRemainingMonths()}</p>
-                    <p className="text-xs text-muted-foreground">Months Left</p>
+                    <p className="text-xs text-muted-foreground">{t('purchaseEmi.monthsLeft')}</p>
                   </div>
                 </div>
               </div>
@@ -148,28 +151,28 @@ export default function PurchaseEMIViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
-                  Financial Details
+                  {tCommon('financialDetails')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Principal Amount:</span>
+                  <span className="text-muted-foreground">{tCommon('principalAmount')}:</span>
                   <span className="font-semibold">{formatAmount(emi.principal_amount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Interest Rate:</span>
+                  <span className="text-muted-foreground">{tCommon('interestRate')}:</span>
                   <span className="font-semibold">{emi.interest_rate}% p.a.</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tenure:</span>
-                  <span className="font-semibold">{emi.tenure_months} months</span>
+                  <span className="text-muted-foreground">{tCommon('tenure')}:</span>
+                  <span className="font-semibold">{emi.tenure_months} {tCommon('months')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Monthly EMI:</span>
+                  <span className="text-muted-foreground">{tCommon('monthlyEmi')}:</span>
                   <span className="font-semibold text-primary">{formatAmount(emi.emi_amount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Outstanding:</span>
+                  <span className="text-muted-foreground">{tCommon('outstanding')}:</span>
                   <span className="font-semibold text-orange-600">{formatAmount(emi.outstanding_amount)}</span>
                 </div>
               </CardContent>
@@ -179,33 +182,33 @@ export default function PurchaseEMIViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Dates & Schedule
+                  {t('purchaseEmi.datesSchedule')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Start Date:</span>
+                  <span className="text-muted-foreground">{tCommon('startDate')}:</span>
                   <span className="font-semibold">{new Date(emi.start_date).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Next Due Date:</span>
+                  <span className="text-muted-foreground">{tCommon('nextDueDate')}:</span>
                   <span className={`font-semibold ${isOverdue ? 'text-red-600' : ''}`}>
                     {emi.next_due_date ? new Date(emi.next_due_date).toLocaleDateString() : 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Payment Day:</span>
-                  <span className="font-semibold">{emi.payment_day || 'Not set'}</span>
+                  <span className="text-muted-foreground">{tCommon('paymentDay')}:</span>
+                  <span className="font-semibold">{emi.payment_day || tCommon('notSet')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Auto Debit:</span>
+                  <span className="text-muted-foreground">{tCommon('autoDebit')}:</span>
                   <span className={`font-semibold ${emi.auto_debit ? 'text-green-600' : 'text-gray-600'}`}>
-                    {emi.auto_debit ? 'Enabled' : 'Disabled'}
+                    {emi.auto_debit ? tCommon('enabled') : tCommon('disabled')}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Reminder Days:</span>
-                  <span className="font-semibold">{emi.reminder_days || 3} days</span>
+                  <span className="text-muted-foreground">{tCommon('reminderDays')}:</span>
+                  <span className="font-semibold">{emi.reminder_days || 3} {t('common.days') || 'days'}</span>
                 </div>
               </CardContent>
             </Card>
@@ -216,36 +219,36 @@ export default function PurchaseEMIViewModal({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Purchase Information
+                {t('purchaseEmi.purchaseInformation')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Store/Vendor:</span>
+                    <span className="text-muted-foreground">{t('purchaseEmi.storeVendor')}:</span>
                     <span className="font-semibold">{emi.lender}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Purchase Date:</span>
+                    <span className="text-muted-foreground">{t('purchaseEmi.purchaseDate')}:</span>
                     <span className="font-semibold">{new Date(emi.start_date).toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">EMI Type:</span>
-                    <span className="font-semibold">Purchase EMI</span>
+                    <span className="text-muted-foreground">{t('purchaseEmi.emiType')}:</span>
+                    <span className="font-semibold">{t('purchaseEmi.title')}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Currency:</span>
+                    <span className="text-muted-foreground">{tCommon('currency')}:</span>
                     <span className="font-semibold">{emi.currency}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Created:</span>
+                    <span className="text-muted-foreground">{tCommon('created')}:</span>
                     <span className="font-semibold">{new Date(emi.created_at).toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Last Updated:</span>
+                    <span className="text-muted-foreground">{tCommon('lastUpdated')}:</span>
                     <span className="font-semibold">{new Date(emi.updated_at).toLocaleDateString()}</span>
                   </div>
                 </div>
@@ -259,7 +262,7 @@ export default function PurchaseEMIViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Notes
+                  {tCommon('notes')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -277,10 +280,10 @@ export default function PurchaseEMIViewModal({
             >
               <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
                 <AlertTriangle className="h-4 w-4" />
-                <span className="font-semibold">Overdue Payment</span>
+                <span className="font-semibold">{t('purchaseEmi.overduePayment')}</span>
               </div>
               <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                This EMI payment is overdue. Please make the payment as soon as possible to avoid penalties.
+                {t('purchaseEmi.overduePaymentMessage')}
               </p>
             </motion.div>
           )}
@@ -288,15 +291,15 @@ export default function PurchaseEMIViewModal({
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" onClick={onClose}>
-              Close
+              {tCommon('close')}
             </Button>
             <Button variant="outline" onClick={onEdit}>
               <Edit className="h-4 w-4 mr-2" />
-              Edit
+              {tCommon('edit')}
             </Button>
             <Button variant="destructive" onClick={onDelete}>
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              {tCommon('delete')}
             </Button>
           </div>
         </div>

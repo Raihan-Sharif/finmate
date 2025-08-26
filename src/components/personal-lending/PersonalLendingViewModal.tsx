@@ -36,6 +36,7 @@ import {
 import { useAppStore } from '@/lib/stores/useAppStore'
 import { useLending } from '@/hooks/useLending'
 import { useAccounts } from '@/hooks/useAccounts'
+import { useTranslations } from 'next-intl'
 
 interface PersonalLendingViewModalProps {
   lending: any | null
@@ -57,6 +58,8 @@ export default function PersonalLendingViewModal({
   const { formatAmount } = useAppStore()
   const { getLendingPayments } = useLending()
   const { accounts } = useAccounts()
+  const t = useTranslations('credit')
+  const tCommon = useTranslations('common')
   const [payments, setPayments] = useState<any[]>([])
   const [loadingPayments, setLoadingPayments] = useState(false)
 
@@ -109,10 +112,12 @@ export default function PersonalLendingViewModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Personal Lending Details
+            {t('personalLending.viewDetails')}
           </DialogTitle>
           <DialogDescription>
-            Complete information about your {lending.type === 'lent' ? 'lending' : 'borrowing'} record
+            {t('personalLending.completeInformation', {
+              type: lending.type === 'lent' ? t('personalLending.lending') : t('personalLending.borrowing')
+            })}
           </DialogDescription>
         </DialogHeader>
 
@@ -123,21 +128,21 @@ export default function PersonalLendingViewModal({
               <h3 className="text-2xl font-bold">{lending.person_name}</h3>
               <div className="flex items-center gap-2 mt-1">
                 <Badge className={typeColors[lending.type as keyof typeof typeColors]}>
-                  {lending.type === 'lent' ? 'Money Lent' : 'Money Borrowed'}
+                  {lending.type === 'lent' ? t('personalLending.moneyLent') : t('personalLending.moneyBorrowed')}
                 </Badge>
                 <Badge className={statusColors[lending.status as keyof typeof statusColors]}>
-                  {lending.status}
+                  {t(`common.status.${lending.status}`) || lending.status}
                 </Badge>
                 {isOverdue && (
                   <Badge variant="destructive">
-                    Overdue
+                    {tCommon('overdue')}
                   </Badge>
                 )}
               </div>
             </div>
             <div className="text-right">
               <p className="text-3xl font-bold text-primary">{formatAmount(lending.pending_amount)}</p>
-              <p className="text-sm text-muted-foreground">Remaining Amount</p>
+              <p className="text-sm text-muted-foreground">{t('personalLending.remainingAmount')}</p>
             </div>
           </div>
 

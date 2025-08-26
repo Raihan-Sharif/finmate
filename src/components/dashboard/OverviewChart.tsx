@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { CurrencyType, MonthlyData } from "@/types";
+import { useTranslations } from 'next-intl';
 import {
   Activity,
   BarChart3,
@@ -44,6 +45,7 @@ export function OverviewChart({
   currency,
 }: OverviewChartProps) {
   const [chartType, setChartType] = useState<"line" | "area" | "bar">("area");
+  const t = useTranslations('dashboard');
 
   const periods = [
     { value: "week", label: "7D" },
@@ -53,9 +55,9 @@ export function OverviewChart({
   ];
 
   const chartTypes = [
-    { value: "line", label: "Line", icon: LineIcon },
-    { value: "area", label: "Area", icon: Activity },
-    { value: "bar", label: "Bar", icon: BarChart3 },
+    { value: "line", label: t('charts.line'), icon: LineIcon },
+    { value: "area", label: t('charts.area'), icon: Activity },
+    { value: "bar", label: t('charts.bar'), icon: BarChart3 },
   ];
 
   // Calculate trends
@@ -143,7 +145,7 @@ export function OverviewChart({
               dataKey="income"
               stroke="#10B981"
               strokeWidth={3}
-              name="Income"
+              name={t('charts.income')}
               dot={{ fill: "#10B981", strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6, stroke: "#10B981", strokeWidth: 2 }}
             />
@@ -152,7 +154,7 @@ export function OverviewChart({
               dataKey="expenses"
               stroke="#EF4444"
               strokeWidth={3}
-              name="Expenses"
+              name={t('charts.expenses')}
               dot={{ fill: "#EF4444", strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6, stroke: "#EF4444", strokeWidth: 2 }}
             />
@@ -161,7 +163,7 @@ export function OverviewChart({
               dataKey="net"
               stroke="#3B82F6"
               strokeWidth={3}
-              name="Net"
+              name={t('charts.net')}
               dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6, stroke: "#3B82F6", strokeWidth: 2 }}
             />
@@ -206,7 +208,7 @@ export function OverviewChart({
               stroke="#10B981"
               fillOpacity={1}
               fill="url(#incomeGradient)"
-              name="Income"
+              name={t('charts.income')}
               strokeWidth={2}
             />
             <Area
@@ -215,7 +217,7 @@ export function OverviewChart({
               stroke="#EF4444"
               fillOpacity={1}
               fill="url(#expenseGradient)"
-              name="Expenses"
+              name={t('charts.expenses')}
               strokeWidth={2}
             />
           </AreaChart>
@@ -246,13 +248,13 @@ export function OverviewChart({
             <Bar
               dataKey="income"
               fill="#10B981"
-              name="Income"
+              name={t('charts.income')}
               radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey="expenses"
               fill="#EF4444"
-              name="Expenses"
+              name={t('charts.expenses')}
               radius={[4, 4, 0, 0]}
             />
           </BarChart>
