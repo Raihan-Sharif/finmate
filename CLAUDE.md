@@ -635,9 +635,123 @@ npm run build      # Full production build
 
 ## Internationalization (i18n) - CRITICAL IMPLEMENTATION NOTES
 
-### **VERY IMPORTANT: Next.js 15 + next-intl Setup**
+### **VERY IMPORTANT: Section-Based Translation System**
 
-The FinMate application supports **Bengali (বাংলা)** and **English** localization. The setup is complex and has specific requirements for Next.js 15.
+**⚠️ MEMORY LIMITATION SOLUTION**: Due to Claude's memory constraints with large translation files, FinMate uses a **section-wise translation system** instead of monolithic translation files.
+
+### **New Translation Architecture:**
+```
+messages/
+├── en.json                    # Original full file (fallback only)
+├── bn.json                    # Original full file (fallback only)  
+└── sections/                  # 📁 ACTIVE TRANSLATION SYSTEM
+    ├── en/
+    │   ├── common.json        # Shared UI elements, actions, status
+    │   ├── navigation.json    # Menu items, navigation labels  
+    │   ├── dashboard.json     # Dashboard translations
+    │   ├── transactions.json  # Transaction management
+    │   ├── budget.json        # Budget management
+    │   ├── investments.json   # Investment portfolio
+    │   ├── credit.json        # Credit & lending (loans, EMI, etc.)
+    │   ├── calculators.json   # Financial calculators
+    │   ├── settings.json      # Application settings
+    │   └── [other sections]   # Additional feature sections
+    └── bn/
+        ├── common.json        # Bengali shared elements
+        ├── navigation.json    # Bengali navigation
+        ├── dashboard.json     # Bengali dashboard
+        ├── transactions.json  # Bengali transactions
+        ├── budget.json        # Bengali budget
+        ├── investments.json   # Bengali investments
+        ├── credit.json        # Bengali credit & lending
+        ├── calculators.json   # Bengali calculators
+        ├── settings.json      # Bengali settings
+        └── [other sections]   # Bengali feature sections
+```
+
+### **⚡ CRITICAL RULES FOR TRANSLATION WORK:**
+
+#### 1. **NEVER Edit Original Files**
+- ❌ **DO NOT** edit `messages/en.json` or `messages/bn.json`
+- ✅ **ALWAYS** edit section files in `messages/sections/[locale]/[section].json`
+- Original files serve as fallback only
+
+#### 2. **Section-Wise Development**
+- Each feature area has its own translation section
+- Credit & lending = `credit.json`
+- Investments = `investments.json`
+- Budget management = `budget.json`
+- Dashboard = `dashboard.json`
+- Transactions = `transactions.json`
+- And so on...
+
+#### 3. **Translation Implementation Process**
+```bash
+# 1. Identify the feature section
+Feature: Bank Loans → Section: credit.json
+
+# 2. Edit the correct section files
+✅ messages/sections/en/credit.json
+✅ messages/sections/bn/credit.json
+
+# 3. NEVER edit these (fallback only)
+❌ messages/en.json
+❌ messages/bn.json
+
+# 4. Test the build
+npm run build
+```
+
+#### 4. **Available Translation Sections (18 total)**
+- **common**: Shared UI elements, actions, status labels
+- **navigation**: Menu items, navigation labels  
+- **tags**: Tag-related translations
+- **home**: Homepage content and hero sections
+- **auth**: Authentication (signin/signup) translations
+- **dashboard**: Dashboard-specific translations
+- **transactions**: Transaction management
+- **budget**: Budget management
+- **investments**: Investment portfolio management
+- **credit**: Loans, EMI, lending (Bank Loans, Purchase EMI, Personal Lending, Analytics)
+- **calculators**: Financial calculators
+- **settings**: Application settings
+- **theme**: Theme and appearance
+- **errors**: Error messages
+- **actions**: Action buttons and labels
+- **forms**: Form-related translations
+- **dateTime**: Date and time formatting
+- **pwa**: Progressive Web App features
+
+#### 5. **Translation Quality Requirements**
+- ✅ **Complete Coverage**: All UI text must have translations
+- ✅ **Consistent Keys**: Both English and Bengali files must have identical key structures
+- ✅ **No Missing Keys**: Avoid showing property names instead of translations
+- ✅ **Valid JSON**: Ensure proper JSON syntax (no trailing commas, proper escaping)
+- ✅ **Input Exclusion**: Never translate input field values or dropdown options
+- ✅ **Professional Quality**: Use proper Bengali typography and grammar
+
+#### 6. **Testing & Validation**
+```bash
+# Always run these commands after translation work
+npm run build          # Test compilation
+npm run type-check     # Check TypeScript types
+npm run lint          # Code quality check
+```
+
+#### 7. **Section Loading Configuration**
+The system automatically loads sections defined in `src/i18n/request.ts`:
+```typescript
+const sections = [
+  'common', 'navigation', 'tags', 'home', 'auth', 
+  'dashboard', 'transactions', 'budget', 'investments', 
+  'credit', 'calculators', 'settings', 'theme', 
+  'errors', 'actions', 'forms', 'dateTime', 'pwa'
+];
+```
+
+### **Next.js 15 + next-intl Setup**
+
+The FinMate application supports **Bengali (বাংলা)** and **English** localization with section-wise loading.
 
 ### **Key Files & Structure:**
 ```
@@ -645,11 +759,12 @@ src/
 ├── i18n/
 │   ├── routing.ts          # Locale configuration
 │   ├── navigation.ts       # Internationalized navigation
-│   └── request.ts          # Message loading configuration
+│   └── request.ts          # Message loading with section merger
 ├── middleware.ts           # Locale detection middleware
 ├── messages/
-│   ├── en.json            # English translations
-│   └── bn.json            # Bengali translations
+│   ├── sections/           # ACTIVE: Section-wise translations
+│   ├── en.json            # FALLBACK: Original full file
+│   └── bn.json            # FALLBACK: Original full file
 └── app/
     ├── layout.tsx         # Root layout (minimal)
     ├── page.tsx           # Root redirect page

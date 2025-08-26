@@ -34,6 +34,8 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:phrase.com)",
       "Bash(timeout 300s npm run build)",
+      "Read(/D:\\d\\Projects\\NextJs/**)",
+      "Read(/D:\\d\\Projects\\NextJs/**)",
       "Read(/D:\\d\\Projects\\NextJs/**)"
     ],
     "deny": [],
