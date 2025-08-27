@@ -666,6 +666,12 @@
       "markAsCompleted": "Mark as Completed",
       "sendReminder": "Send Reminder",
       "viewDetails": "Personal Lending Details",
+      "activeRecords": "Active Records",
+      "allLendingRecords": "All Lending Records",
+      "borrowed": "Borrowed",
+      "lent": "Lent",
+      "originalAmount": "Original Amount",
+      "remaining": "Remaining",
       "completeInformation": "Complete information about your {type} record",
       "lending": "lending",
       "borrowing": "borrowing",
@@ -1035,6 +1041,17 @@
       "refreshData": "Refresh Data"
     },
     "common": {
+      "types": {
+        "personal": "Personal Loan",
+        "home": "Home Loan",
+        "car": "Car Loan",
+        "education": "Education Loan",
+        "business": "Business Loan",
+        "purchase_emi": "Purchase EMI",
+        "credit_card": "Credit Card",
+        "other": "Other"
+      },
+      "progress": "Progress",
       "loanAmount": "Loan Amount",
       "principalAmount": "Principal Amount",
       "interestRate": "Interest Rate",

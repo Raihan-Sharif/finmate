@@ -600,7 +600,7 @@ export default function PersonalLendingPage() {
                               <p className="text-2xl font-bold text-primary">{formatAmount(lending.pending_amount)}</p>
                               <p className="text-sm text-muted-foreground">{tCommon('remaining')}</p>
                               <Badge className={statusColors[lending.status]}>
-                                {lending.status}
+                                {tCommon(`status.${lending.status}`) || lending.status}
                               </Badge>
                             </div>
                             
@@ -611,7 +611,7 @@ export default function PersonalLendingPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>{tCommon('actions')}</DropdownMenuLabel>
+                                <DropdownMenuLabel>{tCommon('actionsMenu')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => handleViewLending(lending)}

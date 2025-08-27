@@ -151,7 +151,7 @@ export default function PersonalLendingViewModal({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
-                {t('personalLending.paymentProgress')}
+                {tCommon('paymentProgress')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -165,7 +165,7 @@ export default function PersonalLendingViewModal({
                   <div>
                     <p className="text-2xl font-bold text-green-600">{formatAmount(paidAmount)}</p>
                     <p className="text-xs text-muted-foreground">
-                      {lending.type === 'lent' ? t('personalLending.receivedBack') : t('personalLending.paidBack')}
+                      {lending.type === 'lent' ? t('personalLending.receivedBack') : tCommon('paidAmount')}
                     </p>
                   </div>
                   <div>
@@ -196,11 +196,11 @@ export default function PersonalLendingViewModal({
                   <span className="font-semibold">{formatAmount(lending.amount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t('personalLending.pendingAmount')}:</span>
+                  <span className="text-muted-foreground">{tCommon('pendingAmount')}:</span>
                   <span className="font-semibold text-orange-600">{formatAmount(lending.pending_amount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t('personalLending.paidAmount')}:</span>
+                  <span className="text-muted-foreground">{tCommon('paidAmount')}:</span>
                   <span className="font-semibold text-green-600">{formatAmount(paidAmount)}</span>
                 </div>
                 {lending.interest_rate > 0 && (
@@ -220,7 +220,7 @@ export default function PersonalLendingViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  {t('personalLending.datesTimeline')}
+                  {tCommon('datesTimeline')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -260,7 +260,7 @@ export default function PersonalLendingViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  {t('personalLending.contactInformation')}
+                  {tCommon('contactInformation')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -343,8 +343,8 @@ export default function PersonalLendingViewModal({
                               <span>
                                 {payment.account_id && (() => {
                                   const account = accounts?.find(acc => acc.id === payment.account_id)
-                                  return account ? `${t('personalLending.source')}: ${account.name}` : `${t('personalLending.source')}: ${t('personalLending.cashPayment')}`
-                                })() || `${t('personalLending.source')}: ${t('personalLending.cashPayment')}`}
+                                  return account ? `${tCommon('source')}: ${account.name}` : `${tCommon('source')}: ${tCommon('cashPayment')}`
+                                })() || `${tCommon('source')}: ${tCommon('cashPayment')}`}
                               </span>
                               <span className="text-muted-foreground">
                                 • {payment.payment_method || t('personalLending.bankTransfer')}

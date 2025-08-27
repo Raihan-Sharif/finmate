@@ -1,37 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import DeleteLoanDialog from '@/components/loans/DeleteLoanDialog'
+import PurchaseEMIForm from '@/components/purchase-emi/PurchaseEMIForm'
+import PurchaseEMIViewModal from '@/components/purchase-emi/PurchaseEMIViewModal'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { 
-  ShoppingBag,
-  Plus,
-  Search,
-  Filter,
-  Edit,
-  Trash2,
-  Eye,
-  MoreVertical,
-  Calendar,
-  DollarSign,
-  Percent,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  ArrowLeft,
-  CreditCard,
-  Smartphone,
-  Laptop,
-  Car,
-  Home,
-  Download,
-  Upload,
-  Package,
-  ShoppingCart
-} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -47,18 +22,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useAutoTransactions } from '@/hooks/useAutoTransactions'
 import { useLoans } from '@/hooks/useEMI'
 import { useAppStore } from '@/lib/stores/useAppStore'
-import { useAutoTransactions } from '@/hooks/useAutoTransactions'
-import { formatCurrency } from '@/lib/utils'
-import { LOAN_TYPES, LoanFormData } from '@/types/emi'
-import PurchaseEMIForm from '@/components/purchase-emi/PurchaseEMIForm'
-import PurchaseEMIViewModal from '@/components/purchase-emi/PurchaseEMIViewModal'
-import DeleteLoanDialog from '@/components/loans/DeleteLoanDialog'
+import { LoanFormData } from '@/types/emi'
+import { motion } from 'framer-motion'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Calendar,
+  Car,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Download,
+  Edit,
+  Eye,
+  Home,
+  MoreVertical,
+  Package,
+  Percent,
+  Plus,
+  Search,
+  ShoppingBag,
+  ShoppingCart,
+  Smartphone,
+  Trash2,
+  Upload
+} from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslations } from 'next-intl'
 
 const purchaseTypeIcons = {
   electronics: Smartphone,
@@ -461,10 +457,10 @@ export default function PurchaseEMIPage() {
               <SelectValue placeholder={t('common.status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('common.allStatus')}</SelectItem>
-              <SelectItem value="active">{t('common.status.active')}</SelectItem>
-              <SelectItem value="closed">{t('common.status.closed')}</SelectItem>
-              <SelectItem value="defaulted">{t('common.status.defaulted')}</SelectItem>
+              <SelectItem value="all">{tCommon('allStatus')}</SelectItem>
+              <SelectItem value="active">{tCommon('status.active')}</SelectItem>
+              <SelectItem value="closed">{tCommon('status.closed')}</SelectItem>
+              <SelectItem value="defaulted">{tCommon('status.defaulted')}</SelectItem>
             </SelectContent>
           </Select>
         </motion.div>
@@ -485,11 +481,11 @@ export default function PurchaseEMIPage() {
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" size="sm">
                     <Upload className="h-4 w-4 mr-2" />
-                    {t('common.actions.import')}
+                    {tCommon('actions.import')}
                   </Button>
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
-                    {t('common.actions.export')}
+                    {tCommon('actions.export')}
                   </Button>
                 </div>
               </CardTitle>
@@ -581,7 +577,7 @@ export default function PurchaseEMIPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
+                                <DropdownMenuLabel>{tCommon('actionsMenu')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => handleViewEMI(emi)}
@@ -628,7 +624,7 @@ export default function PurchaseEMIPage() {
                               <span className="font-semibold">{formatAmount(emi.outstanding_amount)}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">{t('common.principal')}: </span>
+                              <span className="text-muted-foreground">{tCommon('principal')}: </span>
                               <span className="font-semibold">{formatAmount(emi.principal_amount)}</span>
                             </div>
                             <div>
@@ -640,7 +636,7 @@ export default function PurchaseEMIPage() {
                           </div>
                           {emi.notes && (
                             <div className="mt-2">
-                              <span className="text-muted-foreground">{t('common.notes')}: </span>
+                              <span className="text-muted-foreground">{tCommon('notes')}: </span>
                               <span className="text-sm">{emi.notes}</span>
                             </div>
                           )}

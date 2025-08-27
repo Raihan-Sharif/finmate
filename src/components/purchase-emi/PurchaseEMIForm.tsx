@@ -1,21 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -23,27 +9,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { 
-  ShoppingCart, 
-  Calculator, 
-  Store, 
-  Package,
-  CreditCard,
-  Calendar,
-  Percent,
-  DollarSign,
-  Smartphone,
-  Laptop,
-  Home,
-  Car
-} from 'lucide-react'
-import { useAppStore } from '@/lib/stores/useAppStore'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useCategories } from '@/hooks/useCategories'
+import { useAppStore } from '@/lib/stores/useAppStore'
 import { renderIcon } from '@/lib/utils/iconMapping'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { motion } from 'framer-motion'
+import {
+  Calculator,
+  Calendar,
+  CreditCard,
+  Package,
+  Percent,
+  ShoppingCart
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 // Schema will be created inside the component to access translations
 
@@ -422,7 +415,7 @@ export default function PurchaseEMIForm({
                       <SelectValue placeholder={accountsLoading ? `${tCommon('loading')}...` : tCommon('selectAccount')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">{t('common.noAccount')}</SelectItem>
+                      <SelectItem value="none">{tCommon('noAccount')}</SelectItem>
                       {accounts?.map((account) => (
                         <SelectItem key={account.id} value={account.id}>
                           <div className="flex items-center justify-between w-full">
@@ -448,7 +441,7 @@ export default function PurchaseEMIForm({
                       <SelectValue placeholder={categoriesLoading ? `${tCommon('loading')}...` : tCommon('selectCategorySubcategory')} />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-y-auto">
-                      <SelectItem value="none">{t('common.noCategory')}</SelectItem>
+                      <SelectItem value="none">{tCommon('noCategory')}</SelectItem>
                       {dropdownOptions?.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           <div className="flex items-center space-x-2">
@@ -473,7 +466,7 @@ export default function PurchaseEMIForm({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {t('common.chooseCategoryHelp')}
+                    {tCommon('chooseCategoryHelp')}
                   </p>
                 </div>
               </div>

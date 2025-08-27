@@ -636,6 +636,12 @@
       "markAsCompleted": "সম্পন্ন হিসেবে চিহ্নিত করুন",
       "sendReminder": "রিমাইন্ডার পাঠান",
       "viewDetails": "ব্যক্তিগত লেন্ডিং বিবরণ",
+      "activeRecords": "সক্রিয় রেকর্ড",
+      "allLendingRecords": "সব ধারদান রেকর্ড",
+      "borrowed": "উধার নিয়েছেন",
+      "lent": "ধার দিয়েছেন",
+      "originalAmount": "মূল পরিমাণ",
+      "remaining": "বাকি",
       "completeInformation": "আপনার {type} রেকর্ডের সম্পূর্ণ তথ্য",
       "lending": "ধার দেওয়া",
       "borrowing": "ধার নেওয়া",
@@ -1005,6 +1011,17 @@
       "refreshData": "ডেটা রিফ্রেশ করুন"
     },
     "common": {
+      "types": {
+        "personal": "ব্যক্তিগত ঋণ",
+        "home": "বাড়ির ঋণ",
+        "car": "গাড়ির ঋণ",
+        "education": "শিক্ষা ঋণ",
+        "business": "ব্যবসায়িক ঋণ",
+        "purchase_emi": "ক্রয় ইএমআই",
+        "credit_card": "ক্রেডিট কার্ড",
+        "other": "অন্যান্য"
+      },
+      "progress": "অগ্রগতি",
       "loanAmount": "ঋণের পরিমাণ",
       "principalAmount": "মূল পরিমাণ",
       "interestRate": "সুদের হার",

@@ -539,7 +539,7 @@ export default function BankLoansPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>{tCommon('actions')}</DropdownMenuLabel>
+                                <DropdownMenuLabel>{tCommon('actionsMenu')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => handleViewLoan(loan)}

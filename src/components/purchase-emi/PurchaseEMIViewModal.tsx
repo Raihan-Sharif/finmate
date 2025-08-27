@@ -1,11 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
 import {
   Dialog,
   DialogContent,
@@ -13,22 +10,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { 
-  ShoppingCart,
-  Package,
-  Store,
-  Calendar,
-  DollarSign,
-  Percent,
-  Clock,
-  Edit,
-  Trash2,
-  CreditCard,
-  CheckCircle,
-  AlertTriangle,
-  FileText
-} from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
 import { useAppStore } from '@/lib/stores/useAppStore'
+import { motion } from 'framer-motion'
+import {
+  AlertTriangle,
+  Calendar,
+  CheckCircle,
+  DollarSign,
+  Edit,
+  FileText,
+  Package,
+  ShoppingCart,
+  Trash2
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 interface PurchaseEMIViewModalProps {
@@ -97,7 +92,7 @@ export default function PurchaseEMIViewModal({
               <p className="text-muted-foreground">{emi.lender}</p>
               <div className="flex items-center gap-2 mt-1">
                 <Badge className={statusColors[emi.status as keyof typeof statusColors]}>
-                  {t(`common.status.${emi.status}`) || emi.status}
+                  {tCommon(`status.${emi.status}`) || emi.status}
                 </Badge>
                 {isOverdue && (
                   <Badge variant="destructive">
@@ -165,7 +160,7 @@ export default function PurchaseEMIViewModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{tCommon('tenure')}:</span>
-                  <span className="font-semibold">{emi.tenure_months} {tCommon('months')}</span>
+                  <span className="font-semibold">{emi.tenure_months} {tCommon('timeUnits.months')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{tCommon('monthlyEmi')}:</span>
