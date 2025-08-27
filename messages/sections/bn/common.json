@@ -182,7 +182,15 @@
       "reset": "রিসেট",
       "clear": "পরিষ্কার",
       "calculate": "গণনা",
-      "recalculate": "পুনরায় গণনা"
+      "recalculate": "পুনরায় গণনা",
+      "compare": "তুলনা",
+      "analyze": "বিশ্লেষণ",
+      "preview": "প্রিভিউ",
+      "show": "দেখান",
+      "hide": "লুকান",
+      "expand": "বিস্তার",
+      "collapse": "সংকুচিত",
+      "toggle": "টগল"
     },
     "forms": {
       "required": "আবশ্যক",
@@ -220,7 +228,17 @@
       "paymentDay": "পেমেন্টের দিন",
       "loanCalculator": "ঋণ ক্যালকুলেটর",
       "emiCalculator": "ইএমআই ক্যালকুলেটর",
-      "interestCalculator": "সুদ ক্যালকুলেটর"
+      "interestCalculator": "সুদ ক্যালকুলেটর",
+      "loanAmount": "ঋণের পরিমাণ",
+      "totalAmount": "মোট পরিমাণ",
+      "totalInterest": "মোট সুদ",
+      "totalRepayment": "মোট পরিশোধ",
+      "monthlyPayment": "মাসিক পেমেন্ট",
+      "paymentBreakdown": "পেমেন্ট ভাঙ্গন",
+      "paymentSchedule": "পেমেন্ট সময়সূচি",
+      "loanSummary": "ঋণ সারসংক্ষেপ",
+      "interestComponent": "সুদের উপাদান",
+      "principalComponent": "মূল উপাদান"
     },
     "messages": {
       "loading": "লোড হচ্ছে...",

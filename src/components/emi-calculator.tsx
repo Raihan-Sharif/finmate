@@ -35,6 +35,7 @@ import { calculateEMIDetails, EMICalculationResult } from '@/lib/services/emi';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LOAN_TYPES } from '@/types/emi';
+import { useTranslations } from 'next-intl';
 
 const loanTypeIcons = {
   personal: CreditCard,
@@ -48,6 +49,9 @@ const loanTypeIcons = {
 };
 
 export default function EMICalculator() {
+  const t = useTranslations('calculators');
+  const tCommon = useTranslations('common');
+  
   const [principal, setPrincipal] = useState<number>(500000);
   const [rate, setRate] = useState<number>(8.5);
   const [tenure, setTenure] = useState<number>(24);
@@ -129,30 +133,30 @@ export default function EMICalculator() {
             </div>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                EMI Calculator
+                {t('emi.title')}
               </h1>
               <div className="flex items-center justify-center space-x-1 text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4" />
-                <span>Smart loan planning made simple</span>
+                <span>{t('emi.subtitle')}</span>
               </div>
             </div>
           </div>
           
           <div className="flex items-center justify-center space-x-2">
             <Button variant="outline" size="sm" onClick={resetCalculator}>
-              Reset
+              {tCommon('actions.reset')}
             </Button>
             <Button variant="outline" size="sm" onClick={saveTemplate}>
               <Save className="h-4 w-4 mr-1" />
-              Save
+              {tCommon('actions.save')}
             </Button>
             <Button variant="outline" size="sm" onClick={exportResult}>
               <Download className="h-4 w-4 mr-1" />
-              Export
+              {tCommon('actions.export')}
             </Button>
             <Button variant="outline" size="sm" onClick={shareResult}>
               <Share2 className="h-4 w-4 mr-1" />
-              Share
+              {tCommon('actions.share')}
             </Button>
           </div>
         </motion.div>
@@ -162,15 +166,15 @@ export default function EMICalculator() {
           <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3 bg-background shadow-md dark:bg-card">
             <TabsTrigger value="calculator" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <Calculator className="h-4 w-4 mr-2" />
-              Calculator
+              {t('emi.tabs.calculator')}
             </TabsTrigger>
             <TabsTrigger value="comparison" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <TrendingUp className="h-4 w-4 mr-2" />
-              Comparison
+              {t('emi.tabs.comparison')}
             </TabsTrigger>
             <TabsTrigger value="tips" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <Target className="h-4 w-4 mr-2" />
-              Tips
+              {t('emi.tabs.tips')}
             </TabsTrigger>
           </TabsList>
           
@@ -187,16 +191,16 @@ export default function EMICalculator() {
                   <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center text-white">
                       <DollarSign className="h-5 w-5 mr-2" />
-                      Loan Configuration
+                      {t('emi.sections.configuration')}
                     </CardTitle>
                     <CardDescription className="text-blue-100">
-                      Configure your loan parameters
+                      {t('emi.labels.configureLoan')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
                     {/* Loan Type */}
                     <div className="space-y-3">
-                      <Label className="text-sm font-semibold text-foreground">Loan Type</Label>
+                      <Label className="text-sm font-semibold text-foreground">{t('emi.fields.loanType')}</Label>
                       <Select value={loanType} onValueChange={setLoanType}>
                         <SelectTrigger className="h-12 border-2 border-border focus:border-primary dark:border-border dark:focus:border-primary">
                           <SelectValue />
@@ -208,7 +212,7 @@ export default function EMICalculator() {
                               <SelectItem key={type.value} value={type.value}>
                                 <div className="flex items-center space-x-2">
                                   <IconComponent className="h-4 w-4" />
-                                  <span>{type.label}</span>
+                                  <span>{tCommon(`types.${type.value}`)}</span>
                                 </div>
                               </SelectItem>
                             );
@@ -220,7 +224,7 @@ export default function EMICalculator() {
                     {/* Principal Amount */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-semibold text-foreground">Loan Amount</Label>
+                        <Label className="text-sm font-semibold text-foreground">{t('emi.fields.loanAmount')}</Label>
                         <span className="text-lg font-bold text-blue-600">{formatCurrency(principal)}</span>
                       </div>
                       <Slider
@@ -232,15 +236,15 @@ export default function EMICalculator() {
                         className="w-full"
                       />
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>৳10K</span>
-                        <span>৳1Cr</span>
+                        <span>{t('emi.ranges.minAmount')}</span>
+                        <span>{t('emi.ranges.maxAmount')}</span>
                       </div>
                     </div>
 
                     {/* Interest Rate */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-semibold text-foreground">Interest Rate</Label>
+                        <Label className="text-sm font-semibold text-foreground">{t('emi.fields.interestRate')}</Label>
                         <span className="text-lg font-bold text-green-600">{rate}%</span>
                       </div>
                       <Slider
@@ -252,16 +256,16 @@ export default function EMICalculator() {
                         className="w-full"
                       />
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>0%</span>
-                        <span>30%</span>
+                        <span>{t('emi.ranges.minRate')}</span>
+                        <span>{t('emi.ranges.maxRate')}</span>
                       </div>
                     </div>
 
                     {/* Tenure */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-semibold text-foreground">Tenure</Label>
-                        <span className="text-lg font-bold text-purple-600">{tenure} months</span>
+                        <Label className="text-sm font-semibold text-foreground">{t('emi.fields.tenure')}</Label>
+                        <span className="text-lg font-bold text-purple-600">{tenure} {tCommon('timeUnits.months')}</span>
                       </div>
                       <Slider
                         value={[tenure]}
@@ -272,22 +276,22 @@ export default function EMICalculator() {
                         className="w-full"
                       />
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>6M</span>
-                        <span>30Y</span>
+                        <span>{t('emi.ranges.minTenure')}</span>
+                        <span>{t('emi.ranges.maxTenure')}</span>
                       </div>
                     </div>
 
                     {/* Quick Tenure Options */}
                     <div className="space-y-3">
-                      <Label className="text-sm font-semibold text-foreground">Quick Selection</Label>
+                      <Label className="text-sm font-semibold text-foreground">{t('emi.labels.quickSelection')}</Label>
                       <div className="grid grid-cols-3 gap-2">
                         {[
-                          { label: '1Y', value: 12 },
-                          { label: '2Y', value: 24 },
-                          { label: '3Y', value: 36 },
-                          { label: '5Y', value: 60 },
-                          { label: '10Y', value: 120 },
-                          { label: '15Y', value: 180 }
+                          { labelKey: 'oneYear', value: 12 },
+                          { labelKey: 'twoYears', value: 24 },
+                          { labelKey: 'threeYears', value: 36 },
+                          { labelKey: 'fiveYears', value: 60 },
+                          { labelKey: 'tenYears', value: 120 },
+                          { labelKey: 'fifteenYears', value: 180 }
                         ].map(option => (
                           <Button
                             key={option.value}
@@ -296,7 +300,7 @@ export default function EMICalculator() {
                             onClick={() => setTenure(option.value)}
                             className={tenure === option.value ? "bg-gradient-to-r from-blue-600 to-purple-600" : ""}
                           >
-                            {option.label}
+                            {t(`emi.quickOptions.${option.labelKey}`)}
                           </Button>
                         ))}
                       </div>
@@ -316,7 +320,7 @@ export default function EMICalculator() {
                   <CardHeader className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center text-white">
                       <TrendingUp className="h-5 w-5 mr-2" />
-                      EMI Calculation Results
+                      {t('emi.sections.results')}
                       {isCalculating && (
                         <div className="ml-2 animate-spin">
                           <Sparkles className="h-4 w-4" />
@@ -324,7 +328,7 @@ export default function EMICalculator() {
                       )}
                     </CardTitle>
                     <CardDescription className="text-green-100">
-                      Your personalized loan breakdown
+                      {t('emi.labels.personalizedBreakdown')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6">
@@ -351,7 +355,7 @@ export default function EMICalculator() {
                                 </div>
                                 <p className="text-sm text-blue-800 dark:text-blue-300 font-medium flex items-center justify-center">
                                   <Calendar className="h-4 w-4 mr-1" />
-                                  Monthly EMI
+                                  {t('emi.fields.monthlyEMI')}
                                 </p>
                                 <div className="absolute top-2 right-2">
                                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
@@ -371,7 +375,7 @@ export default function EMICalculator() {
                                 </div>
                                 <p className="text-sm text-green-800 dark:text-green-300 font-medium flex items-center justify-center">
                                   <DollarSign className="h-4 w-4 mr-1" />
-                                  Total Amount
+                                  {t('emi.fields.totalAmount')}
                                 </p>
                                 <div className="absolute top-2 right-2">
                                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
@@ -391,7 +395,7 @@ export default function EMICalculator() {
                                 </div>
                                 <p className="text-sm text-orange-800 dark:text-orange-300 font-medium flex items-center justify-center">
                                   <Percent className="h-4 w-4 mr-1" />
-                                  Total Interest
+                                  {t('emi.fields.totalInterest')}
                                 </p>
                                 <div className="absolute top-2 right-2">
                                   <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
@@ -410,14 +414,14 @@ export default function EMICalculator() {
                             <div className="bg-gradient-to-r from-muted/50 to-muted/30 dark:from-muted/20 dark:to-muted/10 rounded-2xl p-6">
                               <h3 className="font-bold text-xl mb-4 flex items-center text-foreground">
                                 <PieChart className="h-5 w-5 mr-2 text-purple-600" />
-                                Payment Composition
+                                {t('emi.labels.paymentComposition')}
                               </h3>
                               
                               <div className="space-y-4">
                                 <div className="flex items-center justify-between p-4 bg-background dark:bg-card rounded-xl shadow-sm">
                                   <div className="flex items-center">
                                     <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mr-3 shadow-sm"></div>
-                                    <span className="font-medium text-foreground">Principal Amount</span>
+                                    <span className="font-medium text-foreground">{t('emi.labels.principalAmount')}</span>
                                   </div>
                                   <div className="flex items-center space-x-3">
                                     <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
@@ -432,7 +436,7 @@ export default function EMICalculator() {
                                 <div className="flex items-center justify-between p-4 bg-background dark:bg-card rounded-xl shadow-sm">
                                   <div className="flex items-center">
                                     <div className="w-4 h-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full mr-3 shadow-sm"></div>
-                                    <span className="font-medium text-foreground">Interest Amount</span>
+                                    <span className="font-medium text-foreground">{t('emi.labels.interestAmount')}</span>
                                   </div>
                                   <div className="flex items-center space-x-3">
                                     <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">
@@ -448,8 +452,8 @@ export default function EMICalculator() {
                               {/* Visual Progress Bar */}
                               <div className="mt-6">
                                 <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                                  <span>Principal</span>
-                                  <span>Interest</span>
+                                  <span>{tCommon('financial.principal')}</span>
+                                  <span>{tCommon('financial.interest')}</span>
                                 </div>
                                 <div className="w-full h-6 bg-muted dark:bg-muted/50 rounded-full overflow-hidden shadow-inner">
                                   <motion.div 
@@ -481,13 +485,17 @@ export default function EMICalculator() {
                                   <Info className="h-4 w-4 text-white" />
                                 </div>
                                 <AlertDescription className="text-foreground leading-relaxed">
-                                  <span className="block text-lg font-semibold text-foreground mb-2">Loan Summary</span>
-                                  You will pay <strong className="text-blue-600">{formatCurrency(result.emi)}</strong> every month for{' '}
-                                  <strong className="text-purple-600">{tenure} months</strong>, totaling{' '}
-                                  <strong className="text-green-600">{formatCurrency(result.totalAmount)}</strong>. 
+                                  <span className="block text-lg font-semibold text-foreground mb-2">{t('emi.labels.loanSummary')}</span>
+                                  {t('emi.summaryText.paymentInfo', {
+                                    emi: formatCurrency(result.emi),
+                                    tenure: tenure,
+                                    totalAmount: formatCurrency(result.totalAmount)
+                                  })}
                                   <br />
-                                  The interest component is <strong className="text-orange-600">{formatCurrency(result.totalInterest)}</strong> 
-                                  ({result.interestPercentage.toFixed(1)}% of total payment).
+                                  {t('emi.summaryText.interestInfo', {
+                                    totalInterest: formatCurrency(result.totalInterest),
+                                    interestPercentage: result.interestPercentage.toFixed(1) + '%'
+                                  })}
                                 </AlertDescription>
                               </div>
                             </Alert>
@@ -507,7 +515,7 @@ export default function EMICalculator() {
                               className="bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:from-purple-700 hover:to-blue-700 shadow-lg"
                             >
                               <Calendar className="h-4 w-4 mr-2" />
-                              {showBreakdown ? 'Hide' : 'Show'} Monthly Breakdown
+                              {showBreakdown ? t('emi.labels.hideBreakdown') : t('emi.labels.showBreakdown')}
                             </Button>
                           </motion.div>
 
@@ -524,18 +532,18 @@ export default function EMICalculator() {
                                 <Separator className="bg-gradient-to-r from-blue-200 to-purple-200 h-0.5" />
                                 <h3 className="font-bold text-xl flex items-center text-foreground">
                                   <Calendar className="h-5 w-5 mr-2 text-purple-600" />
-                                  Month-wise Payment Breakdown
+                                  {t('emi.labels.monthWiseBreakdown')}
                                 </h3>
                                 
                                 <div className="max-h-96 overflow-y-auto bg-background dark:bg-card rounded-xl shadow-lg border border-border">
                                   <table className="w-full text-sm">
                                     <thead className="bg-gradient-to-r from-muted/80 to-muted/60 dark:from-muted/40 dark:to-muted/20 sticky top-0">
                                       <tr>
-                                        <th className="p-4 text-left font-semibold text-foreground">Month</th>
-                                        <th className="p-4 text-right font-semibold text-foreground">EMI</th>
-                                        <th className="p-4 text-right font-semibold text-foreground">Principal</th>
-                                        <th className="p-4 text-right font-semibold text-foreground">Interest</th>
-                                        <th className="p-4 text-right font-semibold text-foreground">Balance</th>
+                                        <th className="p-4 text-left font-semibold text-foreground">{t('emi.tableHeaders.month')}</th>
+                                        <th className="p-4 text-right font-semibold text-foreground">{t('emi.tableHeaders.emi')}</th>
+                                        <th className="p-4 text-right font-semibold text-foreground">{t('emi.tableHeaders.principal')}</th>
+                                        <th className="p-4 text-right font-semibold text-foreground">{t('emi.tableHeaders.interest')}</th>
+                                        <th className="p-4 text-right font-semibold text-foreground">{t('emi.tableHeaders.balance')}</th>
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -583,9 +591,9 @@ export default function EMICalculator() {
                               <Calculator className="h-20 w-20 mx-auto text-muted-foreground relative" />
                             </div>
                             <div className="space-y-2">
-                              <h3 className="text-xl font-semibold text-muted-foreground">Configure Your Loan</h3>
+                              <h3 className="text-xl font-semibold text-muted-foreground">{t('emi.placeholderContent.title')}</h3>
                               <p className="text-muted-foreground max-w-md mx-auto">
-                                Adjust the loan parameters on the left to see your personalized EMI calculation and payment breakdown.
+                                {t('emi.placeholderContent.description')}
                               </p>
                             </div>
                           </div>
@@ -606,16 +614,16 @@ export default function EMICalculator() {
             >
               <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-xl dark:bg-card/40">
                 <CardHeader className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-t-lg">
-                  <CardTitle className="text-white">Loan Comparison</CardTitle>
+                  <CardTitle className="text-white">{t('comparison.title')}</CardTitle>
                   <CardDescription className="text-green-100">
-                    Compare different loan scenarios
+                    {t('comparison.description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="text-center text-muted-foreground">
                       <TrendingUp className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
-                      <p>Comparison feature coming soon</p>
+                      <p>{t('comparison.comingSoon')}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -623,16 +631,16 @@ export default function EMICalculator() {
               
               <Card className="bg-card/70 backdrop-blur-sm border-0 shadow-xl dark:bg-card/40">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg">
-                  <CardTitle className="text-white">Interest Rate Impact</CardTitle>
+                  <CardTitle className="text-white">{t('comparison.rateAnalysis.title')}</CardTitle>
                   <CardDescription className="text-purple-100">
-                    See how rates affect your payments
+                    {t('comparison.rateAnalysis.description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="text-center text-muted-foreground">
                       <Percent className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
-                      <p>Rate analysis coming soon</p>
+                      <p>{t('comparison.rateAnalysis.comingSoon')}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -651,10 +659,10 @@ export default function EMICalculator() {
                 <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center text-white">
                     <Target className="h-5 w-5 mr-2" />
-                    💰 Tips to Reduce EMI
+                    💰 {t('tips.reduceEMI.title')}
                   </CardTitle>
                   <CardDescription className="text-green-100">
-                    Smart strategies to lower your monthly payments
+                    {t('tips.reduceEMI.description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
@@ -675,8 +683,8 @@ export default function EMICalculator() {
                       >
                         <span className="text-lg">{tip.icon}</span>
                         <div>
-                          <h4 className="font-semibold text-green-800">{tip.title}</h4>
-                          <p className="text-sm text-green-600">{tip.desc}</p>
+                          <h4 className="font-semibold text-green-800">{t(`tips.reduceEMI.items.${index}.title`)}</h4>
+                          <p className="text-sm text-green-600">{t(`tips.reduceEMI.items.${index}.description`)}</p>
                         </div>
                       </motion.div>
                     ))}
@@ -689,10 +697,10 @@ export default function EMICalculator() {
                 <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center text-white">
                     <Info className="h-5 w-5 mr-2" />
-                    🧠 Important Considerations
+                    🧠 {t('tips.considerations.title')}
                   </CardTitle>
                   <CardDescription className="text-blue-100">
-                    Key factors to remember when taking loans
+                    {t('tips.considerations.description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
@@ -713,8 +721,8 @@ export default function EMICalculator() {
                       >
                         <span className="text-lg">{tip.icon}</span>
                         <div>
-                          <h4 className="font-semibold text-blue-800">{tip.title}</h4>
-                          <p className="text-sm text-blue-600">{tip.desc}</p>
+                          <h4 className="font-semibold text-blue-800">{t(`tips.considerations.items.${index}.title`)}</h4>
+                          <p className="text-sm text-blue-600">{t(`tips.considerations.items.${index}.description`)}</p>
                         </div>
                       </motion.div>
                     ))}

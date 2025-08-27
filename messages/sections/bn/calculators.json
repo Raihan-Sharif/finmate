@@ -1,21 +1,233 @@
 {
   "calculators": {
-    "title": "ক্যালকুলেটর",
-    "subtitle": "আর্থিক পরিকল্পনার সরঞ্জাম ও ক্যালকুলেটর",
-    "loanEmiCalculator": "ঋণ ও ইএমআই ক্যালকুলেটর",
-    "taxCalculator": "কর ক্যালকুলেটর",
-    "zakatCalculator": "যাকাত ক্যালকুলেটর",
-    "investmentCalculator": "বিনিয়োগ ক্যালকুলেটর",
-    "calculate": "গণনা করুন",
-    "reset": "রিসেট করুন",
-    "principal": "মূল অর্থ",
-    "rateOfInterest": "সুদের হার",
-    "timePeriod": "সমযকাল",
-    "monthlyEmi": "মাসিক ইএমআই",
-    "totalInterest": "মোট সুদ",
-    "totalAmount": "মোট অর্থ",
-    "years": "বছর",
-    "months": "মাস",
-    "perAnnum": "বার্ষিক"
+    "title": "আর্থিক ক্যালকুলেটর",
+    "subtitle": "স্মার্ট আর্থিক পরিকল্পনার সরঞ্জাম",
+    "description": "ঋণ, বিনিয়োগ এবং পরিকল্পনার জন্য পেশাদার আর্থিক ক্যালকুলেটর",
+    
+    "emi": {
+      "title": "ইএমআই ক্যালকুলেটর",
+      "subtitle": "সহজ ঋণ পরিকল্পনা স্মার্ট উপায়ে",
+      "description": "বিস্তারিত ভাঙ্গন এবং পেমেন্ট সময়সূচি সহ আপনার ঋণ ইএমআই গণনা করুন",
+      
+      "sections": {
+        "configuration": "ঋণ কনফিগারেশন", 
+        "results": "ইএমআই গণনার ফলাফল",
+        "breakdown": "পেমেন্ট ভাঙ্গন",
+        "comparison": "ঋণ তুলনা",
+        "tips": "স্মার্ট টিপস",
+        "analysis": "হার বিশ্লেষণ"
+      },
+      
+      "tabs": {
+        "calculator": "ক্যালকুলেটর",
+        "comparison": "তুলনা", 
+        "tips": "পরামর্শ"
+      },
+      
+      "fields": {
+        "loanType": "ঋণের ধরন",
+        "loanAmount": "ঋণের পরিমাণ",
+        "principalAmount": "মূল অর্থ",
+        "interestRate": "সুদের হার",
+        "tenure": "মেয়াদ",
+        "monthlyEMI": "মাসিক ইএমআই",
+        "totalAmount": "মোট অর্থ",
+        "totalInterest": "মোট সুদ",
+        "totalRepayment": "মোট পরিশোধ"
+      },
+      
+      "labels": {
+        "configureLoan": "আপনার ঋণ পরামিতি কনফিগার করুন",
+        "personalizedBreakdown": "আপনার ব্যক্তিগত ঋণ ভাঙ্গন",
+        "monthlyPayment": "মাসিক পেমেন্ট",
+        "principalComponent": "মূল উপাদান",
+        "interestComponent": "সুদের উপাদান",
+        "paymentComposition": "পেমেন্ট রচনা",
+        "principalAmount": "মূল অর্থ",
+        "interestAmount": "সুদের পরিমাণ",
+        "outstandingBalance": "বকেয়া ব্যালেন্স",
+        "quickSelection": "দ্রুত নির্বাচন",
+        "monthWiseBreakdown": "মাসওয়ারি পেমেন্ট ভাঙ্গন",
+        "showBreakdown": "মাসিক ভাঙ্গন দেখান",
+        "hideBreakdown": "মাসিক ভাঙ্গন লুকান",
+        "loanSummary": "ঋণ সারসংক্ষেপ"
+      },
+      
+      "placeholders": {
+        "selectLoanType": "ঋণের ধরন নির্বাচন করুন",
+        "enterAmount": "পরিমাণ লিখুন",
+        "enterRate": "হার লিখুন",
+        "enterTenure": "মেয়াদ লিখুন"
+      },
+      
+      "ranges": {
+        "minAmount": "৳১০হাজার",
+        "maxAmount": "৳১কোটি",
+        "minRate": "০%",
+        "maxRate": "৩০%",
+        "minTenure": "৬মাস",
+        "maxTenure": "৩০বছর"
+      },
+      
+      "quickOptions": {
+        "oneYear": "১বছর",
+        "twoYears": "২বছর", 
+        "threeYears": "৩বছর",
+        "fiveYears": "৫বছর",
+        "tenYears": "১০বছর",
+        "fifteenYears": "১৫বছর"
+      },
+      
+      "summaryText": {
+        "paymentInfo": "আপনি {tenure} মাসের জন্য প্রতি মাসে {emi} পরিশোধ করবেন, মোট {totalAmount}।",
+        "interestInfo": "সুদের উপাদান হল {totalInterest} (মোট পেমেন্টের {interestPercentage})।"
+      },
+      
+      "tableHeaders": {
+        "month": "মাস",
+        "emi": "ইএমআই", 
+        "principal": "মূল",
+        "interest": "সুদ",
+        "balance": "ব্যালেন্স"
+      },
+      
+      "placeholderContent": {
+        "title": "আপনার ঋণ কনফিগার করুন",
+        "description": "আপনার ব্যক্তিগত ইএমআই গণনা এবং পেমেন্ট ভাঙ্গন দেখতে বাম দিকের ঋণ পরামিতি সামঞ্জস্য করুন।"
+      }
+    },
+    
+    "comparison": {
+      "title": "ঋণ তুলনা",
+      "description": "বিভিন্ন ঋণ পরিস্থিতি তুলনা করুন",
+      "comingSoon": "তুলনা বৈশিষ্ট্য শীঘ্রই আসছে",
+      "rateAnalysis": {
+        "title": "সুদের হারের প্রভাব",
+        "description": "হার কীভাবে আপনার পেমেন্টকে প্রভাবিত করে তা দেখুন",
+        "comingSoon": "হার বিশ্লেষণ শীঘ্রই আসছে"
+      }
+    },
+    
+    "tips": {
+      "reduceEMI": {
+        "title": "ইএমআই কমানোর টিপস",
+        "description": "আপনার মাসিক পেমেন্ট কমানোর স্মার্ট কৌশল",
+        "items": [
+          {
+            "title": "বেশি ডাউন পেমেন্ট করুন",
+            "description": "মূল পরিমাণ কমান"
+          },
+          {
+            "title": "দীর্ঘ মেয়াদ বেছে নিন", 
+            "description": "বেশি মাসে পেমেন্ট ছড়িয়ে দিন"
+          },
+          {
+            "title": "সুদের হার তুলনা করুন",
+            "description": "ভাল ডিল খুঁজুন"
+          },
+          {
+            "title": "ক্রেডিট স্কোর উন্নত করুন",
+            "description": "ভাল সুদের হার পান"
+          },
+          {
+            "title": "প্রিপেমেন্ট বিবেচনা করুন",
+            "description": "সম্ভব হলে অতিরিক্ত পরিশোধ করুন"
+          }
+        ]
+      },
+      
+      "considerations": {
+        "title": "গুরুত্বপূর্ণ বিবেচনা",
+        "description": "ঋণ নেওয়ার সময় মনে রাখার মূল বিষয়গুলি",
+        "items": [
+          {
+            "title": "ইএমআই স্থির থাকে",
+            "description": "পুরো ঋণের মেয়াদজুড়ে"
+          },
+          {
+            "title": "প্রাথমিক পেমেন্টে বেশি সুদ",
+            "description": "শুরুতে সুদের অংশ বেশি থাকে"
+          },
+          {
+            "title": "পরবর্তী পেমেন্টে বেশি মূল",
+            "description": "সময়ের সাথে মূল অংশ বৃদ্ধি পায়"
+          },
+          {
+            "title": "প্রক্রিয়াকরণ ফি অতিরিক্ত",
+            "description": "ইএমআই গণনায় অন্তর্ভুক্ত নয়"
+          },
+          {
+            "title": "হার পরিবর্তিত হতে পারে",
+            "description": "ক্রেডিট স্কোর এবং প্রোফাইলের উপর ভিত্তি করে"
+          }
+        ]
+      }
+    },
+    
+    "actions": {
+      "calculate": "গণনা করুন",
+      "recalculate": "পুনঃগণনা করুন",
+      "reset": "রিসেট করুন",
+      "save": "সংরক্ষণ করুন",
+      "export": "রপ্তানি করুন",
+      "share": "শেয়ার করুন",
+      "download": "ডাউনলোড করুন",
+      "saveTemplate": "টেমপ্লেট সংরক্ষণ করুন",
+      "loadTemplate": "টেমপ্লেট লোড করুন",
+      "compareLoans": "ঋণ তুলনা করুন"
+    },
+    
+    "units": {
+      "percentage": "%",
+      "currency": "৳",
+      "months": "মাস",
+      "years": "বছর",
+      "perAnnum": "বার্ষিক",
+      "monthly": "মাসিক",
+      "annually": "বার্ষিক"
+    },
+    
+    "validation": {
+      "required": "এই ক্ষেত্রটি আবশ্যক",
+      "minAmount": "সর্বনিম্ন পরিমাণ ৳১০,০০০",
+      "maxAmount": "সর্বোচ্চ পরিমাণ ৳১,০০,০০,০০০",
+      "invalidAmount": "একটি বৈধ পরিমাণ লিখুন",
+      "invalidRate": "একটি বৈধ সুদের হার লিখুন",
+      "invalidTenure": "একটি বৈধ মেয়াদ লিখুন",
+      "minRate": "সুদের হার নেগেটিভ হতে পারে না",
+      "maxRate": "সুদের হার ৩০% এর বেশি হতে পারে না",
+      "minTenure": "সর্বনিম্ন মেয়াদ ৬ মাস",
+      "maxTenure": "সর্বোচ্চ মেয়াদ ৩৬০ মাস"
+    },
+    
+    "messages": {
+      "calculating": "গণনা করা হচ্ছে...",
+      "calculationComplete": "গণনা সম্পূর্ণ হয়েছে",
+      "noResults": "প্রদর্শনের জন্য কোন ফলাফল নেই",
+      "error": "গণনায় ত্রুটি",
+      "tryAgain": "অনুগ্রহ করে আবার চেষ্টা করুন",
+      "invalidInput": "অনুগ্রহ করে আপনার ইনপুট মান পরীক্ষা করুন"
+    },
+    
+    "features": {
+      "autoCalculate": "টাইপ করার সাথে সাথে স্বয়ংক্রিয় গণনা",
+      "detailedBreakdown": "বিস্তারিত পেমেন্ট ভাঙ্গন",
+      "visualCharts": "ইন্টারঅ্যাক্টিভ ভিজ্যুয়াল চার্ট",
+      "exportResults": "গণনার ফলাফল রপ্তানি",
+      "saveTemplates": "গণনা টেমপ্লেট সংরক্ষণ",
+      "compareScenarios": "একাধিক পরিস্থিতি তুলনা",
+      "smartRecommendations": "এআই-চালিত সুপারিশ"
+    },
+    
+    "types": {
+      "loanEmi": "ঋণ ও ইএমআই ক্যালকুলেটর",
+      "tax": "কর ক্যালকুলেটর",
+      "zakat": "যাকাত ক্যালকুলেটর",
+      "investment": "বিনিয়োগ ক্যালকুলেটর",
+      "compound": "চক্রবৃদ্ধি সুদ ক্যালকুলেটর",
+      "simple": "সরল সুদ ক্যালকুলেটর",
+      "sip": "এসআইপি ক্যালকুলেটর",
+      "retirement": "অবসর ক্যালকুলেটর"
+    }
   }
 }

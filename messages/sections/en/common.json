@@ -182,7 +182,15 @@
       "reset": "Reset",
       "clear": "Clear",
       "calculate": "Calculate",
-      "recalculate": "Recalculate"
+      "recalculate": "Recalculate",
+      "compare": "Compare",
+      "analyze": "Analyze",
+      "preview": "Preview",
+      "show": "Show",
+      "hide": "Hide",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "toggle": "Toggle"
     },
     "forms": {
       "required": "Required",
@@ -220,7 +228,17 @@
       "paymentDay": "Payment Day",
       "loanCalculator": "Loan Calculator",
       "emiCalculator": "EMI Calculator",
-      "interestCalculator": "Interest Calculator"
+      "interestCalculator": "Interest Calculator",
+      "loanAmount": "Loan Amount",
+      "totalAmount": "Total Amount",
+      "totalInterest": "Total Interest",
+      "totalRepayment": "Total Repayment",
+      "monthlyPayment": "Monthly Payment",
+      "paymentBreakdown": "Payment Breakdown",
+      "paymentSchedule": "Payment Schedule",
+      "loanSummary": "Loan Summary",
+      "interestComponent": "Interest Component",
+      "principalComponent": "Principal Component"
     },
     "messages": {
       "loading": "Loading...",

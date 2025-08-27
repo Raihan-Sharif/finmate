@@ -1,21 +1,233 @@
 {
   "calculators": {
-    "title": "Calculators",
-    "subtitle": "Financial planning tools and calculators",
-    "loanEmiCalculator": "Loan & EMI Calculator",
-    "taxCalculator": "Tax Calculator",
-    "zakatCalculator": "Zakat Calculator",
-    "investmentCalculator": "Investment Calculator",
-    "calculate": "Calculate",
-    "reset": "Reset",
-    "principal": "Principal Amount",
-    "rateOfInterest": "Rate of Interest",
-    "timePeriod": "Time Period",
-    "monthlyEmi": "Monthly EMI",
-    "totalInterest": "Total Interest",
-    "totalAmount": "Total Amount",
-    "years": "Years",
-    "months": "Months",
-    "perAnnum": "Per Annum"
+    "title": "Financial Calculators",
+    "subtitle": "Smart financial planning tools",
+    "description": "Professional financial calculators for loans, investments, and planning",
+    
+    "emi": {
+      "title": "EMI Calculator",
+      "subtitle": "Smart loan planning made simple",
+      "description": "Calculate your loan EMI with detailed breakdown and payment schedule",
+      
+      "sections": {
+        "configuration": "Loan Configuration", 
+        "results": "EMI Calculation Results",
+        "breakdown": "Payment Breakdown",
+        "comparison": "Loan Comparison",
+        "tips": "Smart Tips",
+        "analysis": "Rate Analysis"
+      },
+      
+      "tabs": {
+        "calculator": "Calculator",
+        "comparison": "Comparison", 
+        "tips": "Tips"
+      },
+      
+      "fields": {
+        "loanType": "Loan Type",
+        "loanAmount": "Loan Amount",
+        "principalAmount": "Principal Amount",
+        "interestRate": "Interest Rate",
+        "tenure": "Tenure",
+        "monthlyEMI": "Monthly EMI",
+        "totalAmount": "Total Amount",
+        "totalInterest": "Total Interest",
+        "totalRepayment": "Total Repayment"
+      },
+      
+      "labels": {
+        "configureLoan": "Configure your loan parameters",
+        "personalizedBreakdown": "Your personalized loan breakdown",
+        "monthlyPayment": "Monthly Payment",
+        "principalComponent": "Principal Component",
+        "interestComponent": "Interest Component",
+        "paymentComposition": "Payment Composition",
+        "principalAmount": "Principal Amount",
+        "interestAmount": "Interest Amount",
+        "outstandingBalance": "Outstanding Balance",
+        "quickSelection": "Quick Selection",
+        "monthWiseBreakdown": "Month-wise Payment Breakdown",
+        "showBreakdown": "Show Monthly Breakdown",
+        "hideBreakdown": "Hide Monthly Breakdown",
+        "loanSummary": "Loan Summary"
+      },
+      
+      "placeholders": {
+        "selectLoanType": "Select loan type",
+        "enterAmount": "Enter amount",
+        "enterRate": "Enter rate",
+        "enterTenure": "Enter tenure"
+      },
+      
+      "ranges": {
+        "minAmount": "₹10K",
+        "maxAmount": "₹1Cr",
+        "minRate": "0%",
+        "maxRate": "30%",
+        "minTenure": "6M",
+        "maxTenure": "30Y"
+      },
+      
+      "quickOptions": {
+        "oneYear": "1Y",
+        "twoYears": "2Y", 
+        "threeYears": "3Y",
+        "fiveYears": "5Y",
+        "tenYears": "10Y",
+        "fifteenYears": "15Y"
+      },
+      
+      "summaryText": {
+        "paymentInfo": "You will pay {emi} every month for {tenure} months, totaling {totalAmount}.",
+        "interestInfo": "The interest component is {totalInterest} ({interestPercentage} of total payment)."
+      },
+      
+      "tableHeaders": {
+        "month": "Month",
+        "emi": "EMI", 
+        "principal": "Principal",
+        "interest": "Interest",
+        "balance": "Balance"
+      },
+      
+      "placeholderContent": {
+        "title": "Configure Your Loan",
+        "description": "Adjust the loan parameters on the left to see your personalized EMI calculation and payment breakdown."
+      }
+    },
+    
+    "comparison": {
+      "title": "Loan Comparison",
+      "description": "Compare different loan scenarios",
+      "comingSoon": "Comparison feature coming soon",
+      "rateAnalysis": {
+        "title": "Interest Rate Impact",
+        "description": "See how rates affect your payments",
+        "comingSoon": "Rate analysis coming soon"
+      }
+    },
+    
+    "tips": {
+      "reduceEMI": {
+        "title": "Tips to Reduce EMI",
+        "description": "Smart strategies to lower your monthly payments",
+        "items": [
+          {
+            "title": "Make a larger down payment",
+            "description": "Reduce principal amount"
+          },
+          {
+            "title": "Choose longer tenure", 
+            "description": "Spread payments over more months"
+          },
+          {
+            "title": "Compare interest rates",
+            "description": "Shop around for better deals"
+          },
+          {
+            "title": "Improve credit score",
+            "description": "Get better interest rates"
+          },
+          {
+            "title": "Consider prepayment",
+            "description": "Pay extra when possible"
+          }
+        ]
+      },
+      
+      "considerations": {
+        "title": "Important Considerations",
+        "description": "Key factors to remember when taking loans",
+        "items": [
+          {
+            "title": "EMI remains fixed",
+            "description": "Throughout the loan tenure"
+          },
+          {
+            "title": "Early payments have more interest",
+            "description": "Interest component is higher initially"
+          },
+          {
+            "title": "Later payments have more principal",
+            "description": "Principal component increases over time"
+          },
+          {
+            "title": "Processing fees are extra",
+            "description": "Not included in EMI calculation"
+          },
+          {
+            "title": "Rates may vary",
+            "description": "Based on credit score and profile"
+          }
+        ]
+      }
+    },
+    
+    "actions": {
+      "calculate": "Calculate",
+      "recalculate": "Recalculate",
+      "reset": "Reset",
+      "save": "Save",
+      "export": "Export",
+      "share": "Share",
+      "download": "Download",
+      "saveTemplate": "Save Template",
+      "loadTemplate": "Load Template",
+      "compareLoans": "Compare Loans"
+    },
+    
+    "units": {
+      "percentage": "%",
+      "currency": "₹",
+      "months": "months",
+      "years": "years",
+      "perAnnum": "per annum",
+      "monthly": "monthly",
+      "annually": "annually"
+    },
+    
+    "validation": {
+      "required": "This field is required",
+      "minAmount": "Minimum amount is ₹10,000",
+      "maxAmount": "Maximum amount is ₹1,00,00,000",
+      "invalidAmount": "Please enter a valid amount",
+      "invalidRate": "Please enter a valid interest rate",
+      "invalidTenure": "Please enter a valid tenure",
+      "minRate": "Interest rate cannot be negative",
+      "maxRate": "Interest rate cannot exceed 30%",
+      "minTenure": "Minimum tenure is 6 months",
+      "maxTenure": "Maximum tenure is 360 months"
+    },
+    
+    "messages": {
+      "calculating": "Calculating...",
+      "calculationComplete": "Calculation completed",
+      "noResults": "No results to display",
+      "error": "Error in calculation",
+      "tryAgain": "Please try again",
+      "invalidInput": "Please check your input values"
+    },
+    
+    "features": {
+      "autoCalculate": "Auto-calculate as you type",
+      "detailedBreakdown": "Detailed payment breakdown",
+      "visualCharts": "Interactive visual charts",
+      "exportResults": "Export calculation results",
+      "saveTemplates": "Save calculation templates",
+      "compareScenarios": "Compare multiple scenarios",
+      "smartRecommendations": "AI-powered recommendations"
+    },
+    
+    "types": {
+      "loanEmi": "Loan & EMI Calculator",
+      "tax": "Tax Calculator",
+      "zakat": "Zakat Calculator",
+      "investment": "Investment Calculator",
+      "compound": "Compound Interest Calculator",
+      "simple": "Simple Interest Calculator",
+      "sip": "SIP Calculator",
+      "retirement": "Retirement Calculator"
+    }
   }
 }
