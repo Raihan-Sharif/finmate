@@ -305,7 +305,7 @@ export default function BankLoansPage() {
             {selectedLoans.length > 0 && (
               <Button variant="destructive" onClick={handleBulkDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
-                {t('common.delete')} {selectedLoans.length}
+                {tCommon('actions.delete')} {selectedLoans.length}
               </Button>
             )}
           </div>
@@ -402,10 +402,10 @@ export default function BankLoansPage() {
           
           <Select value={filterType} onValueChange={setFilterType}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder={t('common.loanType')} />
+              <SelectValue placeholder={tCommon('loanType')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('common.allTypes')}</SelectItem>
+              <SelectItem value="all">{tCommon('allTypes')}</SelectItem>
               {LOAN_TYPES.map(type => (
                 <SelectItem key={type.value} value={type.value}>
                   {type.label}
@@ -419,10 +419,10 @@ export default function BankLoansPage() {
               <SelectValue placeholder={tCommon('status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('common.allStatus')}</SelectItem>
-              <SelectItem value="active">{t('common.status.active')}</SelectItem>
-              <SelectItem value="closed">{t('common.status.closed')}</SelectItem>
-              <SelectItem value="defaulted">{t('common.status.defaulted')}</SelectItem>
+              <SelectItem value="all">{tCommon('allStatus')}</SelectItem>
+              <SelectItem value="active">{tCommon('status.active')}</SelectItem>
+              <SelectItem value="closed">{tCommon('status.closed')}</SelectItem>
+              <SelectItem value="defaulted">{tCommon('status.defaulted')}</SelectItem>
             </SelectContent>
           </Select>
         </motion.div>
@@ -503,17 +503,17 @@ export default function BankLoansPage() {
                                 <h4 className="font-bold text-lg text-foreground">{loan.lender}</h4>
                                 {isOverdue && (
                                   <Badge variant="destructive" className="text-xs">
-                                    {tCommon('overdue')}
+                                    {tCommon('status.overdue')}
                                   </Badge>
                                 )}
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                {t(`common.types.${loan.type}`) || LOAN_TYPES.find(t => t.value === loan.type)?.label}
+                                {tCommon(`types.${loan.type}`) || LOAN_TYPES.find(t => t.value === loan.type)?.label}
                               </p>
                               <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                                 <span className="flex items-center space-x-1">
                                   <Clock className="h-3 w-3" />
-                                  <span>{loan.tenure_months} {t('common.months')}</span>
+                                  <span>{loan.tenure_months} {tCommon('timeUnits.months')}</span>
                                 </span>
                                 <span className="flex items-center space-x-1">
                                   <Percent className="h-3 w-3" />
@@ -526,9 +526,9 @@ export default function BankLoansPage() {
                           <div className="flex items-center space-x-6">
                             <div className="text-right space-y-1">
                               <p className="text-2xl font-bold text-primary">{formatAmount(loan.emi_amount)}</p>
-                              <p className="text-sm text-muted-foreground">{tCommon('monthlyEmi')}</p>
+                              <p className="text-sm text-muted-foreground">{tCommon('financial.monthlyEmi')}</p>
                               <Badge className={statusColors[loan.status]}>
-                                {t(`common.status.${loan.status}`) || loan.status}
+                                {tCommon(`status.${loan.status}`) || loan.status}
                               </Badge>
                             </div>
                             
@@ -563,7 +563,7 @@ export default function BankLoansPage() {
                                     className="text-green-600 dark:text-green-400"
                                   >
                                     <DollarSign className="h-4 w-4 mr-2" />
-                                    {isAutoProcessing ? tCommon('processing') : t('bankLoans.processPayment')}
+                                    {isAutoProcessing ? tCommon('status.processing') : t('bankLoans.processPayment')}
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuSeparator />

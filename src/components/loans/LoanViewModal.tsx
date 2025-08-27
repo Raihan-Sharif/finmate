@@ -85,23 +85,23 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
               </div>
               <div>
                 <h3 className="text-xl font-bold">{loan.lender}</h3>
-                <p className="text-sm text-muted-foreground">{t(`common.types.${loan.type}`) || loanTypeLabel}</p>
+                <p className="text-sm text-muted-foreground">{tCommon(`types.${loan.type}`) || loanTypeLabel}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Badge className={statusColors[loan.status]}>
-                {t(`common.status.${loan.status}`) || loan.status}
+                {tCommon(`status.${loan.status}`) || loan.status}
               </Badge>
               {isOverdue && (
                 <Badge variant="destructive" className="flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  {tCommon('overdue')}
+                  {tCommon('status.overdue')}
                 </Badge>
               )}
             </div>
           </DialogTitle>
           <DialogDescription>
-            {t('bankLoans.viewLoan')} - {t(`common.types.${loan.type}`) || loanTypeLabel?.toLowerCase()}
+            {t('bankLoans.viewLoan')} - {tCommon(`types.${loan.type}`) || loanTypeLabel?.toLowerCase()}
           </DialogDescription>
         </DialogHeader>
 
@@ -120,7 +120,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                   </div>
                   <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center justify-center">
                     <Calendar className="h-4 w-4 mr-1" />
-                    {tCommon('monthlyEmi')}
+                    {tCommon('financial.monthlyEmi')}
                   </p>
                 </CardContent>
               </Card>
@@ -138,7 +138,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                   </div>
                   <p className="text-sm text-green-800 dark:text-green-300 flex items-center justify-center">
                     <DollarSign className="h-4 w-4 mr-1" />
-                    {tCommon('outstanding')}
+                    {tCommon('financial.outstanding')}
                   </p>
                 </CardContent>
               </Card>
@@ -180,7 +180,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm">
                     <span>{tCommon('amountPaid')}: {formatAmount(totalPaid)}</span>
-                    <span>{tCommon('outstanding')}: {formatAmount(loan.outstanding_amount)}</span>
+                    <span>{tCommon('financial.outstanding')}: {formatAmount(loan.outstanding_amount)}</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-3">
                     <motion.div
@@ -221,7 +221,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                     </div>
                     <div>
                       <p className="text-muted-foreground">{tCommon('tenure')}</p>
-                      <p className="font-semibold">{loan.tenure_months} {tCommon('months')}</p>
+                      <p className="font-semibold">{loan.tenure_months} {tCommon('timeUnits.months')}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">{tCommon('startDate')}</p>
@@ -251,7 +251,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                       <p className="text-muted-foreground">{tCommon('reminderDays')}</p>
                       <p className="font-semibold flex items-center">
                         <Bell className="h-4 w-4 mr-1" />
-                        {loan.reminder_days || 0} {t('common.days') || 'days'}
+                        {loan.reminder_days || 0} {tCommon('timeUnits.days')}
                       </p>
                     </div>
                   </div>
@@ -279,7 +279,7 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
                       <p className={`font-semibold ${isOverdue ? 'text-red-600' : ''}`}>
                         {loan.next_due_date ? new Date(loan.next_due_date).toLocaleDateString() : 'N/A'}
                         {isOverdue && (
-                          <span className="ml-2 text-red-600 text-xs">({tCommon('overdue')})</span>
+                          <span className="ml-2 text-red-600 text-xs">({tCommon('status.overdue')})</span>
                         )}
                       </p>
                     </div>
@@ -345,16 +345,16 @@ export default function LoanViewModal({ loan, isOpen, onClose, onEdit, onDelete 
           >
             {onEdit && (
               <Button variant="outline" onClick={onEdit}>
-                {tCommon('editLoan')}
+                {tCommon('actions.edit')}
               </Button>
             )}
             {onDelete && (
               <Button variant="destructive" onClick={onDelete}>
-                {tCommon('deleteLoan')}
+                {tCommon('actions.delete')}
               </Button>
             )}
             <Button onClick={onClose}>
-              {tCommon('closeLoan')}
+              {tCommon('actions.close')}
             </Button>
           </motion.div>
         </div>

@@ -156,11 +156,11 @@ export default function PersonalLendingPage() {
         }
         const result = await editLending(editingLending.id, updateData)
         if (result.success) {
-          toast.success('Personal lending updated successfully!')
+          toast.success(t('personalLending.form.success.updated'))
           setIsLendingFormOpen(false)
           setEditingLending(null)
         } else {
-          toast.error(result.error || 'Failed to update personal lending')
+          toast.error(result.error || t('personalLending.form.errors.updateFailed'))
         }
       } else {
         const insertData = {
@@ -181,16 +181,16 @@ export default function PersonalLendingPage() {
         }
         const result = await addLending(insertData)
         if (result.success) {
-          toast.success('Personal lending added successfully!')
+          toast.success(t('personalLending.form.success.created'))
           setIsLendingFormOpen(false)
           setEditingLending(null)
         } else {
-          toast.error(result.error || 'Failed to add personal lending')
+          toast.error(result.error || t('personalLending.form.errors.createFailed'))
         }
       }
     } catch (error) {
       console.error('Error submitting personal lending:', error)
-      toast.error('An unexpected error occurred')
+      toast.error(t('personalLending.form.errors.networkError'))
     }
   }
 
@@ -206,15 +206,15 @@ export default function PersonalLendingPage() {
     try {
       const result = await removeLending(deletingLending.id)
       if (result.success) {
-        toast.success('Personal lending deleted successfully!')
+        toast.success(t('personalLending.form.success.deleted'))
         setIsDeleteDialogOpen(false)
         setDeletingLending(null)
       } else {
-        toast.error(result.error || 'Failed to delete personal lending')
+        toast.error(result.error || t('personalLending.form.errors.deleteFailed'))
       }
     } catch (error) {
       console.error('Error deleting personal lending:', error)
-      toast.error('An unexpected error occurred')
+      toast.error(t('personalLending.form.errors.networkError'))
     } finally {
       setIsDeleting(false)
     }
@@ -246,23 +246,23 @@ export default function PersonalLendingPage() {
     try {
       const result = await addPayment(paymentLending.id, paymentData)
       if (result.success) {
-        toast.success('Payment recorded successfully!')
+        toast.success(t('personalLending.form.success.paymentProcessed'))
         setIsPaymentModalOpen(false)
         setPaymentLending(null)
         // Refresh the data
         window.location.reload()
       } else {
-        toast.error(result.error || 'Failed to record payment')
+        toast.error(result.error || t('personalLending.form.errors.paymentFailed'))
       }
     } catch (error) {
       console.error('Error recording payment:', error)
-      toast.error('An unexpected error occurred')
+      toast.error(t('personalLending.form.errors.networkError'))
     }
   }
 
   const handleBulkDelete = async () => {
     if (selectedLendings.length > 0) {
-      if (confirm(`Are you sure you want to delete ${selectedLendings.length} selected lending records?`)) {
+      if (confirm(t('personalLending.confirmBulkDelete', {count: selectedLendings.length}))) {
         try {
           await Promise.all(selectedLendings.map(id => removeLending(id)))
           setSelectedLendings([])
@@ -379,7 +379,7 @@ export default function PersonalLendingPage() {
                   <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Records</p>
+                  <p className="text-sm text-muted-foreground">{t('personalLending.activeRecords')}</p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {activeLent + activeBorrowed}
                   </p>
@@ -395,7 +395,7 @@ export default function PersonalLendingPage() {
                   <Clock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-sm text-muted-foreground">{tCommon('pending')}</p>
                   <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                     {pendingLent + pendingBorrowed}
                   </p>
@@ -411,7 +411,7 @@ export default function PersonalLendingPage() {
                   <PiggyBank className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Partial</p>
+                  <p className="text-sm text-muted-foreground">{tCommon('partial')}</p>
                   <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
                     {partialLent + partialBorrowed}
                   </p>
@@ -427,7 +427,7 @@ export default function PersonalLendingPage() {
                   <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Overdue</p>
+                  <p className="text-sm text-muted-foreground">{tCommon('overdue')}</p>
                   <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {overdueLent + overdueBorrowed}
                   </p>
@@ -448,7 +448,7 @@ export default function PersonalLendingPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search by person name or notes..."
+                placeholder={t('personalLending.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -457,21 +457,21 @@ export default function PersonalLendingPage() {
             
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={tCommon('status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="partial">Partial</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
+                <SelectItem value="all">{t('common.allStatus')}</SelectItem>
+                <SelectItem value="pending">{tCommon('pending')}</SelectItem>
+                <SelectItem value="partial">{tCommon('partial')}</SelectItem>
+                <SelectItem value="paid">{tCommon('paid')}</SelectItem>
+                <SelectItem value="overdue">{tCommon('overdue')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">All Records ({(lendings || []).length})</TabsTrigger>
+              <TabsTrigger value="all">{t('personalLending.allRecords')} ({(lendings || []).length})</TabsTrigger>
               <TabsTrigger value="lent">{t('personalLending.moneyLent')} ({allLentMoney.length})</TabsTrigger>
               <TabsTrigger value="borrowed">{t('personalLending.moneyBorrowed')} ({allBorrowedMoney.length})</TabsTrigger>
             </TabsList>
@@ -490,7 +490,7 @@ export default function PersonalLendingPage() {
                 <div className="flex items-center space-x-2">
                   <Users className="h-5 w-5" />
                   <span>
-                    {activeTab === 'all' ? 'All Lending Records' :
+                    {activeTab === 'all' ? t('personalLending.allLendingRecords') :
                      activeTab === 'lent' ? t('personalLending.moneyLentToOthers') :
                      t('personalLending.moneyBorrowedFromOthers')} ({filteredLendings.length})
                   </span>
@@ -498,11 +498,11 @@ export default function PersonalLendingPage() {
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" size="sm">
                     <Upload className="h-4 w-4 mr-2" />
-                    Import
+                    {tCommon('import')}
                   </Button>
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
-                    Export
+                    {tCommon('export')}
                   </Button>
                 </div>
               </CardTitle>
@@ -566,11 +566,11 @@ export default function PersonalLendingPage() {
                               <div className="flex items-center space-x-2">
                                 <h4 className="font-bold text-lg text-foreground">{lending.person_name}</h4>
                                 <Badge className={typeColors[lending.type]}>
-                                  {lending.type === 'lent' ? 'Lent' : 'Borrowed'}
+                                  {lending.type === 'lent' ? t('personalLending.lent') : t('personalLending.borrowed')}
                                 </Badge>
                                 {overdue && (
                                   <Badge variant="destructive" className="text-xs">
-                                    Overdue
+                                    {tCommon('overdue')}
                                   </Badge>
                                 )}
                               </div>
@@ -582,13 +582,13 @@ export default function PersonalLendingPage() {
                                 {lending.due_date && (
                                   <span className="flex items-center space-x-1">
                                     <Clock className="h-3 w-3" />
-                                    <span>Due: {new Date(lending.due_date).toLocaleDateString()}</span>
+                                    <span>{tCommon('due')}: {new Date(lending.due_date).toLocaleDateString()}</span>
                                   </span>
                                 )}
                                 {lending.interest_rate > 0 && (
                                   <span className="flex items-center space-x-1">
                                     <Percent className="h-3 w-3" />
-                                    <span>{lending.interest_rate}% interest</span>
+                                    <span>{lending.interest_rate}% {t('personalLending.interest')}</span>
                                   </span>
                                 )}
                               </div>
@@ -598,7 +598,7 @@ export default function PersonalLendingPage() {
                           <div className="flex items-center space-x-6">
                             <div className="text-right space-y-1">
                               <p className="text-2xl font-bold text-primary">{formatAmount(lending.pending_amount)}</p>
-                              <p className="text-sm text-muted-foreground">Remaining</p>
+                              <p className="text-sm text-muted-foreground">{tCommon('remaining')}</p>
                               <Badge className={statusColors[lending.status]}>
                                 {lending.status}
                               </Badge>
@@ -611,13 +611,13 @@ export default function PersonalLendingPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuLabel>{tCommon('actions')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => handleViewLending(lending)}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
-                                  View Details
+                                  {tCommon('viewDetails')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => {
@@ -626,7 +626,7 @@ export default function PersonalLendingPage() {
                                   }}
                                 >
                                   <Edit className="h-4 w-4 mr-2" />
-                                  Edit Record
+                                  {tCommon('editRecord')}
                                 </DropdownMenuItem>
                                 {lending.status !== 'paid' && (
                                   <DropdownMenuItem 
@@ -634,7 +634,7 @@ export default function PersonalLendingPage() {
                                     className="text-green-600 dark:text-green-400"
                                   >
                                     <DollarSign className="h-4 w-4 mr-2" />
-                                    Add Payment
+                                    {t('personalLending.addPayment')}
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuSeparator />
@@ -643,7 +643,7 @@ export default function PersonalLendingPage() {
                                   className="text-red-600 dark:text-red-400"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Record
+                                  {tCommon('deleteRecord')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -653,15 +653,15 @@ export default function PersonalLendingPage() {
                         <div className="mt-4 pt-4 border-t border-border">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-3">
                             <div>
-                              <span className="text-muted-foreground">Original Amount: </span>
+                              <span className="text-muted-foreground">{t('personalLending.originalAmount')}: </span>
                               <span className="font-semibold">{formatAmount(lending.amount)}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Paid Amount: </span>
+                              <span className="text-muted-foreground">{t('personalLending.paidAmount')}: </span>
                               <span className="font-semibold text-green-600">{formatAmount(paidAmount)}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Remaining: </span>
+                              <span className="text-muted-foreground">{tCommon('remaining')}: </span>
                               <span className="font-semibold text-orange-600">{formatAmount(lending.pending_amount)}</span>
                             </div>
                           </div>
@@ -680,12 +680,12 @@ export default function PersonalLendingPage() {
                             ></div>
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {progressPercentage.toFixed(1)}% completed
+                            {progressPercentage.toFixed(1)}% {tCommon('completed')}
                           </div>
                           
                           {lending.notes && (
                             <div className="mt-2">
-                              <span className="text-muted-foreground">Notes: </span>
+                              <span className="text-muted-foreground">{tCommon('notes')}: </span>
                               <span className="text-sm">{lending.notes}</span>
                             </div>
                           )}
@@ -699,13 +699,13 @@ export default function PersonalLendingPage() {
                   <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
                   <h3 className="text-lg font-semibold mb-2">
                     {searchTerm || filterStatus !== 'all' 
-                      ? 'No lending records match your criteria' 
+                      ? t('personalLending.noRecordsMatch') 
                       : t('personalLending.noRecords')}
                   </h3>
                   <p className="mb-4">
                     {searchTerm || filterStatus !== 'all'
-                      ? 'Try adjusting your search or filters'
-                      : 'Start tracking money you lent or borrowed from friends and family'}
+                      ? t('personalLending.tryAdjustingFilters')
+                      : t('personalLending.startTrackingMessage')}
                   </p>
                   {!searchTerm && filterStatus === 'all' && (
                     <Button 
@@ -713,7 +713,7 @@ export default function PersonalLendingPage() {
                       className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Record
+                      {t('personalLending.addFirstRecord')}
                     </Button>
                   )}
                 </div>

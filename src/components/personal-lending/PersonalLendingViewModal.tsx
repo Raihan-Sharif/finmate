@@ -151,30 +151,30 @@ export default function PersonalLendingViewModal({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
-                Payment Progress
+                {t('personalLending.paymentProgress')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between text-sm">
-                  <span>Progress</span>
-                  <span>{progressPercentage.toFixed(1)}% completed</span>
+                  <span>{tCommon('progress')}</span>
+                  <span>{progressPercentage.toFixed(1)}% {tCommon('completed')}</span>
                 </div>
                 <Progress value={progressPercentage} className="h-2" />
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-2xl font-bold text-green-600">{formatAmount(paidAmount)}</p>
                     <p className="text-xs text-muted-foreground">
-                      {lending.type === 'lent' ? 'Received Back' : 'Paid Back'}
+                      {lending.type === 'lent' ? t('personalLending.receivedBack') : t('personalLending.paidBack')}
                     </p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-orange-600">{formatAmount(lending.pending_amount)}</p>
-                    <p className="text-xs text-muted-foreground">Outstanding</p>
+                    <p className="text-xs text-muted-foreground">{tCommon('outstanding')}</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-blue-600">{formatAmount(lending.amount)}</p>
-                    <p className="text-xs text-muted-foreground">Original Amount</p>
+                    <p className="text-xs text-muted-foreground">{t('personalLending.originalAmount')}</p>
                   </div>
                 </div>
               </div>
@@ -187,30 +187,30 @@ export default function PersonalLendingViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
-                  Financial Details
+                  {tCommon('financialDetails')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Original Amount:</span>
+                  <span className="text-muted-foreground">{t('personalLending.originalAmount')}:</span>
                   <span className="font-semibold">{formatAmount(lending.amount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pending Amount:</span>
+                  <span className="text-muted-foreground">{t('personalLending.pendingAmount')}:</span>
                   <span className="font-semibold text-orange-600">{formatAmount(lending.pending_amount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Paid Amount:</span>
+                  <span className="text-muted-foreground">{t('personalLending.paidAmount')}:</span>
                   <span className="font-semibold text-green-600">{formatAmount(paidAmount)}</span>
                 </div>
                 {lending.interest_rate > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Interest Rate:</span>
-                    <span className="font-semibold">{lending.interest_rate}% per year</span>
+                    <span className="text-muted-foreground">{tCommon('interestRate')}:</span>
+                    <span className="font-semibold">{lending.interest_rate}% {t('common.perAnnum')}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Currency:</span>
+                  <span className="text-muted-foreground">{tCommon('currency')}:</span>
                   <span className="font-semibold">{lending.currency}</span>
                 </div>
               </CardContent>
@@ -220,34 +220,34 @@ export default function PersonalLendingViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Dates & Timeline
+                  {t('personalLending.datesTimeline')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    {lending.type === 'lent' ? 'Lent Date:' : 'Borrowed Date:'}
+                    {lending.type === 'lent' ? t('personalLending.lentDate') : t('personalLending.borrowedDate')}:
                   </span>
                   <span className="font-semibold">{new Date(lending.date).toLocaleDateString()}</span>
                 </div>
                 {lending.due_date && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Due Date:</span>
+                    <span className="text-muted-foreground">{tCommon('dueDate')}:</span>
                     <span className={`font-semibold ${isOverdue ? 'text-red-600' : ''}`}>
                       {new Date(lending.due_date).toLocaleDateString()}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Reminder Days:</span>
-                  <span className="font-semibold">{lending.reminder_days || 7} days</span>
+                  <span className="text-muted-foreground">{t('personalLending.reminderDays')}:</span>
+                  <span className="font-semibold">{lending.reminder_days || 7} {t('common.days')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created:</span>
+                  <span className="text-muted-foreground">{tCommon('created')}:</span>
                   <span className="font-semibold">{new Date(lending.created_at).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Updated:</span>
+                  <span className="text-muted-foreground">{tCommon('lastUpdated')}:</span>
                   <span className="font-semibold">{new Date(lending.updated_at).toLocaleDateString()}</span>
                 </div>
               </CardContent>
@@ -260,7 +260,7 @@ export default function PersonalLendingViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  Contact Information
+                  {t('personalLending.contactInformation')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -294,7 +294,7 @@ export default function PersonalLendingViewModal({
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <History className="h-4 w-4" />
-                  Payment History ({payments.length})
+                  {t('personalLending.paymentHistory')} ({payments.length})
                 </div>
                 {lending.status !== 'paid' && (
                   <Button
@@ -307,7 +307,7 @@ export default function PersonalLendingViewModal({
                     }`}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Payment
+                    {t('personalLending.addPayment')}
                   </Button>
                 )}
               </CardTitle>
@@ -316,7 +316,7 @@ export default function PersonalLendingViewModal({
               {loadingPayments ? (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-sm text-muted-foreground mt-2">Loading payments...</p>
+                  <p className="text-sm text-muted-foreground mt-2">{t('personalLending.loadingPayments')}</p>
                 </div>
               ) : payments.length > 0 ? (
                 <div className="space-y-3">
@@ -336,18 +336,18 @@ export default function PersonalLendingViewModal({
                           <div>
                             <p className="font-semibold">{payment.lending?.person_name || 'Personal Payment'}</p>
                             <p className="text-sm text-muted-foreground">
-                              {lending.type === 'lent' ? 'Received Payment' : 'Paid Amount'}
+                              {lending.type === 'lent' ? t('personalLending.receivedPayment') : t('personalLending.paidAmount')}
                             </p>
                             <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
                               <span>💳</span>
                               <span>
                                 {payment.account_id && (() => {
                                   const account = accounts?.find(acc => acc.id === payment.account_id)
-                                  return account ? `Source: ${account.name}` : 'Source: Cash Payment'
-                                })() || 'Source: Cash Payment'}
+                                  return account ? `${t('personalLending.source')}: ${account.name}` : `${t('personalLending.source')}: ${t('personalLending.cashPayment')}`
+                                })() || `${t('personalLending.source')}: ${t('personalLending.cashPayment')}`}
                               </span>
                               <span className="text-muted-foreground">
-                                • {payment.payment_method || 'Bank Transfer'}
+                                • {payment.payment_method || t('personalLending.bankTransfer')}
                               </span>
                             </div>
                             {payment.notes && (
@@ -360,7 +360,7 @@ export default function PersonalLendingViewModal({
                           <p className="text-xs text-muted-foreground">
                             {new Date(payment.payment_date).toLocaleDateString()}
                           </p>
-                          <p className="text-xs text-green-600 dark:text-green-400">Completed</p>
+                          <p className="text-xs text-green-600 dark:text-green-400">{tCommon('completed')}</p>
                         </div>
                       </div>
                     </motion.div>
@@ -369,11 +369,11 @@ export default function PersonalLendingViewModal({
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <History className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p>No payments recorded yet</p>
+                  <p>{t('personalLending.noPaymentsRecorded')}</p>
                   <p className="text-sm">
                     {lending.type === 'lent' 
-                      ? 'Record payments as you receive them back from ' + lending.person_name
-                      : 'Record payments as you pay back ' + lending.person_name
+                      ? t('personalLending.recordPaymentsReceiveMessage', {name: lending.person_name})
+                      : t('personalLending.recordPaymentsPayBackMessage', {name: lending.person_name})
                     }
                   </p>
                 </div>
@@ -387,7 +387,7 @@ export default function PersonalLendingViewModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Notes
+                  {tCommon('notes')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -405,13 +405,12 @@ export default function PersonalLendingViewModal({
             >
               <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
                 <AlertTriangle className="h-4 w-4" />
-                <span className="font-semibold">Overdue</span>
+                <span className="font-semibold">{tCommon('overdue')}</span>
               </div>
               <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                This {lending.type === 'lent' ? 'lending' : 'borrowing'} is overdue. 
                 {lending.type === 'lent' 
-                  ? ` Follow up with ${lending.person_name} for repayment.`
-                  : ` Make the payment to ${lending.person_name} as soon as possible.`
+                  ? t('personalLending.overdueMessageLent', {name: lending.person_name})
+                  : t('personalLending.overdueMessageBorrowed', {name: lending.person_name})
                 }
               </p>
             </motion.div>
@@ -420,7 +419,7 @@ export default function PersonalLendingViewModal({
           {/* Action Buttons */}
           <div className="flex justify-between pt-4 border-t">
             <Button variant="outline" onClick={onClose}>
-              Close
+              {tCommon('close')}
             </Button>
             <div className="flex gap-3">
               {lending.status !== 'paid' && (
@@ -433,16 +432,16 @@ export default function PersonalLendingViewModal({
                   }`}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Payment
+                  {t('personalLending.addPayment')}
                 </Button>
               )}
               <Button variant="outline" onClick={onEdit}>
                 <Edit className="h-4 w-4 mr-2" />
-                Edit
+                {tCommon('edit')}
               </Button>
               <Button variant="destructive" onClick={onDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                {tCommon('delete')}
               </Button>
             </div>
           </div>

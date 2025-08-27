@@ -44,26 +44,7 @@ import { useCategories } from '@/hooks/useCategories'
 import { renderIcon } from '@/lib/utils/iconMapping'
 import { useTranslations } from 'next-intl'
 
-const personalLendingSchema = z.object({
-  person_name: z.string().min(1, 'Person name is required'),
-  amount: z.number().min(1, 'Amount must be greater than 0'),
-  type: z.enum(['lent', 'borrowed']),
-  interest_rate: z.number().min(0, 'Interest rate must be 0 or greater').max(100, 'Interest rate cannot exceed 100%').optional(),
-  date: z.string().min(1, 'Date is required'),
-  due_date: z.string().optional(),
-  account_id: z.string().optional(),
-  category_selection: z.string().optional(), // This will contain either category_id or subcategory_id
-  auto_debit: z.boolean().optional(),
-  reminder_days: z.number().min(1).max(365).optional(),
-  contact_info: z.object({
-    phone: z.string().optional(),
-    email: z.string().email().optional().or(z.literal('')),
-    address: z.string().optional(),
-  }).optional(),
-  notes: z.string().optional(),
-})
-
-type PersonalLendingFormSchema = z.infer<typeof personalLendingSchema>
+// Schema will be created inside the component to access translations
 
 interface PersonalLendingFormProps {
   lending?: any | null
@@ -86,6 +67,27 @@ export default function PersonalLendingForm({
   const [selectedType, setSelectedType] = useState<'lent' | 'borrowed'>('lent')
   const t = useTranslations('credit')
   const tCommon = useTranslations('common')
+
+  const personalLendingSchema = z.object({
+    person_name: z.string().min(1, t('personalLending.form.errors.personNameRequired')),
+    amount: z.number().min(1, t('personalLending.form.errors.amountPositive')),
+    type: z.enum(['lent', 'borrowed']),
+    interest_rate: z.number().min(0, t('personalLending.form.errors.interestRatePositive')).max(100, t('personalLending.form.errors.interestRateMax')).optional(),
+    date: z.string().min(1, t('personalLending.form.errors.dateRequired')),
+    due_date: z.string().optional(),
+    account_id: z.string().optional(),
+    category_selection: z.string().optional(),
+    auto_debit: z.boolean().optional(),
+    reminder_days: z.number().min(1, t('personalLending.form.errors.reminderDaysMin')).max(365, t('personalLending.form.errors.reminderDaysMax')).optional(),
+    contact_info: z.object({
+      phone: z.string().optional(),
+      email: z.string().email(t('personalLending.form.errors.emailInvalid')).optional().or(z.literal('')),
+      address: z.string().optional(),
+    }).optional(),
+    notes: z.string().optional(),
+  })
+
+  type PersonalLendingFormSchema = z.infer<typeof personalLendingSchema>
 
   const {
     register,
@@ -290,7 +292,7 @@ export default function PersonalLendingForm({
                   <Label htmlFor="person_name">{t('personalLending.personName')}</Label>
                   <Input
                     id="person_name"
-                    placeholder={t('personalLending.form.personNamePlaceholder') || 'e.g., John Doe, Sarah Smith'}
+                    placeholder={t('personalLending.form.personNamePlaceholder')}
                     {...register('person_name')}
                     className={errors.person_name ? 'border-red-500' : ''}
                   />
@@ -300,7 +302,7 @@ export default function PersonalLendingForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="amount">{t('common.amount')} ({currency})</Label>
+                  <Label htmlFor="amount">{tCommon('amount')} ({currency})</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -456,10 +458,10 @@ export default function PersonalLendingForm({
                     onValueChange={(value) => setValue('account_id', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={accountsLoading ? `${tCommon('loading')}...` : `${tCommon('selectAccount') || 'Select account'}`} />
+                      <SelectValue placeholder={accountsLoading ? `${tCommon('loading')}...` : tCommon('selectAccount')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">{t('common.noAccount') || 'No Account'}</SelectItem>
+                      <SelectItem value="none">{t('common.noAccount')}</SelectItem>
                       {accounts?.map((account) => (
                         <SelectItem key={account.id} value={account.id}>
                           <div className="flex items-center justify-between w-full">
@@ -482,10 +484,10 @@ export default function PersonalLendingForm({
                     onValueChange={(value) => setValue('category_selection', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={categoriesLoading ? `${tCommon('loading')}...` : `${tCommon('selectCategorySubcategory') || 'Select category or subcategory'}`} />
+                      <SelectValue placeholder={categoriesLoading ? `${tCommon('loading')}...` : tCommon('selectCategorySubcategory')} />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-y-auto">
-                      <SelectItem value="none">{t('common.noCategory') || 'No Category'}</SelectItem>
+                      <SelectItem value="none">{t('common.noCategory')}</SelectItem>
                       {dropdownOptions?.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           <div className="flex items-center space-x-2">
@@ -510,7 +512,7 @@ export default function PersonalLendingForm({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {t('common.chooseCategoryHelp') || 'Choose a main category or specific subcategory for better organization'}
+                    {t('common.chooseCategoryHelp')}
                   </p>
                 </div>
               </div>
@@ -556,7 +558,7 @@ export default function PersonalLendingForm({
                 <Label htmlFor="notes">{t('personalLending.notesOptional')}</Label>
                 <Textarea
                   id="notes"
-                  placeholder={t('personalLending.form.notesPlaceholder') || 'Add any additional information about this lending/borrowing...'}
+                  placeholder={t('personalLending.form.notesPlaceholder')}
                   {...register('notes')}
                   rows={3}
                 />

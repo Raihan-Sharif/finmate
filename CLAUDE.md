@@ -880,10 +880,11 @@ Use the `LanguageSwitcher` component which properly handles locale routing:
 5. **Verify URL routing** matches locale content
 
 ### **Message Files:**
-- `messages/en.json`: Complete English translations
-- `messages/bn.json`: Complete Bengali translations (বাংলা)
+- `messages/en.json`: (old Not completed) English translations
+- `messages/bn.json`: (old Not completed) Bengali translations (বাংলা)
 - Both files must have identical key structure
 - All UI text must be translatable - no hardcoded strings
+- Now use Segragate translation file for your memory limit. like  messages/sections/bn/credit.json and  messages/sections/en/credit.json so now each section has their translation only and always use common.json file for common translation which will be need/use in several section like timePeriods, button etc
 
 ---
 

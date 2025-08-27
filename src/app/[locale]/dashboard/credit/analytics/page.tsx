@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 import {
   Select,
   SelectContent,
@@ -18,52 +17,46 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs'
-import { Progress } from '@/components/ui/progress'
-import { 
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart
-} from 'recharts'
-import { 
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Calendar,
-  Target,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Users,
-  CreditCard,
-  PiggyBank,
-  ArrowLeft,
-  Download,
-  Filter,
-  Eye,
-  Zap,
-  BarChart3,
-  PieChart as PieChartIcon,
-  LineChart as LineChartIcon,
-  Activity
-} from 'lucide-react'
 import { useLoans } from '@/hooks/useEMI'
 import { useLending } from '@/hooks/useLending'
-import { useAppStore } from '@/lib/stores/useAppStore'
 import { useTransactions } from '@/hooks/useTransactions'
-import Link from 'next/link'
+import { useAppStore } from '@/lib/stores/useAppStore'
+import { motion } from 'framer-motion'
+import {
+  Activity,
+  AlertTriangle,
+  ArrowLeft,
+  BarChart3,
+  Clock,
+  CreditCard,
+  DollarSign,
+  Download,
+  LineChart as LineChartIcon,
+  PieChart as PieChartIcon,
+  Target,
+  TrendingUp,
+  Users
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from 'recharts'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C']
 
@@ -315,8 +308,8 @@ export default function CreditAnalyticsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="6months">{t('analytics.last6Months')}</SelectItem>
-                <SelectItem value="12months">{t('analytics.last12Months')}</SelectItem>
+                <SelectItem value="6months">{tCommon('timePeriods.last6Months')}</SelectItem>
+                <SelectItem value="12months">{tCommon('timePeriods.last12Months')}</SelectItem>
                 <SelectItem value="ytd">{t('analytics.yearToDate')}</SelectItem>
               </SelectContent>
             </Select>

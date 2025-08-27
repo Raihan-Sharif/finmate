@@ -77,13 +77,13 @@ const statusColors = {
 }
 
 const PURCHASE_CATEGORIES = [
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'appliances', label: 'Home Appliances' },
-  { value: 'furniture', label: 'Furniture' },
-  { value: 'vehicle', label: 'Vehicle' },
-  { value: 'jewelry', label: 'Jewelry' },
-  { value: 'fashion', label: 'Fashion' },
-  { value: 'other', label: 'Other' }
+  { value: 'electronics', key: 'electronics' },
+  { value: 'appliances', key: 'appliances' },
+  { value: 'furniture', key: 'furniture' },
+  { value: 'vehicle', key: 'vehicle' },
+  { value: 'jewelry', key: 'jewelry' },
+  { value: 'fashion', key: 'fashion' },
+  { value: 'other', key: 'other' }
 ]
 
 export default function PurchaseEMIPage() {
@@ -148,11 +148,11 @@ export default function PurchaseEMIPage() {
         }
         const result = await editLoan(editingEMI.id, updateData)
         if (result.success) {
-          toast.success('Purchase EMI updated successfully!')
+          toast.success(t('purchaseEmi.form.success.updated'))
           setIsEMIFormOpen(false)
           setEditingEMI(null)
         } else {
-          toast.error(result.error || 'Failed to update Purchase EMI')
+          toast.error(result.error || t('purchaseEmi.form.errors.updateFailed'))
         }
       } else {
         const insertData = {
@@ -173,16 +173,16 @@ export default function PurchaseEMIPage() {
         }
         const result = await addLoan(insertData)
         if (result.success) {
-          toast.success('Purchase EMI added successfully!')
+          toast.success(t('purchaseEmi.form.success.created'))
           setIsEMIFormOpen(false)
           setEditingEMI(null)
         } else {
-          toast.error(result.error || 'Failed to add Purchase EMI')
+          toast.error(result.error || t('purchaseEmi.form.errors.createFailed'))
         }
       }
     } catch (error) {
       console.error('Error submitting Purchase EMI:', error)
-      toast.error('An unexpected error occurred')
+      toast.error(t('common.messages.somethingWentWrong'))
     }
   }
 
@@ -214,15 +214,15 @@ export default function PurchaseEMIPage() {
     try {
       const result = await removeLoan(deletingEMI.id)
       if (result.success) {
-        toast.success('Purchase EMI deleted successfully!')
+        toast.success(t('purchaseEmi.form.success.deleted'))
         setIsDeleteDialogOpen(false)
         setDeletingEMI(null)
       } else {
-        toast.error(result.error || 'Failed to delete Purchase EMI')
+        toast.error(result.error || t('purchaseEmi.form.errors.deleteFailed'))
       }
     } catch (error) {
       console.error('Error deleting Purchase EMI:', error)
-      toast.error('An unexpected error occurred')
+      toast.error(t('common.messages.somethingWentWrong'))
     } finally {
       setIsDeleting(false)
     }
@@ -249,21 +249,21 @@ export default function PurchaseEMIPage() {
     try {
       const result = await processLoanPayment(emi.id, new Date().toISOString().split('T')[0] || '')
       if (result.success) {
-        toast.success(`EMI payment processed successfully! Transaction created.`)
+        toast.success(t('purchaseEmi.form.success.paymentProcessed'))
         // Refresh EMIs list
         window.location.reload()
       } else {
-        toast.error(result.error || 'Failed to process EMI payment')
+        toast.error(result.error || t('common.messages.tryAgainLater'))
       }
     } catch (error) {
       console.error('Error processing manual EMI payment:', error)
-      toast.error('Failed to process EMI payment')
+      toast.error(t('common.messages.tryAgainLater'))
     }
   }
 
   const handleBulkDelete = async () => {
     if (selectedEMIs.length > 0) {
-      if (confirm(`Are you sure you want to delete ${selectedEMIs.length} selected Purchase EMIs?`)) {
+      if (confirm(t('common.messages.confirmAction'))) {
         try {
           await Promise.all(selectedEMIs.map(id => removeLoan(id)))
           setSelectedEMIs([])
@@ -292,14 +292,14 @@ export default function PurchaseEMIPage() {
   }
 
   const getCategoryLabel = (notes: string | null | undefined): string => {
-    if (!notes) return 'Other'
+    if (!notes) return t('purchaseEmi.categories.other')
     
     for (const category of PURCHASE_CATEGORIES) {
       if (notes.toLowerCase().includes(category.value)) {
-        return category.label
+        return t(`purchaseEmi.categories.${category.key}`)
       }
     }
-    return 'Other'
+    return t('purchaseEmi.categories.other')
   }
 
   if (loading) {
@@ -435,7 +435,7 @@ export default function PurchaseEMIPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search purchase EMIs..."
+              placeholder={t('purchaseEmi.searchPurchases')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -444,13 +444,13 @@ export default function PurchaseEMIPage() {
           
           <Select value={filterCategory} onValueChange={setFilterCategory}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t('common.category')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">{t('purchaseEmi.filters.all')}</SelectItem>
               {PURCHASE_CATEGORIES.map(category => (
                 <SelectItem key={category.value} value={category.value}>
-                  {category.label}
+                  {t(`purchaseEmi.categories.${category.key}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -458,13 +458,13 @@ export default function PurchaseEMIPage() {
 
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-full sm:w-32">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t('common.status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
-              <SelectItem value="defaulted">Defaulted</SelectItem>
+              <SelectItem value="all">{t('common.allStatus')}</SelectItem>
+              <SelectItem value="active">{t('common.status.active')}</SelectItem>
+              <SelectItem value="closed">{t('common.status.closed')}</SelectItem>
+              <SelectItem value="defaulted">{t('common.status.defaulted')}</SelectItem>
             </SelectContent>
           </Select>
         </motion.div>
@@ -480,16 +480,16 @@ export default function PurchaseEMIPage() {
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <ShoppingBag className="h-5 w-5" />
-                  <span>Purchase EMIs ({filteredEMIs.length})</span>
+                  <span>{t('purchaseEmi.purchaseEmis')} ({filteredEMIs.length})</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" size="sm">
                     <Upload className="h-4 w-4 mr-2" />
-                    Import
+                    {t('common.actions.import')}
                   </Button>
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
-                    Export
+                    {t('common.actions.export')}
                   </Button>
                 </div>
               </CardTitle>
@@ -545,7 +545,7 @@ export default function PurchaseEMIPage() {
                                 <h4 className="font-bold text-lg text-foreground">{getItemName(emi.notes)}</h4>
                                 {isOverdue && (
                                   <Badge variant="destructive" className="text-xs">
-                                    Overdue
+                                    {t('common.overdue')}
                                   </Badge>
                                 )}
                               </div>
@@ -568,7 +568,7 @@ export default function PurchaseEMIPage() {
                           <div className="flex items-center space-x-6">
                             <div className="text-right space-y-1">
                               <p className="text-2xl font-bold text-primary">{formatAmount(emi.emi_amount)}</p>
-                              <p className="text-sm text-muted-foreground">Monthly EMI</p>
+                              <p className="text-sm text-muted-foreground">{t('common.monthlyEmi')}</p>
                               <Badge className={statusColors[emi.status]}>
                                 {emi.status}
                               </Badge>
@@ -581,13 +581,13 @@ export default function PurchaseEMIPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => handleViewEMI(emi)}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
-                                  View Details
+                                  {t('common.viewDetails')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => {
@@ -596,7 +596,7 @@ export default function PurchaseEMIPage() {
                                   }}
                                 >
                                   <Edit className="h-4 w-4 mr-2" />
-                                  Edit EMI
+                                  {t('purchaseEmi.viewModal.editEmi')}
                                 </DropdownMenuItem>
                                 {emi.status === 'active' && (
                                   <DropdownMenuItem 
@@ -605,7 +605,7 @@ export default function PurchaseEMIPage() {
                                     className="text-green-600 dark:text-green-400"
                                   >
                                     <DollarSign className="h-4 w-4 mr-2" />
-                                    {isAutoProcessing ? 'Processing...' : 'Process Payment'}
+                                    {isAutoProcessing ? t('purchaseEmi.processing') : t('bankLoans.makePayment')}
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuSeparator />
@@ -614,7 +614,7 @@ export default function PurchaseEMIPage() {
                                   className="text-red-600 dark:text-red-400"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete EMI
+                                  {t('purchaseEmi.viewModal.deleteEmi')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -624,15 +624,15 @@ export default function PurchaseEMIPage() {
                         <div className="mt-4 pt-4 border-t border-border">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                             <div>
-                              <span className="text-muted-foreground">Outstanding: </span>
+                              <span className="text-muted-foreground">{t('common.outstanding')}: </span>
                               <span className="font-semibold">{formatAmount(emi.outstanding_amount)}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Principal: </span>
+                              <span className="text-muted-foreground">{t('common.principal')}: </span>
                               <span className="font-semibold">{formatAmount(emi.principal_amount)}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Next Due: </span>
+                              <span className="text-muted-foreground">{t('common.nextDueDate')}: </span>
                               <span className="font-semibold">
                                 {emi.next_due_date ? new Date(emi.next_due_date).toLocaleDateString() : 'N/A'}
                               </span>
@@ -640,7 +640,7 @@ export default function PurchaseEMIPage() {
                           </div>
                           {emi.notes && (
                             <div className="mt-2">
-                              <span className="text-muted-foreground">Notes: </span>
+                              <span className="text-muted-foreground">{t('common.notes')}: </span>
                               <span className="text-sm">{emi.notes}</span>
                             </div>
                           )}
@@ -654,13 +654,13 @@ export default function PurchaseEMIPage() {
                   <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
                   <h3 className="text-lg font-semibold mb-2">
                     {searchTerm || filterCategory !== 'all' || filterStatus !== 'all' 
-                      ? 'No Purchase EMIs match your criteria' 
-                      : 'No Purchase EMIs'}
+                      ? t('bankLoans.noLoansMatch') 
+                      : t('purchaseEmi.noPurchaseEmis')}
                   </h3>
                   <p className="mb-4">
                     {searchTerm || filterCategory !== 'all' || filterStatus !== 'all'
-                      ? 'Try adjusting your search or filters'
-                      : 'Start tracking your purchase financing and EMI payments'}
+                      ? t('bankLoans.adjustFilters')
+                      : t('purchaseEmi.startTrackingPurchases')}
                   </p>
                   {!searchTerm && filterCategory === 'all' && filterStatus === 'all' && (
                     <Button 
@@ -668,7 +668,7 @@ export default function PurchaseEMIPage() {
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Purchase EMI
+                      {t('purchaseEmi.addFirstPurchaseEmi')}
                     </Button>
                   )}
                 </div>

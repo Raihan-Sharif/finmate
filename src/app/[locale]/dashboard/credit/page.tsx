@@ -254,7 +254,7 @@ export default function CreditOverviewPage() {
                 </div>
                 <Link href="/dashboard/credit/loans">
                   <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                    {t('common.viewAll')}
+                    {tCommon('actions.view')} All
                   </Button>
                 </Link>
               </CardTitle>
@@ -296,21 +296,21 @@ export default function CreditOverviewPage() {
                                 <h4 className="font-bold text-foreground">{loan.lender}</h4>
                                 {isOverdue && (
                                   <Badge variant="destructive" className="text-xs">
-                                    {t('common.overdue')}
+                                    {tCommon('status.overdue')}
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-muted-foreground">{t(`common.types.${loan.type}`) || LOAN_TYPES.find(type => type.value === loan.type)?.label}</p>
+                              <p className="text-sm text-muted-foreground">{tCommon(`types.${loan.type}`) || LOAN_TYPES.find(type => type.value === loan.type)?.label}</p>
                               <p className="text-xs text-muted-foreground">
-                                {loan.tenure_months} {t('common.months')} • {loan.interest_rate}% {t('common.interest')}
+                                {loan.tenure_months} {tCommon('timeUnits.months')} • {loan.interest_rate}% {tCommon('financial.interest')}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-2xl font-bold text-primary">{formatAmount(loan.emi_amount)}</p>
-                            <p className="text-sm text-muted-foreground">{t('common.monthlyEmi')}</p>
+                            <p className="text-sm text-muted-foreground">{tCommon('financial.monthlyEmi')}</p>
                             <Badge variant={loan.status === 'active' ? 'default' : 'secondary'} className="mt-1">
-                              {t(`common.status.${loan.status}`) || loan.status}
+                              {tCommon(`status.${loan.status}`) || loan.status}
                             </Badge>
                           </div>
                         </div>
@@ -355,7 +355,7 @@ export default function CreditOverviewPage() {
                   </div>
                   <Link href="/dashboard/credit/personal-lending">
                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                      {t('common.viewAll')}
+                      {tCommon('actions.view')} All
                     </Button>
                   </Link>
                 </CardTitle>
@@ -406,7 +406,7 @@ export default function CreditOverviewPage() {
                                      lending.status === 'overdue' ? 'destructive' : 'secondary'}
                               className="text-xs"
                             >
-                              {t(`common.status.${lending.status}`) || lending.status}
+                              {tCommon(`status.${lending.status}`) || lending.status}
                             </Badge>
                           </div>
                         </div>
@@ -441,7 +441,7 @@ export default function CreditOverviewPage() {
                 <Link href="/dashboard/calculators/loan-emi" className="block">
                   <Button variant="outline" className="w-full justify-start">
                     <Calculator className="h-4 w-4 mr-2" />
-                    {t('common.loanCalculator')}
+                    {tCommon('financial.loanCalculator')}
                   </Button>
                 </Link>
                 <Link href="/dashboard/credit/purchase-emi" className="block">

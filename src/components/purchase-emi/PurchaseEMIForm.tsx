@@ -70,15 +70,7 @@ interface PurchaseEMIFormProps {
   isLoading?: boolean
 }
 
-const PURCHASE_CATEGORIES = [
-  { value: 'electronics', label: 'Electronics', icon: Smartphone },
-  { value: 'appliances', label: 'Home Appliances', icon: Home },
-  { value: 'furniture', label: 'Furniture', icon: Home },
-  { value: 'vehicle', label: 'Vehicle', icon: Car },
-  { value: 'jewelry', label: 'Jewelry', icon: Package },
-  { value: 'fashion', label: 'Fashion', icon: ShoppingCart },
-  { value: 'other', label: 'Other', icon: Package }
-]
+// Category labels will be translated dynamically in component
 
 export default function PurchaseEMIForm({ 
   emi, 
@@ -97,14 +89,14 @@ export default function PurchaseEMIForm({
     item_name: z.string().min(1, t('purchaseEmi.form.errors.itemNameRequired')),
     lender: z.string().min(1, t('purchaseEmi.form.errors.vendorRequired')),
     principal_amount: z.number().min(1, t('purchaseEmi.form.errors.totalAmountPositive')),
-    interest_rate: z.number().min(0, t('purchaseEmi.form.errors.interestRatePositive') || 'Interest rate must be 0 or greater').max(50, 'Interest rate cannot exceed 50%'),
-    tenure_months: z.number().min(1, t('purchaseEmi.form.errors.tenurePositive')).max(120, 'Tenure cannot exceed 120 months'),
+    interest_rate: z.number().min(0, t('purchaseEmi.form.errors.interestRatePositive')).max(50, t('purchaseEmi.form.errors.interestRateMax')),
+    tenure_months: z.number().min(1, t('purchaseEmi.form.errors.tenurePositive')).max(120, t('purchaseEmi.form.errors.tenureMax')),
     start_date: z.string().min(1, t('purchaseEmi.form.errors.purchaseDateRequired')),
-    payment_day: z.number().min(1, 'Payment day must be between 1-31').max(31, 'Payment day must be between 1-31').optional(),
+    payment_day: z.number().min(1, t('purchaseEmi.form.errors.paymentDayValid')).max(31, t('purchaseEmi.form.errors.paymentDayValid')).optional(),
     account_id: z.string().optional(),
     category_selection: z.string().optional(),
     auto_debit: z.boolean().optional(),
-    reminder_days: z.number().min(1).max(30).optional(),
+    reminder_days: z.number().min(1, t('purchaseEmi.form.errors.reminderDaysValid')).max(30, t('purchaseEmi.form.errors.reminderDaysValid')).optional(),
     notes: z.string().optional(),
   })
   const [emiCalculation, setEmiCalculation] = useState({
@@ -256,7 +248,7 @@ export default function PurchaseEMIForm({
                   <Label htmlFor="item_name">{t('purchaseEmi.itemProductName')}</Label>
                   <Input
                     id="item_name"
-                    placeholder={t('purchaseEmi.form.itemNamePlaceholder') || 'e.g., iPhone 15 Pro, MacBook Air, Samsung TV'}
+                    placeholder={t('purchaseEmi.form.itemNamePlaceholder')}
                     {...register('item_name')}
                     className={errors.item_name ? 'border-red-500' : ''}
                   />
@@ -269,7 +261,7 @@ export default function PurchaseEMIForm({
                   <Label htmlFor="lender">{t('purchaseEmi.storeVendorName')}</Label>
                   <Input
                     id="lender"
-                    placeholder={t('purchaseEmi.form.vendorPlaceholder') || 'e.g., Apple Store, Best Buy, Amazon'}
+                    placeholder={t('purchaseEmi.form.vendorPlaceholder')}
                     {...register('lender')}
                     className={errors.lender ? 'border-red-500' : ''}
                   />
@@ -338,7 +330,7 @@ export default function PurchaseEMIForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="interest_rate">{tCommon('interestRate')} (% {t('common.perAnnum') || 'per annum'})</Label>
+                  <Label htmlFor="interest_rate">{tCommon('interestRate')} (% {t('common.perAnnum')})</Label>
                   <Input
                     id="interest_rate"
                     type="number"
@@ -427,10 +419,10 @@ export default function PurchaseEMIForm({
                     onValueChange={(value) => setValue('account_id', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={accountsLoading ? `${tCommon('loading')}...` : `${tCommon('selectAccount') || 'Select account'}`} />
+                      <SelectValue placeholder={accountsLoading ? `${tCommon('loading')}...` : tCommon('selectAccount')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">{t('common.noAccount') || 'No Account'}</SelectItem>
+                      <SelectItem value="none">{t('common.noAccount')}</SelectItem>
                       {accounts?.map((account) => (
                         <SelectItem key={account.id} value={account.id}>
                           <div className="flex items-center justify-between w-full">
@@ -453,10 +445,10 @@ export default function PurchaseEMIForm({
                     onValueChange={(value) => setValue('category_selection', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={categoriesLoading ? `${tCommon('loading')}...` : `${tCommon('selectCategorySubcategory') || 'Select category or subcategory'}`} />
+                      <SelectValue placeholder={categoriesLoading ? `${tCommon('loading')}...` : tCommon('selectCategorySubcategory')} />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-y-auto">
-                      <SelectItem value="none">{t('common.noCategory') || 'No Category'}</SelectItem>
+                      <SelectItem value="none">{t('common.noCategory')}</SelectItem>
                       {dropdownOptions?.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           <div className="flex items-center space-x-2">
@@ -481,7 +473,7 @@ export default function PurchaseEMIForm({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {t('common.chooseCategoryHelp') || 'Choose a main category or specific subcategory for better organization'}
+                    {t('common.chooseCategoryHelp')}
                   </p>
                 </div>
               </div>
@@ -522,7 +514,7 @@ export default function PurchaseEMIForm({
                 <Label htmlFor="notes">{t('purchaseEmi.notesOptional')}</Label>
                 <Textarea
                   id="notes"
-                  placeholder={t('purchaseEmi.form.notesPlaceholder') || 'Add any additional information about this purchase EMI...'}
+                  placeholder={t('purchaseEmi.form.notesPlaceholder')}
                   {...register('notes')}
                   rows={3}
                 />
@@ -542,7 +534,7 @@ export default function PurchaseEMIForm({
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || principalAmount <= 0}
+              disabled={isLoading}
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
             >
               {isLoading ? (

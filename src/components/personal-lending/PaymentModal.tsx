@@ -38,6 +38,7 @@ import {
 } from 'lucide-react'
 import { useAppStore } from '@/lib/stores/useAppStore'
 import { useAccounts } from '@/hooks/useAccounts'
+import { useTranslations } from 'next-intl'
 
 const paymentSchema = z.object({
   amount: z.number().min(0.01, 'Payment amount must be greater than 0'),
@@ -66,6 +67,8 @@ export default function PaymentModal({
 }: PaymentModalProps) {
   const { formatAmount, currency } = useAppStore()
   const { accounts, loading: accountsLoading } = useAccounts()
+  const t = useTranslations()
+  const tCommon = useTranslations('common')
   const [paymentType, setPaymentType] = useState<'repayment_received' | 'repayment_made'>('repayment_received')
 
   const {
@@ -144,17 +147,17 @@ export default function PaymentModal({
 
   const getPaymentTitle = () => {
     if (lending.type === 'lent') {
-      return `Receive Payment from ${lending.person_name}`
+      return t('personalLending.paymentModal.receivePaymentFrom', { name: lending.person_name })
     } else {
-      return `Make Payment to ${lending.person_name}`
+      return t('personalLending.paymentModal.makePaymentTo', { name: lending.person_name })
     }
   }
 
   const getPaymentDescription = () => {
     if (lending.type === 'lent') {
-      return `Record a payment received from ${lending.person_name} for the money you lent them.`
+      return t('personalLending.paymentModal.recordPaymentReceivedDescription', { name: lending.person_name })
     } else {
-      return `Record a payment you made to ${lending.person_name} for the money you borrowed from them.`
+      return t('personalLending.paymentModal.recordPaymentMadeDescription', { name: lending.person_name })
     }
   }
 
@@ -177,28 +180,28 @@ export default function PaymentModal({
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Info className="h-4 w-4" />
-                Current Status
+                {t('personalLending.paymentModal.currentStatus')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between text-sm">
-                  <span>Payment Progress</span>
-                  <span>{progressPercentage.toFixed(1)}% completed</span>
+                  <span>{t('personalLending.paymentModal.paymentProgress')}</span>
+                  <span>{progressPercentage.toFixed(1)}% {tCommon('completed')}</span>
                 </div>
                 <Progress value={progressPercentage} className="h-2" />
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-lg font-bold text-green-600">{formatAmount(paidAmount)}</p>
-                    <p className="text-xs text-muted-foreground">Paid</p>
+                    <p className="text-xs text-muted-foreground">{tCommon('paid')}</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold text-orange-600">{formatAmount(remainingAmount)}</p>
-                    <p className="text-xs text-muted-foreground">Remaining</p>
+                    <p className="text-xs text-muted-foreground">{tCommon('remaining')}</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold text-blue-600">{formatAmount(originalAmount)}</p>
-                    <p className="text-xs text-muted-foreground">Original</p>
+                    <p className="text-xs text-muted-foreground">{t('personalLending.originalAmount')}</p>
                   </div>
                 </div>
               </div>
@@ -211,13 +214,13 @@ export default function PaymentModal({
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Calculator className="h-4 w-4" />
-                  Payment Details
+                  {t('personalLending.paymentModal.paymentDetails')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="amount">Payment Amount ({currency})</Label>
+                    <Label htmlFor="amount">{t('personalLending.paymentModal.paymentAmount')} ({currency})</Label>
                     <Input
                       id="amount"
                       type="number"
@@ -269,7 +272,7 @@ export default function PaymentModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="payment_date">Payment Date</Label>
+                    <Label htmlFor="payment_date">{t('personalLending.paymentModal.paymentDate')}</Label>
                     <Input
                       id="payment_date"
                       type="date"
@@ -283,16 +286,16 @@ export default function PaymentModal({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="account_id">Account - Optional</Label>
+                  <Label htmlFor="account_id">{t('personalLending.paymentModal.accountOptional')}</Label>
                   <Select 
                     value={watch('account_id') || 'none'} 
                     onValueChange={(value) => setValue('account_id', value === 'none' ? '' : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={accountsLoading ? "Loading accounts..." : "Select account"} />
+                      <SelectValue placeholder={accountsLoading ? tCommon('loading') + '...' : t('personalLending.paymentModal.selectAccount')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No Account</SelectItem>
+                      <SelectItem value="none">{tCommon('noAccount')}</SelectItem>
                       {accounts?.map((account) => (
                         <SelectItem key={account.id} value={account.id}>
                           <div className="flex items-center justify-between w-full">
@@ -307,15 +310,15 @@ export default function PaymentModal({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Selecting an account will update its balance and relevant budget categories
+                    {t('personalLending.paymentModal.accountBalanceNote')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Notes - Optional</Label>
+                  <Label htmlFor="notes">{t('personalLending.paymentModal.notesOptional')}</Label>
                   <Textarea
                     id="notes"
-                    placeholder="Add any notes about this payment..."
+                    placeholder={t('personalLending.paymentModal.notesPlaceholder')}
                     {...register('notes')}
                     rows={2}
                   />
@@ -343,20 +346,22 @@ export default function PaymentModal({
                       ? 'text-green-900 dark:text-green-200'
                       : 'text-blue-900 dark:text-blue-200'
                 }`}>
-                  {isOverPayment ? '⚠️ Overpayment Alert' : isFullPayment ? '✅ Full Payment' : '📊 Partial Payment Preview'}
+                  {isOverPayment ? `⚠️ ${t('personalLending.paymentModal.overpaymentAlert')}` : isFullPayment ? `✅ ${t('personalLending.paymentModal.fullPayment')}` : `📊 ${t('personalLending.paymentModal.partialPaymentPreview')}`}
                 </h4>
                 
                 {isOverPayment && (
                   <p className="text-sm text-orange-700 dark:text-orange-300 mb-3">
-                    This payment amount ({formatAmount(watchedAmount)}) exceeds the remaining balance ({formatAmount(remainingAmount)}). 
-                    The excess amount will be recorded but may need to be refunded.
+                    {t('personalLending.paymentModal.overpaymentMessage', { 
+                      paymentAmount: formatAmount(watchedAmount), 
+                      remainingBalance: formatAmount(remainingAmount) 
+                    })}
                   </p>
                 )}
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>New Progress</span>
-                    <span>{Math.min(100, newProgressPercentage).toFixed(1)}% completed</span>
+                    <span>{t('personalLending.paymentModal.newProgress')}</span>
+                    <span>{Math.min(100, newProgressPercentage).toFixed(1)}% {tCommon('completed')}</span>
                   </div>
                   <Progress value={Math.min(100, newProgressPercentage)} className="h-2" />
                   <div className="grid grid-cols-3 gap-4 text-center">
@@ -366,23 +371,23 @@ export default function PaymentModal({
                       }`}>
                         {formatAmount(Math.min(originalAmount, newPaidAmount))}
                       </p>
-                      <p className="text-xs text-muted-foreground">New Paid</p>
+                      <p className="text-xs text-muted-foreground">{t('personalLending.paymentModal.newPaid')}</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold text-green-600">
                         {formatAmount(newRemainingAmount)}
                       </p>
-                      <p className="text-xs text-muted-foreground">New Remaining</p>
+                      <p className="text-xs text-muted-foreground">{t('personalLending.paymentModal.newRemaining')}</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold text-blue-600">{formatAmount(originalAmount)}</p>
-                      <p className="text-xs text-muted-foreground">Original</p>
+                      <p className="text-xs text-muted-foreground">{t('personalLending.originalAmount')}</p>
                     </div>
                   </div>
                   {isOverPayment && (
                     <div className="text-center pt-2 border-t">
                       <p className="text-sm text-orange-600 font-semibold">
-                        Excess Amount: {formatAmount(watchedAmount - remainingAmount)}
+                        {t('personalLending.paymentModal.excessAmount')}: {formatAmount(watchedAmount - remainingAmount)}
                       </p>
                     </div>
                   )}
@@ -398,7 +403,7 @@ export default function PaymentModal({
                 onClick={handleClose}
                 disabled={isLoading}
               >
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -412,10 +417,10 @@ export default function PaymentModal({
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Processing...</span>
+                    <span>{tCommon('processing')}</span>
                   </div>
                 ) : (
-                  `Record ${isFullPayment ? 'Full' : 'Partial'} Payment`
+                  `${t('personalLending.paymentModal.record')} ${isFullPayment ? t('personalLending.paymentModal.full') : t('personalLending.paymentModal.partial')} ${t('personalLending.paymentModal.payment')}`
                 )}
               </Button>
             </div>

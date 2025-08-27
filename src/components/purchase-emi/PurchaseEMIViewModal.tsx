@@ -53,9 +53,9 @@ export default function PurchaseEMIViewModal({
   if (!emi) return null
 
   const getItemName = (notes: string | null | undefined): string => {
-    if (!notes) return 'Unknown Item'
+    if (!notes) return t('common.placeholders.notSpecified')
     const match = notes.match(/Item: (.+?)(\n|$)/)
-    return match ? match[1] || 'Unknown Item' : 'Unknown Item'
+    return match ? match[1] || t('common.placeholders.notSpecified') : t('common.placeholders.notSpecified')
   }
 
   const isOverdue = emi.status === 'active' && emi.next_due_date && new Date(emi.next_due_date) < new Date()
