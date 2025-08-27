@@ -157,7 +157,7 @@ export default function DashboardPage() {
 
   if (loading && !refreshing) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:from-background dark:via-background dark:to-background">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:bg-zinc-950">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -172,7 +172,7 @@ export default function DashboardPage() {
 
   if (error && !refreshing) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:from-background dark:via-background dark:to-background">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:bg-zinc-950">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -191,7 +191,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:from-background dark:via-background dark:to-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:bg-zinc-950 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
       <div className="p-6 space-y-8">
         {/* Enhanced Header with Controls */}
         <motion.div
@@ -210,7 +210,7 @@ export default function DashboardPage() {
           
           <div className="flex items-center space-x-4">
             <Select value={currentPeriod} onValueChange={handlePeriodChange}>
-              <SelectTrigger className="w-[180px] bg-card/50 border-border/50">
+              <SelectTrigger className="w-[180px] bg-card/50 dark:bg-zinc-800/60 border-border/50 dark:border-zinc-700/40">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
               size="sm" 
               onClick={handleRefresh} 
               disabled={refreshing}
-              className="bg-card/50"
+              className="bg-card/50 dark:bg-zinc-800/60"
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
@@ -253,7 +253,7 @@ export default function DashboardPage() {
         >
           <motion.div variants={fadeInUp}>
             <Link href="/dashboard/transactions/new">
-              <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border-blue-200 dark:border-blue-800 hover:scale-105">
+              <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-blue-50 to-cyan-50 dark:bg-gradient-to-r dark:from-blue-950/60 dark:to-cyan-950/60 border border-blue-200/60 dark:border-blue-800/30 hover:scale-105 hover:border-blue-300/80 dark:hover:from-blue-900/70 dark:hover:to-cyan-900/70 dark:hover:border-blue-700/50 backdrop-blur-sm dark:shadow-xl dark:shadow-black/30">
                 <CardContent className="p-4 text-center">
                   <Plus className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
                   <p className="text-sm font-medium text-blue-700 dark:text-blue-300">{t('overview.addTransaction')}</p>
@@ -263,7 +263,7 @@ export default function DashboardPage() {
           </motion.div>
           <motion.div variants={fadeInUp}>
             <Link href="/dashboard/budget/new">
-              <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200 dark:border-green-800 hover:scale-105">
+              <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-green-50 to-emerald-50 dark:bg-gradient-to-r dark:from-green-950/60 dark:to-emerald-950/60 border border-green-200/60 dark:border-green-800/30 hover:scale-105 hover:border-green-300/80 dark:hover:from-green-900/70 dark:hover:to-emerald-900/70 dark:hover:border-green-700/50 backdrop-blur-sm dark:shadow-xl dark:shadow-black/30">
                 <CardContent className="p-4 text-center">
                   <Target className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
                   <p className="text-sm font-medium text-green-700 dark:text-green-300">{t('overview.createBudget')}</p>
@@ -273,7 +273,7 @@ export default function DashboardPage() {
           </motion.div>
           <motion.div variants={fadeInUp}>
             <Link href="/dashboard/credit">
-              <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border-orange-200 dark:border-orange-800 hover:scale-105">
+              <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-orange-50 to-amber-50 dark:bg-gradient-to-r dark:from-orange-950/60 dark:to-amber-950/60 border border-orange-200/60 dark:border-orange-800/30 hover:scale-105 hover:border-orange-300/80 dark:hover:from-orange-900/70 dark:hover:to-amber-900/70 dark:hover:border-orange-700/50 backdrop-blur-sm dark:shadow-xl dark:shadow-black/30">
                 <CardContent className="p-4 text-center">
                   <CreditCard className="h-8 w-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
                   <p className="text-sm font-medium text-orange-700 dark:text-orange-300">{t('overview.manageLoans')}</p>
@@ -283,7 +283,7 @@ export default function DashboardPage() {
           </motion.div>
           <motion.div variants={fadeInUp}>
             <Link href="/dashboard/investments">
-              <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border-purple-200 dark:border-purple-800 hover:scale-105">
+              <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-purple-50 to-pink-50 dark:bg-gradient-to-r dark:from-purple-950/60 dark:to-pink-950/60 border border-purple-200/60 dark:border-purple-800/30 hover:scale-105 hover:border-purple-300/80 dark:hover:from-purple-900/70 dark:hover:to-pink-900/70 dark:hover:border-purple-700/50 backdrop-blur-sm dark:shadow-xl dark:shadow-black/30">
                 <CardContent className="p-4 text-center">
                   <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
                   <p className="text-sm font-medium text-purple-700 dark:text-purple-300">{t('overview.investments')}</p>
@@ -301,7 +301,7 @@ export default function DashboardPage() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900/50 dark:via-blue-950/30 dark:to-indigo-950/30 border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+            <Card className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-blue-950/40 dark:to-indigo-950/40 border border-slate-200/80 dark:border-blue-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-blue-900/50 hover:dark:to-indigo-900/50 hover:dark:border-blue-700/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center">
                   {t('stats.accountBalance')}
@@ -332,7 +332,7 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-900/30 dark:via-green-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+            <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-green-950/40 dark:to-teal-950/40 border border-emerald-200/80 dark:border-green-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-green-900/50 hover:dark:to-teal-900/50 hover:dark:border-green-700/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{t('stats.income')}</CardTitle>
                 <TrendingUpIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -349,7 +349,7 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-rose-50 via-red-50 to-pink-50 dark:from-rose-900/30 dark:via-red-950/30 dark:to-pink-950/30 border-rose-200 dark:border-rose-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+            <Card className="bg-gradient-to-br from-rose-50 via-red-50 to-pink-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-red-950/40 dark:to-pink-950/40 border border-rose-200/80 dark:border-red-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-red-900/50 hover:dark:to-pink-900/50 hover:dark:border-red-700/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-semibold text-rose-700 dark:text-rose-300">{t('stats.expenses')}</CardTitle>
                 <TrendingDownIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
@@ -366,7 +366,7 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-900/30 dark:via-purple-950/30 dark:to-fuchsia-950/30 border-violet-200 dark:border-violet-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+            <Card className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-violet-950/40 dark:to-fuchsia-950/40 border border-violet-200/80 dark:border-violet-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-violet-900/50 hover:dark:to-fuchsia-900/50 hover:dark:border-violet-700/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-semibold text-violet-700 dark:text-violet-300">{t('stats.netBalance')}</CardTitle>
                 {stats.net_balance >= 0 ? (
@@ -397,7 +397,7 @@ export default function DashboardPage() {
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/30 dark:via-yellow-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+            <Card className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-amber-950/40 dark:to-orange-950/40 border border-amber-200/80 dark:border-amber-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-amber-900/50 hover:dark:to-orange-900/50 hover:dark:border-amber-700/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle className="text-base font-semibold text-amber-700 dark:text-amber-300">{t('stats.investmentPortfolio')}</CardTitle>
                 <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -430,7 +430,7 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <Card className="bg-gradient-to-br from-cyan-50 via-teal-50 to-blue-50 dark:from-cyan-900/30 dark:via-teal-950/30 dark:to-blue-950/30 border-cyan-200 dark:border-cyan-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+            <Card className="bg-gradient-to-br from-cyan-50 via-teal-50 to-blue-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-cyan-950/40 dark:to-blue-950/40 border border-cyan-200/80 dark:border-cyan-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-cyan-900/50 hover:dark:to-blue-900/50 hover:dark:border-cyan-700/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle className="text-base font-semibold text-cyan-700 dark:text-cyan-300">{t('stats.loanCredit')}</CardTitle>
                 <CreditCard className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
@@ -470,7 +470,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/80 via-orange-50/80 to-red-50/80 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-red-950/20 shadow-xl backdrop-blur-sm">
+            <Card className="border border-amber-200/70 dark:border-amber-800/30 bg-gradient-to-br from-amber-50/80 via-orange-50/80 to-red-50/80 dark:bg-gradient-to-br dark:from-zinc-900/70 dark:via-amber-950/50 dark:to-red-950/50 shadow-xl backdrop-blur-sm dark:shadow-xl dark:shadow-black/40">
               <CardHeader>
                 <CardTitle className="text-amber-800 dark:text-amber-200 flex items-center">
                   <AlertTriangle className="h-5 w-5 mr-2 text-amber-600 dark:text-amber-400" />
@@ -486,7 +486,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {stats.pending_emis > 0 && (
-                    <div className="p-4 bg-white/80 dark:bg-slate-900/40 rounded-xl border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
+                    <div className="p-4 bg-white/80 dark:bg-zinc-800/60 rounded-xl border border-amber-200/60 dark:border-amber-700/30 shadow-md hover:shadow-lg transition-all backdrop-blur-sm dark:hover:bg-zinc-700/70 hover:dark:border-amber-600/40">
                       <div className="flex items-center space-x-2 mb-2">
                         <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                         <p className="font-semibold text-amber-800 dark:text-amber-200">{t('alerts.pendingEmis')}</p>
@@ -501,7 +501,7 @@ export default function DashboardPage() {
                   )}
                   
                   {stats.overdue_lendings > 0 && (
-                    <div className="p-4 bg-white/80 dark:bg-slate-900/40 rounded-xl border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
+                    <div className="p-4 bg-white/80 dark:bg-zinc-800/60 rounded-xl border border-amber-200/60 dark:border-amber-700/30 shadow-md hover:shadow-lg transition-all backdrop-blur-sm dark:hover:bg-zinc-700/70 hover:dark:border-amber-600/40">
                       <div className="flex items-center space-x-2 mb-2">
                         <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                         <p className="font-semibold text-amber-800 dark:text-amber-200">{t('alerts.overdueLendings')}</p>
@@ -516,7 +516,7 @@ export default function DashboardPage() {
                   )}
                   
                   {budgetAlerts.map(alert => (
-                    <div key={alert.id} className="p-4 bg-white/80 dark:bg-slate-900/40 rounded-xl border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
+                    <div key={alert.id} className="p-4 bg-white/80 dark:bg-zinc-800/60 rounded-xl border border-amber-200/60 dark:border-amber-700/30 shadow-md hover:shadow-lg transition-all backdrop-blur-sm dark:hover:bg-zinc-700/70 hover:dark:border-amber-600/40">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <Target className="h-4 w-4 text-amber-600 dark:text-amber-400" />
@@ -548,7 +548,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border-0 dark:bg-card/40">
+            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border border-border/60 dark:border-zinc-700/30 dark:bg-zinc-900/60 dark:shadow-xl dark:shadow-black/40">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -627,7 +627,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border-0 dark:bg-card/40">
+            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border border-border/60 dark:border-zinc-700/30 dark:bg-zinc-900/60 dark:shadow-xl dark:shadow-black/40">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -669,7 +669,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 space-y-3 max-h-56 overflow-y-auto">
                       {categoryExpenses.map((category, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                        <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 dark:bg-zinc-800/50 hover:bg-muted/40 dark:hover:bg-zinc-700/60 transition-colors">
                           <div className="flex items-center space-x-3">
                             <div 
                               className="w-4 h-4 rounded-full flex-shrink-0" 
@@ -718,7 +718,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
           >
-            <Card className="shadow-xl bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/30 dark:via-emerald-950/30 dark:to-teal-950/30 border-green-200 dark:border-green-800">
+            <Card className="shadow-xl bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:bg-gradient-to-br dark:from-zinc-900/70 dark:via-green-950/50 dark:to-teal-950/50 border border-green-200/80 dark:border-green-800/30 dark:shadow-xl dark:shadow-black/40">
               <CardHeader>
                 <CardTitle className="flex items-center text-green-800 dark:text-green-300">
                   <Shield className="h-5 w-5 mr-2" />
@@ -767,7 +767,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
           >
-            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border-0 dark:bg-card/40">
+            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border border-border/60 dark:border-zinc-700/30 dark:bg-zinc-900/60 dark:shadow-xl dark:shadow-black/40">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Activity className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
@@ -776,7 +776,7 @@ export default function DashboardPage() {
                 <CardDescription>{t('analytics.keyFinancialMetrics')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-zinc-800/60 rounded-lg hover:bg-muted/60 dark:hover:bg-zinc-700/70 transition-colors">
                   <div className="flex items-center space-x-2">
                     <Banknote className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     <span className="text-sm">{t('analytics.avgTransaction')}</span>
@@ -786,7 +786,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-zinc-800/60 rounded-lg hover:bg-muted/60 dark:hover:bg-zinc-700/70 transition-colors">
                   <div className="flex items-center space-x-2">
                     <PiggyBank className="h-4 w-4 text-green-600 dark:text-green-400" />
                     <span className="text-sm">{t('analytics.savingsRate')}</span>
@@ -796,7 +796,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-zinc-800/60 rounded-lg hover:bg-muted/60 dark:hover:bg-zinc-700/70 transition-colors">
                   <div className="flex items-center space-x-2">
                     <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     <span className="text-sm">{t('analytics.budgetUsage')}</span>
@@ -804,7 +804,7 @@ export default function DashboardPage() {
                   <span className="font-medium">{stats.budget_used_percentage.toFixed(1)}%</span>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-zinc-800/60 rounded-lg hover:bg-muted/60 dark:hover:bg-zinc-700/70 transition-colors">
                   <div className="flex items-center space-x-2">
                     <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     <span className="text-sm">{t('analytics.investmentReturn')}</span>
@@ -823,7 +823,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.8 }}
           >
-            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border-0 dark:bg-card/40">
+            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border border-border/60 dark:border-zinc-700/30 dark:bg-zinc-900/60 dark:shadow-xl dark:shadow-black/40">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -845,7 +845,7 @@ export default function DashboardPage() {
                       key={transaction.id} 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 dark:bg-zinc-800/50 hover:bg-muted/50 dark:hover:bg-zinc-700/60 transition-colors"
                     >
                       <div className="flex items-center space-x-3 min-w-0 flex-1">
                         <div className={`p-2 rounded-full flex-shrink-0 ${
@@ -901,7 +901,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.9 }}
           >
-            <Card className="shadow-xl bg-gradient-to-r from-cyan-50 via-blue-50 to-indigo-50 dark:from-cyan-950/30 dark:via-blue-950/30 dark:to-indigo-950/30 border-cyan-200 dark:border-cyan-800">
+            <Card className="shadow-xl bg-gradient-to-r from-cyan-50 via-blue-50 to-indigo-50 dark:bg-gradient-to-r dark:from-zinc-900/70 dark:via-cyan-950/50 dark:to-indigo-950/50 border border-cyan-200/80 dark:border-cyan-800/30 dark:shadow-xl dark:shadow-black/40">
               <CardHeader>
                 <CardTitle className="flex items-center text-cyan-800 dark:text-cyan-300">
                   <Calendar className="h-5 w-5 mr-2" />
@@ -917,13 +917,13 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {upcomingReminders.map(reminder => (
-                    <div key={reminder.id} className={`p-4 rounded-lg border-2 ${
+                    <div key={reminder.id} className={`p-4 rounded-lg border ${
                       reminder.priority === 'high' 
-                        ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800' 
+                        ? 'bg-red-50 dark:bg-red-950/30 border-red-200/80 dark:border-red-800/40' 
                         : reminder.priority === 'medium'
-                          ? 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800'
-                          : 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800'
-                    }`}>
+                          ? 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200/80 dark:border-yellow-800/40'
+                          : 'bg-green-50 dark:bg-green-950/30 border-green-200/80 dark:border-green-800/40'
+                    } dark:shadow-lg dark:shadow-black/30`}>
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-sm">{reminder.title}</h4>
                         <Badge 
@@ -958,7 +958,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 1.0 }}
           >
-            <Card className="shadow-xl bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border-indigo-200 dark:border-indigo-800">
+            <Card className="shadow-xl bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:bg-gradient-to-r dark:from-zinc-900/70 dark:via-indigo-950/50 dark:to-pink-950/50 border border-indigo-200/80 dark:border-indigo-800/30 dark:shadow-xl dark:shadow-black/40">
               <CardHeader>
                 <CardTitle className="flex items-center text-indigo-800 dark:text-indigo-300">
                   <Target className="h-5 w-5 mr-2" />
