@@ -548,18 +548,18 @@ export default function DashboardPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border border-border/60 dark:border-zinc-700/30 dark:bg-zinc-900/60 dark:shadow-xl dark:shadow-black/40">
+            <Card className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-blue-950/40 dark:to-purple-950/40 border border-blue-200/80 dark:border-blue-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-blue-900/50 hover:dark:to-purple-900/50 hover:dark:border-blue-700/30">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                    {t('analytics.monthlyTrends')}
+                    <BarChart3 className="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" />
+                    <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent font-bold">{t('analytics.monthlyTrends')}</span>
                   </div>
-                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300">
+                  <Badge variant="outline" className="bg-indigo-100/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-600">
                     {t('analytics.dynamicData')} • {periodOptions.find(p => p.value === currentPeriod)?.label}
                   </Badge>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-indigo-700/80 dark:text-indigo-300/80">
                   {t('analytics.incomeVsExpenses')} • {t('analytics.allAmountsIn')} {getCurrencySymbol()}
                 </CardDescription>
               </CardHeader>
@@ -627,18 +627,18 @@ export default function DashboardPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border border-border/60 dark:border-zinc-700/30 dark:bg-zinc-900/60 dark:shadow-xl dark:shadow-black/40">
+            <Card className="bg-gradient-to-br from-purple-50 via-pink-50 to-fuchsia-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-purple-950/40 dark:to-pink-950/40 border border-purple-200/80 dark:border-purple-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-purple-900/50 hover:dark:to-pink-900/50 hover:dark:border-purple-700/30">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <PieChart className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
-                    {t('analytics.categoryBreakdown')}
+                    <PieChart className="h-5 w-5 mr-2 text-fuchsia-600 dark:text-fuchsia-400" />
+                    <span className="bg-gradient-to-r from-purple-600 to-fuchsia-600 bg-clip-text text-transparent font-bold">{t('analytics.categoryBreakdown')}</span>
                   </div>
-                  <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300">
+                  <Badge variant="outline" className="bg-purple-100/70 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-600">
                     {t('analytics.topCategories')} {categoryExpenses.length}
                   </Badge>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-purple-700/80 dark:text-purple-300/80">
                   {periodOptions.find(p => p.value === currentPeriod)?.label} {t('analytics.expensesByCategory')} • {getCurrencySymbol()}
                 </CardDescription>
               </CardHeader>
@@ -767,49 +767,49 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
           >
-            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border border-border/60 dark:border-zinc-700/30 dark:bg-zinc-900/60 dark:shadow-xl dark:shadow-black/40">
+            <Card className="bg-gradient-to-br from-cyan-50 via-teal-50 to-blue-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-cyan-950/40 dark:to-blue-950/40 border border-cyan-200/80 dark:border-cyan-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-cyan-900/50 hover:dark:to-blue-900/50 hover:dark:border-cyan-700/30">
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Activity className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                  {t('analytics.advancedAnalytics')}
+                  <Activity className="h-5 w-5 mr-2 text-cyan-600 dark:text-cyan-400" />
+                  <span className="bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent font-bold">{t('analytics.advancedAnalytics')}</span>
                 </CardTitle>
-                <CardDescription>{t('analytics.keyFinancialMetrics')}</CardDescription>
+                <CardDescription className="text-cyan-700/80 dark:text-cyan-300/80">{t('analytics.keyFinancialMetrics')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-zinc-800/60 rounded-lg hover:bg-muted/60 dark:hover:bg-zinc-700/70 transition-colors">
+                <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-zinc-800/60 rounded-xl border border-cyan-200/60 dark:border-cyan-700/30 shadow-md hover:shadow-lg transition-all backdrop-blur-sm dark:hover:bg-zinc-700/70 hover:dark:border-cyan-600/40">
                   <div className="flex items-center space-x-2">
-                    <Banknote className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm">{t('analytics.avgTransaction')}</span>
+                    <Banknote className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                    <span className="text-sm font-medium text-cyan-800 dark:text-cyan-200">{t('analytics.avgTransaction')}</span>
                   </div>
-                  <span className="font-medium">
+                  <span className="font-bold text-cyan-700 dark:text-cyan-300">
                     {formatAmount(recentTransactions.length > 0 ? (stats.total_income + stats.total_expenses) / recentTransactions.length : 0)}
                   </span>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-zinc-800/60 rounded-lg hover:bg-muted/60 dark:hover:bg-zinc-700/70 transition-colors">
+                <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-zinc-800/60 rounded-xl border border-green-200/60 dark:border-green-700/30 shadow-md hover:shadow-lg transition-all backdrop-blur-sm dark:hover:bg-zinc-700/70 hover:dark:border-green-600/40">
                   <div className="flex items-center space-x-2">
                     <PiggyBank className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    <span className="text-sm">{t('analytics.savingsRate')}</span>
+                    <span className="text-sm font-medium text-green-800 dark:text-green-200">{t('analytics.savingsRate')}</span>
                   </div>
-                  <span className="font-medium text-green-600 dark:text-green-400">
+                  <span className="font-bold text-green-600 dark:text-green-400">
                     {stats.total_income > 0 ? ((stats.net_balance / stats.total_income) * 100).toFixed(1) : '0'}%
                   </span>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-zinc-800/60 rounded-lg hover:bg-muted/60 dark:hover:bg-zinc-700/70 transition-colors">
+                <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-zinc-800/60 rounded-xl border border-purple-200/60 dark:border-purple-700/30 shadow-md hover:shadow-lg transition-all backdrop-blur-sm dark:hover:bg-zinc-700/70 hover:dark:border-purple-600/40">
                   <div className="flex items-center space-x-2">
                     <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span className="text-sm">{t('analytics.budgetUsage')}</span>
+                    <span className="text-sm font-medium text-purple-800 dark:text-purple-200">{t('analytics.budgetUsage')}</span>
                   </div>
-                  <span className="font-medium">{stats.budget_used_percentage.toFixed(1)}%</span>
+                  <span className="font-bold text-purple-700 dark:text-purple-300">{stats.budget_used_percentage.toFixed(1)}%</span>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-zinc-800/60 rounded-lg hover:bg-muted/60 dark:hover:bg-zinc-700/70 transition-colors">
+                <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-zinc-800/60 rounded-xl border border-amber-200/60 dark:border-amber-700/30 shadow-md hover:shadow-lg transition-all backdrop-blur-sm dark:hover:bg-zinc-700/70 hover:dark:border-amber-600/40">
                   <div className="flex items-center space-x-2">
-                    <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span className="text-sm">{t('analytics.investmentReturn')}</span>
+                    <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <span className="text-sm font-medium text-amber-800 dark:text-amber-200">{t('analytics.investmentReturn')}</span>
                   </div>
-                  <span className={`font-medium ${stats.investment_return >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  <span className={`font-bold ${stats.investment_return >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {stats.investment_return >= 0 ? '+' : ''}{stats.investment_return.toFixed(2)}%
                   </span>
                 </div>
@@ -823,20 +823,20 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.8 }}
           >
-            <Card className="shadow-xl bg-card/70 backdrop-blur-sm border border-border/60 dark:border-zinc-700/30 dark:bg-zinc-900/60 dark:shadow-xl dark:shadow-black/40">
+            <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-emerald-950/40 dark:to-teal-950/40 border border-emerald-200/80 dark:border-emerald-800/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 backdrop-blur-sm dark:shadow-xl dark:shadow-black/40 hover:dark:from-zinc-800/90 hover:dark:via-emerald-900/50 hover:dark:to-teal-900/50 hover:dark:border-emerald-700/30">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Activity className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                    {t('activity.recentActivity')}
+                    <Activity className="h-5 w-5 mr-2 text-teal-600 dark:text-teal-400" />
+                    <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent font-bold">{t('activity.recentActivity')}</span>
                   </div>
                   <Link href="/dashboard/transactions">
-                    <Button variant="ghost" size="sm" className="text-xs">
+                    <Button variant="ghost" size="sm" className="text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30">
                       {t('activity.viewAll')} ({recentTransactions.length})
                     </Button>
                   </Link>
                 </CardTitle>
-                <CardDescription>{t('activity.latestTransactions')}</CardDescription>
+                <CardDescription className="text-emerald-700/80 dark:text-emerald-300/80">{t('activity.latestTransactions')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-80 overflow-y-auto">
@@ -845,7 +845,7 @@ export default function DashboardPage() {
                       key={transaction.id} 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 dark:bg-zinc-800/50 hover:bg-muted/50 dark:hover:bg-zinc-700/60 transition-colors"
+                      className="flex items-center justify-between p-4 rounded-xl bg-white/70 dark:bg-zinc-800/60 border border-emerald-200/60 dark:border-emerald-700/30 shadow-md hover:shadow-lg transition-all backdrop-blur-sm dark:hover:bg-zinc-700/70 hover:dark:border-emerald-600/40"
                     >
                       <div className="flex items-center space-x-3 min-w-0 flex-1">
                         <div className={`p-2 rounded-full flex-shrink-0 ${
