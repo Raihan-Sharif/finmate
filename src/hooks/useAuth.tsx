@@ -9,6 +9,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import toast from "react-hot-toast";
@@ -37,32 +38,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Track the last fetched profile to prevent duplicates
+  const lastFetchedProfileRef = useRef<string | null>(null);
+
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
 
     async function getInitialSession() {
       try {
+        // Always use getUser() instead of getSession() for server-side consistency
         const {
-          data: { session },
+          data: { user },
           error,
-        } = await supabase.auth.getSession();
+        } = await supabase.auth.getUser();
 
         if (error) {
-          console.error("Error getting session:", error);
+          console.error("Error getting user:", error);
+          // Clear any stale session data
+          if (mounted) {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+            lastFetchedProfileRef.current = null;
+          }
           return;
         }
 
+        // Get session after confirming user
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (mounted) {
           setSession(session);
-          setUser(session?.user ?? null);
+          setUser(user);
 
-          if (session?.user) {
-            await fetchProfile(session.user.id);
+          if (user && session) {
+            // Only fetch profile if we haven't fetched for this user ID recently
+            if (lastFetchedProfileRef.current !== user.id) {
+              await fetchProfile(user.id);
+            }
+          } else {
+            setProfile(null);
+            lastFetchedProfileRef.current = null;
           }
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          lastFetchedProfileRef.current = null;
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -72,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession();
 
-    // Listen for auth changes
+    // Listen for auth changes with improved handling
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -80,37 +110,105 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log("Auth state changed:", event, session?.user?.id);
 
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-
-      if (event === "SIGNED_OUT") {
-        setProfile(null);
-        router.push("/auth/signin");
+      // Handle different auth events
+      switch (event) {
+        case 'SIGNED_IN':
+        case 'TOKEN_REFRESHED':
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user && lastFetchedProfileRef.current !== session.user.id) {
+            await fetchProfile(session.user.id);
+          }
+          break;
+        case 'SIGNED_OUT':
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          lastFetchedProfileRef.current = null;
+          router.push("/auth/signin");
+          break;
+        case 'USER_UPDATED':
+          if (session?.user) {
+            setUser(session.user);
+            // Always fetch profile on user update as profile data might have changed
+            await fetchProfile(session.user.id);
+          }
+          break;
+        default:
+          // For other events, still update session and user
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user && lastFetchedProfileRef.current !== session.user.id) {
+            await fetchProfile(session.user.id);
+          } else if (!session?.user) {
+            setProfile(null);
+            lastFetchedProfileRef.current = null;
+          }
       }
 
       setLoading(false);
     });
 
+    // Handle custom session-expired events
+    const handleSessionExpired = () => {
+      if (mounted) {
+        console.log('Session expired, clearing auth state');
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        lastFetchedProfileRef.current = null;
+        setLoading(false);
+        router.push('/auth/signin');
+      }
+    };
+    
+    // Simplified visibility change handler - let auth state change handle the heavy lifting
+    const handleVisibilityChange = async () => {
+      if (!document.hidden && mounted && !user) {
+        // Only check if we don't have a user - let the auth state change handle profile fetching
+        try {
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          // If session exists but we don't have user, the auth state change will handle it
+          if (currentSession && !user) {
+            console.log('Session found on visibility change, auth state will handle');
+          }
+        } catch (error) {
+          console.error('Error during visibility change check:', error);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('session-expired', handleSessionExpired);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('session-expired', handleSessionExpired);
     };
   }, [router]);
 
-  // Fetch user profile with role and permissions
+  // Fetch user profile with role and permissions (with duplicate prevention)
   const fetchProfile = useCallback(async (userId: string) => {
+    // Prevent duplicate calls for the same user
+    if (lastFetchedProfileRef.current === userId) {
+      console.log("Profile already fetched for user:", userId, "- skipping duplicate call");
+      return;
+    }
+    
     try {
       console.log("Fetching profile for user ID:", userId);
+      lastFetchedProfileRef.current = userId; // Mark as being fetched
       
-      // Use the database function that bypasses RLS for role data
-      const { data: profileData, error: profileError } = await supabase
-        .rpc('get_user_profile', { p_user_id: userId });
+      // Fetch both profile and permissions in parallel to reduce total API calls
+      const [profileResult, permissionsResult] = await Promise.all([
+        supabase.rpc('get_user_profile', { p_user_id: userId }),
+        supabase.rpc('get_user_permissions', { p_user_id: userId })
+      ]);
+      
+      const { data: profileData, error: profileError } = profileResult;
+      const { data: permissions } = permissionsResult;
       
       console.log("Profile function result:", { data: profileData, error: profileError });
       
@@ -121,16 +219,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!profileData || profileData.length === 0) {
         console.log("Profile not found, might be a new user");
         setProfile(null);
+        lastFetchedProfileRef.current = null; // Reset on failure
         return;
       }
       
       const profile = profileData[0];
       console.log("Profile data:", profile);
       console.log("Role name from profile:", profile.role_name);
-      
-      // Get user permissions
-      const { data: permissions } = await supabase
-        .rpc('get_user_permissions', { p_user_id: userId });
       
       // Construct the role object from the flattened data
       const role = profile.role_name ? {
@@ -185,6 +280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error("Error fetching profile:", error);
       setProfile(null);
+      lastFetchedProfileRef.current = null; // Reset on error so it can be retried
     }
   }, []);
 

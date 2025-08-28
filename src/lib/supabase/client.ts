@@ -1,11 +1,30 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { Database } from '@/types/database_professional'
 
-export const createClient = () =>
-  createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+let client: ReturnType<typeof createBrowserClient<Database>> | undefined;
+
+export const createClient = () => {
+  if (!client) {
+    client = createBrowserClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          flowType: 'pkce',
+          detectSessionInUrl: true,
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+        global: {
+          headers: {
+            'X-Client-Info': 'finmate-web',
+          },
+        },
+      }
+    );
+  }
+  return client;
+}
 
 export const supabase = createClient()
 
