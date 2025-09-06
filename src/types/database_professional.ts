@@ -252,13 +252,17 @@ export interface Database {
           user_id: string
           name: string
           description: string | null
-          type: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
+          type: 'cash' | 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
           balance: number
           currency: string
           account_number: string | null
           bank_name: string | null
           is_active: boolean
           include_in_total: boolean
+          is_default: boolean
+          display_order: number
+          icon: string
+          color: string
           created_at: string
           updated_at: string
         }
@@ -267,13 +271,17 @@ export interface Database {
           user_id: string
           name: string
           description?: string | null
-          type?: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
+          type?: 'cash' | 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
           balance?: number
           currency?: string
           account_number?: string | null
           bank_name?: string | null
           is_active?: boolean
           include_in_total?: boolean
+          is_default?: boolean
+          display_order?: number
+          icon?: string
+          color?: string
           created_at?: string
           updated_at?: string
         }
@@ -282,13 +290,17 @@ export interface Database {
           user_id?: string
           name?: string
           description?: string | null
-          type?: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
+          type?: 'cash' | 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
           balance?: number
           currency?: string
           account_number?: string | null
           bank_name?: string | null
           is_active?: boolean
           include_in_total?: boolean
+          is_default?: boolean
+          display_order?: number
+          icon?: string
+          color?: string
           created_at?: string
           updated_at?: string
         }
@@ -532,7 +544,7 @@ export interface Database {
     Enums: {
       user_role: 'super_admin' | 'admin' | 'paid_user' | 'user'
       transaction_type: 'income' | 'expense' | 'transfer'
-      account_type: 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
+      account_type: 'cash' | 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'other'
       permission_action: 'create' | 'read' | 'update' | 'delete' | 'manage'
       audit_action: 'create' | 'update' | 'delete' | 'login' | 'logout' | 'role_change' | 'permission_change'
     }

@@ -145,7 +145,7 @@ export type ColorString = string
 export type TransactionType = 'income' | 'expense' | 'transfer'
 // Enhanced transaction type with investment integration
 export type { EnhancedTransactionType } from './investments'
-export type AccountType = 'bank' | 'credit_card' | 'wallet' | 'investment' | 'other'
+export type AccountType = 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'cash' | 'other'
 // Legacy InvestmentType - use the new comprehensive InvestmentType from investments.ts instead
 export type LoanType = 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
 export type LendingType = 'lent' | 'borrowed'
@@ -155,6 +155,12 @@ export type Theme = 'light' | 'dark' | 'system'
 export type UserRole = 'super_admin' | 'admin' | 'paid_user' | 'user'
 export type PermissionAction = 'create' | 'read' | 'update' | 'delete' | 'manage'
 export type AuditAction = 'create' | 'update' | 'delete' | 'login' | 'logout' | 'role_change' | 'permission_change'
+
+// Subscription types
+export type SubscriptionPlan = 'free' | 'pro' | 'max'
+export type SubscriptionStatus = 'active' | 'expired' | 'cancelled' | 'trial'
+export type FamilyRole = 'primary' | 'spouse' | 'child' | 'member'
+export type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired'
 
 // Extended Profile with role and permissions
 export type ProfileWithRole = Profile & {
@@ -172,6 +178,90 @@ export type TransactionWithRelations = Transaction & {
 // Extended Category with subcategories
 export type CategoryWithSubcategories = Category & {
   subcategories?: Category[]
+}
+
+// Enhanced Account with display properties
+export type AccountWithBalance = Account & {
+  formatted_balance?: string
+  account_type_display?: string
+  can_delete?: boolean
+}
+
+// Account Summary for dashboard and components
+export type AccountSummary = {
+  account_count: number
+  total_balance: number
+  default_account_id: string | null
+  default_currency: string
+  subscription_plan: string
+  max_accounts: number
+  can_create_more: boolean
+}
+
+// Account limits and validation
+export type AccountLimits = {
+  current: number
+  limit: number
+  canCreate: boolean
+  planType: SubscriptionPlan
+  allowedTypes: AccountType[]
+}
+
+// Subscription Profile extension
+export type ProfileWithSubscription = Profile & {
+  subscription_plan: SubscriptionPlan
+  subscription_status: SubscriptionStatus
+  subscription_expires_at?: string | null
+  subscription_started_at?: string | null
+  max_accounts: number
+  family_group_id?: string | null
+  family_role: FamilyRole
+  invited_by?: string | null
+  joined_family_at?: string | null
+}
+
+// Family Group types
+export type FamilyGroup = {
+  id: string
+  created_by: string
+  name: string
+  description?: string | null
+  max_members: number
+  current_members: number
+  subscription_plan: string
+  subscription_expires_at?: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type FamilyInvitation = {
+  id: string
+  family_group_id: string
+  invited_by: string
+  email: string
+  role: FamilyRole
+  status: InvitationStatus
+  invitation_code: string
+  expires_at: string
+  created_at: string
+  accepted_at?: string | null
+}
+
+export type FamilyMember = {
+  user_id: string
+  full_name: string | null
+  email: string
+  family_role: FamilyRole
+  joined_at: string | null
+  account_count: number
+}
+
+// Enhanced Account Limits for family plans
+export type FamilyAccountLimits = AccountLimits & {
+  familyAccountCount?: number
+  isFamilyPrimary: boolean
+  familyMembers?: FamilyMember[]
 }
 
 export type CurrencyType =

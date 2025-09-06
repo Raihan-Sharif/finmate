@@ -10,7 +10,7 @@ async function loadMessages(locale: string) {
     // Try to load section files and merge them
     const sections = [
       'common', 'navigation', 'tags', 'home', 'auth', 'dashboard', 
-      'transactions', 'budget', 'investments', 'credit', 'calculators', 
+      'transactions', 'accounts', 'budget', 'investments', 'credit', 'calculators', 
       'settings', 'theme', 'errors', 'actions', 'forms', 'dateTime', 'pwa'
     ];
     const sectionMessages: any = {};

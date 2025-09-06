@@ -104,7 +104,7 @@ export default function RecurringTemplatesPage() {
         const [templatesData, categoriesData, accountsData] = await Promise.all([
           RecurringTransactionService.getRecurringTransactions(user.id),
           CategoryService.getCategories(),
-          AccountService.getAccounts()
+          AccountService.getAccounts(user.id)
         ]);
         
         setTemplates(templatesData);

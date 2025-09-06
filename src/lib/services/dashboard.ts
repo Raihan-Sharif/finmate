@@ -30,11 +30,11 @@ export class DashboardService {
       ]);
 
       // Calculate additional metrics
-      const totalBudgetAmount = currentBudgets.reduce((sum, budget) => sum + budget.amount, 0);
-      const totalBudgetSpent = currentBudgets.reduce((sum, budget) => sum + budget.actual_spent, 0);
+      const totalBudgetAmount = currentBudgets.reduce((sum: number, budget: any) => sum + budget.amount, 0);
+      const totalBudgetSpent = currentBudgets.reduce((sum: number, budget: any) => sum + budget.actual_spent, 0);
       const budgetUsagePercentage = totalBudgetAmount > 0 ? (totalBudgetSpent / totalBudgetAmount) * 100 : 0;
 
-      const overBudgetCount = currentBudgets.filter(budget => budget.is_over_budget).length;
+      const overBudgetCount = currentBudgets.filter((budget: any) => budget.is_over_budget).length;
       const onTrackBudgetCount = currentBudgets.length - overBudgetCount;
 
       // Get account balances by type
@@ -47,7 +47,7 @@ export class DashboardService {
 
       return {
         // Financial Overview
-        totalBalance: accountSummary.totalBalance,
+        totalBalance: accountSummary.total_balance,
         totalIncome: transactionStats.totalIncome,
         totalExpenses: transactionStats.totalExpenses,
         netBalance: transactionStats.netBalance,
@@ -62,7 +62,7 @@ export class DashboardService {
         onTrackBudgetCount,
 
         // Account Summary
-        accountCount: accountSummary.accountCount,
+        accountCount: accountSummary.account_count,
         accountsByType,
 
         // Transaction Overview

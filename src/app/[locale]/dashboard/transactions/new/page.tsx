@@ -133,7 +133,7 @@ export default function NewTransactionPage() {
         // Load categories for the selected type and global accounts
         const [categoriesData, accountsData] = await Promise.all([
           CategoryService.getCategories(watchedType),
-          AccountService.getAccounts() // No user ID needed for global accounts
+          AccountService.getAccounts(user.id)
         ]);
         
         // If no data found, create default data
@@ -149,7 +149,7 @@ export default function NewTransactionPage() {
             // Reload data after creating defaults
             const [newCategoriesData, newAccountsData] = await Promise.all([
               CategoryService.getCategories(watchedType),
-              AccountService.getAccounts()
+              AccountService.getAccounts(user.id)
             ]);
             
             setCategories(newCategoriesData);

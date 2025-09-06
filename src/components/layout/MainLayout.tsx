@@ -122,6 +122,36 @@ function getNavigationItems(t: (key: string) => string): NavigationItem[] {
       ],
     },
     {
+      translationKey: 'accounts',
+      href: '/dashboard/accounts',
+      icon: Wallet,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
+      children: [
+        {
+          translationKey: 'myAccounts',
+          href: '/dashboard/accounts',
+          icon: Wallet,
+          color: 'text-teal-600',
+          bgColor: 'bg-teal-50',
+        },
+        {
+          translationKey: 'createAccount',
+          href: '/dashboard/accounts/new',
+          icon: Plus,
+          color: 'text-cyan-600',
+          bgColor: 'bg-cyan-50',
+        },
+        {
+          translationKey: 'accountSettings',
+          href: '/dashboard/accounts/settings',
+          icon: Settings,
+          color: 'text-slate-600',
+          bgColor: 'bg-slate-50',
+        },
+      ],
+    },
+    {
       translationKey: 'budget',
       href: '/dashboard/budget',
       icon: Target,

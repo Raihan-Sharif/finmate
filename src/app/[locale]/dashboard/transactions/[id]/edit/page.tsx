@@ -158,7 +158,7 @@ export default function EditTransactionPage() {
         
         const [categoriesData, accountsData] = await Promise.all([
           CategoryService.getCategories(watchedType),
-          AccountService.getAccounts() // Use global accounts
+          AccountService.getAccounts(user.id) // Use user-specific accounts
         ]);
         
         setCategories(categoriesData);

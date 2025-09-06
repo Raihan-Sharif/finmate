@@ -1,0 +1,210 @@
+{
+  "pageTitle": "Accounts - FinMate",
+  "pageDescription": "Manage your financial accounts, balances, and family sharing",
+  "title": "My Accounts",
+  "subtitle": "Manage all your financial accounts in one place",
+  "myAccounts": "My Accounts",
+  "manageAccountsDesc": "View and manage all your financial accounts",
+  "createAccount": "Create Account",
+  "createFirstAccount": "Create Your First Account",
+  "createAccountDescription": "Add a new financial account to track your money",
+  "defaultAccount": "Default",
+  "currentBalance": "Current Balance",
+  "bankName": "Bank Name",
+  "accountNumber": "Account Number",
+  
+  "overview": {
+    "totalBalance": "Total Balance",
+    "activeAccounts": "Active Accounts", 
+    "currentPlan": "Current Plan",
+    "positive": "Positive Balance",
+    "negative": "Negative Balance",
+    "limitReached": "Account limit reached",
+    "upgradeToPro": "Upgrade to Pro"
+  },
+
+  "actions": {
+    "viewDetails": "View Details",
+    "edit": "Edit Account",
+    "setDefault": "Set as Default",
+    "delete": "Delete Account"
+  },
+
+  "emptyState": {
+    "title": "No Accounts Yet",
+    "description": "Get started by creating your first financial account to track your money and expenses."
+  },
+
+  "subscription": {
+    "currentPlan": "Current Plan",
+    "accountUsage": "Account Usage",
+    "used": "used",
+    "limitReached": "Limit Reached",
+    "availableTypes": "Available Account Types",
+    "upgradeTitle": "Unlock More Features!",
+    "upgradeDescription": "Upgrade to access more account types and family sharing",
+    "upgradeToPro": "Upgrade to Pro",
+    "upgradeToMax": "Upgrade to Max",
+    "familyFeatures": "Family Features Available",
+    "familyDescription": "Share accounts and collaborate with family members",
+    "planFeatures": "Plan Features",
+    "plans": {
+      "free": {
+        "description": "Basic financial tracking for individuals",
+        "feature1": "3 accounts maximum",
+        "feature2": "Cash & bank accounts only",
+        "feature3": "Basic transaction tracking"
+      },
+      "pro": {
+        "description": "Advanced features for serious financial planning", 
+        "feature1": "15 accounts maximum",
+        "feature2": "All account types available",
+        "feature3": "Advanced analytics & insights",
+        "feature4": "Investment tracking & portfolio management"
+      },
+      "max": {
+        "description": "Complete family financial management solution",
+        "feature1": "50 accounts for the whole family",
+        "feature2": "Family member invitation system", 
+        "feature3": "Shared budgets & financial goals",
+        "feature4": "Advanced family financial analytics",
+        "feature5": "Priority support & premium features"
+      }
+    }
+  },
+
+  "family": {
+    "title": "Family Members",
+    "description": "Manage your family's shared financial accounts",
+    "totalMembers": "Total Members",
+    "totalAccounts": "Family Accounts", 
+    "remainingSlots": "Available Slots",
+    "members": "Family Members",
+    "accounts": "accounts",
+    "joinedOn": "Joined on",
+    "inviteMore": "Invite More Family Members",
+    "canInvite": "You can invite {count} more family members",
+    "inviteMember": "Invite Member",
+    "emptyTitle": "Create Your Family Group",
+    "emptyDescription": "Start sharing your FinMate experience with family members. Create a family group to invite up to 3 additional members.",
+    "creating": "Creating...",
+    "createFamily": "Create Family Group",
+    "familyCreated": "Family group created successfully!",
+    "createFailed": "Failed to create family group",
+    "inviteDescription": "Invite a family member to join your Max plan and share financial management tools",
+    "inviteSuccess": "Share this invitation code with your family member",
+    "memberEmail": "Member Email",
+    "memberRole": "Member Role", 
+    "roles": {
+      "spouse": "Spouse",
+      "child": "Child", 
+      "member": "Family Member"
+    },
+    "invitationSent": "Invitation sent successfully!",
+    "shareCodeWith": "Share this code with",
+    "sendInvite": "Send Invitation",
+    "inviting": "Sending...",
+    "inviteSent": "Invitation sent successfully!",
+    "inviteFailed": "Failed to send invitation",
+    "codeCopied": "Invitation code copied to clipboard!"
+  },
+
+  "quickStats": "Quick Stats",
+  "stats": {
+    "totalBalance": "Total Balance",
+    "highest": "Highest Account",
+    "lowest": "Lowest Account", 
+    "average": "Average Balance"
+  },
+
+  "tips": {
+    "title": "Account Tips",
+    "tip1": "Set one account as default for quick transactions",
+    "tip2": "Regularly update your account balances for accuracy",
+    "tip3": "Use different account types to organize your finances better"
+  },
+
+  "create": {
+    "step1": {
+      "title": "Basic Information",
+      "description": "Let's start with the basic details of your new account"
+    },
+    "step2": {
+      "title": "Account Type & Details", 
+      "description": "Choose the type of account and add specific details"
+    },
+    "step3": {
+      "title": "Customize & Preview",
+      "description": "Make your account unique with custom colors and icons"
+    },
+    "accountName": "Account Name",
+    "namePlaceholder": "My Savings Account",
+    "description": "Description (Optional)",
+    "descriptionPlaceholder": "Additional notes about this account...",
+    "initialBalance": "Initial Balance",
+    "accountType": "Account Type",
+    "bankName": "Bank Name",
+    "bankNamePlaceholder": "Bank of Bangladesh",
+    "accountNumber": "Account Number",
+    "accountNumberPlaceholder": "****1234",
+    "chooseIcon": "Choose Icon",
+    "chooseColor": "Choose Color", 
+    "currency": "Currency",
+    "preview": "Preview",
+    "next": "Next Step",
+    "creating": "Creating...",
+    "createAccount": "Create Account",
+    "upgradeForMore": "Upgrade for More Account Types",
+    "upgradeDescription": "Pro and Max plans unlock additional account types like investments and digital wallets",
+    "limitReached": "Account Limit Reached",
+    "limitReachedDescription": "You've reached the maximum number of accounts for your {plan} plan ({current}/{limit} accounts). Upgrade to create more accounts.",
+    "upgradeToPro": "Upgrade to Pro (15 accounts)",
+    "upgradeToMax": "Upgrade to Max (50 accounts + family)"
+  },
+
+  "types": {
+    "cash": {
+      "name": "Cash Wallet",
+      "description": "Physical cash and petty expenses"
+    },
+    "bank": {
+      "name": "Bank Account", 
+      "description": "Checking or savings bank accounts"
+    },
+    "creditCard": {
+      "name": "Credit Card",
+      "description": "Credit cards and credit lines"
+    },
+    "savings": {
+      "name": "Savings Account",
+      "description": "Long-term savings and emergency funds"
+    },
+    "investment": {
+      "name": "Investment Account",
+      "description": "Stocks, bonds, and investment portfolios"
+    },
+    "wallet": {
+      "name": "Digital Wallet",
+      "description": "Mobile wallets and digital payment systems"
+    },
+    "other": {
+      "name": "Other Account",
+      "description": "Custom account types"
+    }
+  },
+
+  "success": {
+    "created": "Account '{name}' created successfully!",
+    "defaultSet": "Default account updated successfully!",
+    "deleted": "Account deleted successfully!"
+  },
+
+  "errors": {
+    "loadFailed": "Failed to load accounts",
+    "createFailed": "Failed to create account", 
+    "defaultFailed": "Failed to set default account",
+    "deleteFailed": "Failed to delete account"
+  },
+
+  "confirmDelete": "Are you sure you want to delete '{name}'? This action cannot be undone."
+}
