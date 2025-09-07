@@ -34,6 +34,7 @@ import { AccountWithBalance } from '@/types'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 export default function AccountsList() {
   const { user } = useAuth()
@@ -106,9 +107,11 @@ export default function AccountsList() {
         <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm mx-auto">
           {t('emptyState.description')}
         </p>
-        <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-          {t('createFirstAccount')}
-        </Button>
+        <Link href="/dashboard/accounts/create">
+          <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+            {t('createFirstAccount')}
+          </Button>
+        </Link>
       </div>
     )
   }
@@ -138,6 +141,7 @@ interface AccountCardProps {
 }
 
 function AccountCard({ account, index, onSetDefault, onDelete }: AccountCardProps) {
+  const { user } = useAuth()
   const t = useTranslations('accounts')
   const isPositiveBalance = account.balance >= 0
   const accountIcon = getAccountIcon(account.type)
@@ -149,11 +153,12 @@ function AccountCard({ account, index, onSetDefault, onDelete }: AccountCardProp
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
     >
-      <Card className={cn(
-        "group relative overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer border-0",
-        accountConfig.gradient,
-        account.is_default && "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900"
-      )}>
+      <Link href={`/dashboard/accounts/${account.id}`}>
+        <Card className={cn(
+          "group relative overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer border-0",
+          accountConfig.gradient,
+          account.is_default && "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900"
+        )}>
         {account.is_default && (
           <div className="absolute top-3 right-3">
             <Badge className="bg-white/20 text-white border-white/30">
@@ -186,20 +191,25 @@ function AccountCard({ account, index, onSetDefault, onDelete }: AccountCardProp
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
+                  className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 relative z-10"
+                  onClick={(e) => e.preventDefault()}
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem>
-                  <Eye className="h-4 w-4 mr-2" />
-                  {t('actions.viewDetails')}
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Edit className="h-4 w-4 mr-2" />
-                  {t('actions.edit')}
-                </DropdownMenuItem>
+                <Link href={`/dashboard/accounts/${account.id}`}>
+                  <DropdownMenuItem>
+                    <Eye className="h-4 w-4 mr-2" />
+                    {t('actions.viewDetails')}
+                  </DropdownMenuItem>
+                </Link>
+                <Link href={`/dashboard/accounts/${account.id}/edit`}>
+                  <DropdownMenuItem>
+                    <Edit className="h-4 w-4 mr-2" />
+                    {t('actions.edit')}
+                  </DropdownMenuItem>
+                </Link>
                 {!account.is_default && (
                   <DropdownMenuItem onClick={() => onSetDefault(account.id)}>
                     <Star className="h-4 w-4 mr-2" />
@@ -254,9 +264,17 @@ function AccountCard({ account, index, onSetDefault, onDelete }: AccountCardProp
                 </span>
               </div>
             )}
+
+            <div className="flex items-center justify-between text-sm pt-2 border-t border-white/10">
+              <span className="text-white/80 text-xs uppercase tracking-wide">Account Holder</span>
+              <span className="text-white font-medium">
+                {user?.user_metadata?.full_name || user?.email || 'Account Holder'}
+              </span>
+            </div>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </Link>
     </motion.div>
   )
 }

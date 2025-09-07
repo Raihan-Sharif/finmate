@@ -45,7 +45,7 @@ export default async function AccountsPage() {
               </div>
             </div>
             
-            <CreateAccountButton />
+            <CreateAccountButton showFullPage={true} />
           </div>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default async function AccountsPage() {
                       <CardDescription>{t('manageAccountsDesc')}</CardDescription>
                     </div>
                   </div>
-                  <CreateAccountButton variant="outline" size="sm" />
+                  <CreateAccountButton variant="outline" size="sm" showFullPage={true} />
                 </div>
               </CardHeader>
               <CardContent className="p-0">

@@ -58,6 +58,7 @@ import {
 import { AccountWithBalance, AccountType } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 export default function AccountSettings() {
   const { user } = useAuth()
@@ -73,12 +74,39 @@ export default function AccountSettings() {
     groupByType: false,
     defaultCurrency: 'BDT'
   })
+  const [savingPreferences, setSavingPreferences] = useState(false)
 
   useEffect(() => {
     if (user?.id) {
       loadAccounts()
+      loadPreferences()
     }
   }, [user?.id])
+
+  const loadPreferences = () => {
+    try {
+      const saved = localStorage.getItem(`account_preferences_${user?.id}`)
+      if (saved) {
+        setPreferences(JSON.parse(saved))
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error)
+    }
+  }
+
+  const savePreferences = async (newPreferences: typeof preferences) => {
+    try {
+      setSavingPreferences(true)
+      localStorage.setItem(`account_preferences_${user?.id}`, JSON.stringify(newPreferences))
+      setPreferences(newPreferences)
+      toast.success('Preferences saved successfully!')
+    } catch (error) {
+      console.error('Error saving preferences:', error)
+      toast.error('Failed to save preferences')
+    } finally {
+      setSavingPreferences(false)
+    }
+  }
 
   const loadAccounts = async () => {
     if (!user?.id) return
@@ -212,9 +240,11 @@ export default function AccountSettings() {
             </div>
             <Switch
               checked={preferences.showZeroBalances}
-              onCheckedChange={(checked) =>
-                setPreferences(prev => ({ ...prev, showZeroBalances: checked }))
-              }
+              onCheckedChange={(checked) => {
+                const newPreferences = { ...preferences, showZeroBalances: checked }
+                savePreferences(newPreferences)
+              }}
+              disabled={savingPreferences}
             />
           </div>
 
@@ -229,9 +259,11 @@ export default function AccountSettings() {
             </div>
             <Switch
               checked={preferences.groupByType}
-              onCheckedChange={(checked) =>
-                setPreferences(prev => ({ ...prev, groupByType: checked }))
-              }
+              onCheckedChange={(checked) => {
+                const newPreferences = { ...preferences, groupByType: checked }
+                savePreferences(newPreferences)
+              }}
+              disabled={savingPreferences}
             />
           </div>
         </CardContent>
@@ -361,16 +393,24 @@ function AccountCard({ account, onSetDefault, onDelete, getIconComponent }: Acco
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <Link href={`/dashboard/accounts/${account.id}`}>
+              <DropdownMenuItem>
+                <Eye className="h-4 w-4 mr-2" />
+                {t('actions.viewDetails')}
+              </DropdownMenuItem>
+            </Link>
+            <Link href={`/dashboard/accounts/${account.id}/edit`}>
+              <DropdownMenuItem>
+                <Edit3 className="h-4 w-4 mr-2" />
+                {t('actions.edit')}
+              </DropdownMenuItem>
+            </Link>
             {!account.is_default && (
               <DropdownMenuItem onClick={onSetDefault}>
                 <Star className="h-4 w-4 mr-2" />
                 {t('actions.setDefault')}
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem>
-              <Edit3 className="h-4 w-4 mr-2" />
-              {t('actions.edit')}
-            </DropdownMenuItem>
             {account.can_delete && (
               <DropdownMenuItem onClick={onDelete} className="text-red-600 dark:text-red-400">
                 <Trash2 className="h-4 w-4 mr-2" />

@@ -77,14 +77,14 @@ export default function CreateAccountForm() {
   }, [user?.id])
 
   useEffect(() => {
-    if (formData.type) {
+    if (formData.type && step === 3 && !formData.icon) {
       setFormData(prev => ({
         ...prev,
-        icon: prev.icon || getDefaultAccountIcon(prev.type),
-        color: prev.color || getDefaultAccountColor(prev.type)
+        icon: getDefaultAccountIcon(prev.type),
+        color: getDefaultAccountColor(prev.type)
       }))
     }
-  }, [formData.type])
+  }, [formData.type, step])
 
   const loadAccountLimits = async () => {
     if (!user?.id) return
@@ -118,6 +118,20 @@ export default function CreateAccountForm() {
       })
 
       toast.success(t('success.created', { name: formData.name }))
+      // Reset form and reload limits
+      setFormData({
+        name: '',
+        description: '',
+        type: '' as AccountType,
+        currency: 'BDT' as CurrencyType,
+        balance: '0',
+        bank_name: '',
+        account_number: '',
+        icon: '',
+        color: ''
+      })
+      setStep(1)
+      await loadAccountLimits()
       router.push('/dashboard/accounts')
     } catch (error: any) {
       console.error('Error creating account:', error)
@@ -382,20 +396,34 @@ export default function CreateAccountForm() {
             {/* Preview */}
             <div className="mt-6">
               <Label className="mb-3 block">{t('create.preview')}</Label>
-              <Card className="overflow-hidden" style={{ background: `linear-gradient(135deg, ${formData.color}, ${formData.color}dd)` }}>
-                <CardContent className="p-4 text-white">
-                  <div className="flex items-center justify-between">
+              <Card className="relative overflow-hidden border-0 shadow-2xl" style={{ 
+                background: `linear-gradient(135deg, ${formData.color || '#3B82F6'}, ${(formData.color || '#3B82F6')}dd)` 
+              }}>
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12" />
+                
+                <CardContent className="relative p-6 text-white">
+                  <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-white/20">
-                        {getIconComponent(formData.icon, 'h-5 w-5')}
+                      <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                        {getIconComponent(formData.icon, 'h-6 w-6')}
                       </div>
                       <div>
-                        <p className="font-semibold">{formData.name || t('create.namePlaceholder')}</p>
+                        <p className="font-bold text-lg">{formData.name || t('create.namePlaceholder')}</p>
                         <p className="text-white/80 text-sm">{getAccountTypeDisplay(formData.type)}</p>
                       </div>
                     </div>
+                  </div>
+                  
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-white/80 text-xs uppercase tracking-wide mb-1">Account Holder</p>
+                      <p className="text-white font-medium">{user?.user_metadata?.full_name || user?.email || 'Account Holder'}</p>
+                    </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold">
+                      <p className="text-white/80 text-xs uppercase tracking-wide mb-1">Balance</p>
+                      <p className="text-2xl font-bold">
                         {getCurrencySymbol(formData.currency)}{parseFloat(formData.balance || '0').toLocaleString()}
                       </p>
                     </div>

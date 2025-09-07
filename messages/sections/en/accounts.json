@@ -194,8 +194,51 @@
       }
     },
 
+    "edit": {
+      "editAccount": "Edit Account",
+      "editAccountDescription": "Update your account information and settings",
+      "updateAccountInfo": "Update Account Information",
+      "updateAccountDescription": "Modify your account details, settings, and appearance",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "includeInTotal": "Include in Total Balance",
+      "includeInTotalDescription": "Include this account when calculating total balance",
+      "accountActive": "Account Active",
+      "accountActiveDescription": "Inactive accounts are hidden from most views",
+      "currentBalance": "Current Balance",
+      "defaultAccountTypeWarning": "Cannot change the type of your default account"
+    },
+
+    "details": {
+      "accountDetails": "Account Details",
+      "accountDetailsDescription": "View and manage your account information",
+      "accountStats": "Account Statistics",
+      "recentActivity": "Recent Activity",
+      "recentActivityDescription": "Latest transactions and account activity",
+      "noTransactions": "No Recent Transactions",
+      "noTransactionsDescription": "Start using this account to see your transaction history here",
+      "accountSettings": "Account Settings",
+      "viewTransactions": "View All Transactions",
+      "accountId": "Account ID",
+      "createdAt": "Created",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "includeInTotal": "Include in Total",
+      "currency": "Currency",
+      "yes": "Yes",
+      "no": "No",
+      "confirmDeleteTitle": "Delete Account",
+      "deleteWarning": "This action cannot be undone",
+      "deleteWarningDescription": "All transaction history for this account will remain but the account will be permanently deleted.",
+      "deleting": "Deleting...",
+      "accountNotFound": "Account Not Found",
+      "accountNotFoundDescription": "The account you're looking for doesn't exist or you don't have permission to view it."
+    },
+
     "success": {
       "created": "Account '{name}' created successfully!",
+      "updated": "Account '{name}' updated successfully!",
       "defaultSet": "Default account updated successfully!",
       "deleted": "Account deleted successfully!"
     },
@@ -203,8 +246,11 @@
     "errors": {
       "loadFailed": "Failed to load accounts",
       "createFailed": "Failed to create account", 
+      "updateFailed": "Failed to update account",
       "defaultFailed": "Failed to set default account",
-      "deleteFailed": "Failed to delete account"
+      "deleteFailed": "Failed to delete account",
+      "accountNotFound": "Account not found",
+      "accountNotFoundDescription": "The account you are looking for does not exist or you don't have permission to view it."
     },
 
     "confirmDelete": "Are you sure you want to delete '{name}'? This action cannot be undone."
