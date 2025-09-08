@@ -28,7 +28,8 @@ import {
   Smartphone,
   CircleDollarSign,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Plus
 } from 'lucide-react'
 import { AccountWithBalance } from '@/types'
 import { motion } from 'framer-motion'
@@ -128,6 +129,9 @@ export default function AccountsList() {
             onDelete={handleDelete}
           />
         ))}
+        
+        {/* Add Another Account Card */}
+        <AddAccountCard />
       </div>
     </div>
   )
@@ -338,6 +342,34 @@ function getAccountConfig(type: string) {
         iconBg: 'bg-white/20'
       }
   }
+}
+
+function AddAccountCard() {
+  const t = useTranslations('accounts')
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+    >
+      <Link href="/dashboard/accounts/create">
+        <Card className="group border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 cursor-pointer h-full min-h-[200px] flex items-center justify-center">
+          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 flex items-center justify-center mb-4 transition-colors">
+              <Plus className="h-6 w-6 text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+            </div>
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-blue-900 dark:group-hover:text-blue-100">
+              {t('createAccount')}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-blue-300">
+              {t('createAccountDescription')}
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+    </motion.div>
+  )
 }
 
 function AccountsListSkeleton() {

@@ -77,14 +77,15 @@ export default function CreateAccountForm() {
   }, [user?.id])
 
   useEffect(() => {
-    if (formData.type && step === 3 && !formData.icon) {
+    if (formData.type && step === 3 && !formData.icon && !formData.color) {
+      // Set defaults but allow user to change them
       setFormData(prev => ({
         ...prev,
         icon: getDefaultAccountIcon(prev.type),
         color: getDefaultAccountColor(prev.type)
       }))
     }
-  }, [formData.type, step])
+  }, [formData.type, step, formData.icon, formData.color])
 
   const loadAccountLimits = async () => {
     if (!user?.id) return
@@ -99,7 +100,7 @@ export default function CreateAccountForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user?.id || !formData.name || !formData.type) return
+    if (!user?.id || !formData.name || !formData.type || !formData.icon || !formData.color) return
 
     try {
       setLoading(true)
@@ -118,21 +119,12 @@ export default function CreateAccountForm() {
       })
 
       toast.success(t('success.created', { name: formData.name }))
-      // Reset form and reload limits
-      setFormData({
-        name: '',
-        description: '',
-        type: '' as AccountType,
-        currency: 'BDT' as CurrencyType,
-        balance: '0',
-        bank_name: '',
-        account_number: '',
-        icon: '',
-        color: ''
-      })
-      setStep(1)
-      await loadAccountLimits()
-      router.push('/dashboard/accounts')
+      
+      // Wait a bit for the toast to show before redirecting
+      setTimeout(() => {
+        router.push('/dashboard/accounts')
+      }, 1000)
+      
     } catch (error: any) {
       console.error('Error creating account:', error)
       toast.error(error.message || t('errors.createFailed'))
@@ -462,7 +454,7 @@ export default function CreateAccountForm() {
         ) : (
           <Button
             type="submit"
-            disabled={loading || !formData.name || !formData.type}
+            disabled={loading || !formData.name || !formData.type || !formData.icon || !formData.color}
             className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
           >
             {loading ? (
