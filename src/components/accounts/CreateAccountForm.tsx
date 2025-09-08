@@ -9,7 +9,8 @@ import {
   getAvailableAccountIcons, 
   getAvailableAccountColors,
   getDefaultAccountIcon,
-  getDefaultAccountColor
+  getDefaultAccountColor,
+  shouldDefaultToCreditType
 } from '@/lib/services/accounts'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
@@ -42,7 +43,7 @@ import {
   Car,
   ShoppingCart
 } from 'lucide-react'
-import { AccountType, CurrencyType } from '@/types'
+import { AccountType, CurrencyType, BalanceType } from '@/types'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
@@ -61,8 +62,17 @@ export default function CreateAccountForm() {
     bank_name: '',
     account_number: '',
     icon: '',
-    color: ''
+    color: '',
+    balance_type: 'debit' as BalanceType,
+    credit_limit: '0',
+    interest_rate: '0',
+    minimum_payment: '0',
+    payment_due_day: 20,
+    statement_closing_day: 25
   })
+  
+  const [userHasSelectedIcon, setUserHasSelectedIcon] = useState(false)
+  const [userHasSelectedColor, setUserHasSelectedColor] = useState(false)
   
   const [limits, setLimits] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -77,15 +87,15 @@ export default function CreateAccountForm() {
   }, [user?.id])
 
   useEffect(() => {
-    if (formData.type && step === 3 && !formData.icon && !formData.color) {
-      // Set defaults but allow user to change them
+    if (formData.type && step === 3 && !formData.icon && !formData.color && !userHasSelectedIcon && !userHasSelectedColor) {
+      // Set defaults but don't mark as user-selected
       setFormData(prev => ({
         ...prev,
         icon: getDefaultAccountIcon(prev.type),
         color: getDefaultAccountColor(prev.type)
       }))
     }
-  }, [formData.type, step, formData.icon, formData.color])
+  }, [formData.type, step, formData.icon, formData.color, userHasSelectedIcon, userHasSelectedColor])
 
   const loadAccountLimits = async () => {
     if (!user?.id) return
@@ -115,6 +125,12 @@ export default function CreateAccountForm() {
         account_number: formData.account_number || null,
         icon: formData.icon,
         color: formData.color,
+        balance_type: formData.balance_type,
+        credit_limit: parseFloat(formData.credit_limit) || 0,
+        interest_rate: parseFloat(formData.interest_rate) / 100 || 0, // Convert percentage to decimal
+        minimum_payment: parseFloat(formData.minimum_payment) || 0,
+        payment_due_day: formData.payment_due_day,
+        statement_closing_day: formData.statement_closing_day,
         is_active: true
       })
 
@@ -259,7 +275,13 @@ export default function CreateAccountForm() {
                     key={type}
                     type={type}
                     selected={formData.type === type}
-                    onClick={() => setFormData(prev => ({ ...prev, type }))}
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      type,
+                      balance_type: shouldDefaultToCreditType(type) ? 'credit' : 'debit',
+                      credit_limit: shouldDefaultToCreditType(type) ? '50000' : '0',
+                      interest_rate: shouldDefaultToCreditType(type) ? '18.99' : '0'
+                    }))}
                   />
                 ))}
               </div>
@@ -306,6 +328,81 @@ export default function CreateAccountForm() {
                 </div>
               </div>
             )}
+
+            {formData.balance_type === 'credit' && (
+              <div className="space-y-4 mt-6 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30">
+                <div className="flex items-center space-x-2 mb-4">
+                  <CreditCard className="h-5 w-5 text-amber-600" />
+                  <h4 className="font-medium text-amber-900 dark:text-amber-100">{t('create.creditAccountSettings')}</h4>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="credit_limit" className="flex items-center space-x-2">
+                      <span>{t('create.creditLimit')}</span>
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="credit_limit"
+                      type="number"
+                      step="0.01"
+                      value={formData.credit_limit}
+                      onChange={(e) => setFormData(prev => ({ ...prev, credit_limit: e.target.value }))}
+                      placeholder="50000.00"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                      {t('create.creditLimitHelp')}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="interest_rate">{t('create.interestRate')}</Label>
+                    <Input
+                      id="interest_rate"
+                      type="number"
+                      step="0.01"
+                      value={formData.interest_rate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, interest_rate: e.target.value }))}
+                      placeholder="18.99"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                      {t('create.interestRateHelp')}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="minimum_payment">{t('create.minimumPayment')}</Label>
+                    <Input
+                      id="minimum_payment"
+                      type="number"
+                      step="0.01"
+                      value={formData.minimum_payment}
+                      onChange={(e) => setFormData(prev => ({ ...prev, minimum_payment: e.target.value }))}
+                      placeholder="1000.00"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="payment_due_day">{t('create.paymentDueDay')}</Label>
+                    <Input
+                      id="payment_due_day"
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={formData.payment_due_day}
+                      onChange={(e) => setFormData(prev => ({ ...prev, payment_due_day: parseInt(e.target.value) || 20 }))}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                      {t('create.paymentDueDayHelp')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -333,7 +430,10 @@ export default function CreateAccountForm() {
                     <button
                       key={iconOption.value}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, icon: iconOption.value }))}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, icon: iconOption.value }))
+                        setUserHasSelectedIcon(true)
+                      }}
                       className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
                         formData.icon === iconOption.value
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
@@ -353,7 +453,10 @@ export default function CreateAccountForm() {
                     <button
                       key={colorOption.value}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, color: colorOption.value }))}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, color: colorOption.value }))
+                        setUserHasSelectedColor(true)
+                      }}
                       className={`w-12 h-12 rounded-lg border-4 transition-all hover:scale-105 ${
                         formData.color === colorOption.value
                           ? 'border-slate-400 dark:border-slate-500 shadow-lg'
@@ -444,7 +547,7 @@ export default function CreateAccountForm() {
             onClick={() => setStep(step + 1)}
             disabled={
               (step === 1 && !formData.name) ||
-              (step === 2 && !formData.type)
+              (step === 2 && (!formData.type || (formData.balance_type === 'credit' && (!formData.credit_limit || parseFloat(formData.credit_limit) <= 0))))
             }
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           >
@@ -454,7 +557,7 @@ export default function CreateAccountForm() {
         ) : (
           <Button
             type="submit"
-            disabled={loading || !formData.name || !formData.type || !formData.icon || !formData.color}
+            disabled={loading || !formData.name || !formData.type || !userHasSelectedIcon || !userHasSelectedColor}
             className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
           >
             {loading ? (

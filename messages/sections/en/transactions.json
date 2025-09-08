@@ -130,7 +130,8 @@
         "defaultDataCreated": "Default categories and accounts created!",
         "transactionUpdated": "Transaction updated successfully!",
         "recurringUpdated": "Transaction and recurring schedule updated successfully!",
-        "recurringRemoved": "Transaction updated and recurring schedule removed!"
+        "recurringRemoved": "Transaction updated and recurring schedule removed!",
+        "readyForAnother": "Transaction saved! Ready to add another transaction."
       },
       "updateTransaction": "Update your {type} transaction details",
       "updating": "Updating..."

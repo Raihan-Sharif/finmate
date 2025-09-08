@@ -119,19 +119,22 @@ export default function AccountsList() {
 
   return (
     <div className="p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {accounts.map((account, index) => (
-          <AccountCard
-            key={account.id}
-            account={account}
-            index={index}
-            onSetDefault={handleSetDefault}
-            onDelete={handleDelete}
-          />
+          <div key={account.id} className="w-full h-64">
+            <AccountCard
+              account={account}
+              index={index}
+              onSetDefault={handleSetDefault}
+              onDelete={handleDelete}
+            />
+          </div>
         ))}
         
         {/* Add Another Account Card */}
-        <AddAccountCard />
+        <div className="w-full h-64">
+          <AddAccountCard />
+        </div>
       </div>
     </div>
   )
@@ -156,52 +159,62 @@ function AccountCard({ account, index, onSetDefault, onDelete }: AccountCardProp
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
+      className="w-full h-full"
     >
-      <Link href={`/dashboard/accounts/${account.id}`}>
+      <Link href={`/dashboard/accounts/${account.id}`} className="block w-full h-full">
         <Card className={cn(
-          "group relative overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer border-0",
+          "group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer border-0 rounded-2xl",
+          "w-full h-full", // Use full container dimensions
           accountConfig.gradient,
-          account.is_default && "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900"
+          account.is_default && "ring-2 ring-amber-400 ring-offset-2 dark:ring-offset-slate-900 shadow-amber-200/50"
         )}>
-        {account.is_default && (
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-white/20 text-white border-white/30">
-              <Star className="h-3 w-3 mr-1 fill-current" />
-              {t('defaultAccount')}
-            </Badge>
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16" />
-
-        <CardContent className="relative p-6 text-white">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className={cn(
-                "p-3 rounded-xl backdrop-blur-sm",
-                accountConfig.iconBg
-              )}>
-                {accountIcon}
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">{account.name}</h3>
-                <p className="text-white/80 text-sm">{account.account_type_display}</p>
-              </div>
+          
+          {/* Card Background Pattern - Modern Bank Card Style */}
+          <div className="absolute inset-0">
+            {/* Subtle geometric pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id={`pattern-${account.id}`} x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <circle cx="20" cy="20" r="1.5" fill="currentColor" opacity="0.3"/>
+                    <circle cx="10" cy="30" r="1" fill="currentColor" opacity="0.2"/>
+                    <circle cx="30" cy="10" r="1" fill="currentColor" opacity="0.2"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill={`url(#pattern-${account.id})`}/>
+              </svg>
             </div>
+            
+            {/* Modern overlay gradients */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16 blur-2xl" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/5 rounded-full translate-y-12 -translate-x-12 blur-xl" />
+          </div>
 
+          {/* Default Account Indicator */}
+          {account.is_default && (
+            <div className="absolute top-4 right-4 z-10">
+              <Badge className="bg-amber-400/20 text-amber-100 border-amber-400/30 backdrop-blur-sm font-medium">
+                <Star className="h-3 w-3 mr-1 fill-current" />
+                {t('defaultAccount')}
+              </Badge>
+            </div>
+          )}
+
+          {/* Card Actions Menu */}
+          <div className="absolute top-4 left-4 z-10">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 relative z-10"
+                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 backdrop-blur-sm rounded-full"
                   onClick={(e) => e.preventDefault()}
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="start" className="w-48">
                 <Link href={`/dashboard/accounts/${account.id}`}>
                   <DropdownMenuItem>
                     <Eye className="h-4 w-4 mr-2" />
@@ -234,49 +247,105 @@ function AccountCard({ account, index, onSetDefault, onDelete }: AccountCardProp
             </DropdownMenu>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-baseline justify-between">
-              <span className="text-white/80 text-sm">{t('currentBalance')}</span>
-              <div className="flex items-center space-x-2">
+          <CardContent className="relative h-full flex flex-col justify-between p-8 text-white">
+            {/* Top Section - Bank Name & Account Info */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <div className={cn(
+                  "p-3 rounded-2xl backdrop-blur-sm border border-white/30 shadow-lg",
+                  accountConfig.iconBg
+                )}>
+                  {accountIcon}
+                </div>
+                <div>
+                  <p className="text-white/90 text-sm font-medium uppercase tracking-wider mb-1">
+                    {account.bank_name || 'FINMATE BANK'}
+                  </p>
+                  <h3 className="font-bold text-xl leading-tight">{account.name}</h3>
+                  <p className="text-white/80 text-sm font-medium">{account.account_type_display}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* EMV Chip - Modern Bank Card Element */}
+            <div className="absolute top-20 left-8">
+              <div className="relative">
+                <div className="w-12 h-9 rounded-md bg-gradient-to-br from-yellow-200 via-yellow-300 to-yellow-400 shadow-lg">
+                  <div className="absolute inset-1 rounded-sm bg-gradient-to-br from-yellow-100 to-yellow-200">
+                    <div className="w-full h-full grid grid-cols-4 grid-rows-3 gap-px p-1">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="bg-yellow-300/60 rounded-sm" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card Number */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="font-mono text-2xl font-bold tracking-[0.2em] mb-2">
+                  {account.account_number 
+                    ? `•••• •••• •••• ${account.account_number.slice(-4)}`
+                    : '•••• •••• •••• ••••'
+                  }
+                </div>
+                <div className="text-white/80 text-sm uppercase tracking-wider">
+                  CARD NUMBER
+                </div>
+              </div>
+            </div>
+
+            {/* Balance Section - Prominent Display */}
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-white/80 text-sm font-medium tracking-wide">CURRENT BALANCE</span>
                 {isPositiveBalance ? (
                   <ArrowUpRight className="h-4 w-4 text-green-300" />
                 ) : (
                   <ArrowDownRight className="h-4 w-4 text-red-300" />
                 )}
-                <span className="text-2xl font-bold">
-                  ৳{Math.abs(account.balance).toLocaleString()}
-                </span>
+              </div>
+              <div className="text-4xl font-bold tracking-tight mb-1">
+                ৳{Math.abs(account.balance).toLocaleString()}
+              </div>
+              {account.balance < 0 && (
+                <div className="text-red-300 text-sm font-medium">Overdrawn</div>
+              )}
+            </div>
+
+            {/* Bottom Section - Cardholder & Expiry */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-white/70 text-xs uppercase tracking-wider mb-1">CARDHOLDER NAME</p>
+                <p className="text-white text-lg font-bold uppercase tracking-wide">
+                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'ACCOUNT HOLDER'}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-white/70 text-xs uppercase tracking-wider mb-1">VALID THRU</p>
+                <p className="text-white text-lg font-mono font-bold">
+                  {new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
+                    month: '2-digit', 
+                    year: '2-digit' 
+                  })}
+                </p>
               </div>
             </div>
 
-            {account.description && (
-              <p className="text-white/70 text-xs">{account.description}</p>
-            )}
-
-            {account.bank_name && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-white/80">{t('bankName')}</span>
-                <span className="text-white">{account.bank_name}</span>
+            {/* Card Network Logo Area */}
+            <div className="absolute bottom-8 right-8">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-5 rounded-sm bg-white/20 flex items-center justify-center">
+                  <div className="w-6 h-3 rounded-full bg-white/80" />
+                </div>
+                <div className="w-8 h-5 rounded-sm bg-white/20 flex items-center justify-center">
+                  <div className="w-6 h-3 rounded-full bg-white/60" />
+                </div>
               </div>
-            )}
-
-            {account.account_number && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-white/80">{t('accountNumber')}</span>
-                <span className="text-white font-mono">
-                  ****{account.account_number.slice(-4)}
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between text-sm pt-2 border-t border-white/10">
-              <span className="text-white/80 text-xs uppercase tracking-wide">Account Holder</span>
-              <span className="text-white font-medium">
-                {user?.user_metadata?.full_name || user?.email || 'Account Holder'}
-              </span>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
         </Card>
       </Link>
     </motion.div>
@@ -352,19 +421,61 @@ function AddAccountCard() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
+      className="w-full h-full"
     >
-      <Link href="/dashboard/accounts/create">
-        <Card className="group border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 cursor-pointer h-full min-h-[200px] flex items-center justify-center">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 flex items-center justify-center mb-4 transition-colors">
-              <Plus className="h-6 w-6 text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+      <Link href="/dashboard/accounts/create" className="block w-full h-full">
+        <Card className={cn(
+          "group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer rounded-2xl",
+          "w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600",
+          "hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20",
+          "bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-600"
+        )}>
+          
+          {/* Background pattern for consistency */}
+          <div className="absolute inset-0 opacity-5">
+            <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="add-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <circle cx="20" cy="20" r="1" fill="currentColor" opacity="0.3"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#add-pattern)"/>
+            </svg>
+          </div>
+
+          {/* Decorative gradients */}
+          <div className="absolute inset-0">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 dark:bg-blue-400/10 rounded-full -translate-y-16 translate-x-16 blur-2xl group-hover:bg-blue-300/30 transition-colors" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-200/20 dark:bg-indigo-400/10 rounded-full translate-y-12 -translate-x-12 blur-xl group-hover:bg-indigo-300/30 transition-colors" />
+          </div>
+
+          <CardContent className="relative h-full flex flex-col items-center justify-center text-center p-8">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className={cn(
+                "w-24 h-24 rounded-3xl flex items-center justify-center transition-all duration-300",
+                "bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-900/50 dark:to-indigo-900/50",
+                "group-hover:from-blue-200 group-hover:to-indigo-300 dark:group-hover:from-blue-800/60 dark:group-hover:to-indigo-800/60",
+                "group-hover:scale-110 group-hover:rotate-3 shadow-2xl"
+              )}>
+                <Plus className="h-12 w-12 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors" />
+              </div>
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-blue-900 dark:group-hover:text-blue-100">
-              {t('createAccount')}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-blue-300">
-              {t('createAccountDescription')}
-            </p>
+            
+            <div className="absolute bottom-8 left-8 right-8 text-center">
+              <h3 className="font-bold text-2xl text-slate-900 dark:text-slate-100 mb-3 group-hover:text-blue-900 dark:group-hover:text-blue-100 transition-colors">
+                {t('createAccount')}
+              </h3>
+              
+              <p className="text-lg text-slate-600 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors leading-relaxed">
+                {t('createAccountDescription')}
+              </p>
+              
+              <div className="mt-4 pt-4 border-t border-dashed border-slate-300 dark:border-slate-600">
+                <div className="text-sm text-slate-500 dark:text-slate-400 font-medium tracking-wide uppercase">
+                  Click to Add New Account
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </Link>
@@ -375,29 +486,62 @@ function AddAccountCard() {
 function AccountsListSkeleton() {
   return (
     <div className="p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="border-0 bg-slate-200 dark:bg-slate-800 animate-pulse">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="h-12 w-12 bg-slate-300 dark:bg-slate-700 rounded-xl" />
+          <div key={i} className="w-full h-64">
+            <Card className="w-full h-full border-0 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-700 animate-pulse rounded-2xl">
+              <CardContent className="h-full flex flex-col justify-between p-8">
+                {/* Top section - Bank & Account */}
+                <div className="flex items-center space-x-4">
+                  <div className="h-12 w-12 bg-slate-300 dark:bg-slate-600 rounded-2xl" />
                   <div className="space-y-2">
-                    <div className="h-4 w-24 bg-slate-300 dark:bg-slate-700 rounded" />
-                    <div className="h-3 w-16 bg-slate-300 dark:bg-slate-700 rounded" />
+                    <div className="h-3 w-20 bg-slate-300 dark:bg-slate-600 rounded" />
+                    <div className="h-5 w-32 bg-slate-300 dark:bg-slate-600 rounded" />
+                    <div className="h-3 w-24 bg-slate-300 dark:bg-slate-600 rounded" />
                   </div>
                 </div>
-                <div className="h-8 w-8 bg-slate-300 dark:bg-slate-700 rounded" />
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <div className="h-3 w-20 bg-slate-300 dark:bg-slate-700 rounded" />
-                  <div className="h-6 w-24 bg-slate-300 dark:bg-slate-700 rounded" />
+                
+                {/* EMV Chip */}
+                <div className="absolute top-20 left-8">
+                  <div className="w-12 h-9 bg-slate-300 dark:bg-slate-600 rounded-md" />
                 </div>
-                <div className="h-2 w-full bg-slate-300 dark:bg-slate-700 rounded" />
-              </div>
-            </CardContent>
-          </Card>
+                
+                {/* Card Number section */}
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="space-y-2 text-center">
+                    <div className="h-6 w-64 bg-slate-300 dark:bg-slate-600 rounded mx-auto" />
+                    <div className="h-3 w-20 bg-slate-300 dark:bg-slate-600 rounded mx-auto" />
+                  </div>
+                </div>
+                
+                {/* Balance section */}
+                <div className="text-center mb-6">
+                  <div className="h-3 w-28 bg-slate-300 dark:bg-slate-600 rounded mx-auto mb-2" />
+                  <div className="h-10 w-48 bg-slate-300 dark:bg-slate-600 rounded mx-auto" />
+                </div>
+                
+                {/* Bottom section - Cardholder & Expiry */}
+                <div className="flex justify-between">
+                  <div className="space-y-2">
+                    <div className="h-2 w-24 bg-slate-300 dark:bg-slate-600 rounded" />
+                    <div className="h-4 w-32 bg-slate-300 dark:bg-slate-600 rounded" />
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <div className="h-2 w-16 bg-slate-300 dark:bg-slate-600 rounded" />
+                    <div className="h-4 w-12 bg-slate-300 dark:bg-slate-600 rounded" />
+                  </div>
+                </div>
+                
+                {/* Card Network logos */}
+                <div className="absolute bottom-8 right-8">
+                  <div className="flex space-x-2">
+                    <div className="w-8 h-5 bg-slate-300 dark:bg-slate-600 rounded-sm" />
+                    <div className="w-8 h-5 bg-slate-300 dark:bg-slate-600 rounded-sm" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         ))}
       </div>
     </div>

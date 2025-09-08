@@ -146,6 +146,7 @@ export type TransactionType = 'income' | 'expense' | 'transfer'
 // Enhanced transaction type with investment integration
 export type { EnhancedTransactionType } from './investments'
 export type AccountType = 'bank' | 'credit_card' | 'wallet' | 'investment' | 'savings' | 'cash' | 'other'
+export type BalanceType = 'debit' | 'credit'
 // Legacy InvestmentType - use the new comprehensive InvestmentType from investments.ts instead
 export type LoanType = 'personal' | 'home' | 'car' | 'education' | 'business' | 'other'
 export type LendingType = 'lent' | 'borrowed'
@@ -185,6 +186,32 @@ export type AccountWithBalance = Account & {
   formatted_balance?: string
   account_type_display?: string
   can_delete?: boolean
+  available_credit?: number
+  credit_utilization?: number
+  is_overlimit?: boolean
+}
+
+// Credit Account Display Balance
+export type CreditAccountBalance = {
+  balance: number
+  credit_limit: number
+  available_credit: number
+  utilization_percentage: number
+  balance_type: BalanceType
+  currency: string
+  is_overlimit: boolean
+}
+
+// Account Credit Information
+export type AccountCreditInfo = {
+  credit_limit: number
+  interest_rate: number
+  minimum_payment: number
+  payment_due_day: number
+  statement_closing_day: number
+  available_credit: number
+  credit_utilization: number
+  is_overlimit: boolean
 }
 
 // Account Summary for dashboard and components

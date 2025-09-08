@@ -196,8 +196,11 @@ export default function AccountDetailsView({ accountId }: AccountDetailsViewProp
           </div>
         )}
         
-        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16" />
+        {/* Modern gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10" />
+        {/* Decorative blurred elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16 blur-xl" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/5 rounded-full translate-y-12 -translate-x-12 blur-lg" />
         
         <CardContent className="relative p-8 text-white">
           <div className="flex items-center justify-between mb-6">

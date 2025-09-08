@@ -86,6 +86,7 @@ export default function NewTransactionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingAndAddAnother, setIsSavingAndAddAnother] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [receipt, setReceipt] = useState<File | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
@@ -101,18 +102,23 @@ export default function NewTransactionPage() {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors }
   } = useForm<TransactionForm>({
     defaultValues: {
       type: defaultType,
-      date: new Date().toISOString().split('T')[0] || '',
-      tags: [] as string[],
-      recurring: false,
       amount: 0,
       description: '',
       category: '',
       subcategory: '',
-      account: ''
+      account: '',
+      date: new Date().toISOString().split('T')[0] || '',
+      notes: '',
+      tags: [] as string[],
+      recurring: false,
+      recurringFrequency: '',
+      location: '',
+      vendor: ''
     }
   });
 
@@ -201,13 +207,15 @@ export default function NewTransactionPage() {
 
   const availableCategories = categories;
 
-  const onSubmit = async (data: TransactionForm) => {
+  const saveTransaction = async (data: TransactionForm, shouldAddAnother = false) => {
     if (!user) {
       toast.error(t('form.errors.loginRequired'));
-      return;
+      return false;
     }
 
-    setIsLoading(true);
+    const loadingState = shouldAddAnother ? setIsSavingAndAddAnother : setIsLoading;
+    loadingState(true);
+    
     try {
       let recurringTemplateId = null;
 
@@ -277,12 +285,60 @@ export default function NewTransactionPage() {
         toast.success(t('form.success.transactionCreated'));
       }
       
-      router.push('/dashboard/transactions');
+      return true;
     } catch (error: any) {
       console.error('Error saving transaction:', error);
       toast.error(error.message || t('form.errors.saveFailed'));
+      return false;
     } finally {
-      setIsLoading(false);
+      loadingState(false);
+    }
+  };
+
+  const onSubmit = async (data: TransactionForm) => {
+    const success = await saveTransaction(data, false);
+    if (success) {
+      router.push('/dashboard/transactions');
+    }
+  };
+
+  const onSaveAndAddAnother = async (data: TransactionForm) => {
+    const success = await saveTransaction(data, true);
+    if (success) {
+      // Reset form to add another transaction with complete default values
+      reset({
+        type: data.type, // Keep the same type for convenience
+        amount: 0,
+        description: '',
+        category: '',
+        subcategory: '',
+        account: data.account, // Keep the same account for convenience
+        date: new Date().toISOString().split('T')[0] || '', // Today's date
+        notes: '',
+        tags: [] as string[],
+        recurring: false,
+        recurringFrequency: '',
+        location: '',
+        vendor: ''
+      });
+      
+      // Reset additional states
+      setTagInput('');
+      setReceipt(null);
+      setSubcategories([]);
+      
+      // Scroll to top for better UX
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Focus on the amount field after a short delay to let form reset complete
+      setTimeout(() => {
+        const amountField = document.getElementById('amount');
+        if (amountField) {
+          amountField.focus();
+        }
+      }, 100);
+      
+      toast.success(t('form.success.readyForAnother'));
     }
   };
 
@@ -915,10 +971,25 @@ export default function NewTransactionPage() {
           </Link>
           
           <div className="flex space-x-3">
-            <Button type="button" variant="outline">
-              {t('form.saveAndAddAnother')}
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleSubmit(onSaveAndAddAnother)}
+              disabled={isLoading || isSavingAndAddAnother}
+            >
+              {isSavingAndAddAnother ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  {t('form.saving')}
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t('form.saveAndAddAnother')}
+                </>
+              )}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || isSavingAndAddAnother}>
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />

@@ -319,10 +319,10 @@ export default function TransactionsPage() {
                   <SelectValue placeholder={t('filters.category')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  {categories.map((category, categoryIndex) => (
                     <SelectItem 
-                      key={category.value} 
-                      value={category.value}
+                      key={`category-${category.value}-${categoryIndex}`} 
+                      value={String(category.value)}
                       className={
                         category.level === 1 
                           ? 'pl-8 text-sm text-muted-foreground border-l-2 border-l-muted ml-4' 
@@ -333,11 +333,11 @@ export default function TransactionsPage() {
                     >
                       <div className="flex items-center gap-2">
                         {category.icon && category.level === 0 && category.value !== 'all' && (
-                          <span className="text-lg">{category.icon}</span>
+                          <span className="text-lg">{String(category.icon)}</span>
                         )}
                         {category.level === 1 && <span className="text-muted-foreground mr-1">↳</span>}
                         <span className={category.level === 1 ? 'text-sm' : ''}>
-                          {category.displayLabel || category.label}
+                          {String(category.displayLabel || category.label)}
                         </span>
                       </div>
                     </SelectItem>
@@ -350,17 +350,17 @@ export default function TransactionsPage() {
                   <SelectValue placeholder={t('filters.account')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {accounts.map((account) => (
+                  {accounts.map((account, accountIndex) => (
                     <SelectItem 
-                      key={account.value || account} 
-                      value={account.value || account}
+                      key={`account-${account.value || account}-${accountIndex}`} 
+                      value={String(account.value || account)}
                       className={account.value === 'all' ? '' : 'pl-4'}
                     >
                       <div className="flex items-center gap-2">
                         {account.icon && account.value !== 'all' && (
-                          <span className="text-sm">{account.icon}</span>
+                          <span className="text-sm">{String(account.icon)}</span>
                         )}
-                        <span>{account.label || account}</span>
+                        <span>{String(account.label || account)}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -393,7 +393,7 @@ export default function TransactionsPage() {
                 )}
                 {selectedCategory !== 'all' && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>{t('filters.category')}: {categories.find(c => c.value === selectedCategory)?.label || selectedCategory}</span>
+                    <span>{t('filters.category')}: {String(categories.find(c => c.value === selectedCategory)?.label || selectedCategory)}</span>
                     <button onClick={() => setSelectedCategory('all')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
@@ -401,7 +401,7 @@ export default function TransactionsPage() {
                 )}
                 {selectedAccount !== 'all' && (
                   <Badge variant="secondary" className="flex items-center space-x-1">
-                    <span>{t('filters.account')}: {accounts.find(a => a.value === selectedAccount)?.label || selectedAccount}</span>
+                    <span>{t('filters.account')}: {String(accounts.find(a => a.value === selectedAccount)?.label || selectedAccount)}</span>
                     <button onClick={() => setSelectedAccount('all')} className="ml-1 hover:bg-muted rounded">
                       ×
                     </button>
@@ -475,15 +475,15 @@ export default function TransactionsPage() {
                       </div>
                       <div className="flex items-center space-x-2 mt-1">
                         <Badge variant="outline" className="text-xs">
-                          {(transaction as any).subcategories?.name || (transaction as any).categories?.name || 'Uncategorized'}
+                          {String((transaction as any).subcategories?.name || (transaction as any).categories?.name || 'Uncategorized')}
                         </Badge>
                         {(transaction as any).subcategories && (transaction as any).categories && (
                           <span className="text-xs text-muted-foreground">
-                            ({(transaction as any).categories.name})
+                            ({String((transaction as any).categories.name)})
                           </span>
                         )}
                         <span className="text-sm text-muted-foreground">
-                          {(transaction as any).accounts?.name || 'No Account'}
+                          {String((transaction as any).accounts?.name || 'No Account')}
                         </span>
                         <span className="text-sm text-muted-foreground">•</span>
                         <span className="text-sm text-muted-foreground flex items-center">
@@ -498,8 +498,8 @@ export default function TransactionsPage() {
                         <div className="flex items-center space-x-1 mt-2">
                           <Tag className="w-3 h-3 text-muted-foreground" />
                           {transaction.tags.map((tag: string, tagIndex: number) => (
-                            <Badge key={tagIndex} variant="secondary" className="text-xs">
-                              {tag}
+                            <Badge key={`${transaction.id}-tag-${tagIndex}-${tag}`} variant="secondary" className="text-xs">
+                              {String(tag)}
                             </Badge>
                           ))}
                         </div>

@@ -160,7 +160,16 @@
       "limitReached": "Account Limit Reached",
       "limitReachedDescription": "You've reached the maximum number of accounts for your {plan} plan ({current}/{limit} accounts). Upgrade to create more accounts.",
       "upgradeToPro": "Upgrade to Pro (15 accounts)",
-      "upgradeToMax": "Upgrade to Max (50 accounts + family)"
+      "upgradeToMax": "Upgrade to Max (50 accounts + family)",
+      "creditAccountSettings": "Credit Account Settings",
+      "creditLimit": "Credit Limit",
+      "creditLimitHelp": "Maximum amount you can borrow on this account",
+      "interestRate": "Annual Interest Rate (%)",
+      "interestRateHelp": "Annual percentage rate (APR) for this credit account",
+      "minimumPayment": "Minimum Monthly Payment",
+      "paymentDueDay": "Payment Due Day",
+      "paymentDueDayHelp": "Day of the month when payment is due (1-31)",
+      "statementClosingDay": "Statement Closing Day"
     },
 
     "types": {
@@ -252,6 +261,17 @@
       "accountNotFound": "Account not found",
       "accountNotFoundDescription": "The account you are looking for does not exist or you don't have permission to view it."
     },
+
+    "upgrade": {
+      "accountLimitTitle": "Account Limit Reached",
+      "accountLimitDescription": "You've reached your account limit ({current}/{limit}). Upgrade to create more accounts and unlock powerful features.",
+      "accountTypeTitle": "Account Type Not Available", 
+      "accountTypeDescription": "This account type is not available in your current plan. Upgrade to access all account types.",
+      "generalTitle": "Upgrade Your Plan",
+      "generalDescription": "Unlock more accounts, advanced features, and family sharing with our premium plans."
+    },
+
+    "upgradeToCreate": "Upgrade to Create",
 
     "confirmDelete": "Are you sure you want to delete '{name}'? This action cannot be undone."
   }

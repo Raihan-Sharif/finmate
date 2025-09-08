@@ -51,94 +51,99 @@ export default async function AccountsPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Accounts Overview */}
-            <Suspense fallback={<AccountsOverviewSkeleton />}>
-              <AccountsOverview />
-            </Suspense>
+        {/* Use a single Suspense boundary for the entire content to prevent multiple loading flashes */}
+        <Suspense fallback={<AccountsPageSkeleton />}>
+          <AccountsPageContent t={t} />
+        </Suspense>
+      </div>
+    </div>
+  )
+}
 
-            {/* Accounts List */}
-            <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
-              <CardHeader className="border-b border-slate-200/60 dark:border-slate-800/60">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-                      <CreditCard className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl">{t('myAccounts')}</CardTitle>
-                      <CardDescription>{t('manageAccountsDesc')}</CardDescription>
-                    </div>
-                  </div>
-                  <CreateAccountButton variant="outline" size="sm" showFullPage={true} />
+// Main content component that wraps all account page content
+async function AccountsPageContent({ t }: { t: any }) {
+  return (
+    <div className="space-y-8">
+      {/* Accounts Overview */}
+      <div className="space-y-6">
+        <AccountsOverview />
+      </div>
+
+      {/* Accounts List and Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Main Accounts List */}
+        <div className="lg:col-span-2">
+          <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="text-xl">
+                {t('yourAccounts')}
+              </CardTitle>
+              <CardDescription>
+                {t('manageYourAccounts')}
+              </CardDescription>
+            </CardHeader>
+            <AccountsList />
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Family Members */}
+          <FamilyMembersSection />
+
+          {/* Subscription Limits */}
+          <SubscriptionLimitsCard />
+
+          {/* Quick Stats */}
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200/50 dark:border-emerald-800/50">
+            <CardHeader>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
+                  <TrendingUp className="h-5 w-5" />
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Suspense fallback={<AccountsListSkeleton />}>
-                  <AccountsList />
-                </Suspense>
-              </CardContent>
-            </Card>
-
-            {/* Family Members Section (Max Plan Only) */}
-            <Suspense fallback={<FamilyMembersSkeleton />}>
-              <FamilyMembersSection />
-            </Suspense>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Subscription Limits */}
-            <Suspense fallback={<SubscriptionLimitsSkeleton />}>
-              <SubscriptionLimitsCard />
-            </Suspense>
-
-            {/* Quick Stats */}
-            <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                  <span>{t('quickStats')}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Suspense fallback={<QuickStatsSkeleton />}>
-                  <QuickStatsContent />
-                </Suspense>
-              </CardContent>
-            </Card>
-
-            {/* Account Tips */}
-            <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200/50 dark:border-blue-800/50">
-              <CardHeader>
-                <CardTitle className="text-lg text-blue-900 dark:text-blue-100">
-                  {t('tips.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    {t('tips.tip1')}
-                  </p>
+                <div>
+                  <CardTitle className="text-lg text-emerald-900 dark:text-emerald-100">
+                    {t('quickStats.title')}
+                  </CardTitle>
+                  <CardDescription className="text-emerald-700 dark:text-emerald-300">
+                    {t('quickStats.description')}
+                  </CardDescription>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    {t('tips.tip2')}
-                  </p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    {t('tips.tip3')}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <QuickStatsContent />
+            </CardContent>
+          </Card>
+
+          {/* Account Tips */}
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200/50 dark:border-blue-800/50">
+            <CardHeader>
+              <CardTitle className="text-lg text-blue-900 dark:text-blue-100">
+                {t('tips.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  {t('tips.tip1')}
+                </p>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  {t('tips.tip2')}
+                </p>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  {t('tips.tip3')}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -174,6 +179,74 @@ async function QuickStatsContent() {
       <div className="flex justify-between items-center">
         <span className="text-sm text-slate-600 dark:text-slate-400">{t('stats.average')}</span>
         <span className="font-semibold">৳{stats.averageBalance.toLocaleString()}</span>
+      </div>
+    </div>
+  )
+}
+
+// Main page skeleton that matches the AccountsPageContent structure
+function AccountsPageSkeleton() {
+  return (
+    <div className="space-y-8">
+      {/* Accounts Overview Skeleton */}
+      <div className="space-y-6">
+        <AccountsOverviewSkeleton />
+      </div>
+
+      {/* Accounts List and Sidebar Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Main Accounts List Skeleton */}
+        <div className="lg:col-span-2">
+          <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+            <CardHeader>
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </CardHeader>
+            <AccountsListSkeleton />
+          </Card>
+        </div>
+
+        {/* Sidebar Skeleton */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Family Members Skeleton */}
+          <FamilyMembersSkeleton />
+
+          {/* Subscription Limits Skeleton */}
+          <SubscriptionLimitsSkeleton />
+
+          {/* Quick Stats Skeleton */}
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200/50 dark:border-emerald-800/50">
+            <CardHeader>
+              <div className="flex items-center space-x-3">
+                <Skeleton className="h-9 w-9 rounded-xl" />
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <QuickStatsSkeleton />
+            </CardContent>
+          </Card>
+
+          {/* Account Tips Skeleton */}
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200/50 dark:border-blue-800/50">
+            <CardHeader>
+              <Skeleton className="h-5 w-28" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-start space-x-3">
+                  <Skeleton className="w-2 h-2 rounded-full mt-2 flex-shrink-0" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

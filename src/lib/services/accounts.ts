@@ -9,8 +9,11 @@ import {
   FamilyAccountLimits,
   SubscriptionPlan,
   AccountType,
+  BalanceType,
   CurrencyType,
-  FamilyMember
+  FamilyMember,
+  CreditAccountBalance,
+  AccountCreditInfo
 } from '@/types'
 
 // ==============================================
@@ -34,12 +37,23 @@ export async function getUserAccounts(userId: string): Promise<AccountWithBalanc
     throw new Error('Failed to fetch accounts')
   }
 
-  return data?.map(account => ({
-    ...account,
-    formatted_balance: formatAccountBalance(account.balance, account.currency as CurrencyType),
-    account_type_display: getAccountTypeDisplay(account.type as AccountType),
-    can_delete: !account.is_default && data.length > 1
-  })) || []
+  return data?.map(account => {
+    const enhancedAccount: AccountWithBalance = {
+      ...account,
+      formatted_balance: formatAccountBalance(account.balance, account.currency as CurrencyType, account.balance_type as BalanceType),
+      account_type_display: getAccountTypeDisplay(account.type as AccountType),
+      can_delete: !account.is_default && data.length > 1
+    }
+
+    // Add credit account specific properties
+    if (account.balance_type === 'credit' && account.credit_limit > 0) {
+      enhancedAccount.available_credit = account.credit_limit + account.balance // balance is negative for credit
+      enhancedAccount.credit_utilization = Math.round(((account.credit_limit + account.balance) / account.credit_limit) * 100)
+      enhancedAccount.is_overlimit = (account.balance * -1) > account.credit_limit
+    }
+
+    return enhancedAccount
+  }) || []
 }
 
 /**
@@ -479,7 +493,7 @@ export async function getCurrentAccountCount(userId: string): Promise<number> {
 /**
  * Format account balance with currency symbol
  */
-export function formatAccountBalance(balance: number, currency: CurrencyType): string {
+export function formatAccountBalance(balance: number, currency: CurrencyType, balanceType: BalanceType = 'debit'): string {
   const symbols = {
     USD: '$',
     BDT: '৳',
@@ -492,7 +506,17 @@ export function formatAccountBalance(balance: number, currency: CurrencyType): s
   }
 
   const symbol = symbols[currency] || currency
-  return `${symbol}${Math.abs(balance).toLocaleString()}`
+  
+  if (balanceType === 'credit') {
+    // For credit accounts, negative balance means debt (what you owe)
+    const absBalance = Math.abs(balance)
+    const sign = balance < 0 ? '-' : '+'
+    return `${sign}${symbol}${absBalance.toLocaleString()}`
+  } else {
+    // For debit accounts, show balance as-is
+    const sign = balance < 0 ? '-' : ''
+    return `${sign}${symbol}${Math.abs(balance).toLocaleString()}`
+  }
 }
 
 /**
@@ -584,6 +608,117 @@ export function getAvailableAccountColors(): Array<{value: string, label: string
     { value: '#84CC16', label: 'Lime' },
     { value: '#F97316', label: 'Orange' },
   ]
+}
+
+// ==============================================
+// Credit Account Functions
+// ==============================================
+
+/**
+ * Get credit account balance details
+ */
+export async function getCreditAccountBalance(accountId: string): Promise<CreditAccountBalance | null> {
+  const { data, error } = await supabase
+    .rpc('get_account_display_balance', { account_id_param: accountId })
+
+  if (error) {
+    console.error('Error getting credit account balance:', error)
+    return null
+  }
+
+  return data
+}
+
+/**
+ * Get available credit for a credit account
+ */
+export async function getAvailableCredit(accountId: string): Promise<number | null> {
+  const { data, error } = await supabase
+    .rpc('get_available_credit', { account_id_param: accountId })
+
+  if (error) {
+    console.error('Error getting available credit:', error)
+    return null
+  }
+
+  return data
+}
+
+/**
+ * Check if transaction amount is within credit limit
+ */
+export async function validateCreditTransaction(accountId: string, amount: number): Promise<{ valid: boolean; message?: string; availableCredit?: number }> {
+  try {
+    const account = await getAccountById(accountId, '')
+    if (!account || account.balance_type !== 'credit') {
+      return { valid: true } // Not a credit account, no validation needed
+    }
+
+    const availableCredit = account.credit_limit + account.balance // balance is negative for debt
+    
+    if (amount > availableCredit) {
+      return {
+        valid: false,
+        message: `Transaction amount exceeds available credit. Available: ${formatAccountBalance(availableCredit, account.currency as CurrencyType)}, Requested: ${formatAccountBalance(amount, account.currency as CurrencyType)}`,
+        availableCredit
+      }
+    }
+
+    return { valid: true, availableCredit }
+  } catch (error) {
+    console.error('Error validating credit transaction:', error)
+    return { valid: false, message: 'Error validating transaction' }
+  }
+}
+
+/**
+ * Get account credit information
+ */
+export async function getAccountCreditInfo(accountId: string): Promise<AccountCreditInfo | null> {
+  try {
+    const account = await getAccountById(accountId, '')
+    if (!account || account.balance_type !== 'credit') {
+      return null
+    }
+
+    const availableCredit = account.credit_limit + account.balance
+    const creditUtilization = account.credit_limit > 0 
+      ? Math.round(((account.credit_limit + account.balance) / account.credit_limit) * 100)
+      : 0
+    const isOverlimit = (account.balance * -1) > account.credit_limit
+
+    return {
+      credit_limit: account.credit_limit,
+      interest_rate: account.interest_rate,
+      minimum_payment: account.minimum_payment,
+      payment_due_day: account.payment_due_day,
+      statement_closing_day: account.statement_closing_day,
+      available_credit: availableCredit,
+      credit_utilization: creditUtilization,
+      is_overlimit: isOverlimit
+    }
+  } catch (error) {
+    console.error('Error getting account credit info:', error)
+    return null
+  }
+}
+
+/**
+ * Calculate interest for credit account
+ */
+export function calculateCreditInterest(balance: number, interestRate: number, days: number = 30): number {
+  if (balance >= 0) return 0 // No interest if no debt
+  
+  const principal = Math.abs(balance)
+  const dailyRate = interestRate / 365
+  return principal * dailyRate * days
+}
+
+/**
+ * Check if account type should default to credit balance type
+ */
+export function shouldDefaultToCreditType(accountType: AccountType): boolean {
+  return accountType === 'credit_card'
 }
 
 // ==============================================

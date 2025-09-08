@@ -263,6 +263,12 @@ export interface Database {
           display_order: number
           icon: string
           color: string
+          balance_type: 'debit' | 'credit'
+          credit_limit: number
+          interest_rate: number
+          minimum_payment: number
+          payment_due_day: number
+          statement_closing_day: number
           created_at: string
           updated_at: string
         }
@@ -282,6 +288,12 @@ export interface Database {
           display_order?: number
           icon?: string
           color?: string
+          balance_type?: 'debit' | 'credit'
+          credit_limit?: number
+          interest_rate?: number
+          minimum_payment?: number
+          payment_due_day?: number
+          statement_closing_day?: number
           created_at?: string
           updated_at?: string
         }
@@ -301,6 +313,12 @@ export interface Database {
           display_order?: number
           icon?: string
           color?: string
+          balance_type?: 'debit' | 'credit'
+          credit_limit?: number
+          interest_rate?: number
+          minimum_payment?: number
+          payment_due_day?: number
+          statement_closing_day?: number
           created_at?: string
           updated_at?: string
         }
