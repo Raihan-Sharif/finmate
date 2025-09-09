@@ -9,6 +9,7 @@ import SubscriptionLimitsCard from '@/components/accounts/SubscriptionLimitsCard
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Plus, CreditCard, Users, TrendingUp } from 'lucide-react'
+import QuickStatsClient from '@/components/accounts/QuickStatsClient'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('accounts')
@@ -69,120 +70,82 @@ async function AccountsPageContent({ t }: { t: any }) {
         <AccountsOverview />
       </div>
 
-      {/* Accounts List and Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Main Accounts List */}
-        <div className="lg:col-span-2">
+      {/* Accounts List and Compact Sidebar */}
+      <div className="grid grid-cols-1 xl:grid-cols-6 gap-6">
+        {/* Main Accounts List - Takes 4/6 of the width */}
+        <div className="xl:col-span-4">
           <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
             <CardHeader>
               <CardTitle className="text-xl">
-                {t('yourAccounts')}
+                {t('myAccounts')}
               </CardTitle>
               <CardDescription>
-                {t('manageYourAccounts')}
+                {t('manageAccountsDesc')}
               </CardDescription>
             </CardHeader>
             <AccountsList />
           </Card>
         </div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Family Members */}
-          <FamilyMembersSection />
-
-          {/* Subscription Limits */}
+        {/* Ultra-Compact Sidebar - Takes 2/6 of the width */}
+        <div className="xl:col-span-2 space-y-3">
+          {/* Subscription Limits - Ultra Compact */}
           <SubscriptionLimitsCard />
 
-          {/* Quick Stats */}
-          <Card className="shadow-xl border-0 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200/50 dark:border-emerald-800/50">
-            <CardHeader>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
-                  <TrendingUp className="h-5 w-5" />
+          {/* Quick Stats - Ultra Compact */}
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200/50 dark:border-emerald-800/50">
+            <CardHeader className="pb-2 px-3 pt-3">
+              <div className="flex items-center space-x-1.5">
+                <div className="p-1 rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                  <TrendingUp className="h-3 w-3" />
                 </div>
-                <div>
-                  <CardTitle className="text-lg text-emerald-900 dark:text-emerald-100">
-                    {t('quickStats.title')}
-                  </CardTitle>
-                  <CardDescription className="text-emerald-700 dark:text-emerald-300">
-                    {t('quickStats.description')}
-                  </CardDescription>
-                </div>
+                <CardTitle className="text-sm text-emerald-900 dark:text-emerald-100">
+                  {t('quickStats')}
+                </CardTitle>
               </div>
             </CardHeader>
-            <CardContent>
-              <QuickStatsContent />
+            <CardContent className="pt-0 px-3 pb-3">
+              <QuickStatsClient />
             </CardContent>
           </Card>
 
-          {/* Account Tips */}
-          <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200/50 dark:border-blue-800/50">
-            <CardHeader>
-              <CardTitle className="text-lg text-blue-900 dark:text-blue-100">
+          {/* Account Tips - Ultra Compact */}
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200/50 dark:border-blue-800/50">
+            <CardHeader className="pb-2 px-3 pt-3">
+              <CardTitle className="text-sm text-blue-900 dark:text-blue-100">
                 {t('tips.title')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
-                <p className="text-sm text-blue-800 dark:text-blue-200">
+            <CardContent className="pt-0 px-3 pb-3 space-y-1.5">
+              <div className="flex items-start space-x-1.5">
+                <div className="w-1 h-1 rounded-full bg-blue-600 mt-1.5 flex-shrink-0" />
+                <p className="text-[10px] text-blue-800 dark:text-blue-200 leading-tight">
                   {t('tips.tip1')}
                 </p>
               </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
-                <p className="text-sm text-blue-800 dark:text-blue-200">
+              <div className="flex items-start space-x-1.5">
+                <div className="w-1 h-1 rounded-full bg-blue-600 mt-1.5 flex-shrink-0" />
+                <p className="text-[10px] text-blue-800 dark:text-blue-200 leading-tight">
                   {t('tips.tip2')}
                 </p>
               </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
-                <p className="text-sm text-blue-800 dark:text-blue-200">
+              <div className="flex items-start space-x-1.5">
+                <div className="w-1 h-1 rounded-full bg-blue-600 mt-1.5 flex-shrink-0" />
+                <p className="text-[10px] text-blue-800 dark:text-blue-200 leading-tight">
                   {t('tips.tip3')}
                 </p>
               </div>
             </CardContent>
           </Card>
+
+          {/* Family Members - Ultra Compact */}
+          <FamilyMembersSection />
         </div>
       </div>
     </div>
   )
 }
 
-// Quick Stats Content Component
-async function QuickStatsContent() {
-  const t = await getTranslations('accounts')
-  
-  // This would fetch real data in production
-  const stats = {
-    totalBalance: 45250.80,
-    highestAccount: 28500.00,
-    lowestAccount: 1250.00,
-    averageBalance: 11312.70
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-slate-600 dark:text-slate-400">{t('stats.totalBalance')}</span>
-        <span className="font-semibold text-green-600 dark:text-green-400">৳{stats.totalBalance.toLocaleString()}</span>
-      </div>
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-slate-600 dark:text-slate-400">{t('stats.highest')}</span>
-        <span className="font-semibold">৳{stats.highestAccount.toLocaleString()}</span>
-      </div>
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-slate-600 dark:text-slate-400">{t('stats.lowest')}</span>
-        <span className="font-semibold">৳{stats.lowestAccount.toLocaleString()}</span>
-      </div>
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-slate-600 dark:text-slate-400">{t('stats.average')}</span>
-        <span className="font-semibold">৳{stats.averageBalance.toLocaleString()}</span>
-      </div>
-    </div>
-  )
-}
 
 // Main page skeleton that matches the AccountsPageContent structure
 function AccountsPageSkeleton() {
@@ -194,9 +157,9 @@ function AccountsPageSkeleton() {
       </div>
 
       {/* Accounts List and Sidebar Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-6 gap-6">
         {/* Main Accounts List Skeleton */}
-        <div className="lg:col-span-2">
+        <div className="xl:col-span-4">
           <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
             <CardHeader>
               <div className="space-y-2">
@@ -208,47 +171,109 @@ function AccountsPageSkeleton() {
           </Card>
         </div>
 
-        {/* Sidebar Skeleton */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Family Members Skeleton */}
-          <FamilyMembersSkeleton />
-
-          {/* Subscription Limits Skeleton */}
+        {/* Ultra-Compact Sidebar Skeleton */}
+        <div className="xl:col-span-2 space-y-3">
           <SubscriptionLimitsSkeleton />
-
-          {/* Quick Stats Skeleton */}
-          <Card className="shadow-xl border-0 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200/50 dark:border-emerald-800/50">
-            <CardHeader>
-              <div className="flex items-center space-x-3">
-                <Skeleton className="h-9 w-9 rounded-xl" />
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-3 w-32" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <QuickStatsSkeleton />
-            </CardContent>
-          </Card>
-
-          {/* Account Tips Skeleton */}
-          <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200/50 dark:border-blue-800/50">
-            <CardHeader>
-              <Skeleton className="h-5 w-28" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-start space-x-3">
-                  <Skeleton className="w-2 h-2 rounded-full mt-2 flex-shrink-0" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <QuickStatsSkeleton />
+          <AccountTipsSkeleton />
+          <FamilyMembersSkeleton />
         </div>
       </div>
     </div>
+  )
+}
+
+// Ultra-Compact Skeleton Components
+function SubscriptionLimitsSkeleton() {
+  return (
+    <Card className="shadow-lg border-0">
+      <CardHeader className="pb-2 px-3 pt-3">
+        <Skeleton className="h-4 w-20" />
+      </CardHeader>
+      <CardContent className="pt-0 px-3 pb-3 space-y-2">
+        <div className="space-y-1">
+          <div className="flex justify-between">
+            <Skeleton className="h-2 w-12" />
+            <Skeleton className="h-2 w-8" />
+          </div>
+          <Skeleton className="h-1 w-full rounded-full" />
+        </div>
+        <Skeleton className="h-6 w-full" />
+      </CardContent>
+    </Card>
+  )
+}
+
+function QuickStatsSkeleton() {
+  return (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200/50 dark:border-emerald-800/50">
+      <CardHeader className="pb-2 px-3 pt-3">
+        <div className="flex items-center space-x-1.5">
+          <Skeleton className="h-5 w-5 rounded-md" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 px-3 pb-3">
+        <div className="space-y-2">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex justify-between items-center">
+              <Skeleton className="h-2 w-16" />
+              <Skeleton className="h-3 w-12" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function AccountTipsSkeleton() {
+  return (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200/50 dark:border-blue-800/50">
+      <CardHeader className="pb-2 px-3 pt-3">
+        <Skeleton className="h-3 w-16" />
+      </CardHeader>
+      <CardContent className="pt-0 px-3 pb-3 space-y-1.5">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex items-start space-x-1.5">
+            <Skeleton className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" />
+            <Skeleton className="h-2 w-full" />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+function FamilyMembersSkeleton() {
+  return (
+    <Card className="shadow-lg border-0">
+      <CardHeader className="pb-2 px-3 pt-3">
+        <div className="flex items-center space-x-2">
+          <Skeleton className="h-5 w-5 rounded-lg" />
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-2 w-24" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 px-3 pb-3">
+        <div className="space-y-2">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between p-2 rounded-lg border">
+              <div className="flex items-center space-x-2">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <div className="space-y-1">
+                  <Skeleton className="h-2 w-16" />
+                  <Skeleton className="h-2 w-12" />
+                </div>
+              </div>
+              <Skeleton className="h-4 w-10" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -295,67 +320,3 @@ function AccountsListSkeleton() {
   )
 }
 
-function FamilyMembersSkeleton() {
-  return (
-    <Card className="shadow-xl border-0">
-      <CardHeader>
-        <div className="flex items-center space-x-3">
-          <Skeleton className="h-8 w-8 rounded-lg" />
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-3 w-48" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
-              <div className="flex items-center space-x-3">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-1">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-              </div>
-              <Skeleton className="h-6 w-16" />
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function SubscriptionLimitsSkeleton() {
-  return (
-    <Card className="shadow-xl border-0">
-      <CardHeader>
-        <Skeleton className="h-5 w-32" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <Skeleton className="h-3 w-16" />
-            <Skeleton className="h-3 w-12" />
-          </div>
-          <Skeleton className="h-2 w-full rounded-full" />
-        </div>
-        <Skeleton className="h-8 w-full" />
-      </CardContent>
-    </Card>
-  )
-}
-
-function QuickStatsSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="flex justify-between items-center">
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-      ))}
-    </div>
-  )
-}

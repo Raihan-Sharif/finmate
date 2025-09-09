@@ -111,6 +111,8 @@
     },
 
     "quickStats": "Quick Stats",
+    "yourAccounts": "Your Accounts",
+    "manageYourAccounts": "Manage your financial accounts",
     "stats": {
       "totalBalance": "Total Balance",
       "highest": "Highest Account",

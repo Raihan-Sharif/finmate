@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function getInitialSession() {
       try {
-        // Always use getUser() instead of getSession() for server-side consistency
+        // Always use getUser() for consistency with server-side middleware
         const {
           data: { user },
           error,
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Get session after confirming user
+        // Get session for client-side usage
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(user);
 
           if (user && session) {
-            // Only fetch profile if we haven't fetched for this user ID recently
+            // Fetch profile data with role information
             if (lastFetchedProfileRef.current !== user.id) {
               await fetchProfile(user.id);
             }
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession();
 
-    // Listen for auth changes with improved handling
+    // Listen for auth changes - simplified and consistent with docs
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -110,68 +110,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log("Auth state changed:", event, session?.user?.id);
 
-      // Handle different auth events
-      switch (event) {
-        case 'SIGNED_IN':
-        case 'TOKEN_REFRESHED':
-          setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user && lastFetchedProfileRef.current !== session.user.id) {
-            await fetchProfile(session.user.id);
-          }
-          break;
-        case 'SIGNED_OUT':
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          lastFetchedProfileRef.current = null;
-          router.push("/auth/signin");
-          break;
-        case 'USER_UPDATED':
-          if (session?.user) {
-            setUser(session.user);
-            // Always fetch profile on user update as profile data might have changed
-            await fetchProfile(session.user.id);
-          }
-          break;
-        default:
-          // For other events, still update session and user
-          setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user && lastFetchedProfileRef.current !== session.user.id) {
-            await fetchProfile(session.user.id);
-          } else if (!session?.user) {
-            setProfile(null);
-            lastFetchedProfileRef.current = null;
-          }
+      // Always update session and user state first
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      // Handle user-specific logic based on event
+      if (event === 'SIGNED_OUT') {
+        setProfile(null);
+        lastFetchedProfileRef.current = null;
+        router.push("/auth/signin");
+      } else if (session?.user) {
+        // For all events with a user, fetch/refresh profile if needed
+        const shouldFetchProfile = 
+          lastFetchedProfileRef.current !== session.user.id || 
+          event === 'USER_UPDATED';
+        
+        if (shouldFetchProfile) {
+          await fetchProfile(session.user.id);
+        }
+      } else {
+        // No user, clear profile
+        setProfile(null);
+        lastFetchedProfileRef.current = null;
       }
 
       setLoading(false);
     });
 
-    // Handle custom session-expired events
-    const handleSessionExpired = () => {
-      if (mounted) {
-        console.log('Session expired, clearing auth state');
-        setSession(null);
-        setUser(null);
-        setProfile(null);
-        lastFetchedProfileRef.current = null;
-        setLoading(false);
-        router.push('/auth/signin');
-      }
-    };
-    
-    // Simplified visibility change handler - let auth state change handle the heavy lifting
+    // Handle page visibility changes to refresh auth state when user returns
     const handleVisibilityChange = async () => {
-      if (!document.hidden && mounted && !user) {
-        // Only check if we don't have a user - let the auth state change handle profile fetching
+      if (!document.hidden && mounted) {
         try {
-          const { data: { session: currentSession } } = await supabase.auth.getSession();
-          // If session exists but we don't have user, the auth state change will handle it
-          if (currentSession && !user) {
-            console.log('Session found on visibility change, auth state will handle');
-          }
+          // Trigger a session refresh which will handle auth state properly
+          await supabase.auth.getSession();
         } catch (error) {
           console.error('Error during visibility change check:', error);
         }
@@ -179,13 +150,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('session-expired', handleSessionExpired);
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('session-expired', handleSessionExpired);
     };
   }, [router]);
 

@@ -111,6 +111,8 @@
     },
 
     "quickStats": "দ্রুত পরিসংখ্যান",
+    "yourAccounts": "আপনার অ্যাকাউন্ট",
+    "manageYourAccounts": "আপনার আর্থিক অ্যাকাউন্ট পরিচালনা করুন",
     "stats": {
       "totalBalance": "মোট ব্যালেন্স",
       "highest": "সর্বোচ্চ অ্যাকাউন্ট",
