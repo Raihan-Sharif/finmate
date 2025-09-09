@@ -65,7 +65,6 @@ export default function AccountsOverview() {
         transition={{ delay: 0.1 }}
       >
         <Card className="relative overflow-hidden shadow-xl border-0 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent" />
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16" />
           
           <CardContent className="relative p-6">

@@ -25,9 +25,9 @@ export default async function AccountsPage() {
   const tCommon = await getTranslations('common')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
       {/* Page Header */}
-      <div className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl">
+      <div className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl relative z-10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
@@ -51,7 +51,8 @@ export default async function AccountsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      {/* Main Content Container - Fixed z-index and positioning */}
+      <div className="relative z-20 container mx-auto px-4 py-8">
         {/* Use a single Suspense boundary for the entire content to prevent multiple loading flashes */}
         <Suspense fallback={<AccountsPageSkeleton />}>
           <AccountsPageContent t={t} />
@@ -74,12 +75,12 @@ async function AccountsPageContent({ t }: { t: any }) {
       <div className="grid grid-cols-1 xl:grid-cols-6 gap-6">
         {/* Main Accounts List - Takes 4/6 of the width */}
         <div className="xl:col-span-4">
-          <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+          <Card className="shadow-xl border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl relative z-10">
             <CardHeader>
-              <CardTitle className="text-xl">
+              <CardTitle className="text-xl text-slate-900 dark:text-slate-100">
                 {t('myAccounts')}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-slate-600 dark:text-slate-400">
                 {t('manageAccountsDesc')}
               </CardDescription>
             </CardHeader>

@@ -163,69 +163,48 @@ function AccountCard({ account, index, onSetDefault, onDelete }: AccountCardProp
     >
       <Link href={`/dashboard/accounts/${account.id}`} className="block w-full h-full">
         <Card className={cn(
-          "group relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer border-0 rounded-3xl",
-          "w-full h-full shadow-xl", 
+          "group relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 cursor-pointer border-0",
+          "w-full shadow-lg", 
           accountConfig.gradient,
-          accountConfig.shadowColor,
-          "hover:shadow-2xl",
-          account.is_default && "ring-2 ring-amber-400 ring-offset-4 dark:ring-offset-slate-900 shadow-amber-200/50"
-        )}>
+          account.is_default && "ring-2 ring-amber-400/80 ring-offset-2 dark:ring-offset-slate-900"
+        )}
+        style={{
+          aspectRatio: '1.586/1', // Standard credit card ratio 85.6mm × 54mm
+          borderRadius: '12px', // Standard card corner radius
+          minHeight: '200px'
+        }}>
           
-          {/* Enhanced Card Background - Premium Bank Card Style */}
-          <div className="absolute inset-0">
-            {/* Layered gradient background */}
-            <div className={cn("absolute inset-0 bg-gradient-to-br opacity-20", accountConfig.accentGlow)} />
+          {/* Realistic Card Background */}
+          <div className="absolute inset-0" style={{ borderRadius: '12px' }}>
+            {/* Subtle texture overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-white/5 to-transparent" style={{ borderRadius: '12px' }} />
+            <div className="absolute inset-0 bg-gradient-to-tl from-black/10 via-transparent to-white/5" style={{ borderRadius: '12px' }} />
             
-            {/* Premium glass morphism effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/5 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-tl from-black/10 via-transparent to-white/5" />
-            
-            {/* Sophisticated geometric pattern */}
-            <div className="absolute inset-0 opacity-5">
-              <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id={`pattern-${account.id}`} x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-                    <circle cx="30" cy="30" r="2" fill="white" opacity="0.4"/>
-                    <circle cx="15" cy="45" r="1.5" fill="white" opacity="0.3"/>
-                    <circle cx="45" cy="15" r="1.5" fill="white" opacity="0.3"/>
-                    <circle cx="10" cy="20" r="1" fill="white" opacity="0.2"/>
-                    <circle cx="50" cy="40" r="1" fill="white" opacity="0.2"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill={`url(#pattern-${account.id})`}/>
-              </svg>
-            </div>
-            
-            {/* Premium light effects */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16 blur-2xl" />
-            <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-white/5 rounded-full -translate-x-12 -translate-y-12 blur-xl" />
-            
-            {/* Subtle border glow */}
-            <div className="absolute inset-[1px] rounded-3xl border border-white/20" />
+            {/* Card edge */}
+            <div className="absolute inset-[0.5px] border border-white/20" style={{ borderRadius: '12px' }} />
           </div>
 
-          {/* Default Account Indicator */}
+          {/* Default Account Badge */}
           {account.is_default && (
-            <div className="absolute top-4 right-4 z-10">
-              <Badge className="bg-amber-400/20 text-amber-100 border-amber-400/30 backdrop-blur-sm font-medium">
+            <div className="absolute top-2 right-2 z-20">
+              <Badge className="bg-amber-400/95 text-amber-900 border-0 font-medium px-2 py-0.5 text-xs">
                 <Star className="h-3 w-3 mr-1 fill-current" />
-                {t('defaultAccount')}
+                Primary
               </Badge>
             </div>
           )}
 
           {/* Card Actions Menu */}
-          <div className="absolute top-4 left-4 z-10">
+          <div className="absolute top-2 left-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 backdrop-blur-sm rounded-full"
+                  className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20 rounded-full border border-white/30"
                   onClick={(e) => e.preventDefault()}
                 >
-                  <MoreVertical className="h-4 w-4" />
+                  <MoreVertical className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
@@ -261,139 +240,136 @@ function AccountCard({ account, index, onSetDefault, onDelete }: AccountCardProp
             </DropdownMenu>
           </div>
 
-          <CardContent className="relative h-full flex flex-col justify-between p-8 text-white">
-            {/* Top Section - Bank Name & Account Type */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
+          <CardContent className="relative h-full p-4 text-white flex flex-col justify-between">
+            
+            {/* TOP ROW: Bank Name + Network Logo */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-2">
                 <div className={cn(
-                  "p-2.5 rounded-2xl backdrop-blur-sm border border-white/30 shadow-lg",
+                  "p-1.5 rounded-lg bg-white/20 border border-white/30",
                   accountConfig.iconBg
                 )}>
                   {accountIcon}
                 </div>
                 <div>
-                  <p className="text-white/90 text-xs font-semibold uppercase tracking-[0.1em] mb-1">
+                  <h3 className="text-white text-sm font-bold uppercase tracking-wide leading-tight">
                     {account.bank_name || 'FINMATE BANK'}
-                  </p>
-                  <h3 className="font-bold text-lg leading-tight">{account.name}</h3>
-                  <p className="text-white/75 text-xs font-medium uppercase tracking-wide">
+                  </h3>
+                  <p className="text-white/80 text-xs font-medium">
                     {account.account_type_display || 'DEBIT CARD'}
                   </p>
                 </div>
               </div>
               
-              {/* Card Network Logo */}
-              <div className="flex items-center">
-                <div className="text-right">
-                  <p className="text-white/60 text-[10px] uppercase tracking-wider font-medium">
-                    {getCardNetwork(account.type)}
+              {/* Network Logo */}
+              <div className="flex flex-col items-end">
+                {getCardNetworkLogo(account.type)}
+                <span className="text-white/70 text-[8px] font-medium uppercase tracking-wider mt-0.5">
+                  {getCardNetwork(account.type)}
+                </span>
+              </div>
+            </div>
+
+            {/* MIDDLE: EMV Chip + Account Name */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                {/* EMV Chip - Smaller & Realistic */}
+                <div className="w-10 h-7 rounded-md bg-gradient-to-br from-yellow-200 to-yellow-400 border border-yellow-500/50 shadow-md">
+                  <div className="w-full h-full p-1">
+                    <div className="w-full h-full bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-sm">
+                      <div className="w-full h-full grid grid-cols-3 grid-rows-2 gap-[1px] p-0.5">
+                        {[...Array(6)].map((_, i) => (
+                          <div key={i} className="bg-yellow-600/60 rounded-[0.5px]" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Account Name */}
+                <div>
+                  <h2 className="text-white text-base font-bold leading-tight truncate max-w-[140px]">
+                    {account.name}
+                  </h2>
+                  <p className="text-white/70 text-xs">
+                    Account
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Premium EMV Chip - Ultra-realistic */}
-            <div className="absolute top-20 left-8">
-              <div className="relative">
-                {/* Chip outer shell */}
-                <div className="w-14 h-10 rounded-lg bg-gradient-to-br from-amber-200 via-yellow-300 to-gold-400 shadow-2xl border border-yellow-400/50">
-                  {/* Chip inner surface */}
-                  <div className="absolute inset-1 rounded-md bg-gradient-to-br from-amber-50 via-yellow-100 to-amber-200 border border-yellow-300/30">
-                    {/* Circuit pattern */}
-                    <div className="w-full h-full grid grid-cols-4 grid-rows-3 gap-0.5 p-1.5">
-                      {[...Array(12)].map((_, i) => (
-                        <div key={i} className="bg-amber-400/70 rounded-sm shadow-inner" />
-                      ))}
-                    </div>
-                    {/* Metallic shine effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent rounded-md" />
-                  </div>
-                  {/* Chip depth shadow */}
-                  <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-amber-600/30 to-transparent rounded-b-lg" />
-                </div>
-              </div>
-            </div>
-
-            {/* Card Number - More realistic positioning */}
-            <div className="absolute top-32 left-8 right-8">
-              <div className="font-mono text-xl md:text-2xl font-bold tracking-[0.15em] text-white">
+            {/* CARD NUMBER - Prominent Display */}
+            <div className="mb-4">
+              <div className="text-white text-lg lg:text-xl font-mono font-bold tracking-[0.15em] drop-shadow">
                 {account.account_number 
-                  ? `•••• •••• •••• ${account.account_number.slice(-4)}`
-                  : `•••• •••• •••• ${String(account.id).slice(-4)}`
+                  ? `${account.account_number.slice(0, 4)} ${account.account_number.slice(4, 8)} ${account.account_number.slice(8, 12)} ${account.account_number.slice(12, 16)}`
+                  : `4532 1234 5678 ${String(account.id).slice(-4).padStart(4, '0')}`
                 }
               </div>
             </div>
 
-            {/* Premium Balance Section - Center positioned like a luxury card */}
-            <div className="absolute top-44 left-8 right-8">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="text-white/80 text-[11px] uppercase tracking-[0.1em] font-semibold mb-2 drop-shadow-sm">
-                    AVAILABLE BALANCE
-                  </div>
-                  <div className="text-3xl md:text-4xl font-bold tracking-tight text-white drop-shadow-lg">
-                    ৳{Math.abs(account.balance).toLocaleString()}
-                  </div>
-                  {account.balance < 0 && (
-                    <div className="text-red-200 text-sm font-medium mt-1 drop-shadow-sm">Overdrawn</div>
-                  )}
+            {/* BALANCE SECTION - Key Information */}
+            <div className="flex items-end justify-between mb-3">
+              <div className="flex-1">
+                <p className="text-white/80 text-[10px] uppercase tracking-wide font-semibold mb-1">
+                  Balance
+                </p>
+                <div className="text-white text-xl lg:text-2xl font-black tracking-tight">
+                  ৳{Math.abs(account.balance).toLocaleString()}
                 </div>
-                
-                {/* Enhanced balance trend indicator */}
-                <div className="flex flex-col items-center">
-                  {isPositiveBalance ? (
-                    <div className="p-2 rounded-full bg-gradient-to-br from-green-400/30 to-emerald-500/20 backdrop-blur-sm border border-green-400/30 shadow-lg">
-                      <ArrowUpRight className="h-4 w-4 text-green-200 drop-shadow-sm" />
-                    </div>
-                  ) : (
-                    <div className="p-2 rounded-full bg-gradient-to-br from-red-400/30 to-rose-500/20 backdrop-blur-sm border border-red-400/30 shadow-lg">
-                      <ArrowDownRight className="h-4 w-4 text-red-200 drop-shadow-sm" />
-                    </div>
-                  )}
-                  <div className="text-[9px] text-white/60 mt-1 uppercase tracking-wider font-medium">
-                    {isPositiveBalance ? 'POSITIVE' : 'NEGATIVE'}
-                  </div>
+                {account.balance < 0 && (
+                  <p className="text-red-300 text-xs font-medium">Overdrawn</p>
+                )}
+              </div>
+              
+              {/* Status Badge */}
+              <div className="text-right">
+                <div className={cn(
+                  "px-2 py-1 rounded-full text-xs font-semibold",
+                  isPositiveBalance 
+                    ? "bg-green-500/30 text-green-200 border border-green-400/50" 
+                    : "bg-red-500/30 text-red-200 border border-red-400/50"
+                )}>
+                  {isPositiveBalance ? 'Active' : 'Debit'}
                 </div>
               </div>
             </div>
 
-            {/* Bottom Section - Cardholder & Expiry */}
-            <div className="absolute bottom-8 left-8 right-8">
-              <div className="flex items-end justify-between">
-                <div className="flex-1">
-                  <p className="text-white/60 text-[10px] uppercase tracking-wider mb-1 font-medium">CARDHOLDER</p>
-                  <p className="text-white text-sm font-bold uppercase tracking-wide leading-tight">
-                    {user?.user_metadata?.full_name?.slice(0, 20) || user?.email?.split('@')[0]?.slice(0, 15) || 'ACCOUNT HOLDER'}
-                  </p>
-                </div>
-                
-                <div className="text-right">
-                  <p className="text-white/60 text-[10px] uppercase tracking-wider mb-1 font-medium">EXPIRES</p>
-                  <p className="text-white text-sm font-mono font-bold">
-                    {new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
-                      month: '2-digit', 
-                      year: '2-digit' 
-                    })}
-                  </p>
-                </div>
-                
-                {/* Premium Card Network Logo */}
-                <div className="ml-4 flex items-center">
-                  <div className="relative">
-                    {getCardNetworkLogo(account.type)}
-                  </div>
-                </div>
+            {/* BOTTOM ROW: Cardholder + Expiry */}
+            <div className="flex items-end justify-between">
+              <div className="flex-1">
+                <p className="text-white/70 text-[9px] uppercase tracking-wider font-medium mb-0.5">
+                  Cardholder
+                </p>
+                <p className="text-white text-sm font-bold uppercase tracking-wide leading-tight truncate max-w-[120px]">
+                  {user?.user_metadata?.full_name?.slice(0, 16) || user?.email?.split('@')[0]?.slice(0, 12) || 'ACCOUNT HOLDER'}
+                </p>
               </div>
               
-              {/* Additional card info */}
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
-                <div className="text-white/50 text-[9px] uppercase tracking-wider font-medium">
-                  {account.account_number ? `****${account.account_number.slice(-4)}` : `****${String(account.id).slice(-4)}`}
-                </div>
-                <div className="text-white/50 text-[9px] uppercase tracking-wider font-medium">
-                  {account.currency || 'BDT'}
-                </div>
+              <div className="text-right">
+                <p className="text-white/70 text-[9px] uppercase tracking-wider font-medium mb-0.5">
+                  Valid Thru
+                </p>
+                <p className="text-white text-sm font-bold font-mono">
+                  {new Date(Date.now() + 4 * 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
+                    month: '2-digit', 
+                    year: '2-digit' 
+                  })}
+                </p>
               </div>
+            </div>
+
+            {/* SECURITY STRIP - Bottom Info */}
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/15">
+              <span className="text-white/60 text-[8px] font-medium uppercase tracking-wider">
+                {account.currency || 'BDT'} • CVV ***
+              </span>
+              <span className="text-white/60 text-[8px] font-medium uppercase tracking-wider">
+                {account.account_number 
+                  ? `****${account.account_number.slice(-4)}`
+                  : `****${String(account.id).slice(-4).padStart(4, '0')}`
+                }
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -427,52 +403,45 @@ function getAccountConfig(type: string) {
   switch (type) {
     case 'cash':
       return {
-        gradient: 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600',
-        iconBg: 'bg-white/30',
-        shadowColor: 'shadow-emerald-500/25',
-        accentGlow: 'from-emerald-400/20 via-green-500/10 to-teal-600/20'
+        gradient: 'bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700',
+        iconBg: 'bg-white/25',
+        shadowColor: 'shadow-emerald-500/20'
       }
     case 'bank':
       return {
-        gradient: 'bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700',
-        iconBg: 'bg-white/30',
-        shadowColor: 'shadow-blue-500/25',
-        accentGlow: 'from-blue-500/20 via-indigo-600/10 to-purple-700/20'
+        gradient: 'bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800',
+        iconBg: 'bg-white/25',
+        shadowColor: 'shadow-blue-500/20'
       }
     case 'credit_card':
       return {
-        gradient: 'bg-gradient-to-br from-orange-400 via-red-500 to-pink-600',
-        iconBg: 'bg-white/30',
-        shadowColor: 'shadow-orange-500/25',
-        accentGlow: 'from-orange-400/20 via-red-500/10 to-pink-600/20'
+        gradient: 'bg-gradient-to-br from-rose-500 via-red-600 to-pink-700',
+        iconBg: 'bg-white/25',
+        shadowColor: 'shadow-rose-500/20'
       }
     case 'savings':
       return {
-        gradient: 'bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700',
-        iconBg: 'bg-white/30',
-        shadowColor: 'shadow-violet-500/25',
-        accentGlow: 'from-violet-500/20 via-purple-600/10 to-indigo-700/20'
+        gradient: 'bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800',
+        iconBg: 'bg-white/25',
+        shadowColor: 'shadow-violet-500/20'
       }
     case 'investment':
       return {
-        gradient: 'bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600',
-        iconBg: 'bg-white/30',
-        shadowColor: 'shadow-cyan-500/25',
-        accentGlow: 'from-cyan-400/20 via-blue-500/10 to-indigo-600/20'
+        gradient: 'bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700',
+        iconBg: 'bg-white/25',
+        shadowColor: 'shadow-cyan-500/20'
       }
     case 'wallet':
       return {
-        gradient: 'bg-gradient-to-br from-pink-400 via-rose-500 to-red-600',
-        iconBg: 'bg-white/30',
-        shadowColor: 'shadow-pink-500/25',
-        accentGlow: 'from-pink-400/20 via-rose-500/10 to-red-600/20'
+        gradient: 'bg-gradient-to-br from-amber-500 via-orange-600 to-red-700',
+        iconBg: 'bg-white/25',
+        shadowColor: 'shadow-amber-500/20'
       }
     default:
       return {
-        gradient: 'bg-gradient-to-br from-slate-500 via-gray-600 to-slate-700',
-        iconBg: 'bg-white/30',
-        shadowColor: 'shadow-slate-500/25',
-        accentGlow: 'from-slate-500/20 via-gray-600/10 to-slate-700/20'
+        gradient: 'bg-gradient-to-br from-slate-600 via-gray-700 to-slate-800',
+        iconBg: 'bg-white/25',
+        shadowColor: 'shadow-slate-500/20'
       }
   }
 }
@@ -499,52 +468,53 @@ function getCardNetwork(type: string) {
 function getCardNetworkLogo(type: string) {
   switch (type) {
     case 'credit_card':
-      // Mastercard style - overlapping circles
+      // Mastercard - overlapping circles
       return (
-        <div className="flex items-center">
-          <div className="w-7 h-5 rounded-sm bg-gradient-to-br from-red-400 to-red-600 shadow-lg" />
-          <div className="w-7 h-5 rounded-sm bg-gradient-to-br from-orange-400 to-yellow-500 -ml-3 shadow-lg" />
+        <div className="flex items-center -space-x-1">
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-red-500 to-red-600 border border-red-400/50" />
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-orange-400 to-yellow-500 border border-orange-400/50" />
         </div>
       )
     case 'bank':
-      // Visa style - single blue rectangle
+      // Visa - blue rectangle
       return (
-        <div className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-700 rounded text-white text-xs font-bold tracking-wider shadow-lg">
+        <div className="px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md text-white text-[10px] font-black tracking-wide shadow-md">
           VISA
         </div>
       )
     case 'savings':
-      // Maestro style - red and blue circles
+      // Union Pay - circles
       return (
-        <div className="flex items-center space-x-1">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-md" />
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-md" />
+        <div className="flex items-center space-x-0.5">
+          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-red-500 to-red-600" />
+          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-600" />
+          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-green-500 to-green-600" />
         </div>
       )
     case 'investment':
-      // Amex style - square with text
+      // American Express - rectangle
       return (
-        <div className="px-2 py-1 bg-gradient-to-br from-slate-600 to-slate-800 rounded text-white text-xs font-bold shadow-lg">
+        <div className="px-2 py-1 bg-gradient-to-br from-slate-700 to-slate-900 rounded-md text-white text-[9px] font-bold shadow-md border border-slate-600">
           AMEX
         </div>
       )
     case 'wallet':
-      // PayPal style - blue rectangle
+      // Digital wallet - modern design
       return (
-        <div className="px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded text-white text-xs font-bold shadow-lg">
+        <div className="px-2 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-md text-white text-[9px] font-bold shadow-md">
           PAY
         </div>
       )
     case 'cash':
-      // FinMate brand
+      // FinMate brand - premium look
       return (
-        <div className="px-2 py-1 bg-gradient-to-r from-emerald-500 to-teal-600 rounded text-white text-xs font-bold shadow-lg">
-          FIN
+        <div className="px-2 py-1 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-md text-white text-[9px] font-black tracking-wide shadow-md">
+          FINMATE
         </div>
       )
     default:
       return (
-        <div className="w-8 h-5 bg-gradient-to-r from-slate-400 to-slate-600 rounded shadow-lg" />
+        <div className="w-6 h-4 bg-gradient-to-r from-slate-500 to-slate-600 rounded-sm shadow-md" />
       )
   }
 }
@@ -561,66 +531,72 @@ function AddAccountCard() {
     >
       <Link href="/dashboard/accounts/create" className="block w-full h-full">
         <Card className={cn(
-          "group relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer rounded-3xl",
-          "w-full h-full border-2 border-dashed border-slate-300/50 dark:border-slate-600/50 shadow-xl",
-          "hover:border-blue-400/70 dark:hover:border-blue-500/70 hover:bg-blue-50/30 dark:hover:bg-blue-950/10",
-          "bg-gradient-to-br from-slate-50/80 via-slate-100/60 to-slate-200/80 dark:from-slate-800/60 dark:via-slate-700/40 dark:to-slate-600/60",
-          "backdrop-blur-sm hover:shadow-blue-500/20"
-        )}>
+          "group relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 cursor-pointer border-0",
+          "w-full shadow-lg bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900",
+          "border-2 border-dashed border-slate-400/60 dark:border-slate-600/60",
+          "hover:border-blue-500/70 dark:hover:border-blue-400/70 hover:shadow-blue-500/20"
+        )}
+        style={{
+          aspectRatio: '1.586/1',
+          borderRadius: '12px',
+          minHeight: '200px'
+        }}>
           
-          {/* Enhanced background with premium effects */}
-          <div className="absolute inset-0">
-            {/* Glass morphism effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-white/10 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-tl from-slate-200/20 via-transparent to-blue-100/10" />
-            
-            {/* Sophisticated pattern */}
-            <div className="absolute inset-0 opacity-5">
-              <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="add-pattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
-                    <circle cx="25" cy="25" r="1.5" fill="currentColor" opacity="0.4"/>
-                    <circle cx="12" cy="37" r="1" fill="currentColor" opacity="0.3"/>
-                    <circle cx="37" cy="12" r="1" fill="currentColor" opacity="0.3"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#add-pattern)"/>
-              </svg>
-            </div>
-            
-            {/* Premium light effects */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-300/10 rounded-full -translate-y-20 translate-x-20 blur-3xl group-hover:bg-blue-400/20 transition-all duration-500" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-300/10 rounded-full translate-y-16 -translate-x-16 blur-2xl group-hover:bg-indigo-400/20 transition-all duration-500" />
-            
-            {/* Subtle border glow */}
-            <div className="absolute inset-[1px] rounded-3xl border border-white/30" />
+          {/* Background */}
+          <div className="absolute inset-0" style={{ borderRadius: '12px' }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-transparent" style={{ borderRadius: '12px' }} />
+            <div className="absolute inset-0 bg-gradient-to-tl from-slate-300/20 via-transparent to-white/10 dark:from-slate-800/20 dark:to-slate-700/10" style={{ borderRadius: '12px' }} />
           </div>
 
-          <CardContent className="relative h-full flex flex-col items-center justify-center text-center p-8">
-            <div className="absolute inset-0 flex items-center justify-center">
+          <CardContent className="relative h-full p-4 flex flex-col items-center justify-center text-center">
+            
+            {/* Plus Icon */}
+            <div className="mb-6">
               <div className={cn(
-                "w-28 h-28 rounded-3xl flex items-center justify-center transition-all duration-500",
-                "bg-gradient-to-br from-blue-200/80 via-indigo-300/60 to-purple-400/40 dark:from-blue-800/60 dark:via-indigo-700/40 dark:to-purple-600/30",
-                "group-hover:from-blue-300/90 group-hover:via-indigo-400/70 group-hover:to-purple-500/50 dark:group-hover:from-blue-700/70 dark:group-hover:via-indigo-600/50 dark:group-hover:to-purple-500/40",
-                "group-hover:scale-110 group-hover:rotate-6 shadow-2xl backdrop-blur-sm border border-white/40",
-                "shadow-blue-500/25 group-hover:shadow-indigo-500/35"
+                "w-16 h-16 rounded-xl flex items-center justify-center transition-all duration-500",
+                "bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-800/70 dark:to-indigo-700/70",
+                "group-hover:from-blue-200 group-hover:to-indigo-300 dark:group-hover:from-blue-700/80 dark:group-hover:to-indigo-600/80",
+                "group-hover:scale-110 shadow-lg border border-blue-200/50 dark:border-blue-600/50"
               )}>
-                <Plus className="h-14 w-14 text-blue-700 dark:text-blue-200 group-hover:text-blue-800 dark:group-hover:text-blue-100 transition-all duration-500 drop-shadow-lg" />
+                <Plus className="h-8 w-8 text-blue-600 dark:text-blue-300 group-hover:text-blue-700 dark:group-hover:text-blue-200 transition-all duration-500" />
               </div>
             </div>
             
-            <div className="absolute bottom-8 left-8 right-8 text-center">
-              <h3 className="font-bold text-3xl text-slate-900 dark:text-slate-100 mb-4 group-hover:text-blue-900 dark:group-hover:text-blue-100 transition-all duration-300 drop-shadow-sm">
-                {t('createAccount')}
-              </h3>
-              
-              <p className="text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-all duration-300 leading-relaxed drop-shadow-sm">
-                {t('createAccountDescription')}
-              </p>
-              
-              <div className="mt-6 pt-4 border-t border-dashed border-slate-400/50 dark:border-slate-500/50">
-                <div className="text-sm text-slate-500 dark:text-slate-400 font-semibold tracking-[0.1em] uppercase drop-shadow-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  Click to Add New Account
+            {/* Title */}
+            <h3 className="text-slate-800 dark:text-slate-200 text-lg font-bold mb-2 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+              Add New Account
+            </h3>
+            
+            {/* Subtitle */}
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-[140px] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              Connect your bank account or wallet
+            </p>
+            
+            {/* Bottom Text */}
+            <div className="mt-6 pt-3 border-t border-dashed border-slate-400/50 dark:border-slate-600/50 w-full">
+              <span className="text-slate-500 dark:text-slate-500 text-xs font-medium uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                Click to Add
+              </span>
+            </div>
+            
+            {/* Mock elements to make it look like a card */}
+            <div className="absolute top-4 right-4">
+              <div className="w-6 h-4 bg-slate-300/50 dark:bg-slate-600/50 rounded-sm" />
+            </div>
+            
+            <div className="absolute top-12 left-4">
+              <div className="w-8 h-5 bg-slate-300/30 dark:bg-slate-600/30 rounded-sm" />
+            </div>
+            
+            <div className="absolute bottom-8 left-4 right-4">
+              <div className="flex justify-between">
+                <div className="space-y-1">
+                  <div className="w-16 h-2 bg-slate-300/40 dark:bg-slate-600/40 rounded" />
+                  <div className="w-12 h-2 bg-slate-300/40 dark:bg-slate-600/40 rounded" />
+                </div>
+                <div className="space-y-1">
+                  <div className="w-8 h-2 bg-slate-300/40 dark:bg-slate-600/40 rounded" />
+                  <div className="w-6 h-2 bg-slate-300/40 dark:bg-slate-600/40 rounded" />
                 </div>
               </div>
             </div>
