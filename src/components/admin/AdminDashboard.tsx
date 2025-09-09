@@ -4,12 +4,13 @@ import { useAuth, usePermissions } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Settings, BarChart3, Shield, Activity, UserCheck, UserX, TrendingUp, Clock } from 'lucide-react';
+import { Users, Settings, BarChart3, Shield, Activity, UserCheck, UserX, TrendingUp, Clock, CreditCard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AdminService from '@/lib/services/admin';
 import { Profile, ProfileWithRole } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CronJobMonitor from '@/components/admin/CronJobMonitor';
+import { SubscriptionPaymentsAdmin } from '@/components/admin/SubscriptionPaymentsAdmin';
 
 interface SystemStats {
   totalUsers: number;
@@ -166,10 +167,14 @@ export default function AdminDashboard() {
       )}
 
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users" disabled={!canManageUsers()}>
             <Users className="w-4 h-4 mr-2" />
             User Management
+          </TabsTrigger>
+          <TabsTrigger value="payments" disabled={!canManageSystem()}>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Payments
           </TabsTrigger>
           <TabsTrigger value="system" disabled={!canManageSystem()}>
             <Settings className="w-4 h-4 mr-2" />
@@ -184,6 +189,10 @@ export default function AdminDashboard() {
             Analytics
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="payments" className="space-y-4">
+          <SubscriptionPaymentsAdmin />
+        </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
           <Card>
