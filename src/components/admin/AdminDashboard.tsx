@@ -4,13 +4,14 @@ import { useAuth, usePermissions } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Settings, BarChart3, Shield, Activity, UserCheck, UserX, TrendingUp, Clock, CreditCard } from 'lucide-react';
+import { Users, Settings, BarChart3, Shield, Activity, UserCheck, UserX, TrendingUp, Clock, CreditCard, Gift } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AdminService from '@/lib/services/admin';
 import { Profile, ProfileWithRole } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CronJobMonitor from '@/components/admin/CronJobMonitor';
 import { SubscriptionPaymentsAdmin } from '@/components/admin/SubscriptionPaymentsAdmin';
+import { CouponAdmin } from '@/components/admin/CouponAdmin';
 
 interface SystemStats {
   totalUsers: number;
@@ -167,18 +168,22 @@ export default function AdminDashboard() {
       )}
 
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="users" disabled={!canManageUsers()}>
             <Users className="w-4 h-4 mr-2" />
-            User Management
+            Users
           </TabsTrigger>
           <TabsTrigger value="payments" disabled={!canManageSystem()}>
             <CreditCard className="w-4 h-4 mr-2" />
             Payments
           </TabsTrigger>
+          <TabsTrigger value="coupons" disabled={!canManageSystem()}>
+            <Gift className="w-4 h-4 mr-2" />
+            Coupons
+          </TabsTrigger>
           <TabsTrigger value="system" disabled={!canManageSystem()}>
             <Settings className="w-4 h-4 mr-2" />
-            System Settings
+            System
           </TabsTrigger>
           <TabsTrigger value="cron" disabled={!canManageSystem()}>
             <Clock className="w-4 h-4 mr-2" />
@@ -192,6 +197,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="payments" className="space-y-4">
           <SubscriptionPaymentsAdmin />
+        </TabsContent>
+
+        <TabsContent value="coupons" className="space-y-4">
+          <CouponAdmin />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">

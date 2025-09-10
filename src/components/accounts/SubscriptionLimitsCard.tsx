@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { AccountLimits } from '@/types'
 import { motion } from 'framer-motion'
+import { UpgradeButton } from '@/components/subscription/UpgradeButton'
 
 export default function SubscriptionLimitsCard() {
   const { user } = useAuth()
@@ -150,23 +151,22 @@ export default function SubscriptionLimitsCard() {
                 </p>
               </div>
               <div className="space-y-2">
-                <Button 
-                  size="sm" 
+                <UpgradeButton 
+                  reason={isAtLimit ? "account_limit" : "general"}
+                  targetPlan="pro"
+                  variant="cta"
+                  size="sm"
                   className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 border-0"
-                >
-                  <Star className="h-4 w-4 mr-2" />
-                  {t('subscription.upgradeToPro')}
-                  <ArrowUpRight className="h-3 w-3 ml-1" />
-                </Button>
-                <Button 
-                  size="sm" 
+                  redirectTo="/dashboard/accounts"
+                />
+                <UpgradeButton 
+                  reason="family_sharing"
+                  targetPlan="max"
                   variant="outline"
+                  size="sm"
                   className="w-full bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50"
-                >
-                  <Crown className="h-4 w-4 mr-2" />
-                  {t('subscription.upgradeToMax')}
-                  <ArrowUpRight className="h-3 w-3 ml-1" />
-                </Button>
+                  redirectTo="/dashboard/accounts"
+                />
               </div>
             </div>
           </motion.div>
@@ -188,14 +188,14 @@ export default function SubscriptionLimitsCard() {
                   {t('subscription.familyDescription')}
                 </p>
               </div>
-              <Button 
-                size="sm" 
+              <UpgradeButton 
+                reason="family_sharing"
+                targetPlan="max"
+                variant="cta"
+                size="sm"
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 border-0"
-              >
-                <Crown className="h-4 w-4 mr-2" />
-                {t('subscription.upgradeToMax')}
-                <ArrowUpRight className="h-3 w-3 ml-1" />
-              </Button>
+                redirectTo="/dashboard/accounts"
+              />
             </div>
           </motion.div>
         )}

@@ -39,7 +39,9 @@
       "Read(/D:\\d\\Projects\\NextJs/**)",
       "WebFetch(domain:supabase.com)",
       "Bash(timeout 30 npm run dev)",
-      "Bash(timeout 60s npm run build)"
+      "Bash(timeout 60s npm run build)",
+      "Bash(timeout 120 npm run build)",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "additionalDirectories": [

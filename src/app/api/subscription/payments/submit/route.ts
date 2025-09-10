@@ -15,21 +15,24 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const {
-      plan_id,
-      payment_method_id,
+      plan,
       billing_cycle,
-      transaction_id,
-      sender_number,
-      base_amount,
-      discount_amount,
-      final_amount,
-      coupon_id,
-      notes
+      payment_method,
+      payment_details,
+      applied_coupon_id,
+      upgrade_reason
     } = body
 
+    // Extract payment details - handle both old and new formats
+    const transaction_id = payment_details?.transaction_id || body.transaction_id
+    const sender_number = payment_details?.sender_number || body.sender_number
+    const amount = payment_details?.amount || body.amount || body.final_amount
+    const coupon = payment_details?.coupon || null
+    const discount_amount = payment_details?.discount_amount || 0
+
     // Validate required fields
-    if (!plan_id || !payment_method_id || !billing_cycle || !transaction_id || 
-        !sender_number || final_amount === undefined) {
+    if (!plan || !billing_cycle || !payment_method || !transaction_id || 
+        !sender_number || !amount) {
       return NextResponse.json(
         { success: false, message: 'Missing required payment information' },
         { status: 400 }
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate transaction ID format (basic validation)
-    if (transaction_id.length < 8) {
+    if (transaction_id.length < 6) {
       return NextResponse.json(
         { success: false, message: 'Invalid transaction ID format' },
         { status: 400 }
@@ -49,6 +52,34 @@ export async function POST(request: NextRequest) {
     if (!phoneRegex.test(sender_number.replace(/\s/g, ''))) {
       return NextResponse.json(
         { success: false, message: 'Invalid mobile number format' },
+        { status: 400 }
+      )
+    }
+
+    // Get subscription plan details
+    const { data: planData, error: planError } = await supabase
+      .from('subscription_plans')
+      .select('id, plan_name, price_monthly, price_yearly')
+      .eq('plan_name', plan)
+      .single()
+
+    if (planError || !planData) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid subscription plan' },
+        { status: 400 }
+      )
+    }
+
+    // Get payment method details
+    const { data: paymentMethodData, error: paymentMethodError } = await supabase
+      .from('payment_methods')
+      .select('id, method_name')
+      .eq('method_name', payment_method)
+      .single()
+
+    if (paymentMethodError || !paymentMethodData) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid payment method' },
         { status: 400 }
       )
     }
@@ -67,21 +98,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Calculate amounts
+    const baseAmount = billing_cycle === 'yearly' ? planData.price_yearly : planData.price_monthly
+    const finalDiscountAmount = discount_amount || Math.max(0, baseAmount - amount)
+    const couponId = applied_coupon_id || coupon?.id || null
+    
     // Insert payment record
     const { data, error } = await supabase
       .from('subscription_payments')
       .insert({
         user_id: user.id,
-        plan_id,
-        payment_method_id,
+        plan_id: planData.id,
+        payment_method_id: paymentMethodData.id,
         billing_cycle,
         transaction_id,
         sender_number: sender_number.replace(/\s/g, ''),
-        base_amount: parseFloat(base_amount.toString()),
-        discount_amount: parseFloat((discount_amount || 0).toString()),
-        final_amount: parseFloat(final_amount.toString()),
-        coupon_id: coupon_id || null,
-        notes: notes || null,
+        base_amount: baseAmount,
+        discount_amount: finalDiscountAmount,
+        final_amount: amount,
+        coupon_id: couponId,
+        notes: upgrade_reason ? `Upgrade reason: ${upgrade_reason}` : null,
         status: 'submitted',
         submitted_at: new Date().toISOString(),
         currency: 'BDT'
@@ -100,7 +136,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       payment_id: data.id,
-      message: 'Payment submitted successfully. It will be verified within 24 hours.'
+      message: 'Payment submitted successfully. It will be verified within 12-24 hours.',
+      estimated_processing_time: '12-24 hours'
     })
 
   } catch (error: any) {

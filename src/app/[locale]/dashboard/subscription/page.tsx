@@ -1,51 +1,69 @@
 import { Suspense } from 'react'
 import { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { SubscriptionManager } from '@/components/subscription/SubscriptionManager'
+import SubscriptionMain from '@/components/subscription/SubscriptionMain'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Crown, CreditCard, Users, TrendingUp } from 'lucide-react'
+import { Crown, CreditCard, Users, TrendingUp, Sparkles, Zap, Shield } from 'lucide-react'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('subscription')
   
   return {
-    title: t('pageTitle'),
+    title: `${t('pageTitle')} - FinMate`,
     description: t('pageDescription'),
   }
 }
 
 export default async function SubscriptionPage() {
   const t = await getTranslations('subscription')
-  const tCommon = await getTranslations('common')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50/30 via-purple-50/20 to-pink-50/10 dark:from-slate-950 dark:via-indigo-950/10 dark:to-purple-950/5 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-purple-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-pink-400/20 to-indigo-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-to-r from-blue-400/10 to-purple-400/10 rounded-full blur-3xl animate-pulse delay-500" />
+      </div>
+
       {/* Page Header */}
-      <div className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl relative z-10">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg">
-                  <Crown className="h-6 w-6" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
-                    {t('title')}
-                  </h1>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    {t('subtitle')}
-                  </p>
+      <div className="relative z-10 border-b border-slate-200/30 dark:border-slate-800/30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center space-y-6">
+            <div className="flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur opacity-30 animate-pulse" />
+                <div className="relative p-4 rounded-3xl bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-2xl">
+                  <Crown className="h-10 w-10" />
                 </div>
               </div>
             </div>
             
-            {/* Quick Stats */}
-            <div className="hidden lg:flex items-center space-x-6">
-              <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-                <TrendingUp className="h-4 w-4" />
-                <span className="text-sm font-medium">{t('activeSubscription')}</span>
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
+                {t('heroTitle', { default: 'Subscription Plans' })}
+              </h1>
+              <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                {t('heroSubtitle', { 
+                  default: 'Choose the perfect plan to unlock premium features and take your financial management to the next level.' 
+                })}
+              </p>
+            </div>
+            
+            {/* Trust Indicators */}
+            <div className="flex items-center justify-center space-x-8 text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-4 w-4 text-green-600" />
+                <span>Secure Payment</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Zap className="h-4 w-4 text-blue-600" />
+                <span>Instant Access</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Sparkles className="h-4 w-4 text-purple-600" />
+                <span>Premium Support</span>
               </div>
             </div>
           </div>
@@ -53,10 +71,35 @@ export default async function SubscriptionPage() {
       </div>
 
       {/* Main Content Container */}
-      <div className="relative z-20 container mx-auto px-4 py-8">
+      <div className="relative z-20 container mx-auto px-4 py-12">
         <Suspense fallback={<SubscriptionPageSkeleton />}>
-          <SubscriptionManager />
+          <SubscriptionMain />
         </Suspense>
+      </div>
+      
+      {/* Footer Trust Section */}
+      <div className="relative z-10 border-t border-slate-200/30 dark:border-slate-800/30 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center space-x-8 text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span>SSL Encrypted</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                <span>24/7 Support</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                <span>Cancel Anytime</span>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-500 max-w-md mx-auto">
+              Your payment information is secure and encrypted. All transactions are processed through secure payment gateways.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
