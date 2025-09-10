@@ -11,7 +11,7 @@ async function loadMessages(locale: string) {
     const sections = [
       'common', 'navigation', 'tags', 'home', 'auth', 'dashboard', 
       'transactions', 'accounts', 'budget', 'investments', 'credit', 'calculators', 
-      'settings', 'theme', 'errors', 'actions', 'forms', 'dateTime', 'pwa'
+      'settings', 'subscription', 'theme', 'errors', 'actions', 'forms', 'dateTime', 'pwa'
     ];
     const sectionMessages: any = {};
     

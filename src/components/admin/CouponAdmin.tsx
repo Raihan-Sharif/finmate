@@ -48,6 +48,8 @@ interface Coupon {
   max_discount_amount?: number
   expires_at?: string
   is_active: boolean
+  scope: 'public' | 'private' | 'user_specific'
+  allowed_users?: string[]
   created_at: string
   updated_at: string
 }
@@ -74,6 +76,7 @@ export function CouponAdmin() {
     minimum_amount: '',
     max_discount_amount: '',
     expires_at: '',
+    scope: 'public' as 'public' | 'private' | 'user_specific',
     is_active: true
   })
 
@@ -110,6 +113,7 @@ export function CouponAdmin() {
       minimum_amount: '',
       max_discount_amount: '',
       expires_at: '',
+      scope: 'public',
       is_active: true
     })
   }
@@ -123,6 +127,7 @@ export function CouponAdmin() {
         description: formData.description,
         type: formData.type,
         value: formData.value,
+        scope: formData.scope,
         is_active: formData.is_active
       }
 
@@ -160,6 +165,7 @@ export function CouponAdmin() {
         description: formData.description,
         type: formData.type,
         value: formData.value,
+        scope: formData.scope,
         is_active: formData.is_active
       }
 
@@ -245,6 +251,7 @@ export function CouponAdmin() {
       minimum_amount: coupon.minimum_amount?.toString() || '',
       max_discount_amount: coupon.max_discount_amount?.toString() || '',
       expires_at: coupon.expires_at ? format(new Date(coupon.expires_at), 'yyyy-MM-dd') : '',
+      scope: coupon.scope || 'public',
       is_active: coupon.is_active
     })
     setShowEditModal(true)

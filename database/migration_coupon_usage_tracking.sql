@@ -97,11 +97,16 @@ DECLARE
     v_discount DECIMAL(10,2);
     v_usage_count INTEGER;
 BEGIN
-    -- Get coupon details
+    -- Get coupon details with scope validation
     SELECT * INTO v_coupon
     FROM coupons
     WHERE code = UPPER(p_coupon_code)
-    AND is_active = true;
+    AND is_active = true
+    AND (
+        scope = 'public' OR
+        (scope = 'user_specific' AND p_user_id = ANY(allowed_users)) OR
+        scope = 'private'
+    );
 
     -- Check if coupon exists
     IF NOT FOUND THEN
@@ -175,12 +180,24 @@ GRANT EXECUTE ON FUNCTION validate_coupon_usage(UUID, VARCHAR, DECIMAL) TO authe
 -- ==============================================
 -- 5. Add Sample Test Coupons (if not exist)
 -- ==============================================
-INSERT INTO coupons (code, description, type, value, max_uses, max_uses_per_user, expires_at, is_active) VALUES 
-('FREEPRO', 'Get Pro plan for free (100% discount)', 'percentage', 100, 10, 1, NOW() + INTERVAL '30 days', true)
+-- Add coupon visibility scope column if not exists
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'coupons' AND column_name = 'scope') THEN
+        ALTER TABLE coupons ADD COLUMN scope VARCHAR(20) DEFAULT 'public' CHECK (scope IN ('public', 'private', 'user_specific'));
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'coupons' AND column_name = 'allowed_users') THEN
+        ALTER TABLE coupons ADD COLUMN allowed_users UUID[] DEFAULT NULL;
+    END IF;
+END $$;
+
+INSERT INTO coupons (code, description, type, value, max_uses, max_uses_per_user, expires_at, is_active, scope) VALUES 
+('FREEPRO', 'Get Pro plan for free (100% discount)', 'percentage', 100, 10, 1, NOW() + INTERVAL '30 days', true, 'public')
 ON CONFLICT (code) DO NOTHING;
 
-INSERT INTO coupons (code, description, type, value, max_uses, max_uses_per_user, expires_at, is_active) VALUES 
-('SAVE50', '৳50 off on any plan', 'fixed', 50, 100, 2, NOW() + INTERVAL '60 days', true)
+INSERT INTO coupons (code, description, type, value, max_uses, max_uses_per_user, expires_at, is_active, scope) VALUES 
+('SAVE50', '৳50 off on any plan', 'fixed', 50, 100, 2, NOW() + INTERVAL '60 days', true, 'public')
 ON CONFLICT (code) DO NOTHING;
 
 COMMIT;

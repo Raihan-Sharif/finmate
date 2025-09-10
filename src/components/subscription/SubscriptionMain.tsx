@@ -402,7 +402,7 @@ export default function SubscriptionMain() {
                     } : {}}
                   >
                     <Card
-                      className={`relative overflow-hidden transition-all duration-500 backdrop-blur-xl ${
+                      className={`relative overflow-hidden transition-all duration-500 backdrop-blur-xl h-full min-h-[600px] flex flex-col ${
                         !isCurrent && canUpgrade ? 'cursor-pointer' : 'cursor-default'
                       } ${
                         isSelected
@@ -502,8 +502,8 @@ export default function SubscriptionMain() {
                         </div>
                       </CardHeader>
                       
-                      <CardContent className="space-y-6">
-                        <div className="space-y-3">
+                      <CardContent className="flex-1 flex flex-col justify-between space-y-6">
+                        <div className="space-y-3 flex-1">
                           {planFeatures[plan]?.map((feature, index) => (
                             <div key={index} className="flex items-start space-x-3">
                               <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -514,7 +514,8 @@ export default function SubscriptionMain() {
                           ))}
                         </div>
                         
-                        <Button
+                        <div className="pt-4">
+                          <Button
                           className={`w-full ${
                             isCurrent
                               ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700'
@@ -542,7 +543,8 @@ export default function SubscriptionMain() {
                             ? 'Selected' 
                             : `Choose ${plan.charAt(0).toUpperCase() + plan.slice(1)}`
                           }
-                        </Button>
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>
