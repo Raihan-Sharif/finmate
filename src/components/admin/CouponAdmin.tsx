@@ -83,16 +83,17 @@ export function CouponAdmin() {
   const fetchCoupons = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('coupons')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const response = await fetch('/api/admin/coupons')
+      const result = await response.json()
 
-      if (error) throw error
-      setCoupons(data || [])
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to fetch coupons')
+      }
+
+      setCoupons(result.coupons || [])
     } catch (error: any) {
       console.error('Error fetching coupons:', error)
-      toast.error('Failed to fetch coupons')
+      toast.error(error.message || 'Failed to fetch coupons')
     } finally {
       setLoading(false)
     }
@@ -122,26 +123,17 @@ export function CouponAdmin() {
     try {
       setProcessingId('create')
       
-      const insertData: any = {
-        code: formData.code.toUpperCase(),
-        description: formData.description,
-        type: formData.type,
-        value: formData.value,
-        scope: formData.scope,
-        is_active: formData.is_active
+      const response = await fetch('/api/admin/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to create coupon')
       }
-
-      if (formData.max_uses) insertData.max_uses = parseInt(formData.max_uses)
-      if (formData.max_uses_per_user) insertData.max_uses_per_user = parseInt(formData.max_uses_per_user)
-      if (formData.minimum_amount) insertData.minimum_amount = parseFloat(formData.minimum_amount)
-      if (formData.max_discount_amount) insertData.max_discount_amount = parseFloat(formData.max_discount_amount)
-      if (formData.expires_at) insertData.expires_at = new Date(formData.expires_at).toISOString()
-
-      const { error } = await supabase
-        .from('coupons')
-        .insert([insertData])
-
-      if (error) throw error
 
       toast.success('Coupon created successfully!')
       setShowCreateModal(false)
@@ -161,26 +153,20 @@ export function CouponAdmin() {
     try {
       setProcessingId(selectedCoupon.id)
       
-      const updateData: any = {
-        description: formData.description,
-        type: formData.type,
-        value: formData.value,
-        scope: formData.scope,
-        is_active: formData.is_active
+      const response = await fetch('/api/admin/coupons', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          coupon_id: selectedCoupon.id,
+          ...formData
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to update coupon')
       }
-
-      if (formData.max_uses) updateData.max_uses = parseInt(formData.max_uses)
-      if (formData.max_uses_per_user) updateData.max_uses_per_user = parseInt(formData.max_uses_per_user)
-      if (formData.minimum_amount) updateData.minimum_amount = parseFloat(formData.minimum_amount)
-      if (formData.max_discount_amount) updateData.max_discount_amount = parseFloat(formData.max_discount_amount)
-      if (formData.expires_at) updateData.expires_at = new Date(formData.expires_at).toISOString()
-
-      const { error } = await supabase
-        .from('coupons')
-        .update(updateData)
-        .eq('id', selectedCoupon.id)
-
-      if (error) throw error
 
       toast.success('Coupon updated successfully!')
       setShowEditModal(false)
@@ -201,18 +187,21 @@ export function CouponAdmin() {
     try {
       setProcessingId(coupon.id)
       
-      const { error } = await supabase
-        .from('coupons')
-        .delete()
-        .eq('id', coupon.id)
+      const response = await fetch(`/api/admin/coupons?id=${coupon.id}`, {
+        method: 'DELETE'
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to delete coupon')
+      }
 
       toast.success('Coupon deleted successfully!')
       fetchCoupons()
     } catch (error: any) {
       console.error('Error deleting coupon:', error)
-      toast.error('Failed to delete coupon')
+      toast.error(error.message || 'Failed to delete coupon')
     } finally {
       setProcessingId(null)
     }
@@ -222,18 +211,26 @@ export function CouponAdmin() {
     try {
       setProcessingId(coupon.id)
       
-      const { error } = await supabase
-        .from('coupons')
-        .update({ is_active: !coupon.is_active })
-        .eq('id', coupon.id)
+      const response = await fetch('/api/admin/coupons', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          coupon_id: coupon.id,
+          is_active: !coupon.is_active
+        })
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to update coupon status')
+      }
 
       toast.success(`Coupon ${!coupon.is_active ? 'activated' : 'deactivated'}!`)
       fetchCoupons()
     } catch (error: any) {
       console.error('Error toggling coupon status:', error)
-      toast.error('Failed to update coupon status')
+      toast.error(error.message || 'Failed to update coupon status')
     } finally {
       setProcessingId(null)
     }

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Crown, 
   Zap, 
@@ -36,6 +37,7 @@ import { toast } from 'sonner'
 import PaymentMethodSelector from './PaymentMethodSelector'
 import PaymentPendingPage from './PaymentPendingPage'
 import CouponInput from './CouponInputSimple'
+import { SubscriptionOverview } from './SubscriptionOverview'
 
 type SubscriptionStep = 'plans' | 'payment' | 'pending' | 'success'
 
@@ -226,14 +228,40 @@ export default function SubscriptionMain() {
 
   return (
     <div className="space-y-8">
-      {/* Progress Indicator with Enhanced Design */}
-      <div className="max-w-2xl mx-auto">
-        <motion.div 
-          className="flex items-center justify-center space-x-4 mb-8"
+      {/* Main Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="flex justify-center"
         >
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <CreditCard className="h-4 w-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="upgrade" className="flex items-center space-x-2">
+              <TrendingUp className="h-4 w-4" />
+              <span>Upgrade</span>
+            </TabsTrigger>
+          </TabsList>
+        </motion.div>
+
+        <TabsContent value="overview" className="mt-8">
+          <SubscriptionOverview />
+        </TabsContent>
+
+        <TabsContent value="upgrade" className="mt-8">
+          <div className="space-y-8">
+            {/* Progress Indicator with Enhanced Design */}
+            <div className="max-w-2xl mx-auto">
+              <motion.div 
+                className="flex items-center justify-center space-x-4 mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
           {(['plans', 'payment', 'pending'] as SubscriptionStep[]).map((step, index) => {
             const isActive = step === currentStep
             const isCompleted = ['plans', 'payment', 'pending'].indexOf(currentStep) > index
@@ -651,6 +679,9 @@ export default function SubscriptionMain() {
           </motion.div>
         )}
       </AnimatePresence>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

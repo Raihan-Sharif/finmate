@@ -334,6 +334,13 @@ function getNavigationItems(t: (key: string) => string): NavigationItem[] {
           color: 'text-slate-600',
           bgColor: 'bg-slate-50',
         },
+        {
+          translationKey: 'subscription',
+          href: '/dashboard/subscription',
+          icon: CreditCard,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50',
+        },
       ],
     },
   ];
@@ -392,6 +399,13 @@ function getAdminNavigationItems(t: (key: string) => string): NavigationItem[] {
           icon: Receipt,
           color: 'text-red-700',
           bgColor: 'bg-red-100',
+        },
+        {
+          translationKey: 'subscriptionManagement',
+          href: '/admin/subscriptions',
+          icon: CreditCard,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50',
         },
       ],
     },

@@ -112,24 +112,37 @@ export function PaymentModal({
     try {
       setIsSubmitting(true)
       
-      // Submit payment data to your API
-      const response = await fetch('/api/subscription/payments', {
+      // Get payment method name for API
+      const paymentMethod = paymentMethods.find(m => m.id === data.payment_method_id)
+      if (!paymentMethod) {
+        throw new Error('Invalid payment method selected')
+      }
+      
+      // Submit payment data using the correct API endpoint
+      const response = await fetch('/api/subscription/payments/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...data,
-          plan_id: plan.id,
+          plan: plan.plan_name,
           billing_cycle: billingCycle,
-          base_amount: paymentCalculation.baseAmount,
-          discount_amount: paymentCalculation.discountAmount,
-          final_amount: paymentCalculation.finalAmount,
-          coupon_id: appliedCoupon?.id || null
+          payment_method: paymentMethod.method_name,
+          payment_details: {
+            transaction_id: data.transaction_id,
+            sender_number: data.sender_number,
+            amount: paymentCalculation.finalAmount,
+            discount_amount: paymentCalculation.discountAmount,
+            coupon: appliedCoupon
+          },
+          applied_coupon_id: appliedCoupon?.id || null,
+          upgrade_reason: data.notes
         })
       })
 
-      if (!response.ok) throw new Error('Payment submission failed')
-
       const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Payment submission failed')
+      }
       
       toast.success(t('paymentSubmittedSuccess'))
       setCurrentStep('confirmation')
@@ -139,9 +152,9 @@ export function PaymentModal({
         onPaymentComplete()
       }, 2000)
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment submission error:', error)
-      toast.error(t('paymentSubmissionError'))
+      toast.error(error.message || t('paymentSubmissionError'))
     } finally {
       setIsSubmitting(false)
     }

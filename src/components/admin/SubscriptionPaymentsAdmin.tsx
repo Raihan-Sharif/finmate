@@ -88,24 +88,27 @@ export function SubscriptionPaymentsAdmin() {
     try {
       setLoading(true)
       
-      const { data, error } = await supabase
-        .from('subscription_payments')
-        .select(`
-          *,
-          plan:subscription_plans(display_name),
-          payment_method:payment_methods(display_name),
-          coupon:coupons(code),
-          profiles(full_name, email)
-        `)
-        .order('created_at', { ascending: false })
+      const response = await fetch('/api/admin/subscription/payments')
+      const result = await response.json()
 
-      if (error) throw error
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to fetch payments')
+      }
 
-      setPayments(data || [])
-      setFilteredPayments(data || [])
+      // Transform the data to match expected format
+      const transformedPayments = (result.payments || []).map((payment: any) => ({
+        ...payment,
+        plan: payment.plan || { display_name: 'Unknown Plan' },
+        payment_method: payment.payment_method || { display_name: 'Unknown Method' },
+        coupon: payment.coupon || null,
+        profiles: payment.user || { full_name: 'Unknown User', email: 'unknown@example.com' }
+      }))
+
+      setPayments(transformedPayments)
+      setFilteredPayments(transformedPayments)
     } catch (error: any) {
       console.error('Error fetching payments:', error)
-      toast.error(t('fetchError'))
+      toast.error(error.message || t('fetchError'))
     } finally {
       setLoading(false)
     }
@@ -187,44 +190,29 @@ export function SubscriptionPaymentsAdmin() {
     try {
       setProcessingId(paymentId)
 
-      // Update payment status
-      const updateData: any = {
-        status,
-        admin_notes: notes || null,
-        verified_by: user?.id,
-        updated_at: new Date().toISOString()
+      const response = await fetch('/api/admin/subscription/payments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payment_id: paymentId,
+          status,
+          admin_notes: notes || null,
+          rejection_reason: status === 'rejected' ? notes : null
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to update payment status')
       }
-
-      if (status === 'verified') {
-        updateData.verified_at = new Date().toISOString()
-      } else if (status === 'approved') {
-        updateData.approved_at = new Date().toISOString()
-        
-        // Also run the upgrade function
-        const { error: upgradeError } = await supabase
-          .rpc('upgrade_user_subscription', {
-            p_payment_id: paymentId,
-            p_approved_by: user?.id
-          })
-        
-        if (upgradeError) throw upgradeError
-      } else if (status === 'rejected') {
-        updateData.rejected_at = new Date().toISOString()
-      }
-
-      const { error } = await supabase
-        .from('subscription_payments')
-        .update(updateData)
-        .eq('id', paymentId)
-
-      if (error) throw error
 
       toast.success(t('statusUpdated'))
       fetchPayments() // Refresh the list
       setShowDetailModal(false)
     } catch (error: any) {
       console.error('Error updating payment status:', error)
-      toast.error(t('updateError'))
+      toast.error(error.message || t('updateError'))
     } finally {
       setProcessingId(null)
     }

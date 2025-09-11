@@ -43,6 +43,7 @@ import {
   Info
 } from 'lucide-react';
 import Link from 'next/link';
+import { SubscriptionCard } from '@/components/dashboard/SubscriptionCard';
 import {
   LineChart,
   Line,
@@ -461,6 +462,15 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </motion.div>
+        </motion.div>
+
+        {/* Subscription Management Card */}
+        <motion.div
+          variants={fadeInUp}
+          initial="initial"
+          animate="animate"
+        >
+          <SubscriptionCard />
         </motion.div>
 
         {/* Smart Financial Alerts */}
