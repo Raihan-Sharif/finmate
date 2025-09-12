@@ -412,14 +412,14 @@ function getAdminNavigationItems(t: (key: string) => string): NavigationItem[] {
   ];
   
   return adminNavigationConfig.map(item => ({
-    name: t(item.translationKey),
+    name: t(`admin.${item.translationKey}`),
     href: item.href,
     icon: item.icon,
     color: item.color,
     bgColor: item.bgColor,
     ...(item.children && {
       children: item.children.map(child => ({
-        name: t(child.translationKey),
+        name: t(`admin.${child.translationKey}`),
         href: child.href,
         icon: child.icon,
         color: child.color,

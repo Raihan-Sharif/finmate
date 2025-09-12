@@ -189,26 +189,27 @@ export function AdminSubscriptionManager() {
                       key={tab.id}
                       value={tab.id}
                       className={cn(
-                        "flex flex-col items-center space-y-2 p-3 text-xs font-medium transition-all duration-200 h-auto",
+                        "flex flex-col items-center space-y-1 p-2 text-xs font-medium transition-all duration-200 h-auto min-h-[60px]",
                         "data-[state=active]:bg-white data-[state=active]:shadow-sm",
                         "data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-700 dark:data-[state=active]:text-slate-100",
                         "hover:bg-white/50 dark:hover:bg-slate-700/50",
-                        "sm:flex-row sm:space-y-0 sm:space-x-2 sm:text-sm"
+                        "sm:flex-row sm:space-y-0 sm:space-x-2 sm:text-sm sm:min-h-[50px]",
+                        "lg:p-3"
                       )}
                     >
                       <div className={cn(
-                        "p-2 rounded-lg transition-all duration-200 flex-shrink-0",
+                        "p-1.5 sm:p-2 rounded-lg transition-all duration-200 flex-shrink-0",
                         isActive ? `bg-gradient-to-br ${tab.color} text-white shadow-lg` : "bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300"
                       )}>
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
                       </div>
-                      <div className="text-center sm:text-left min-w-0">
-                        <div className="font-semibold truncate">
+                      <div className="text-center sm:text-left min-w-0 flex-1 overflow-hidden">
+                        <div className="font-semibold truncate text-xs sm:text-sm">
                           <span className="sm:hidden">{tab.shortLabel}</span>
                           <span className="hidden sm:inline lg:hidden">{tab.shortLabel}</span>
                           <span className="hidden lg:inline">{tab.label}</span>
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 hidden xl:block truncate max-w-32">
+                        <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 hidden lg:block truncate max-w-[100px] xl:max-w-[120px]">
                           {tab.description}
                         </div>
                       </div>
@@ -250,21 +251,7 @@ export function AdminSubscriptionManager() {
                       <SubscriptionPaymentsAdmin key={refreshing ? 'refresh' : 'normal'} />
                     </TabsContent>
 
-                    <TabsContent value="coupons" className="mt-0 space-y-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            Coupon Management
-                          </h3>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Create, edit, and manage discount coupons for subscriptions
-                          </p>
-                        </div>
-                        <Button size="sm" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Coupon
-                        </Button>
-                      </div>
+                    <TabsContent value="coupons" className="mt-0">
                       <CouponAdmin key={refreshing ? 'refresh' : 'normal'} />
                     </TabsContent>
 

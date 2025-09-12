@@ -55,7 +55,7 @@ interface Coupon {
 }
 
 export function CouponAdmin() {
-  const t = useTranslations('admin.coupons')
+  const t = useTranslations('admin.subscriptions.coupons')
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)

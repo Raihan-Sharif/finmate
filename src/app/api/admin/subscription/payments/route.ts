@@ -27,11 +27,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    if (!profile?.[0]?.role_name || !['admin', 'superadmin'].includes(profile[0].role_name)) {
+    if (!profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
       console.log('Permission denied:', { 
         hasProfile: !!profile?.[0], 
         roleName: profile?.[0]?.role_name,
-        allowedRoles: ['admin', 'superadmin']
+        allowedRoles: ['admin', 'super_admin']
       })
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
@@ -156,11 +156,11 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    if (!profile?.[0]?.role_name || !['admin', 'superadmin'].includes(profile[0].role_name)) {
+    if (!profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
       console.log('Permission denied PATCH:', { 
         hasProfile: !!profile?.[0], 
         roleName: profile?.[0]?.role_name,
-        allowedRoles: ['admin', 'superadmin']
+        allowedRoles: ['admin', 'super_admin']
       })
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },

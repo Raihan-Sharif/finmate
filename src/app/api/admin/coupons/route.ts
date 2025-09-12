@@ -17,7 +17,12 @@ export async function GET(request: NextRequest) {
     const { data: profile } = await supabase
       .rpc('get_user_profile', { p_user_id: user.id })
     
-    if (!profile || profile.length === 0 || profile[0].role_name !== 'admin') {
+    if (!profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      console.log('Permission denied:', { 
+        hasProfile: !!profile?.[0], 
+        roleName: profile?.[0]?.role_name,
+        allowedRoles: ['admin', 'super_admin']
+      })
       return NextResponse.json(
         { success: false, message: 'Admin access required' },
         { status: 403 }
@@ -60,7 +65,12 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await supabase
       .rpc('get_user_profile', { p_user_id: user.id })
     
-    if (!profile || profile.length === 0 || profile[0].role_name !== 'admin') {
+    if (!profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      console.log('Permission denied:', { 
+        hasProfile: !!profile?.[0], 
+        roleName: profile?.[0]?.role_name,
+        allowedRoles: ['admin', 'super_admin']
+      })
       return NextResponse.json(
         { success: false, message: 'Admin access required' },
         { status: 403 }
@@ -156,7 +166,12 @@ export async function PATCH(request: NextRequest) {
     const { data: profile } = await supabase
       .rpc('get_user_profile', { p_user_id: user.id })
     
-    if (!profile || profile.length === 0 || profile[0].role_name !== 'admin') {
+    if (!profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      console.log('Permission denied:', { 
+        hasProfile: !!profile?.[0], 
+        roleName: profile?.[0]?.role_name,
+        allowedRoles: ['admin', 'super_admin']
+      })
       return NextResponse.json(
         { success: false, message: 'Admin access required' },
         { status: 403 }
@@ -237,7 +252,12 @@ export async function DELETE(request: NextRequest) {
     const { data: profile } = await supabase
       .rpc('get_user_profile', { p_user_id: user.id })
     
-    if (!profile || profile.length === 0 || profile[0].role_name !== 'admin') {
+    if (!profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      console.log('Permission denied:', { 
+        hasProfile: !!profile?.[0], 
+        roleName: profile?.[0]?.role_name,
+        allowedRoles: ['admin', 'super_admin']
+      })
       return NextResponse.json(
         { success: false, message: 'Admin access required' },
         { status: 403 }

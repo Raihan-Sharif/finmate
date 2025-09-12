@@ -2,6 +2,11 @@
   "admin": {
     "title": "অ্যাডমিন প্যানেল",
     "dashboard": "অ্যাডমিন ড্যাশবোর্ড",
+    "adminPanel": "অ্যাডমিন প্যানেল",
+    "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
+    "systemSettings": "সিস্টেম সেটিংস",
+    "auditLogs": "অডিট লগ",
+    "subscriptionManagement": "সাবস্ক্রিপশন ব্যবস্থাপনা",
     "subscriptions": {
       "title": "সাবস্ক্রিপশন ব্যবস্থাপনা",
       "description": "সাবস্ক্রিপশন, পেমেন্ট এবং কুপন পরিচালনা করুন",
