@@ -10,8 +10,8 @@ import AdminService from '@/lib/services/admin';
 import { Profile, ProfileWithRole } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CronJobMonitor from '@/components/admin/CronJobMonitor';
-import { SubscriptionPaymentsAdmin } from '@/components/admin/SubscriptionPaymentsAdmin';
-import { CouponAdmin } from '@/components/admin/CouponAdmin';
+import { SubscriptionManager } from '@/components/admin/SubscriptionManager';
+import { useTranslations } from 'next-intl';
 
 interface SystemStats {
   totalUsers: number;
@@ -26,6 +26,8 @@ interface SystemStats {
 export default function AdminDashboard() {
   const { user, profile } = useAuth();
   const { isAdmin, canManageUsers, canManageSystem, canViewAnalytics } = usePermissions();
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [users, setUsers] = useState<ProfileWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +103,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold">{t('dashboard')}</h1>
           <p className="text-gray-600">Manage your FinMate application</p>
         </div>
         <Badge variant="secondary" className="px-3 py-1">
@@ -115,7 +117,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('navigation.users')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -168,22 +170,18 @@ export default function AdminDashboard() {
       )}
 
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users" disabled={!canManageUsers()}>
             <Users className="w-4 h-4 mr-2" />
-            Users
+            {t('navigation.users')}
           </TabsTrigger>
-          <TabsTrigger value="payments" disabled={!canManageSystem()}>
+          <TabsTrigger value="subscriptions" disabled={!canManageSystem()}>
             <CreditCard className="w-4 h-4 mr-2" />
-            Payments
-          </TabsTrigger>
-          <TabsTrigger value="coupons" disabled={!canManageSystem()}>
-            <Gift className="w-4 h-4 mr-2" />
-            Coupons
+            {t('navigation.subscriptions')}
           </TabsTrigger>
           <TabsTrigger value="system" disabled={!canManageSystem()}>
             <Settings className="w-4 h-4 mr-2" />
-            System
+            {t('navigation.settings')}
           </TabsTrigger>
           <TabsTrigger value="cron" disabled={!canManageSystem()}>
             <Clock className="w-4 h-4 mr-2" />
@@ -191,16 +189,12 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="analytics" disabled={!canViewAnalytics()}>
             <BarChart3 className="w-4 h-4 mr-2" />
-            Analytics
+            {t('navigation.analytics')}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="payments" className="space-y-4">
-          <SubscriptionPaymentsAdmin />
-        </TabsContent>
-
-        <TabsContent value="coupons" className="space-y-4">
-          <CouponAdmin />
+        <TabsContent value="subscriptions" className="space-y-4">
+          <SubscriptionManager />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
