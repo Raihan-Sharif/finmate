@@ -34,6 +34,15 @@
     "accounts": "অ্যাকাউন্ট",
     "categories": "বিভাগ",
     "exportData": "ডেটা রপ্তানি",
+    "subscription": "সাবস্ক্রিপশন",
+    "admin": {
+      "adminPanel": "অ্যাডমিন প্যানেল",
+      "dashboard": "ড্যাশবোর্ড",
+      "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
+      "systemSettings": "সিস্টেম সেটিংস",
+      "auditLogs": "অডিট লগ",
+      "subscriptionManagement": "সাবস্ক্রিপশন ব্যবস্থাপনা"
+    },
     "adminPanel": "অ্যাডমিন প্যানেল",
     "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
     "systemSettings": "সিস্টেম সেটিংস",

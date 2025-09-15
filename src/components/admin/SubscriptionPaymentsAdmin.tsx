@@ -33,6 +33,7 @@ import {
   Smartphone
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
@@ -443,7 +444,7 @@ export function SubscriptionPaymentsAdmin() {
                           </span>
                           <span className="flex items-center space-x-1">
                             <DollarSign className="h-3 w-3" />
-                            <span>৳{payment.final_amount}</span>
+                            <span>{formatCurrency(payment.final_amount, payment.currency)}</span>
                           </span>
                           <span className="flex items-center space-x-1">
                             <Calendar className="h-3 w-3" />
@@ -533,17 +534,17 @@ export function SubscriptionPaymentsAdmin() {
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>{t('baseAmount')}</span>
-                        <span>৳{selectedPayment.base_amount}</span>
+                        <span>{formatCurrency(selectedPayment.base_amount, selectedPayment.currency)}</span>
                       </div>
                       {selectedPayment.discount_amount > 0 && (
                         <div className="flex justify-between text-green-600">
                           <span>{t('discount')} ({selectedPayment.coupon?.code})</span>
-                          <span>-৳{selectedPayment.discount_amount}</span>
+                          <span>-{formatCurrency(selectedPayment.discount_amount, selectedPayment.currency)}</span>
                         </div>
                       )}
                       <div className="flex justify-between font-semibold border-t pt-1">
                         <span>{t('total')}</span>
-                        <span>৳{selectedPayment.final_amount}</span>
+                        <span>{formatCurrency(selectedPayment.final_amount, selectedPayment.currency)}</span>
                       </div>
                     </div>
                   </div>

@@ -516,7 +516,7 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await supabase
       .rpc('get_user_profile', { p_user_id: user.id })
     
-    if (!profile || profile.length === 0 || profile[0].role_name !== 'admin') {
+    if (!profile || profile.length === 0 || !['admin', 'super_admin'].includes(profile[0].role_name)) {
       return NextResponse.json(
         { success: false, message: 'Admin access required' },
         { status: 403 }
