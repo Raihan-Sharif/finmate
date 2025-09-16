@@ -21,26 +21,24 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Install Supabase CLI
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Verify Supabase CLI and Login
       run: |
-        # Download and install Supabase CLI binary
-        curl -L "https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
-        tar -xzf supabase.tar.gz
-        sudo mv supabase /usr/local/bin/supabase
-        chmod +x /usr/local/bin/supabase
-        supabase --version
-        
-    - name: Login to Supabase
-      run: |
-        supabase login --token $SUPABASE_ACCESS_TOKEN
+        # Use npx to run Supabase CLI (recommended for CI/CD)
+        npx supabase --version
+        npx supabase login --token $SUPABASE_ACCESS_TOKEN
         
     - name: Initialize Supabase locally
       run: |
-        supabase init --with-vscode-settings=false
-        
-    - name: Link to Supabase project  
+        npx supabase init --with-vscode-settings=false
+
+    - name: Link to Supabase project
       run: |
-        supabase link --project-ref $SUPABASE_PROJECT_ID --password $SUPABASE_DB_PASSWORD
+        npx supabase link --project-ref $SUPABASE_PROJECT_ID --password $SUPABASE_DB_PASSWORD
         
     - name: Create backup directory
       run: |
@@ -56,21 +54,21 @@ jobs:
     - name: Pull full schema from Supabase
       run: |
         # Pull all schema changes including functions, triggers, policies
-        supabase db pull --schema public,auth,extensions,storage
-        
+        npx supabase db pull --schema public,auth,extensions,storage
+
     - name: Generate comprehensive schema dump
       run: |
         # Generate a complete SQL dump of the schema
-        supabase db dump --data-only=false --schema-only=true --file=database/backup/schema/complete_schema.sql
+        npx supabase db dump --data-only=false --schema-only=true --file=database/backup/schema/complete_schema.sql
 
         # Generate individual component dumps for better organization
-        supabase db dump --data-only=false --schema-only=true --schema=public --file=database/backup/schema/public_schema.sql
-        supabase db dump --data-only=false --schema-only=true --schema=auth --file=database/backup/schema/auth_schema.sql
-        supabase db dump --data-only=false --schema-only=true --schema=storage --file=database/backup/schema/storage_schema.sql
-        supabase db dump --data-only=false --schema-only=true --schema=extensions --file=database/backup/schema/extensions_schema.sql
+        npx supabase db dump --data-only=false --schema-only=true --schema=public --file=database/backup/schema/public_schema.sql
+        npx supabase db dump --data-only=false --schema-only=true --schema=auth --file=database/backup/schema/auth_schema.sql
+        npx supabase db dump --data-only=false --schema-only=true --schema=storage --file=database/backup/schema/storage_schema.sql
+        npx supabase db dump --data-only=false --schema-only=true --schema=extensions --file=database/backup/schema/extensions_schema.sql
 
         # Generate a data-only dump for reference (without sensitive data)
-        supabase db dump --data-only=true --schema-only=false --exclude-table-data='auth.*' --file=database/backup/schema/reference_data.sql
+        npx supabase db dump --data-only=true --schema-only=false --exclude-table-data='auth.*' --file=database/backup/schema/reference_data.sql
         
     - name: Extract and organize database functions
       run: |
