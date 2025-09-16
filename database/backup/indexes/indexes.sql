@@ -1,0 +1,547 @@
+CREATE INDEX "idx_accounts_active" ON "public"."accounts" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_accounts_balance_type" ON "public"."accounts" USING "btree" ("balance_type");
+
+
+--
+CREATE INDEX "idx_accounts_credit_limit" ON "public"."accounts" USING "btree" ("credit_limit") WHERE ("credit_limit" > (0)::numeric);
+
+
+--
+CREATE INDEX "idx_accounts_global" ON "public"."accounts" USING "btree" ("user_id") WHERE ("user_id" IS NULL);
+
+
+--
+CREATE INDEX "idx_accounts_payment_due_day" ON "public"."accounts" USING "btree" ("payment_due_day") WHERE ("balance_type" = 'credit'::"public"."balance_type");
+
+
+--
+CREATE INDEX "idx_accounts_type" ON "public"."accounts" USING "btree" ("type");
+
+
+--
+CREATE INDEX "idx_accounts_user_id" ON "public"."accounts" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_ai_insights_dismissed" ON "public"."ai_insights" USING "btree" ("is_dismissed");
+
+
+--
+CREATE INDEX "idx_ai_insights_expires_at" ON "public"."ai_insights" USING "btree" ("expires_at");
+
+
+--
+CREATE INDEX "idx_ai_insights_type" ON "public"."ai_insights" USING "btree" ("type");
+
+
+--
+CREATE INDEX "idx_ai_insights_user_id" ON "public"."ai_insights" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_audit_logs_action" ON "public"."admin_audit_logs" USING "btree" ("action");
+
+
+--
+CREATE INDEX "idx_audit_logs_admin_user" ON "public"."admin_audit_logs" USING "btree" ("admin_user_id");
+
+
+--
+CREATE INDEX "idx_audit_logs_created" ON "public"."admin_audit_logs" USING "btree" ("created_at");
+
+
+--
+CREATE INDEX "idx_audit_logs_target_user" ON "public"."admin_audit_logs" USING "btree" ("target_user_id");
+
+
+--
+CREATE INDEX "idx_budget_templates_active" ON "public"."budget_templates" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_budget_templates_created_at" ON "public"."budget_templates" USING "btree" ("created_at");
+
+
+--
+CREATE INDEX "idx_budget_templates_global" ON "public"."budget_templates" USING "btree" ("is_global");
+
+
+--
+CREATE INDEX "idx_budget_templates_usage_count" ON "public"."budget_templates" USING "btree" ("usage_count");
+
+
+--
+CREATE INDEX "idx_budget_templates_user_id" ON "public"."budget_templates" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_budgets_active" ON "public"."budgets" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_budgets_dates" ON "public"."budgets" USING "btree" ("start_date", "end_date");
+
+
+--
+CREATE INDEX "idx_budgets_period" ON "public"."budgets" USING "btree" ("period");
+
+
+--
+CREATE INDEX "idx_budgets_user_id" ON "public"."budgets" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_categories_active" ON "public"."categories" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_categories_is_default" ON "public"."categories" USING "btree" ("is_default");
+
+
+--
+CREATE INDEX "idx_categories_sort_order" ON "public"."categories" USING "btree" ("sort_order");
+
+
+--
+CREATE INDEX "idx_categories_type" ON "public"."categories" USING "btree" ("type");
+
+
+--
+CREATE INDEX "idx_categories_type_active" ON "public"."categories" USING "btree" ("type", "is_active");
+
+
+--
+CREATE INDEX "idx_categories_user_id" ON "public"."categories" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_coupon_usage_user_coupon" ON "public"."coupon_usage" USING "btree" ("user_id", "coupon_id");
+
+
+--
+CREATE INDEX "idx_coupons_code_active" ON "public"."coupons" USING "btree" ("code", "is_active");
+
+
+--
+CREATE INDEX "idx_cron_job_logs_name_date" ON "public"."cron_job_logs" USING "btree" ("job_name", "started_at" DESC);
+
+
+--
+CREATE INDEX "idx_cron_job_logs_status" ON "public"."cron_job_logs" USING "btree" ("status", "started_at" DESC);
+
+
+--
+CREATE INDEX "idx_emi_payments_is_paid" ON "public"."emi_payments" USING "btree" ("is_paid");
+
+
+--
+CREATE INDEX "idx_emi_payments_loan_id" ON "public"."emi_payments" USING "btree" ("loan_id");
+
+
+--
+CREATE INDEX "idx_emi_payments_payment_date" ON "public"."emi_payments" USING "btree" ("payment_date");
+
+
+--
+CREATE INDEX "idx_emi_payments_user_id" ON "public"."emi_payments" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_emi_schedules_due_date" ON "public"."emi_schedules" USING "btree" ("due_date");
+
+
+--
+CREATE INDEX "idx_emi_schedules_is_paid" ON "public"."emi_schedules" USING "btree" ("is_paid");
+
+
+--
+CREATE INDEX "idx_emi_schedules_loan_id" ON "public"."emi_schedules" USING "btree" ("loan_id");
+
+
+--
+CREATE INDEX "idx_emi_schedules_user_id" ON "public"."emi_schedules" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_emi_templates_is_active" ON "public"."emi_templates" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_emi_templates_user_id" ON "public"."emi_templates" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_investment_performance_date" ON "public"."investment_performance_snapshots" USING "btree" ("snapshot_date");
+
+
+--
+CREATE INDEX "idx_investment_performance_investment_id" ON "public"."investment_performance_snapshots" USING "btree" ("investment_id");
+
+
+--
+CREATE INDEX "idx_investment_performance_portfolio_id" ON "public"."investment_performance_snapshots" USING "btree" ("portfolio_id");
+
+
+--
+CREATE INDEX "idx_investment_performance_type" ON "public"."investment_performance_snapshots" USING "btree" ("snapshot_type");
+
+
+--
+CREATE INDEX "idx_investment_performance_user_id" ON "public"."investment_performance_snapshots" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_investment_portfolios_active" ON "public"."investment_portfolios" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_investment_portfolios_user_active" ON "public"."investment_portfolios" USING "btree" ("user_id", "is_active");
+
+
+--
+CREATE INDEX "idx_investment_portfolios_user_id" ON "public"."investment_portfolios" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_investment_price_history_date" ON "public"."investment_price_history" USING "btree" ("date");
+
+
+--
+CREATE INDEX "idx_investment_price_history_investment_id" ON "public"."investment_price_history" USING "btree" ("investment_id");
+
+
+--
+CREATE INDEX "idx_investment_price_history_symbol" ON "public"."investment_price_history" USING "btree" ("symbol");
+
+
+--
+CREATE INDEX "idx_investment_price_history_symbol_date" ON "public"."investment_price_history" USING "btree" ("symbol", "date");
+
+
+--
+CREATE INDEX "idx_investment_templates_active" ON "public"."investment_templates" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_investment_templates_auto_execute" ON "public"."investment_templates" USING "btree" ("auto_execute", "is_active");
+
+
+--
+CREATE INDEX "idx_investment_templates_global" ON "public"."investment_templates" USING "btree" ("is_global");
+
+
+--
+CREATE INDEX "idx_investment_templates_next_execution" ON "public"."investment_templates" USING "btree" ("next_execution");
+
+
+--
+CREATE INDEX "idx_investment_templates_portfolio_id" ON "public"."investment_templates" USING "btree" ("portfolio_id");
+
+
+--
+CREATE INDEX "idx_investment_templates_user_active" ON "public"."investment_templates" USING "btree" ("user_id", "is_active");
+
+
+--
+CREATE INDEX "idx_investment_templates_user_id" ON "public"."investment_templates" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_investment_transactions_date" ON "public"."investment_transactions" USING "btree" ("transaction_date");
+
+
+--
+CREATE INDEX "idx_investment_transactions_investment_id" ON "public"."investment_transactions" USING "btree" ("investment_id");
+
+
+--
+CREATE INDEX "idx_investment_transactions_main_transaction_id" ON "public"."investment_transactions" USING "btree" ("main_transaction_id");
+
+
+--
+CREATE INDEX "idx_investment_transactions_portfolio_id" ON "public"."investment_transactions" USING "btree" ("portfolio_id");
+
+
+--
+CREATE INDEX "idx_investment_transactions_recurring" ON "public"."investment_transactions" USING "btree" ("recurring_investment_id");
+
+
+--
+CREATE INDEX "idx_investment_transactions_type" ON "public"."investment_transactions" USING "btree" ("type");
+
+
+--
+CREATE INDEX "idx_investment_transactions_type_date" ON "public"."investment_transactions" USING "btree" ("type", "transaction_date");
+
+
+--
+CREATE INDEX "idx_investment_transactions_user_date" ON "public"."investment_transactions" USING "btree" ("user_id", "transaction_date");
+
+
+--
+CREATE INDEX "idx_investment_transactions_user_id" ON "public"."investment_transactions" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_investments_portfolio_id" ON "public"."investments" USING "btree" ("portfolio_id");
+
+
+--
+CREATE INDEX "idx_investments_status" ON "public"."investments" USING "btree" ("status");
+
+
+--
+CREATE INDEX "idx_investments_symbol" ON "public"."investments" USING "btree" ("symbol");
+
+
+--
+CREATE INDEX "idx_investments_type" ON "public"."investments" USING "btree" ("type");
+
+
+--
+CREATE INDEX "idx_investments_user_id" ON "public"."investments" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_investments_user_status" ON "public"."investments" USING "btree" ("user_id", "status");
+
+
+--
+CREATE INDEX "idx_investments_user_status_type" ON "public"."investments" USING "btree" ("user_id", "status", "type");
+
+
+--
+CREATE INDEX "idx_investments_user_type" ON "public"."investments" USING "btree" ("user_id", "type");
+
+
+--
+CREATE INDEX "idx_lending_account_id" ON "public"."lending" USING "btree" ("account_id");
+
+
+--
+CREATE INDEX "idx_lending_category_id" ON "public"."lending" USING "btree" ("category_id");
+
+
+--
+CREATE INDEX "idx_lending_due_date" ON "public"."lending" USING "btree" ("due_date");
+
+
+--
+CREATE INDEX "idx_lending_payments_lending_id" ON "public"."lending_payments" USING "btree" ("lending_id");
+
+
+--
+CREATE INDEX "idx_lending_payments_payment_date" ON "public"."lending_payments" USING "btree" ("payment_date");
+
+
+--
+CREATE INDEX "idx_lending_payments_user_id" ON "public"."lending_payments" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_lending_status" ON "public"."lending" USING "btree" ("status");
+
+
+--
+CREATE INDEX "idx_lending_type" ON "public"."lending" USING "btree" ("type");
+
+
+--
+CREATE INDEX "idx_lending_user_id" ON "public"."lending" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_loans_account_id" ON "public"."loans" USING "btree" ("account_id");
+
+
+--
+CREATE INDEX "idx_loans_category_id" ON "public"."loans" USING "btree" ("category_id");
+
+
+--
+CREATE INDEX "idx_loans_metadata_purchase_category" ON "public"."loans" USING "btree" ((("metadata" ->> 'purchase_category'::"text"))) WHERE ("type" = 'purchase_emi'::"public"."loan_type");
+
+
+--
+CREATE INDEX "idx_loans_next_due_date" ON "public"."loans" USING "btree" ("next_due_date");
+
+
+--
+CREATE INDEX "idx_loans_payment_day" ON "public"."loans" USING "btree" ("payment_day");
+
+
+--
+CREATE INDEX "idx_loans_status" ON "public"."loans" USING "btree" ("status");
+
+
+--
+CREATE INDEX "idx_loans_type_purchase_emi" ON "public"."loans" USING "btree" ("user_id", "type") WHERE ("type" = 'purchase_emi'::"public"."loan_type");
+
+
+--
+CREATE INDEX "idx_loans_user_id" ON "public"."loans" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_notifications_created_at" ON "public"."notifications" USING "btree" ("created_at");
+
+
+--
+CREATE INDEX "idx_notifications_is_read" ON "public"."notifications" USING "btree" ("is_read");
+
+
+--
+CREATE INDEX "idx_notifications_user_id" ON "public"."notifications" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_profiles_active" ON "public"."profiles" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_profiles_email" ON "public"."profiles" USING "btree" ("email");
+
+
+--
+CREATE INDEX "idx_profiles_role_id" ON "public"."profiles" USING "btree" ("role_id");
+
+
+--
+CREATE INDEX "idx_profiles_user_id" ON "public"."profiles" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_recurring_transactions_active" ON "public"."recurring_transactions" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_recurring_transactions_next_execution" ON "public"."recurring_transactions" USING "btree" ("next_execution");
+
+
+--
+CREATE INDEX "idx_recurring_transactions_user_id" ON "public"."recurring_transactions" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_role_permissions_permission_id" ON "public"."role_permissions" USING "btree" ("permission_id");
+
+
+--
+CREATE INDEX "idx_role_permissions_role_id" ON "public"."role_permissions" USING "btree" ("role_id");
+
+
+--
+CREATE INDEX "idx_subcategories_active" ON "public"."subcategories" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_subcategories_category_active" ON "public"."subcategories" USING "btree" ("category_id", "is_active");
+
+
+--
+CREATE INDEX "idx_subcategories_category_id" ON "public"."subcategories" USING "btree" ("category_id");
+
+
+--
+CREATE INDEX "idx_subcategories_sort_order" ON "public"."subcategories" USING "btree" ("sort_order");
+
+
+--
+CREATE INDEX "idx_subscription_history_user_id" ON "public"."subscription_history" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_subscription_payments_coupon_id" ON "public"."subscription_payments" USING "btree" ("coupon_id");
+
+
+--
+CREATE INDEX "idx_subscription_payments_created_at" ON "public"."subscription_payments" USING "btree" ("created_at");
+
+
+--
+CREATE INDEX "idx_subscription_payments_status" ON "public"."subscription_payments" USING "btree" ("status");
+
+
+--
+CREATE INDEX "idx_subscription_payments_user_id" ON "public"."subscription_payments" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_transactions_account_id" ON "public"."transactions" USING "btree" ("account_id");
+
+
+--
+CREATE INDEX "idx_transactions_category_id" ON "public"."transactions" USING "btree" ("category_id");
+
+
+--
+CREATE INDEX "idx_transactions_created_at" ON "public"."transactions" USING "btree" ("created_at");
+
+
+--
+CREATE INDEX "idx_transactions_date" ON "public"."transactions" USING "btree" ("date");
+
+
+--
+CREATE INDEX "idx_transactions_investment_id" ON "public"."transactions" USING "btree" ("investment_id");
+
+
+--
+CREATE INDEX "idx_transactions_investment_transaction_id" ON "public"."transactions" USING "btree" ("investment_transaction_id");
+
+
+--
+CREATE INDEX "idx_transactions_is_investment_related" ON "public"."transactions" USING "btree" ("is_investment_related");
+
+
+--
+CREATE INDEX "idx_transactions_recurring_template_id" ON "public"."transactions" USING "btree" ("recurring_template_id");
+
+
+--
+CREATE INDEX "idx_transactions_type" ON "public"."transactions" USING "btree" ("type");
+
+
+--
+CREATE INDEX "idx_transactions_user_date" ON "public"."transactions" USING "btree" ("user_id", "date");
+
+
+--
+CREATE INDEX "idx_transactions_user_id" ON "public"."transactions" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_transactions_user_type" ON "public"."transactions" USING "btree" ("user_id", "type");
+
+
+--
+CREATE INDEX "idx_user_permissions_permission_id" ON "public"."user_permissions" USING "btree" ("permission_id");
+
+
+--
+CREATE INDEX "idx_user_permissions_user_id" ON "public"."user_permissions" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_user_sessions_active" ON "public"."user_sessions" USING "btree" ("is_active");
+
+
+--
+CREATE INDEX "idx_user_sessions_expires" ON "public"."user_sessions" USING "btree" ("expires_at");
+
+
+--
+CREATE INDEX "idx_user_sessions_user_id" ON "public"."user_sessions" USING "btree" ("user_id");
+
+
+--
+CREATE INDEX "idx_user_subscriptions_status_end_date" ON "public"."user_subscriptions" USING "btree" ("status", "end_date");
+
+
+--
+CREATE INDEX "idx_user_subscriptions_user_id" ON "public"."user_subscriptions" USING "btree" ("user_id");
+
+
