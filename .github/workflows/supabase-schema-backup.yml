@@ -39,7 +39,15 @@ jobs:
     - name: Link to Supabase project
       run: |
         npx supabase link --project-ref $SUPABASE_PROJECT_ID --password $SUPABASE_DB_PASSWORD
-        
+
+    - name: Handle migration state and pull schema
+      run: |
+        # Clear any local migration state that might conflict with remote
+        rm -rf supabase/migrations/* 2>/dev/null || true
+
+        # Try to pull schema, but don't fail if migration history conflicts
+        npx supabase db pull --schema public,auth,extensions,storage || echo "Warning: Schema pull failed, continuing with direct dump"
+
     - name: Create backup directory
       run: |
         mkdir -p database/backup/schema
@@ -51,11 +59,6 @@ jobs:
         mkdir -p database/backup/sequences
         mkdir -p database/backup/indexes
         
-    - name: Pull full schema from Supabase
-      run: |
-        # Pull all schema changes including functions, triggers, policies
-        npx supabase db pull --schema public,auth,extensions,storage
-
     - name: Generate comprehensive schema dump
       run: |
         # Generate a complete SQL dump of the schema (schema only, no data)
