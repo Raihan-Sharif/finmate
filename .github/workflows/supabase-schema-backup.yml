@@ -21,14 +21,13 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
     - name: Install Supabase CLI
       run: |
-        npm install -g supabase
+        # Download and install Supabase CLI binary
+        curl -L "https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
+        tar -xzf supabase.tar.gz
+        sudo mv supabase /usr/local/bin/supabase
+        chmod +x /usr/local/bin/supabase
         supabase --version
         
     - name: Login to Supabase
