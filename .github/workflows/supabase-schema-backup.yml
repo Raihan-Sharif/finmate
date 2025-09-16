@@ -58,17 +58,17 @@ jobs:
 
     - name: Generate comprehensive schema dump
       run: |
-        # Generate a complete SQL dump of the schema
-        npx supabase db dump --data-only=false --schema-only=true --file=database/backup/schema/complete_schema.sql
+        # Generate a complete SQL dump of the schema (schema only, no data)
+        npx supabase db dump -f database/backup/schema/complete_schema.sql
 
         # Generate individual component dumps for better organization
-        npx supabase db dump --data-only=false --schema-only=true --schema=public --file=database/backup/schema/public_schema.sql
-        npx supabase db dump --data-only=false --schema-only=true --schema=auth --file=database/backup/schema/auth_schema.sql
-        npx supabase db dump --data-only=false --schema-only=true --schema=storage --file=database/backup/schema/storage_schema.sql
-        npx supabase db dump --data-only=false --schema-only=true --schema=extensions --file=database/backup/schema/extensions_schema.sql
+        npx supabase db dump -s public -f database/backup/schema/public_schema.sql
+        npx supabase db dump -s auth -f database/backup/schema/auth_schema.sql
+        npx supabase db dump -s storage -f database/backup/schema/storage_schema.sql
+        npx supabase db dump -s extensions -f database/backup/schema/extensions_schema.sql
 
         # Generate a data-only dump for reference (without sensitive data)
-        npx supabase db dump --data-only=true --schema-only=false --exclude-table-data='auth.*' --file=database/backup/schema/reference_data.sql
+        npx supabase db dump --data-only -x 'auth.*' -f database/backup/schema/reference_data.sql
         
     - name: Extract and organize database functions
       run: |
