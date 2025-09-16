@@ -1,0 +1,338 @@
+name: Backup Supabase Schema
+
+on:
+  schedule:
+    # Run nightly at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+  
+env:
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+  SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+jobs:
+  backup-schema:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install Supabase CLI
+      run: |
+        npm install -g supabase
+        supabase --version
+        
+    - name: Login to Supabase
+      run: |
+        supabase login --token $SUPABASE_ACCESS_TOKEN
+        
+    - name: Initialize Supabase locally
+      run: |
+        supabase init --with-vscode-settings=false
+        
+    - name: Link to Supabase project  
+      run: |
+        supabase link --project-ref $SUPABASE_PROJECT_ID --password $SUPABASE_DB_PASSWORD
+        
+    - name: Create backup directory
+      run: |
+        mkdir -p database/backup/schema
+        mkdir -p database/backup/functions
+        mkdir -p database/backup/policies
+        mkdir -p database/backup/triggers
+        mkdir -p database/backup/views
+        mkdir -p database/backup/types
+        mkdir -p database/backup/sequences
+        mkdir -p database/backup/indexes
+        
+    - name: Pull full schema from Supabase
+      run: |
+        # Pull all schema changes including functions, triggers, policies
+        supabase db pull --schema public,auth,extensions,storage
+        
+    - name: Generate comprehensive schema dump
+      run: |
+        # Generate a complete SQL dump of the schema
+        supabase db dump --data-only=false --schema-only=true --file=database/backup/schema/complete_schema.sql
+
+        # Generate individual component dumps for better organization
+        supabase db dump --data-only=false --schema-only=true --schema=public --file=database/backup/schema/public_schema.sql
+        supabase db dump --data-only=false --schema-only=true --schema=auth --file=database/backup/schema/auth_schema.sql
+        supabase db dump --data-only=false --schema-only=true --schema=storage --file=database/backup/schema/storage_schema.sql
+        supabase db dump --data-only=false --schema-only=true --schema=extensions --file=database/backup/schema/extensions_schema.sql
+
+        # Generate a data-only dump for reference (without sensitive data)
+        supabase db dump --data-only=true --schema-only=false --exclude-table-data='auth.*' --file=database/backup/schema/reference_data.sql
+        
+    - name: Extract and organize database functions
+      run: |
+        # Copy edge functions from supabase/functions if they exist
+        if [ -d "supabase/functions" ]; then
+          cp -r supabase/functions/* database/backup/functions/ 2>/dev/null || true
+        fi
+
+        # Extract ONLY user-defined database functions (exclude system functions)
+        # Filter out system functions and keep only custom functions
+        cat database/backup/schema/complete_schema.sql | \
+        awk '/CREATE OR REPLACE FUNCTION/{
+          # Skip system functions (those in pg_catalog, information_schema, auth, etc.)
+          if ($0 !~ /pg_catalog\./ &&
+              $0 !~ /information_schema\./ &&
+              $0 !~ /auth\./ &&
+              $0 !~ /storage\./ &&
+              $0 !~ /realtime\./ &&
+              $0 !~ /supabase_/ &&
+              $0 !~ /_realtime/ &&
+              $0 !~ /handle_new_user/ &&
+              $0 !~ /vector_/ &&
+              $0 !~ /embedding_/) {
+            print_function = 1
+            print $0
+          } else {
+            print_function = 0
+          }
+          next
+        }
+        print_function && /^$$/ {
+          print_function = 0
+          print $0
+          next
+        }
+        print_function {print}' > database/backup/functions/database_functions.sql 2>/dev/null || echo "-- No user-defined functions found" > database/backup/functions/database_functions.sql
+
+        # Extract only user-defined function signatures for documentation
+        cat database/backup/schema/complete_schema.sql | \
+        grep "CREATE OR REPLACE FUNCTION" | \
+        grep -v -E "(pg_catalog\.|information_schema\.|auth\.|storage\.|realtime\.|supabase_|_realtime|handle_new_user|vector_|embedding_)" | \
+        sed 's/CREATE OR REPLACE FUNCTION //' > database/backup/functions/function_signatures.txt 2>/dev/null || echo "No user-defined functions found" > database/backup/functions/function_signatures.txt
+        
+    - name: Extract policies, triggers, views, and other components
+      run: |
+        # Extract RLS policies
+        cat database/backup/schema/complete_schema.sql | grep -A 10 -B 2 "CREATE POLICY\|ALTER TABLE.*ENABLE ROW LEVEL SECURITY" > database/backup/policies/rls_policies.sql 2>/dev/null || echo "-- No RLS policies found" > database/backup/policies/rls_policies.sql
+
+        # Extract policy summaries for documentation
+        cat database/backup/schema/complete_schema.sql | grep "CREATE POLICY" | awk '{print $3 " ON " $5}' > database/backup/policies/policy_summary.txt 2>/dev/null || echo "No policies found" > database/backup/policies/policy_summary.txt
+
+        # Extract triggers
+        cat database/backup/schema/complete_schema.sql | grep -A 10 -B 2 "CREATE TRIGGER\|CREATE OR REPLACE FUNCTION.*TRIGGER" > database/backup/triggers/triggers.sql 2>/dev/null || echo "-- No triggers found" > database/backup/triggers/triggers.sql
+
+        # Extract ONLY user-defined trigger functions (exclude system trigger functions)
+        cat database/backup/schema/complete_schema.sql | \
+        grep -A 30 "CREATE OR REPLACE FUNCTION.*trigger" | \
+        grep -v -E "(pg_catalog\.|information_schema\.|auth\.|storage\.|realtime\.|supabase_|_realtime|handle_new_user)" > database/backup/triggers/trigger_functions.sql 2>/dev/null || echo "-- No user-defined trigger functions found" > database/backup/triggers/trigger_functions.sql
+
+        # Extract views
+        cat database/backup/schema/complete_schema.sql | grep -A 20 "CREATE VIEW\|CREATE OR REPLACE VIEW" > database/backup/views/views.sql 2>/dev/null || echo "-- No views found" > database/backup/views/views.sql
+
+        # Extract custom types and enums
+        cat database/backup/schema/complete_schema.sql | grep -A 10 "CREATE TYPE\|CREATE DOMAIN" > database/backup/types/custom_types.sql 2>/dev/null || echo "-- No custom types found" > database/backup/types/custom_types.sql
+
+        # Extract sequences
+        cat database/backup/schema/complete_schema.sql | grep -A 5 "CREATE SEQUENCE" > database/backup/sequences/sequences.sql 2>/dev/null || echo "-- No sequences found" > database/backup/sequences/sequences.sql
+
+        # Extract indexes
+        cat database/backup/schema/complete_schema.sql | grep -A 2 "CREATE.*INDEX" > database/backup/indexes/indexes.sql 2>/dev/null || echo "-- No custom indexes found" > database/backup/indexes/indexes.sql
+        
+    - name: Create comprehensive schema summary
+      run: |
+        cat > database/SCHEMA_SUMMARY.md << 'EOF'
+        # 🗄️ Supabase Database Schema Backup
+
+        **Last Updated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+        **Project ID:** $SUPABASE_PROJECT_ID
+        **Backup Location:** `database/backup/`
+
+        ## 📁 Directory Structure
+
+        ```
+        database/backup/
+        ├── schema/                     # Complete database schema dumps
+        │   ├── complete_schema.sql     # Full schema dump (ALL components)
+        │   ├── public_schema.sql       # Public schema only
+        │   ├── auth_schema.sql         # Authentication schema
+        │   ├── storage_schema.sql      # Storage schema
+        │   ├── extensions_schema.sql   # Extensions schema
+        │   └── reference_data.sql      # Sample data (non-sensitive)
+        ├── functions/                  # User-defined database functions and edge functions
+        │   ├── database_functions.sql  # User-defined database functions only
+        │   └── function_signatures.txt # User function signatures documentation
+        ├── policies/                   # Row Level Security policies
+        │   ├── rls_policies.sql        # All RLS policies
+        │   └── policy_summary.txt      # Policy documentation
+        ├── triggers/                   # Database triggers
+        │   ├── triggers.sql            # All triggers
+        │   └── trigger_functions.sql   # Trigger functions
+        ├── views/                      # Database views
+        │   └── views.sql               # All views
+        ├── types/                      # Custom types and enums
+        │   └── custom_types.sql        # All custom types
+        ├── sequences/                  # Database sequences
+        │   └── sequences.sql           # All sequences
+        ├── indexes/                    # Database indexes
+        │   └── indexes.sql             # All custom indexes
+        └── migrations/                 # Supabase migrations
+        ```
+
+        ## 📊 Schema Statistics
+
+        **Tables:** $(cat database/backup/schema/complete_schema.sql | grep -c "CREATE TABLE" || echo "0")
+        **Functions:** $(cat database/backup/schema/complete_schema.sql | grep -c "CREATE OR REPLACE FUNCTION" || echo "0")
+        **Policies:** $(cat database/backup/policies/rls_policies.sql | grep -c "CREATE POLICY" || echo "0")
+        **Triggers:** $(cat database/backup/triggers/triggers.sql | grep -c "CREATE TRIGGER" || echo "0")
+        **Views:** $(cat database/backup/views/views.sql | grep -c "CREATE VIEW\|CREATE OR REPLACE VIEW" || echo "0")
+        **Custom Types:** $(cat database/backup/types/custom_types.sql | grep -c "CREATE TYPE\|CREATE DOMAIN" || echo "0")
+        **Sequences:** $(cat database/backup/sequences/sequences.sql | grep -c "CREATE SEQUENCE" || echo "0")
+        **Indexes:** $(cat database/backup/indexes/indexes.sql | grep -c "CREATE.*INDEX" || echo "0")
+
+        ## 🚀 Usage Instructions
+
+        ### Full Schema Restore
+        To restore complete schema to a new Supabase project:
+        ```bash
+        # 1. Create new Supabase project
+        # 2. Reset database (if needed)
+        supabase db reset
+
+        # 3. Apply complete schema
+        psql -h your-db-host -U postgres -d postgres -f database/backup/schema/complete_schema.sql
+        ```
+
+        ### Component-wise Restore
+        Apply specific components:
+        ```bash
+        # Apply only functions
+        psql -f database/backup/functions/database_functions.sql
+
+        # Apply only policies
+        psql -f database/backup/policies/rls_policies.sql
+
+        # Apply only triggers
+        psql -f database/backup/triggers/triggers.sql
+        ```
+
+        ## 🔧 Backup Components
+
+        This backup includes ALL database components:
+        - ✅ **Tables** - All table definitions and constraints
+        - ✅ **Functions** - User-defined database functions and edge functions (system functions excluded)
+        - ✅ **Policies** - Row Level Security (RLS) policies
+        - ✅ **Triggers** - All triggers and trigger functions
+        - ✅ **Views** - All database views
+        - ✅ **Types** - Custom types and enums
+        - ✅ **Sequences** - Auto-increment sequences
+        - ✅ **Indexes** - Performance indexes
+        - ✅ **Extensions** - PostgreSQL extensions
+        - ✅ **Migrations** - Supabase migration history
+
+        ## 📝 Notes
+
+        - 🤖 **Automated**: Generated nightly at 2:00 AM UTC by GitHub Actions
+        - 🔧 **Manual Trigger**: Available from the Actions tab
+        - 🔒 **Security**: Sensitive data (auth tables) excluded from reference data
+        - 📊 **Monitoring**: Detailed backup reports in GitHub Actions summaries
+        - 🔄 **Version Control**: All changes tracked in git history
+
+        ## 🆘 Support
+
+        If restoration fails:
+        1. Check PostgreSQL version compatibility
+        2. Ensure all required extensions are available
+        3. Review error logs for missing dependencies
+        4. Apply schema components in order: extensions → types → tables → functions → policies → triggers → views
+        EOF
+        
+    - name: Copy migrations and create backup inventory
+      run: |
+        # Copy migrations
+        if [ -d "supabase/migrations" ]; then
+          mkdir -p database/backup/migrations
+          cp -r supabase/migrations/* database/backup/migrations/ 2>/dev/null || true
+        fi
+
+        # Create backup inventory file
+        cat > database/backup/BACKUP_INVENTORY.md << 'EOF'
+        # 📋 Database Backup Inventory
+
+        **Generated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+        ## 📄 Files Generated
+
+        EOF
+
+        # Add file counts to inventory
+        echo "### Schema Files" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Complete Schema: $(wc -l < database/backup/schema/complete_schema.sql 2>/dev/null || echo "0") lines" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Public Schema: $(wc -l < database/backup/schema/public_schema.sql 2>/dev/null || echo "0") lines" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Auth Schema: $(wc -l < database/backup/schema/auth_schema.sql 2>/dev/null || echo "0") lines" >> database/backup/BACKUP_INVENTORY.md
+
+        echo "" >> database/backup/BACKUP_INVENTORY.md
+        echo "### Component Files" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Functions: $(find database/backup/functions -name "*.sql" 2>/dev/null | wc -l || echo "0") files" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Policies: $(find database/backup/policies -name "*.sql" 2>/dev/null | wc -l || echo "0") files" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Triggers: $(find database/backup/triggers -name "*.sql" 2>/dev/null | wc -l || echo "0") files" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Views: $(find database/backup/views -name "*.sql" 2>/dev/null | wc -l || echo "0") files" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Types: $(find database/backup/types -name "*.sql" 2>/dev/null | wc -l || echo "0") files" >> database/backup/BACKUP_INVENTORY.md
+        echo "- Migrations: $(find database/backup/migrations -name "*.sql" 2>/dev/null | wc -l || echo "0") files" >> database/backup/BACKUP_INVENTORY.md
+
+        echo "" >> database/backup/BACKUP_INVENTORY.md
+        echo "## 🔍 Verification Checksums" >> database/backup/BACKUP_INVENTORY.md
+        echo "\`\`\`" >> database/backup/BACKUP_INVENTORY.md
+        echo "Complete Schema: $(md5sum database/backup/schema/complete_schema.sql 2>/dev/null | cut -d' ' -f1 || echo "N/A")" >> database/backup/BACKUP_INVENTORY.md
+        echo "Functions: $(md5sum database/backup/functions/database_functions.sql 2>/dev/null | cut -d' ' -f1 || echo "N/A")" >> database/backup/BACKUP_INVENTORY.md
+        echo "Policies: $(md5sum database/backup/policies/rls_policies.sql 2>/dev/null | cut -d' ' -f1 || echo "N/A")" >> database/backup/BACKUP_INVENTORY.md
+        echo "\`\`\`" >> database/backup/BACKUP_INVENTORY.md
+        
+    - name: Set up git config
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+    - name: Check for changes and commit
+      run: |
+        git add database/
+
+        if git diff --staged --quiet; then
+          echo "No schema changes detected"
+          echo "STATUS=no-changes" >> $GITHUB_ENV
+        else
+          git commit -m "🗄️ Automated schema backup - $(date -u '+%Y-%m-%d %H:%M UTC')
+
+          📊 Backup Summary:
+          - Tables: $(cat database/backup/schema/complete_schema.sql | grep -c 'CREATE TABLE' || echo '0')
+          - Functions: $(cat database/backup/schema/complete_schema.sql | grep -c 'CREATE OR REPLACE FUNCTION' || echo '0')
+          - Policies: $(cat database/backup/policies/rls_policies.sql | grep -c 'CREATE POLICY' || echo '0')
+          - Views: $(cat database/backup/views/views.sql | grep -c 'CREATE VIEW\|CREATE OR REPLACE VIEW' || echo '0')
+
+          🔄 Auto-generated by GitHub Actions"
+          git push
+          echo "Schema backup completed and pushed to repository"
+          echo "STATUS=completed" >> $GITHUB_ENV
+        fi
+        
+    - name: Cleanup
+      run: |
+        # Clean up any sensitive files
+        rm -rf supabase/.env* 2>/dev/null || true
+        
+    - name: Generate backup report
+      run: |
+        echo "## 📊 Schema Backup Report" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:** ✅ Completed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "**Files backed up:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Complete schema dump" >> $GITHUB_STEP_SUMMARY
+        echo "- Individual schema components" >> $GITHUB_STEP_SUMMARY
+        echo "- Database functions" >> $GITHUB_STEP_SUMMARY
+        echo "- RLS policies" >> $GITHUB_STEP_SUMMARY
+        echo "- Triggers" >> $GITHUB_STEP_SUMMARY
+        echo "- Migrations" >> $GITHUB_STEP_SUMMARY
