@@ -40,9 +40,21 @@ import { format } from 'date-fns'
 interface PaymentRecord {
   id: string
   user_id: string
-  plan: { display_name: string }
-  payment_method: { display_name: string }
-  coupon?: { code: string }
+  plan: {
+    name: string
+    display_name: string
+    price_monthly?: number
+    price_yearly?: number
+  }
+  payment_method: {
+    name: string
+    display_name: string
+  }
+  coupon?: {
+    code: string
+    type: string
+    value: number
+  }
   billing_cycle: 'monthly' | 'yearly'
   base_amount: number
   discount_amount: number
@@ -56,8 +68,8 @@ interface PaymentRecord {
   verified_at?: string
   approved_at?: string
   rejected_at?: string
-  expired_at: string
   admin_notes?: string
+  rejection_reason?: string
   verified_by?: string
   profiles: {
     full_name: string
@@ -99,10 +111,18 @@ export function SubscriptionPaymentsAdmin() {
       // Transform the data to match expected format
       const transformedPayments = (result.payments || []).map((payment: any) => ({
         ...payment,
-        plan: payment.plan || { display_name: 'Unknown Plan' },
-        payment_method: payment.payment_method || { display_name: 'Unknown Method' },
+        plan: payment.plan || {
+          name: 'unknown',
+          display_name: 'Unknown Plan',
+          price_monthly: 0,
+          price_yearly: 0
+        },
+        payment_method: payment.payment_method || {
+          name: 'manual',
+          display_name: 'Manual Payment'
+        },
         coupon: payment.coupon || null,
-        profiles: payment.user || { full_name: 'Unknown User', email: 'unknown@example.com' }
+        profiles: payment.profiles || { full_name: 'Unknown User', email: 'unknown@example.com' }
       }))
 
       setPayments(transformedPayments)

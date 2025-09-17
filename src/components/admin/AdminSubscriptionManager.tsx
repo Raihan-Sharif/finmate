@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,16 +27,51 @@ import { cn } from '@/lib/utils'
 import { SubscriptionPaymentsAdmin } from './SubscriptionPaymentsAdmin'
 import { CouponAdmin } from './CouponAdmin'
 
+interface SubscriptionOverview {
+  total_users: number
+  active_subscriptions: number
+  pending_payments: number
+  total_revenue: number
+  monthly_revenue: number
+  coupon_usage: number
+  active_coupons: number
+  total_plans: number
+}
+
 export function AdminSubscriptionManager() {
   const t = useTranslations('admin')
   const [activeTab, setActiveTab] = useState('payments')
   const [refreshing, setRefreshing] = useState(false)
+  const [overview, setOverview] = useState<SubscriptionOverview | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const fetchOverview = async () => {
+    try {
+      const response = await fetch('/api/admin/subscription/overview')
+      const result = await response.json()
+
+      if (result.success) {
+        setOverview(result.overview)
+      } else {
+        console.error('Failed to fetch overview:', result.message)
+      }
+    } catch (error) {
+      console.error('Error fetching overview:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleRefresh = async () => {
     setRefreshing(true)
+    await fetchOverview()
     // Trigger refresh in child components
     setTimeout(() => setRefreshing(false), 1000)
   }
+
+  useEffect(() => {
+    fetchOverview()
+  }, [])
 
   const tabs = [
     {
@@ -107,31 +142,39 @@ export function AdminSubscriptionManager() {
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
             <CardContent className="p-4 text-center">
               <CreditCard className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">--</div>
-              <div className="text-sm text-blue-600 dark:text-blue-400">Total Payments</div>
+              <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                {loading ? '...' : overview?.pending_payments || 0}
+              </div>
+              <div className="text-sm text-blue-600 dark:text-blue-400">Pending Payments</div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border-purple-200 dark:border-purple-800">
             <CardContent className="p-4 text-center">
               <Gift className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">--</div>
+              <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                {loading ? '...' : overview?.active_coupons || 0}
+              </div>
               <div className="text-sm text-purple-600 dark:text-purple-400">Active Coupons</div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
             <CardContent className="p-4 text-center">
               <Users className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">--</div>
-              <div className="text-sm text-emerald-600 dark:text-emerald-400">Paid Users</div>
+              <div className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
+                {loading ? '...' : overview?.active_subscriptions || 0}
+              </div>
+              <div className="text-sm text-emerald-600 dark:text-emerald-400">Active Subscriptions</div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-800">
             <CardContent className="p-4 text-center">
               <DollarSign className="h-8 w-8 text-amber-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-amber-900 dark:text-amber-100">--</div>
+              <div className="text-2xl font-bold text-amber-900 dark:text-amber-100">
+                {loading ? '...' : `৳${overview?.monthly_revenue?.toLocaleString() || '0'}`}
+              </div>
               <div className="text-sm text-amber-600 dark:text-amber-400">Revenue (Month)</div>
             </CardContent>
           </Card>

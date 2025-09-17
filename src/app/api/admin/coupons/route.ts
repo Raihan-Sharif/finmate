@@ -29,9 +29,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Fetch all coupons using admin function (bypasses RLS)
+    // Fetch all coupons using direct query
     const { data: coupons, error } = await supabase
-      .rpc('admin_get_all_coupons')
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false })
 
     if (error) throw error
 
@@ -114,25 +116,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create coupon using admin function (bypasses RLS)
+    // Create coupon using direct insert
     const { data: couponResult, error } = await supabase
-      .rpc('admin_create_coupon', {
-        p_code: code.toUpperCase(),
-        p_description: description,
-        p_type: type,
-        p_value: parseFloat(value),
-        p_max_uses: max_uses ? parseInt(max_uses) : null,
-        p_max_uses_per_user: max_uses_per_user ? parseInt(max_uses_per_user) : null,
-        p_minimum_amount: minimum_amount ? parseFloat(minimum_amount) : null,
-        p_max_discount_amount: max_discount_amount ? parseFloat(max_discount_amount) : null,
-        p_expires_at: expires_at ? new Date(expires_at).toISOString() : null,
-        p_scope: scope || 'public',
-        p_is_active: is_active !== false
+      .from('coupons')
+      .insert({
+        code: code.toUpperCase(),
+        description: description,
+        value: parseFloat(value),
+        max_uses: max_uses ? parseInt(max_uses) : null,
+        max_uses_per_user: max_uses_per_user ? parseInt(max_uses_per_user) : null,
+        minimum_amount: minimum_amount ? parseFloat(minimum_amount) : 0,
+        max_discount_amount: max_discount_amount ? parseFloat(max_discount_amount) : null,
+        expires_at: expires_at ? new Date(expires_at).toISOString() : null,
+        scope: scope || 'public',
+        is_active: is_active !== false
       })
+      .select()
+      .single()
 
     if (error) throw error
 
-    const coupon = couponResult && couponResult.length > 0 ? couponResult[0] : null
+    const coupon = couponResult
     if (!coupon) throw new Error('Failed to create coupon')
 
     return NextResponse.json({
@@ -200,25 +204,30 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Update coupon using admin function (bypasses RLS)
+    // Build update object with only provided fields
+    const updateData: any = { updated_at: new Date().toISOString() }
+
+    if (description !== undefined) updateData.description = description
+    if (value !== undefined) updateData.value = parseFloat(value)
+    if (max_uses !== undefined) updateData.max_uses = max_uses ? parseInt(max_uses) : null
+    if (max_uses_per_user !== undefined) updateData.max_uses_per_user = max_uses_per_user ? parseInt(max_uses_per_user) : null
+    if (minimum_amount !== undefined) updateData.minimum_amount = minimum_amount ? parseFloat(minimum_amount) : 0
+    if (max_discount_amount !== undefined) updateData.max_discount_amount = max_discount_amount ? parseFloat(max_discount_amount) : null
+    if (expires_at !== undefined) updateData.expires_at = expires_at ? new Date(expires_at).toISOString() : null
+    if (scope !== undefined) updateData.scope = scope
+    if (is_active !== undefined) updateData.is_active = is_active
+
+    // Update coupon using direct update
     const { data: couponResult, error } = await supabase
-      .rpc('admin_update_coupon', {
-        p_coupon_id: coupon_id,
-        p_description: description,
-        p_type: type,
-        p_value: value !== undefined ? parseFloat(value) : null,
-        p_max_uses: max_uses !== undefined ? (max_uses ? parseInt(max_uses) : null) : null,
-        p_max_uses_per_user: max_uses_per_user !== undefined ? (max_uses_per_user ? parseInt(max_uses_per_user) : null) : null,
-        p_minimum_amount: minimum_amount !== undefined ? (minimum_amount ? parseFloat(minimum_amount) : null) : null,
-        p_max_discount_amount: max_discount_amount !== undefined ? (max_discount_amount ? parseFloat(max_discount_amount) : null) : null,
-        p_expires_at: expires_at !== undefined ? (expires_at ? new Date(expires_at).toISOString() : null) : null,
-        p_scope: scope,
-        p_is_active: is_active
-      })
+      .from('coupons')
+      .update(updateData)
+      .eq('id', coupon_id)
+      .select()
+      .single()
 
     if (error) throw error
 
-    const coupon = couponResult && couponResult.length > 0 ? couponResult[0] : null
+    const coupon = couponResult
     if (!coupon) throw new Error('Failed to update coupon')
 
     return NextResponse.json({
@@ -288,11 +297,11 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Delete coupon using admin function (bypasses RLS)
-    const { data: result, error } = await supabase
-      .rpc('admin_delete_coupon', {
-        p_coupon_id: couponId
-      })
+    // Delete coupon using direct delete
+    const { error } = await supabase
+      .from('coupons')
+      .delete()
+      .eq('id', couponId)
 
     if (error) throw error
 

@@ -41,5 +41,5 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
 , "tailwind.config.js", "next.config.js"  ],
-  "exclude": ["node_modules", "supabase/functions"]
+  "exclude": ["node_modules", "supabase/functions", "database/backup/functions"]
 }

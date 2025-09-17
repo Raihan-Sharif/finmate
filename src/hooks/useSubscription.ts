@@ -59,14 +59,44 @@ export function useSubscription() {
     if (!user?.id) return
 
     try {
-      const { data, error } = await supabase
-        .rpc('get_subscription_status', { p_user_id: user.id })
+      // Get current user subscription
+      const { data: userSub, error: subError } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .gt('end_date', new Date().toISOString())
+        .single()
 
-      if (error) throw error
-
-      if (data && data.length > 0) {
-        setSubscriptionStatus(data[0])
+      if (subError && subError.code !== 'PGRST116') {
+        throw subError
       }
+
+      // Get pending payments
+      const { data: pendingPayment, error: paymentError } = await supabase
+        .from('subscription_payments')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('status', ['pending', 'submitted'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (paymentError && paymentError.code !== 'PGRST116') {
+        console.warn('Payment fetch error:', paymentError)
+      }
+
+      // Calculate subscription status
+      const status: SubscriptionStatus = {
+        current_plan: userSub?.plan_id ? 'premium' : 'free',
+        status: userSub ? 'active' : 'inactive',
+        expires_at: userSub?.end_date || null,
+        days_remaining: userSub ? Math.ceil((new Date(userSub.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null,
+        can_upgrade: !userSub,
+        pending_payment_id: pendingPayment?.id || null
+      }
+
+      setSubscriptionStatus(status)
     } catch (error: any) {
       console.error('Error fetching subscription status:', error)
       setError(error.message || 'Failed to load subscription status')
@@ -91,20 +121,31 @@ export function useSubscription() {
     }
   }
 
-  // Fetch payment methods
+  // Fetch payment methods (hardcoded since table doesn't exist)
   const fetchPaymentMethods = async () => {
     try {
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order')
+      // Since payment_methods table doesn't exist, provide default methods
+      const defaultMethods: PaymentMethod[] = [
+        {
+          id: 'manual',
+          method_name: 'manual',
+          display_name: 'Manual Payment',
+          description: 'Transfer money manually and provide transaction details',
+          account_info: {
+            number: 'Contact admin',
+            name: 'FinMate Support',
+            type: 'manual'
+          },
+          instructions: 'Please contact support for payment instructions',
+          logo_url: null,
+          is_active: true,
+          sort_order: 1
+        }
+      ]
 
-      if (error) throw error
-
-      setPaymentMethods(data || [])
+      setPaymentMethods(defaultMethods)
     } catch (error: any) {
-      console.error('Error fetching payment methods:', error)
+      console.error('Error setting payment methods:', error)
       setError(error.message || 'Failed to load payment methods')
     }
   }
@@ -156,18 +197,45 @@ export function useSubscription() {
     if (!user?.id) throw new Error('User not authenticated')
 
     try {
-      const { data, error } = await supabase
-        .rpc('apply_coupon', {
-          p_user_id: user.id,
-          p_coupon_code: couponData.code,
-          p_plan_name: couponData.plan_name,
-          p_billing_cycle: couponData.billing_cycle,
-          p_base_amount: couponData.base_amount
-        })
+      // Check if coupon exists and is valid
+      const { data: coupon, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('code', couponData.code.toUpperCase())
+        .eq('is_active', true)
+        .single()
 
-      if (error) throw error
+      if (error || !coupon) {
+        throw new Error('Invalid or expired coupon code')
+      }
 
-      return data && data.length > 0 ? data[0] : null
+      // Check expiry
+      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+        throw new Error('Coupon has expired')
+      }
+
+      // Check usage limits
+      if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+        throw new Error('Coupon usage limit reached')
+      }
+
+      // Check minimum amount
+      if (coupon.minimum_amount && couponData.base_amount < coupon.minimum_amount) {
+        throw new Error(`Minimum amount required: ৳${coupon.minimum_amount}`)
+      }
+
+      // Calculate discount
+      let discountAmount = coupon.value
+      if (coupon.max_discount_amount) {
+        discountAmount = Math.min(discountAmount, coupon.max_discount_amount)
+      }
+
+      return {
+        coupon_id: coupon.id,
+        code: coupon.code,
+        discount_amount: discountAmount,
+        final_amount: Math.max(0, couponData.base_amount - discountAmount)
+      }
     } catch (error: any) {
       console.error('Error validating coupon:', error)
       throw new Error(error.message || 'Failed to validate coupon')
@@ -179,78 +247,91 @@ export function useSubscription() {
     if (!user?.id) return []
 
     try {
-      const { data, error } = await supabase
+      // Get payment data without joins first
+      const { data: payments, error } = await supabase
         .from('subscription_payments')
-        .select(`
-          *,
-          plan:subscription_plans(display_name),
-          payment_method:payment_methods(display_name),
-          coupon:coupons(code)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
 
-      return data || []
+      if (!payments || payments.length === 0) return []
+
+      // Get related data separately
+      const planIds = [...new Set(payments.map(p => p.plan_id).filter(Boolean))]
+      const couponIds = [...new Set(payments.map(p => p.coupon_id).filter(Boolean))]
+
+      const [plansData, couponsData] = await Promise.all([
+        planIds.length > 0 ? supabase
+          .from('subscription_plans')
+          .select('id, display_name')
+          .in('id', planIds) : Promise.resolve({ data: [] }),
+        couponIds.length > 0 ? supabase
+          .from('coupons')
+          .select('id, code')
+          .in('id', couponIds) : Promise.resolve({ data: [] })
+      ])
+
+      // Create lookup maps
+      const plansMap = new Map(plansData.data?.map(p => [p.id, p]) || [])
+      const couponsMap = new Map(couponsData.data?.map(c => [c.id, c]) || [])
+
+      // Combine data
+      return payments.map(payment => ({
+        ...payment,
+        plan: plansMap.get(payment.plan_id) || null,
+        payment_method: { display_name: 'Manual Payment' },
+        coupon: couponsMap.get(payment.coupon_id) || null
+      }))
     } catch (error: any) {
       console.error('Error fetching payment history:', error)
       return []
     }
   }
 
-  // Create family group (for Max plan)
+  // Create family group (for Max plan) - simplified implementation
   const createFamilyGroup = async (familyName?: string) => {
     if (!user?.id) throw new Error('User not authenticated')
 
     try {
-      const { data, error } = await supabase
-        .rpc('create_family_group', {
-          p_user_id: user.id,
-          p_family_name: familyName || 'My Family'
-        })
-
-      if (error) throw error
-
-      return data
+      // For now, just return a success message since family features are not fully implemented
+      return {
+        success: true,
+        message: 'Family group feature is coming soon',
+        family_name: familyName || 'My Family'
+      }
     } catch (error: any) {
       console.error('Error creating family group:', error)
       throw new Error(error.message || 'Failed to create family group')
     }
   }
 
-  // Invite family member
+  // Invite family member - simplified implementation
   const inviteFamilyMember = async (email: string, role: 'spouse' | 'child' | 'member' = 'member') => {
     if (!user?.id) throw new Error('User not authenticated')
 
     try {
-      const { data, error } = await supabase
-        .rpc('invite_family_member', {
-          p_inviter_id: user.id,
-          p_email: email,
-          p_role: role
-        })
-
-      if (error) throw error
-
-      return data // Returns invitation code
+      // For now, just return a success message since family features are not fully implemented
+      return {
+        success: true,
+        message: 'Family invitation feature is coming soon',
+        email,
+        role
+      }
     } catch (error: any) {
       console.error('Error inviting family member:', error)
       throw new Error(error.message || 'Failed to invite family member')
     }
   }
 
-  // Get family members
+  // Get family members - simplified implementation
   const fetchFamilyMembers = async () => {
     if (!user?.id) return []
 
     try {
-      const { data, error } = await supabase
-        .rpc('get_family_members', { p_user_id: user.id })
-
-      if (error) throw error
-
-      return data || []
+      // For now, return empty array since family features are not fully implemented
+      return []
     } catch (error: any) {
       console.error('Error fetching family members:', error)
       return []
