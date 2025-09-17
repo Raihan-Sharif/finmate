@@ -32,25 +32,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get query parameters for filtering and pagination
+    // Get query parameters for filtering
     const url = new URL(request.url)
-    const status = url.searchParams.get('status') || null
-    const limit = parseInt(url.searchParams.get('limit') || '50')
-    const offset = parseInt(url.searchParams.get('offset') || '0')
+    const status = url.searchParams.get('status') || 'all'
 
-    // Build the query for subscription payments (simplified without joins)
-    let paymentsQuery = supabase
-      .from('subscription_payments')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    // Add status filter if provided
-    if (status && status !== 'all') {
-      paymentsQuery = paymentsQuery.eq('status', status)
-    }
-
-    const { data: paymentsData, error: paymentsError } = await paymentsQuery
+    // Use the simplified admin function to get subscription payments with all related data
+    const { data: paymentsData, error: paymentsError } = await supabase
+      .rpc('admin_get_subscription_payments')
 
     if (paymentsError) {
       console.error('Error fetching payments:', paymentsError)
@@ -60,133 +48,61 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get related data separately to avoid join issues
-    const userIds = paymentsData ? [...new Set(paymentsData.map(p => p.user_id).filter(Boolean))] : []
-    const planIds = paymentsData ? [...new Set(paymentsData.map(p => p.plan_id).filter(Boolean))] : []
-    const couponIds = paymentsData ? [...new Set(paymentsData.map(p => p.coupon_id).filter(Boolean))] : []
-
-    // Fetch related data
-    const [profilesData, plansData, couponsData] = await Promise.all([
-      userIds.length > 0 ? supabase
-        .from('profiles')
-        .select('user_id, full_name')
-        .in('user_id', userIds) : Promise.resolve({ data: [] }),
-      planIds.length > 0 ? supabase
-        .from('subscription_plans')
-        .select('id, plan_name, display_name, price_monthly, price_yearly')
-        .in('id', planIds) : Promise.resolve({ data: [] }),
-      couponIds.length > 0 ? supabase
-        .from('coupons')
-        .select('id, code, value')
-        .in('id', couponIds) : Promise.resolve({ data: [] })
-    ])
-
-    // Create lookup maps
-    const profilesMap = new Map(profilesData.data?.map(p => [p.user_id, p]) || [])
-    const plansMap = new Map(plansData.data?.map(p => [p.id, p]) || [])
-    const couponsMap = new Map(couponsData.data?.map(c => [c.id, c]) || [])
-
-    // Get user emails separately (simplified approach)
-    const userEmails: Record<string, string> = {}
-    for (const userId of userIds) {
-      try {
-        // Try to get email from auth, but don't fail if it doesn't work
-        const { data: authUser } = await supabase.auth.admin.getUserById(userId)
-        if (authUser.user?.email) {
-          userEmails[userId] = authUser.user.email
-        } else {
-          userEmails[userId] = `user-${userId.slice(-8)}@example.com`
-        }
-      } catch (error) {
-        // Fallback email
-        userEmails[userId] = `user-${userId.slice(-8)}@example.com`
-      }
-    }
-
-    // Get total count for pagination
-    let countQuery = supabase
-      .from('subscription_payments')
-      .select('*', { count: 'exact', head: true })
-
+    // Filter by status if specified (done in JavaScript since the function returns all)
+    let filteredPayments = paymentsData || []
     if (status && status !== 'all') {
-      countQuery = countQuery.eq('status', status)
+      filteredPayments = filteredPayments.filter((payment: any) => payment.status === status)
     }
 
-    const { count: totalCount, error: countError } = await countQuery
-
-    if (countError) {
-      console.error('Error fetching payments count:', countError)
-      return NextResponse.json(
-        { success: false, message: 'Failed to fetch payments count' },
-        { status: 500 }
-      )
-    }
-
-    // Transform the data for frontend consumption
-    const transformedPayments = (paymentsData || []).map((payment: any) => {
-      const profile = profilesMap.get(payment.user_id)
-      const plan = plansMap.get(payment.plan_id)
-      const coupon = couponsMap.get(payment.coupon_id)
-
-      return {
-        id: payment.id,
-        user_id: payment.user_id,
-        plan_id: payment.plan_id,
-        billing_cycle: payment.billing_cycle,
-        transaction_id: payment.transaction_id,
-        sender_number: payment.sender_number,
-        base_amount: payment.base_amount,
-        discount_amount: payment.discount_amount,
-        final_amount: payment.final_amount,
-        coupon_id: payment.coupon_id,
-        status: payment.status,
-        admin_notes: payment.admin_notes,
-        rejection_reason: payment.rejection_reason,
-        submitted_at: payment.submitted_at,
-        verified_at: payment.verified_at,
-        approved_at: payment.approved_at,
-        rejected_at: payment.rejected_at,
-        created_at: payment.created_at,
-        updated_at: payment.updated_at,
-        currency: payment.currency || 'BDT',
-        plan: plan ? {
-          name: plan.plan_name,
-          display_name: plan.display_name,
-          price_monthly: plan.price_monthly,
-          price_yearly: plan.price_yearly
-        } : {
-          name: 'unknown',
-          display_name: 'Unknown Plan',
-          price_monthly: 0,
-          price_yearly: 0
-        },
-        payment_method: {
-          name: 'manual',
-          display_name: 'Manual Payment'
-        },
-        coupon: coupon ? {
-          code: coupon.code,
-          type: 'percentage', // Default since type column doesn't exist
-          value: coupon.value
-        } : null,
-        profiles: {
-          full_name: profile?.full_name || 'Unknown User',
-          email: userEmails[payment.user_id] || 'unknown@example.com'
-        }
+    // Transform the data for frontend consumption (the function already returns structured data)
+    const transformedPayments = filteredPayments.map((payment: any) => ({
+      id: payment.id,
+      user_id: payment.user_id,
+      plan_id: payment.plan_id,
+      payment_method_id: payment.payment_method_id,
+      billing_cycle: payment.billing_cycle,
+      transaction_id: payment.transaction_id,
+      sender_number: payment.sender_number,
+      base_amount: payment.base_amount,
+      discount_amount: payment.discount_amount,
+      final_amount: payment.final_amount,
+      coupon_id: payment.coupon_id,
+      status: payment.status,
+      admin_notes: payment.admin_notes,
+      rejection_reason: payment.rejection_reason,
+      submitted_at: payment.submitted_at,
+      verified_at: payment.verified_at,
+      approved_at: payment.approved_at,
+      rejected_at: payment.rejected_at,
+      created_at: payment.created_at,
+      updated_at: payment.updated_at,
+      currency: payment.currency || 'BDT',
+      plan: {
+        name: payment.plan_name || 'unknown',
+        display_name: payment.plan_display_name || 'Unknown Plan',
+        price_monthly: payment.plan_price_monthly || 0,
+        price_yearly: payment.plan_price_yearly || 0
+      },
+      payment_method: {
+        name: payment.payment_method_name || 'manual',
+        display_name: payment.payment_method_display_name || 'Manual Payment'
+      },
+      coupon: payment.coupon_code ? {
+        code: payment.coupon_code,
+        type: payment.coupon_type || 'percentage', // Use actual type from database
+        value: payment.coupon_value
+      } : null,
+      profiles: {
+        full_name: payment.user_full_name || 'Unknown User',
+        email: payment.user_email || 'unknown@example.com'
       }
-    })
+    }))
 
     return NextResponse.json({
       success: true,
       payments: transformedPayments,
-      total: totalCount || 0,
-      hasMore: (offset + limit) < (totalCount || 0),
-      pagination: {
-        offset,
-        limit,
-        total: totalCount || 0,
-        pages: Math.ceil((totalCount || 0) / limit)
-      }
+      total: transformedPayments.length,
+      hasMore: false
     })
 
   } catch (error: any) {

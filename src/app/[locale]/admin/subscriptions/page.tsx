@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { SubscriptionManager } from '@/components/admin/SubscriptionManager'
+import { EnhancedSubscriptionManager } from '@/components/admin/EnhancedSubscriptionManager'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Crown, CreditCard, Gift, TrendingUp, Loader2 } from 'lucide-react'
@@ -62,7 +62,7 @@ export default async function SubscriptionsAdminPage() {
       {/* Main Content */}
       <div className="relative z-20 container mx-auto px-4 py-8">
         <Suspense fallback={<SubscriptionManagerSkeleton />}>
-          <SubscriptionManager />
+          <EnhancedSubscriptionManager />
         </Suspense>
       </div>
     </div>
