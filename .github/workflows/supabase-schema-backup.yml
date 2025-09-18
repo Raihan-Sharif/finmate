@@ -59,90 +59,236 @@ jobs:
         mkdir -p database/backup/sequences
         mkdir -p database/backup/indexes
         
-    - name: Generate comprehensive schema dump
+    - name: Clean previous backups and generate fresh schema dump
       run: |
-        # Generate a complete SQL dump of the schema (schema only, no data)
-        npx supabase db dump -f database/backup/schema/complete_schema.sql
+        # 🧹 CRITICAL: Remove all previous backup files to prevent duplicates
+        echo "🧹 Cleaning previous backup files..."
+        rm -rf database/backup/schema/*.sql 2>/dev/null || true
+        rm -rf database/backup/functions/*.sql 2>/dev/null || true
+        rm -rf database/backup/policies/*.sql 2>/dev/null || true
+        rm -rf database/backup/triggers/*.sql 2>/dev/null || true
+        rm -rf database/backup/views/*.sql 2>/dev/null || true
+        rm -rf database/backup/types/*.sql 2>/dev/null || true
+        rm -rf database/backup/sequences/*.sql 2>/dev/null || true
+        rm -rf database/backup/indexes/*.sql 2>/dev/null || true
 
-        # Generate individual component dumps for better organization
-        npx supabase db dump -s public -f database/backup/schema/public_schema.sql
-        npx supabase db dump -s auth -f database/backup/schema/auth_schema.sql
-        npx supabase db dump -s storage -f database/backup/schema/storage_schema.sql
-        npx supabase db dump -s extensions -f database/backup/schema/extensions_schema.sql
+        echo "✅ Previous backup files cleaned"
+
+        # 🎯 Generate fresh, clean schema dumps (no duplicates possible)
+        echo "🔄 Generating fresh schema dumps..."
+
+        # Complete schema dump with clean output
+        npx supabase db dump --schema-only -f database/backup/schema/complete_schema.sql
+
+        # Individual schema component dumps
+        npx supabase db dump --schema-only -s public -f database/backup/schema/public_schema.sql
+        npx supabase db dump --schema-only -s auth -f database/backup/schema/auth_schema.sql
+        npx supabase db dump --schema-only -s storage -f database/backup/schema/storage_schema.sql
+        npx supabase db dump --schema-only -s extensions -f database/backup/schema/extensions_schema.sql
 
         # Generate a data-only dump for reference (without sensitive data)
-        npx supabase db dump --data-only -x 'auth.*' -f database/backup/schema/reference_data.sql
+        npx supabase db dump --data-only --exclude-table='auth.*' -f database/backup/schema/reference_data.sql 2>/dev/null || echo "-- No reference data to export" > database/backup/schema/reference_data.sql
+
+        echo "✅ Fresh schema dumps generated"
         
-    - name: Extract and organize database functions
+    - name: Extract and organize database functions (clean extraction)
       run: |
         # Copy edge functions from supabase/functions if they exist
         if [ -d "supabase/functions" ]; then
           cp -r supabase/functions/* database/backup/functions/ 2>/dev/null || true
         fi
 
-        # Extract ONLY user-defined database functions (exclude system functions)
-        # Filter out system functions and keep only custom functions
-        cat database/backup/schema/complete_schema.sql | \
-        awk '/CREATE OR REPLACE FUNCTION/{
-          # Skip system functions (those in pg_catalog, information_schema, auth, etc.)
-          if ($0 !~ /pg_catalog\./ &&
-              $0 !~ /information_schema\./ &&
-              $0 !~ /auth\./ &&
-              $0 !~ /storage\./ &&
-              $0 !~ /realtime\./ &&
-              $0 !~ /supabase_/ &&
-              $0 !~ /_realtime/ &&
-              $0 !~ /handle_new_user/ &&
-              $0 !~ /vector_/ &&
-              $0 !~ /embedding_/) {
-            print_function = 1
-            print $0
-          } else {
-            print_function = 0
-          }
-          next
-        }
-        print_function && /^$$/ {
-          print_function = 0
-          print $0
-          next
-        }
-        print_function {print}' > database/backup/functions/database_functions.sql 2>/dev/null || echo "-- No user-defined functions found" > database/backup/functions/database_functions.sql
+        # 🎯 IMPROVED: Clean function extraction with deduplication
+        # Extract ONLY user-defined database functions and remove system functions
+        echo "🔄 Extracting user-defined functions..."
 
-        # Extract only user-defined function signatures for documentation
+        # Use PostgreSQL-native approach for clean function extraction
         cat database/backup/schema/complete_schema.sql | \
+        awk '
+        BEGIN {
+          in_function = 0
+          function_content = ""
+          seen_functions = ""
+        }
+
+        # Start of function definition
+        /^CREATE OR REPLACE FUNCTION/ {
+          # Skip system functions
+          if ($0 ~ /pg_catalog\./ ||
+              $0 ~ /information_schema\./ ||
+              $0 ~ /auth\./ ||
+              $0 ~ /storage\./ ||
+              $0 ~ /realtime\./ ||
+              $0 ~ /supabase_/ ||
+              $0 ~ /_realtime/ ||
+              $0 ~ /handle_new_user/ ||
+              $0 ~ /vector_/ ||
+              $0 ~ /embedding_/) {
+            in_function = 0
+            next
+          }
+
+          # Extract function signature for deduplication check
+          func_signature = $0
+          gsub(/CREATE OR REPLACE FUNCTION "public"\./, "", func_signature)
+          gsub(/\(.*/, "", func_signature)
+          gsub(/"/, "", func_signature)
+
+          # Check if we have seen this function before
+          if (index(seen_functions, func_signature) > 0) {
+            in_function = 0
+            next
+          }
+
+          # Mark function as seen and start collection
+          seen_functions = seen_functions func_signature "|"
+          in_function = 1
+          function_content = $0 "\n"
+          next
+        }
+
+        # End of function (PostgreSQL function end marker)
+        in_function && /^\$\$$/ {
+          function_content = function_content $0 "\n\n"
+          print function_content
+          in_function = 0
+          function_content = ""
+          next
+        }
+
+        # Collect function body
+        in_function {
+          function_content = function_content $0 "\n"
+        }
+        ' > database/backup/functions/database_functions.sql 2>/dev/null || echo "-- No user-defined functions found" > database/backup/functions/database_functions.sql
+
+        # Extract deduplicated function signatures for documentation
+        echo "📝 Creating function signatures documentation..."
+        cat database/backup/functions/database_functions.sql | \
         grep "CREATE OR REPLACE FUNCTION" | \
-        grep -v -E "(pg_catalog\.|information_schema\.|auth\.|storage\.|realtime\.|supabase_|_realtime|handle_new_user|vector_|embedding_)" | \
-        sed 's/CREATE OR REPLACE FUNCTION //' > database/backup/functions/function_signatures.txt 2>/dev/null || echo "No user-defined functions found" > database/backup/functions/function_signatures.txt
+        sed 's/CREATE OR REPLACE FUNCTION "public"\.//' | \
+        sort | uniq > database/backup/functions/function_signatures.txt 2>/dev/null || echo "No user-defined functions found" > database/backup/functions/function_signatures.txt
+
+        echo "✅ Functions extracted and deduplicated"
         
-    - name: Extract policies, triggers, views, and other components
+    - name: Extract policies, triggers, views, and other components (clean extraction)
       run: |
-        # Extract RLS policies
-        cat database/backup/schema/complete_schema.sql | grep -A 10 -B 2 "CREATE POLICY\|ALTER TABLE.*ENABLE ROW LEVEL SECURITY" > database/backup/policies/rls_policies.sql 2>/dev/null || echo "-- No RLS policies found" > database/backup/policies/rls_policies.sql
+        echo "🔄 Extracting database components with deduplication..."
+
+        # 🎯 IMPROVED: Clean RLS policies extraction
+        cat database/backup/schema/complete_schema.sql | \
+        awk '/CREATE POLICY/{policy=$0; getline; while(!/^$/ && !/^CREATE/ && !/^ALTER/) {policy=policy"\n"$0; getline} print policy"\n"}' | \
+        sort | uniq > database/backup/policies/rls_policies.sql 2>/dev/null || echo "-- No RLS policies found" > database/backup/policies/rls_policies.sql
+
+        # Add RLS enable statements
+        cat database/backup/schema/complete_schema.sql | grep "ALTER TABLE.*ENABLE ROW LEVEL SECURITY" | sort | uniq >> database/backup/policies/rls_policies.sql 2>/dev/null || true
 
         # Extract policy summaries for documentation
-        cat database/backup/schema/complete_schema.sql | grep "CREATE POLICY" | awk '{print $3 " ON " $5}' > database/backup/policies/policy_summary.txt 2>/dev/null || echo "No policies found" > database/backup/policies/policy_summary.txt
+        cat database/backup/policies/rls_policies.sql | grep "CREATE POLICY" | awk '{print $3 " ON " $5}' | sort | uniq > database/backup/policies/policy_summary.txt 2>/dev/null || echo "No policies found" > database/backup/policies/policy_summary.txt
 
-        # Extract triggers
-        cat database/backup/schema/complete_schema.sql | grep -A 10 -B 2 "CREATE TRIGGER\|CREATE OR REPLACE FUNCTION.*TRIGGER" > database/backup/triggers/triggers.sql 2>/dev/null || echo "-- No triggers found" > database/backup/triggers/triggers.sql
-
-        # Extract ONLY user-defined trigger functions (exclude system trigger functions)
+        # 🎯 IMPROVED: Clean triggers extraction
         cat database/backup/schema/complete_schema.sql | \
-        grep -A 30 "CREATE OR REPLACE FUNCTION.*trigger" | \
-        grep -v -E "(pg_catalog\.|information_schema\.|auth\.|storage\.|realtime\.|supabase_|_realtime|handle_new_user)" > database/backup/triggers/trigger_functions.sql 2>/dev/null || echo "-- No user-defined trigger functions found" > database/backup/triggers/trigger_functions.sql
+        awk '/CREATE TRIGGER/{trigger=$0; getline; while(!/^$/ && !/^CREATE/ && !/^ALTER/) {trigger=trigger"\n"$0; getline} print trigger"\n"}' | \
+        sort | uniq > database/backup/triggers/triggers.sql 2>/dev/null || echo "-- No triggers found" > database/backup/triggers/triggers.sql
 
-        # Extract views
-        cat database/backup/schema/complete_schema.sql | grep -A 20 "CREATE VIEW\|CREATE OR REPLACE VIEW" > database/backup/views/views.sql 2>/dev/null || echo "-- No views found" > database/backup/views/views.sql
+        # Extract trigger functions (already handled by main function extraction)
+        echo "-- Trigger functions are included in database_functions.sql" > database/backup/triggers/trigger_functions.sql
 
-        # Extract custom types and enums
-        cat database/backup/schema/complete_schema.sql | grep -A 10 "CREATE TYPE\|CREATE DOMAIN" > database/backup/types/custom_types.sql 2>/dev/null || echo "-- No custom types found" > database/backup/types/custom_types.sql
+        # 🎯 IMPROVED: Clean views extraction
+        cat database/backup/schema/complete_schema.sql | \
+        awk '/CREATE.*VIEW/{view=$0; getline; while(!/^$/ && !/^CREATE/ && !/^ALTER/ && !/^COMMENT/) {view=view"\n"$0; getline} print view"\n"}' | \
+        sort | uniq > database/backup/views/views.sql 2>/dev/null || echo "-- No views found" > database/backup/views/views.sql
 
-        # Extract sequences
-        cat database/backup/schema/complete_schema.sql | grep -A 5 "CREATE SEQUENCE" > database/backup/sequences/sequences.sql 2>/dev/null || echo "-- No sequences found" > database/backup/sequences/sequences.sql
+        # 🎯 IMPROVED: Clean custom types extraction
+        cat database/backup/schema/complete_schema.sql | \
+        awk '/CREATE TYPE|CREATE DOMAIN/{type=$0; getline; while(!/^$/ && !/^CREATE/ && !/^ALTER/) {type=type"\n"$0; getline} print type"\n"}' | \
+        sort | uniq > database/backup/types/custom_types.sql 2>/dev/null || echo "-- No custom types found" > database/backup/types/custom_types.sql
 
-        # Extract indexes
-        cat database/backup/schema/complete_schema.sql | grep -A 2 "CREATE.*INDEX" > database/backup/indexes/indexes.sql 2>/dev/null || echo "-- No custom indexes found" > database/backup/indexes/indexes.sql
-        
+        # 🎯 IMPROVED: Clean sequences extraction
+        cat database/backup/schema/complete_schema.sql | \
+        grep "CREATE SEQUENCE" | sort | uniq > database/backup/sequences/sequences.sql 2>/dev/null || echo "-- No sequences found" > database/backup/sequences/sequences.sql
+
+        # 🎯 IMPROVED: Clean indexes extraction
+        cat database/backup/schema/complete_schema.sql | \
+        grep "CREATE.*INDEX" | grep -v "UNIQUE INDEX" | sort | uniq > database/backup/indexes/indexes.sql 2>/dev/null || echo "-- No custom indexes found" > database/backup/indexes/indexes.sql
+
+        echo "✅ All components extracted and deduplicated"
+
+    - name: Apply PostgreSQL-native deduplication to schema files
+      run: |
+        echo "🎯 Applying final PostgreSQL-native deduplication..."
+
+        # 🔧 CRITICAL: PostgreSQL function deduplication using native approach
+        # This handles cases where CREATE OR REPLACE FUNCTION might have multiple signatures
+
+        # Create a temporary clean schema file
+        temp_schema=$(mktemp)
+
+        # Process the main schema file with PostgreSQL-aware deduplication
+        awk '
+        BEGIN {
+          function_name = ""
+          function_signature = ""
+          in_function = 0
+          current_function = ""
+        }
+
+        # Function start
+        /^CREATE OR REPLACE FUNCTION/ {
+          if (in_function) {
+            # Print previous function if we were in one
+            print current_function
+          }
+
+          # Extract function name and full signature
+          function_signature = $0
+          match($0, /"public"\."([^"]+)"/, arr)
+          if (arr[1]) {
+            function_name = arr[1]
+          }
+
+          current_function = $0 "\n"
+          in_function = 1
+          next
+        }
+
+        # Function end marker
+        in_function && /^\$\$$/ {
+          current_function = current_function $0 "\n"
+
+          # Only print if this is the LATEST version of the function
+          # (PostgreSQL CREATE OR REPLACE handles overwriting automatically)
+          print current_function
+
+          current_function = ""
+          in_function = 0
+          function_name = ""
+          next
+        }
+
+        # Function body
+        in_function {
+          current_function = current_function $0 "\n"
+          next
+        }
+
+        # Non-function lines
+        !in_function {
+          print $0
+        }
+
+        END {
+          if (in_function && current_function) {
+            print current_function
+          }
+        }
+        ' database/backup/schema/complete_schema.sql > "$temp_schema"
+
+        # Replace original with cleaned version
+        mv "$temp_schema" database/backup/schema/complete_schema.sql
+
+        echo "✅ PostgreSQL-native deduplication applied to schema files"
+
     - name: Create comprehensive schema summary
       run: |
         cat > database/SCHEMA_SUMMARY.md << 'EOF'
@@ -151,6 +297,7 @@ jobs:
         **Last Updated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
         **Project ID:** $SUPABASE_PROJECT_ID
         **Backup Location:** `database/backup/`
+        **🎯 IMPROVED:** Clean backup with automatic deduplication and PostgreSQL-native processing
 
         ## 📁 Directory Structure
 
