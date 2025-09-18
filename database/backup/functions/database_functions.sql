@@ -210,6 +210,64 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION "public"."admin_get_subscription_payments"() RETURNS TABLE("id" "uuid", "user_id" "uuid", "plan_id" "uuid", "payment_method_id" "uuid", "billing_cycle" "text", "transaction_id" "text", "sender_number" "text", "base_amount" numeric, "discount_amount" numeric, "final_amount" numeric, "coupon_id" "uuid", "status" "text", "admin_notes" "text", "rejection_reason" "text", "submitted_at" timestamp with time zone, "verified_at" timestamp with time zone, "approved_at" timestamp with time zone, "rejected_at" timestamp with time zone, "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "currency" "text", "user_full_name" "text", "user_email" "text", "plan_name" "text", "plan_display_name" "text", "plan_price_monthly" numeric, "plan_price_yearly" numeric, "payment_method_name" "text", "payment_method_display_name" "text", "coupon_code" "text", "coupon_type" "text", "coupon_value" numeric)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  -- Return comprehensive payment data with all joins (no permission check for simplified version)
+  RETURN QUERY
+  SELECT
+    sp.id,
+    sp.user_id,
+    sp.plan_id,
+    sp.payment_method_id,
+    sp.billing_cycle::text,
+    sp.transaction_id,
+    sp.sender_number,
+    sp.base_amount,
+    sp.discount_amount,
+    sp.final_amount,
+    sp.coupon_id,
+    sp.status::text,
+    sp.admin_notes,
+    sp.rejection_reason,
+    sp.submitted_at,
+    sp.verified_at,
+    sp.approved_at,
+    sp.rejected_at,
+    sp.created_at,
+    sp.updated_at,
+    COALESCE(sp.currency, 'BDT') as currency,
+    -- User data with fallbacks
+    COALESCE(p.full_name, 'Unknown User') as user_full_name,
+    COALESCE(au.email, 'unknown@example.com') as user_email,
+    -- Plan data with fallbacks
+    COALESCE(spl.plan_name, 'unknown') as plan_name,
+    COALESCE(spl.display_name, 'Unknown Plan') as plan_display_name,
+    COALESCE(spl.price_monthly, 0) as plan_price_monthly,
+    COALESCE(spl.price_yearly, 0) as plan_price_yearly,
+    -- Payment method data with fallbacks (corrected field names)
+    COALESCE(pm.method_name, 'manual') as payment_method_name,
+    COALESCE(pm.display_name, 'Manual Payment') as payment_method_display_name,
+    -- Coupon data (nullable)
+    c.code as coupon_code,
+    c.type as coupon_type,
+    c.value as coupon_value
+  FROM subscription_payments sp
+  -- Join with profiles
+  LEFT JOIN profiles p ON sp.user_id = p.user_id
+  -- Join with auth.users for email (using auth schema)
+  LEFT JOIN auth.users au ON sp.user_id = au.id
+  -- Join with subscription plans
+  LEFT JOIN subscription_plans spl ON sp.plan_id = spl.id
+  -- Join with payment methods (using payment_method_id)
+  LEFT JOIN payment_methods pm ON sp.payment_method_id = pm.id
+  -- Join with coupons (optional)
+  LEFT JOIN coupons c ON sp.coupon_id = c.id
+  ORDER BY sp.created_at DESC;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION "public"."admin_get_subscription_payments"("p_admin_user_id" "uuid", "p_status" "text" DEFAULT NULL::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "user_id" "uuid", "plan_id" "uuid", "payment_method_id" "uuid", "billing_cycle" "text", "transaction_id" "text", "sender_number" "text", "base_amount" numeric, "discount_amount" numeric, "final_amount" numeric, "coupon_id" "uuid", "status" "text", "admin_notes" "text", "rejection_reason" "text", "submitted_at" timestamp with time zone, "verified_at" timestamp with time zone, "approved_at" timestamp with time zone, "rejected_at" timestamp with time zone, "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "currency" "text", "user_full_name" "text", "user_email" "text", "plan_name" "text", "plan_display_name" "text", "plan_price_monthly" numeric, "plan_price_yearly" numeric, "payment_method_name" "text", "payment_method_display_name" "text", "coupon_code" "text", "coupon_type" "text", "coupon_value" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -231,14 +289,14 @@ BEGIN
     sp.user_id,
     sp.plan_id,
     sp.payment_method_id,
-    sp.billing_cycle,
+    sp.billing_cycle::text,
     sp.transaction_id,
     sp.sender_number,
     sp.base_amount,
     sp.discount_amount,
     sp.final_amount,
     sp.coupon_id,
-    sp.status,
+    sp.status::text,
     sp.admin_notes,
     sp.rejection_reason,
     sp.submitted_at,
@@ -256,9 +314,9 @@ BEGIN
     COALESCE(spl.display_name, 'Unknown Plan') as plan_display_name,
     COALESCE(spl.price_monthly, 0) as plan_price_monthly,
     COALESCE(spl.price_yearly, 0) as plan_price_yearly,
-    -- Payment method data with fallbacks
-    COALESCE(pm.method_name, 'unknown') as payment_method_name,
-    COALESCE(pm.display_name, 'Unknown Method') as payment_method_display_name,
+    -- Payment method data with fallbacks (corrected field names)
+    COALESCE(pm.method_name, 'manual') as payment_method_name,
+    COALESCE(pm.display_name, 'Manual Payment') as payment_method_display_name,
     -- Coupon data (nullable)
     c.code as coupon_code,
     c.type as coupon_type,
@@ -270,12 +328,12 @@ BEGIN
   LEFT JOIN auth.users au ON sp.user_id = au.id
   -- Join with subscription plans
   LEFT JOIN subscription_plans spl ON sp.plan_id = spl.id
-  -- Join with payment methods
+  -- Join with payment methods (using payment_method_id)
   LEFT JOIN payment_methods pm ON sp.payment_method_id = pm.id
   -- Join with coupons (optional)
   LEFT JOIN coupons c ON sp.coupon_id = c.id
   WHERE
-    (p_status IS NULL OR p_status = 'all' OR sp.status = p_status)
+    (p_status IS NULL OR p_status = 'all' OR sp.status::text = p_status)
   ORDER BY sp.created_at DESC
   LIMIT p_limit
   OFFSET p_offset;
