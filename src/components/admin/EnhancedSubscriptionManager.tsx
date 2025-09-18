@@ -13,6 +13,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CouponManager } from './CouponManager'
+import { PaymentMethodManager } from './PaymentMethodManager'
+import { SubscriptionPlansManager } from './SubscriptionPlansManager'
 import {
   CreditCard,
   Gift,
@@ -38,7 +41,9 @@ import {
   FileText,
   User,
   Building2,
-  CreditCardIcon
+  CreditCardIcon,
+  Settings,
+  Layers
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -158,14 +163,22 @@ export function EnhancedSubscriptionManager() {
   }
 
   const fetchPayments = async () => {
-    const response = await fetch('/api/admin/subscription/payments')
-    const result = await response.json()
+    try {
+      const response = await fetch('/api/admin/subscription/payments')
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
 
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Failed to fetch payments')
+      const result = await response.json()
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch payments')
+      }
+
+      setPayments(result.payments || [])
+    } catch (error) {
+      console.error('fetchPayments error:', error)
+      throw error
     }
-
-    setPayments(result.payments || [])
   }
 
   const calculateStats = () => {
@@ -392,18 +405,30 @@ export function EnhancedSubscriptionManager() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview" className="flex items-center space-x-2">
             <BarChart3 className="h-4 w-4" />
-            <span>Analytics Overview</span>
+            <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
           <TabsTrigger value="payments" className="flex items-center space-x-2">
             <CreditCard className="h-4 w-4" />
-            <span>Payment Management</span>
+            <span className="hidden sm:inline">Payments</span>
           </TabsTrigger>
           <TabsTrigger value="subscriptions" className="flex items-center space-x-2">
             <Crown className="h-4 w-4" />
-            <span>Active Subscriptions</span>
+            <span className="hidden sm:inline">Subscriptions</span>
+          </TabsTrigger>
+          <TabsTrigger value="plans" className="flex items-center space-x-2">
+            <Layers className="h-4 w-4" />
+            <span className="hidden sm:inline">Plans</span>
+          </TabsTrigger>
+          <TabsTrigger value="coupons" className="flex items-center space-x-2">
+            <Gift className="h-4 w-4" />
+            <span className="hidden sm:inline">Coupons</span>
+          </TabsTrigger>
+          <TabsTrigger value="methods" className="flex items-center space-x-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Methods</span>
           </TabsTrigger>
         </TabsList>
 
@@ -763,6 +788,21 @@ export function EnhancedSubscriptionManager() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Subscription Plans Tab */}
+        <TabsContent value="plans" className="space-y-6">
+          <SubscriptionPlansManager />
+        </TabsContent>
+
+        {/* Coupons Tab */}
+        <TabsContent value="coupons" className="space-y-6">
+          <CouponManager />
+        </TabsContent>
+
+        {/* Payment Methods Tab */}
+        <TabsContent value="methods" className="space-y-6">
+          <PaymentMethodManager />
         </TabsContent>
       </Tabs>
 
