@@ -3,6 +3,7 @@
 **Last Updated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
 **Project ID:** $SUPABASE_PROJECT_ID
 **Backup Location:** `database/backup/`
+**🎯 IMPROVED:** Clean backup with automatic deduplication and PostgreSQL-native processing
 
 ## 📁 Directory Structure
 

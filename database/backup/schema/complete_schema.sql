@@ -417,6 +417,7 @@ $$;
 ALTER FUNCTION "public"."accept_family_invitation"("p_user_id" "uuid", "p_invitation_code" "text") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."admin_create_coupon"("p_code" character varying, "p_description" "text", "p_type" "text", "p_value" numeric, "p_max_uses" integer, "p_max_uses_per_user" integer, "p_minimum_amount" numeric, "p_max_discount_amount" numeric, "p_expires_at" timestamp with time zone, "p_scope" "text", "p_is_active" boolean DEFAULT true) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -437,6 +438,7 @@ $$;
 
 
 ALTER FUNCTION "public"."admin_create_coupon"("p_code" character varying, "p_description" "text", "p_type" "text", "p_value" numeric, "p_max_uses" integer, "p_max_uses_per_user" integer, "p_minimum_amount" numeric, "p_max_discount_amount" numeric, "p_expires_at" timestamp with time zone, "p_scope" "text", "p_is_active" boolean) OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."admin_create_coupon"("p_code" character varying, "p_description" "text", "p_type" character varying, "p_value" numeric, "p_max_uses" integer DEFAULT NULL::integer, "p_max_uses_per_user" integer DEFAULT NULL::integer, "p_minimum_amount" numeric DEFAULT NULL::numeric, "p_max_discount_amount" numeric DEFAULT NULL::numeric, "p_expires_at" timestamp with time zone DEFAULT NULL::timestamp with time zone, "p_scope" character varying DEFAULT 'public'::character varying, "p_is_active" boolean DEFAULT true) RETURNS TABLE("id" "uuid", "code" character varying, "description" "text", "type" character varying, "value" numeric, "max_uses" integer, "max_uses_per_user" integer, "used_count" integer, "minimum_amount" numeric, "max_discount_amount" numeric, "expires_at" timestamp with time zone, "is_active" boolean, "scope" character varying, "created_at" timestamp with time zone, "updated_at" timestamp with time zone)
@@ -513,6 +515,7 @@ $$;
 ALTER FUNCTION "public"."admin_create_coupon"("p_code" character varying, "p_description" "text", "p_type" character varying, "p_value" numeric, "p_max_uses" integer, "p_max_uses_per_user" integer, "p_minimum_amount" numeric, "p_max_discount_amount" numeric, "p_expires_at" timestamp with time zone, "p_scope" character varying, "p_is_active" boolean) OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."admin_delete_coupon"("p_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -524,6 +527,7 @@ $$;
 
 
 ALTER FUNCTION "public"."admin_delete_coupon"("p_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."admin_get_all_coupons"() RETURNS TABLE("id" "uuid", "code" character varying, "description" "text", "type" "text", "value" numeric, "max_uses" integer, "max_uses_per_user" integer, "minimum_amount" numeric, "max_discount_amount" numeric, "expires_at" timestamp with time zone, "is_active" boolean, "scope" "text", "usage_count" bigint, "created_at" timestamp with time zone)
@@ -559,6 +563,7 @@ $$;
 
 
 ALTER FUNCTION "public"."admin_get_all_coupons"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."admin_get_subscription_overview"() RETURNS json
@@ -600,6 +605,7 @@ $$;
 
 
 ALTER FUNCTION "public"."admin_get_subscription_overview"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."admin_get_subscription_payments"() RETURNS TABLE("id" "uuid", "user_id" "uuid", "plan_id" "uuid", "payment_method_id" "uuid", "billing_cycle" "text", "transaction_id" "text", "sender_number" "text", "base_amount" numeric, "discount_amount" numeric, "final_amount" numeric, "coupon_id" "uuid", "status" "text", "admin_notes" "text", "rejection_reason" "text", "submitted_at" timestamp with time zone, "verified_at" timestamp with time zone, "approved_at" timestamp with time zone, "rejected_at" timestamp with time zone, "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "currency" "text", "user_full_name" "text", "user_email" "text", "plan_name" "text", "plan_display_name" "text", "plan_price_monthly" numeric, "plan_price_yearly" numeric, "payment_method_name" "text", "payment_method_display_name" "text", "coupon_code" "text", "coupon_type" "text", "coupon_value" numeric)
@@ -665,6 +671,7 @@ ALTER FUNCTION "public"."admin_get_subscription_payments"() OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."admin_get_subscription_payments"() IS 'Simplified admin function to fetch all subscription payments without user ID parameter.';
+
 
 
 
@@ -748,6 +755,7 @@ COMMENT ON FUNCTION "public"."admin_get_subscription_payments"("p_admin_user_id"
 
 
 
+
 CREATE OR REPLACE FUNCTION "public"."admin_get_subscription_payments_count"("p_admin_user_id" "uuid", "p_status" "text" DEFAULT NULL::"text") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -783,6 +791,7 @@ COMMENT ON FUNCTION "public"."admin_get_subscription_payments_count"("p_admin_us
 
 
 
+
 CREATE OR REPLACE FUNCTION "public"."admin_toggle_coupon_status"("p_coupon_id" "uuid", "p_is_active" boolean) RETURNS TABLE("id" "uuid", "code" character varying, "is_active" boolean, "updated_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -815,6 +824,7 @@ $$;
 ALTER FUNCTION "public"."admin_toggle_coupon_status"("p_coupon_id" "uuid", "p_is_active" boolean) OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."admin_update_coupon"("p_id" "uuid", "p_description" "text", "p_type" "text", "p_value" numeric, "p_max_uses" integer, "p_max_uses_per_user" integer, "p_minimum_amount" numeric, "p_max_discount_amount" numeric, "p_expires_at" timestamp with time zone, "p_scope" "text", "p_is_active" boolean) RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -839,6 +849,7 @@ $$;
 
 
 ALTER FUNCTION "public"."admin_update_coupon"("p_id" "uuid", "p_description" "text", "p_type" "text", "p_value" numeric, "p_max_uses" integer, "p_max_uses_per_user" integer, "p_minimum_amount" numeric, "p_max_discount_amount" numeric, "p_expires_at" timestamp with time zone, "p_scope" "text", "p_is_active" boolean) OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."admin_update_coupon"("p_coupon_id" "uuid", "p_description" "text" DEFAULT NULL::"text", "p_type" character varying DEFAULT NULL::character varying, "p_value" numeric DEFAULT NULL::numeric, "p_max_uses" integer DEFAULT NULL::integer, "p_max_uses_per_user" integer DEFAULT NULL::integer, "p_minimum_amount" numeric DEFAULT NULL::numeric, "p_max_discount_amount" numeric DEFAULT NULL::numeric, "p_expires_at" timestamp with time zone DEFAULT NULL::timestamp with time zone, "p_scope" character varying DEFAULT NULL::character varying, "p_is_active" boolean DEFAULT NULL::boolean) RETURNS TABLE("id" "uuid", "code" character varying, "description" "text", "type" character varying, "value" numeric, "max_uses" integer, "max_uses_per_user" integer, "used_count" integer, "minimum_amount" numeric, "max_discount_amount" numeric, "expires_at" timestamp with time zone, "is_active" boolean, "scope" character varying, "created_at" timestamp with time zone, "updated_at" timestamp with time zone)
@@ -896,6 +907,7 @@ $$;
 
 
 ALTER FUNCTION "public"."admin_update_coupon"("p_coupon_id" "uuid", "p_description" "text", "p_type" character varying, "p_value" numeric, "p_max_uses" integer, "p_max_uses_per_user" integer, "p_minimum_amount" numeric, "p_max_discount_amount" numeric, "p_expires_at" timestamp with time zone, "p_scope" character varying, "p_is_active" boolean) OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."apply_coupon"("p_user_id" "uuid", "p_coupon_code" character varying, "p_plan_name" character varying, "p_billing_cycle" character varying, "p_base_amount" numeric) RETURNS TABLE("is_valid" boolean, "coupon_id" "uuid", "discount_amount" numeric, "coupon_type" character varying, "coupon_value" numeric, "message" "text")
@@ -1000,6 +1012,7 @@ $$;
 ALTER FUNCTION "public"."apply_coupon"("p_user_id" "uuid", "p_coupon_code" character varying, "p_plan_name" character varying, "p_billing_cycle" character varying, "p_base_amount" numeric) OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."calculate_next_execution_date"("base_date" "date", "frequency" character varying, "interval_value" integer DEFAULT 1) RETURNS "date"
     LANGUAGE "plpgsql" IMMUTABLE
     AS $$
@@ -1017,6 +1030,7 @@ $$;
 
 
 ALTER FUNCTION "public"."calculate_next_execution_date"("base_date" "date", "frequency" character varying, "interval_value" integer) OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."can_create_account"("p_user_id" "uuid") RETURNS boolean
@@ -1053,6 +1067,7 @@ $$;
 ALTER FUNCTION "public"."can_create_account"("p_user_id" "uuid") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."can_create_account_type"("p_user_id" "uuid", "p_account_type" "public"."account_type") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1074,6 +1089,7 @@ $$;
 
 
 ALTER FUNCTION "public"."can_create_account_type"("p_user_id" "uuid", "p_account_type" "public"."account_type") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."check_auto_payment_health"() RETURNS json
@@ -1162,6 +1178,7 @@ $$;
 ALTER FUNCTION "public"."check_auto_payment_health"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."cleanup_expired_ai_insights"() RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1179,6 +1196,7 @@ $$;
 
 
 ALTER FUNCTION "public"."cleanup_expired_ai_insights"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."cleanup_old_cron_logs"() RETURNS integer
@@ -1216,6 +1234,7 @@ $$;
 ALTER FUNCTION "public"."cleanup_old_cron_logs"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."create_better_default_accounts"("user_id_param" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1241,6 +1260,7 @@ $$;
 
 
 ALTER FUNCTION "public"."create_better_default_accounts"("user_id_param" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."create_default_accounts"("p_user_id" "uuid") RETURNS "void"
@@ -1282,6 +1302,7 @@ $$;
 
 
 ALTER FUNCTION "public"."create_default_accounts"("p_user_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."create_emi_schedule_entries"("p_loan_id" "uuid", "p_user_id" "uuid") RETURNS integer
@@ -1329,6 +1350,7 @@ $$;
 ALTER FUNCTION "public"."create_emi_schedule_entries"("p_loan_id" "uuid", "p_user_id" "uuid") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."create_family_group"("p_user_id" "uuid", "p_family_name" character varying DEFAULT 'My Family'::character varying) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1353,6 +1375,7 @@ $$;
 
 
 ALTER FUNCTION "public"."create_family_group"("p_user_id" "uuid", "p_family_name" character varying) OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."create_global_accounts"() RETURNS "void"
@@ -1384,6 +1407,7 @@ $$;
 
 
 ALTER FUNCTION "public"."create_global_accounts"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."create_global_categories"() RETURNS "void"
@@ -1684,6 +1708,7 @@ $$;
 ALTER FUNCTION "public"."create_global_categories"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."create_investment_main_transaction"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1779,6 +1804,7 @@ $$;
 
 
 ALTER FUNCTION "public"."create_investment_main_transaction"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."create_lending_payment_transaction"("p_lending_id" "uuid", "p_user_id" "uuid", "p_payment_date" "date" DEFAULT CURRENT_DATE) RETURNS json
@@ -1898,6 +1924,7 @@ $$;
 
 
 ALTER FUNCTION "public"."create_lending_payment_transaction"("p_lending_id" "uuid", "p_user_id" "uuid", "p_payment_date" "date") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."create_lending_transaction"("p_lending_id" "uuid", "p_user_id" "uuid", "p_amount" numeric, "p_transaction_type" character varying, "p_payment_date" "date" DEFAULT CURRENT_DATE) RETURNS json
@@ -2023,6 +2050,7 @@ $$;
 
 
 ALTER FUNCTION "public"."create_lending_transaction"("p_lending_id" "uuid", "p_user_id" "uuid", "p_amount" numeric, "p_transaction_type" character varying, "p_payment_date" "date") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."create_loan_payment_transaction"("p_loan_id" "uuid", "p_user_id" "uuid", "p_payment_date" "date" DEFAULT CURRENT_DATE) RETURNS json
@@ -2152,6 +2180,7 @@ $$;
 
 
 ALTER FUNCTION "public"."create_loan_payment_transaction"("p_loan_id" "uuid", "p_user_id" "uuid", "p_payment_date" "date") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."create_payment_reminders"("p_user_id" "uuid", "p_check_date" "date" DEFAULT CURRENT_DATE) RETURNS json
@@ -2293,6 +2322,7 @@ $$;
 ALTER FUNCTION "public"."create_payment_reminders"("p_user_id" "uuid", "p_check_date" "date") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."create_purchase_emi"("p_user_id" "uuid", "p_item_name" "text", "p_vendor_name" "text", "p_purchase_category" "text", "p_principal_amount" numeric, "p_interest_rate" numeric, "p_tenure_months" integer, "p_purchase_date" "date", "p_down_payment" numeric DEFAULT 0, "p_item_condition" "text" DEFAULT 'new'::"text", "p_warranty_period" integer DEFAULT NULL::integer, "p_payment_day" integer DEFAULT 1, "p_account_id" "uuid" DEFAULT NULL::"uuid", "p_category_id" "uuid" DEFAULT NULL::"uuid", "p_notes" "text" DEFAULT NULL::"text", "p_currency" "text" DEFAULT 'BDT'::"text") RETURNS TABLE("loan_id" "uuid", "emi_amount" numeric, "success" boolean, "message" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2401,6 +2431,7 @@ COMMENT ON FUNCTION "public"."create_purchase_emi"("p_user_id" "uuid", "p_item_n
 
 
 
+
 CREATE OR REPLACE FUNCTION "public"."delete_investment_main_transaction"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -2417,6 +2448,7 @@ $$;
 
 
 ALTER FUNCTION "public"."delete_investment_main_transaction"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."exec_sql"("query" "text") RETURNS TABLE("result" "jsonb")
@@ -2446,6 +2478,7 @@ $$;
 
 
 ALTER FUNCTION "public"."exec_sql"("query" "text") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."execute_pending_investment_templates"() RETURNS integer
@@ -2535,6 +2568,7 @@ $$;
 ALTER FUNCTION "public"."execute_pending_investment_templates"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."execute_pending_recurring_transactions"() RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2615,6 +2649,7 @@ $$;
 ALTER FUNCTION "public"."execute_pending_recurring_transactions"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."generate_emi_schedule"("p_loan_id" "uuid", "p_user_id" "uuid") RETURNS TABLE("installment_number" integer, "due_date" "date", "emi_amount" numeric, "principal_amount" numeric, "interest_amount" numeric, "outstanding_balance" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2674,6 +2709,7 @@ $$;
 ALTER FUNCTION "public"."generate_emi_schedule"("p_loan_id" "uuid", "p_user_id" "uuid") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_account_display_balance"("account_id_param" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2727,6 +2763,7 @@ COMMENT ON FUNCTION "public"."get_account_display_balance"("account_id_param" "u
 
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_account_limit"("plan_type" "text") RETURNS integer
     LANGUAGE "plpgsql"
     AS $$
@@ -2744,6 +2781,7 @@ $$;
 ALTER FUNCTION "public"."get_account_limit"("plan_type" "text") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_allowed_account_types"("plan_type" "text") RETURNS "text"[]
     LANGUAGE "plpgsql"
     AS $$
@@ -2759,6 +2797,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_allowed_account_types"("plan_type" "text") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_asset_allocation_data"("p_user_id" "uuid", "p_currency" character varying DEFAULT 'BDT'::character varying) RETURNS TABLE("name" "text", "investment_type" "text", "value" numeric, "percentage" numeric, "color" "text", "investment_count" integer)
@@ -2826,6 +2865,7 @@ COMMENT ON FUNCTION "public"."get_asset_allocation_data"("p_user_id" "uuid", "p_
 
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_available_credit"("account_id_param" "uuid") RETURNS numeric
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2863,6 +2903,7 @@ ALTER FUNCTION "public"."get_available_credit"("account_id_param" "uuid") OWNER 
 
 
 COMMENT ON FUNCTION "public"."get_available_credit"("account_id_param" "uuid") IS 'Calculate available credit for a credit account';
+
 
 
 
@@ -2945,6 +2986,7 @@ $$;
 ALTER FUNCTION "public"."get_complete_schema_info"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_constraints"() RETURNS TABLE("schema_name" "text", "table_name" "text", "constraint_name" "text", "constraint_definition" "text", "metadata" "jsonb")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2975,6 +3017,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_constraints"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_cron_job_status"() RETURNS TABLE("jobname" "text", "schedule" "text", "active" boolean, "last_run" timestamp without time zone, "next_run" timestamp without time zone)
@@ -3008,6 +3051,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_cron_job_status"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_database_stats"() RETURNS TABLE("stat_name" "text", "stat_value" "text", "metadata" "jsonb")
@@ -3045,6 +3089,7 @@ $$;
 ALTER FUNCTION "public"."get_database_stats"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_effective_category"("p_category_id" "uuid", "p_subcategory_id" "uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3064,6 +3109,7 @@ ALTER FUNCTION "public"."get_effective_category"("p_category_id" "uuid", "p_subc
 
 
 COMMENT ON FUNCTION "public"."get_effective_category"("p_category_id" "uuid", "p_subcategory_id" "uuid") IS 'Returns the effective category ID - either the direct category or the parent of a subcategory';
+
 
 
 
@@ -3136,6 +3182,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_emi_overview"("p_user_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_emi_overview"("p_user_id" "uuid", "p_currency" character varying DEFAULT 'BDT'::character varying) RETURNS TABLE("total_active_loans" integer, "total_outstanding_amount" numeric, "total_monthly_emi" numeric, "overdue_payments" integer, "overdue_amount" numeric, "next_payment_date" "date", "next_payment_amount" numeric, "total_paid_this_month" numeric, "total_pending_this_month" numeric)
@@ -3266,6 +3313,7 @@ $$;
 ALTER FUNCTION "public"."get_emi_overview"("p_user_id" "uuid", "p_currency" character varying) OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_family_account_count"("p_user_id" "uuid") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3297,6 +3345,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_family_account_count"("p_user_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_family_members"("p_user_id" "uuid") RETURNS TABLE("user_id" "uuid", "full_name" "text", "email" "text", "family_role" "public"."family_role_type", "joined_at" timestamp with time zone, "account_count" integer)
@@ -3334,6 +3383,7 @@ $$;
 ALTER FUNCTION "public"."get_family_members"("p_user_id" "uuid") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_financial_summary"("p_user_id" "uuid", "p_currency" character varying DEFAULT 'USD'::character varying) RETURNS TABLE("total_balance" numeric, "monthly_income" numeric, "monthly_expenses" numeric, "monthly_savings" numeric, "total_investments" numeric, "total_loans" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3363,6 +3413,7 @@ $$;
 ALTER FUNCTION "public"."get_financial_summary"("p_user_id" "uuid", "p_currency" character varying) OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_indexes"() RETURNS TABLE("schema_name" "text", "table_name" "text", "index_name" "text", "index_definition" "text", "metadata" "jsonb")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3389,6 +3440,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_indexes"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_investment_analytics_summary"("p_user_id" "uuid") RETURNS TABLE("total_portfolios" integer, "total_investments" integer, "total_invested" numeric, "current_value" numeric, "total_gain_loss" numeric, "total_return_percentage" numeric, "best_performing_investment" "jsonb", "worst_performing_investment" "jsonb", "active_sips" integer, "monthly_sip_amount" numeric, "recent_transactions" "jsonb")
@@ -3520,6 +3572,7 @@ COMMENT ON FUNCTION "public"."get_investment_analytics_summary"("p_user_id" "uui
 
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_lending_overview"("p_user_id" "uuid", "p_currency" character varying DEFAULT 'BDT'::character varying) RETURNS TABLE("total_lent_amount" numeric, "total_borrowed_amount" numeric, "total_lent_pending" numeric, "total_borrowed_pending" numeric, "overdue_lent_count" integer, "overdue_borrowed_count" integer, "overdue_lent_amount" numeric, "overdue_borrowed_amount" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3602,6 +3655,7 @@ $$;
 ALTER FUNCTION "public"."get_lending_overview"("p_user_id" "uuid", "p_currency" character varying) OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_monthly_trend_data"("p_user_id" "uuid", "p_currency" character varying DEFAULT 'BDT'::character varying, "p_months_back" integer DEFAULT 12) RETURNS TABLE("month" "text", "month_name" "text", "invested" numeric, "current_value" numeric, "gain_loss" numeric, "return_percentage" numeric, "transaction_count" integer)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3662,6 +3716,7 @@ ALTER FUNCTION "public"."get_monthly_trend_data"("p_user_id" "uuid", "p_currency
 
 
 COMMENT ON FUNCTION "public"."get_monthly_trend_data"("p_user_id" "uuid", "p_currency" character varying, "p_months_back" integer) IS 'Returns monthly investment trend data for bar/line charts showing growth over time';
+
 
 
 
@@ -3758,6 +3813,7 @@ COMMENT ON FUNCTION "public"."get_portfolio_performance_data"("p_user_id" "uuid"
 
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_purchase_emi_overview"("p_user_id" "uuid") RETURNS TABLE("total_purchase_emis" integer, "total_outstanding_amount" numeric, "total_monthly_emi" numeric, "active_purchases" integer, "by_category" "jsonb")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3814,6 +3870,7 @@ COMMENT ON FUNCTION "public"."get_purchase_emi_overview"("p_user_id" "uuid") IS 
 
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_rls_policies"() RETURNS TABLE("schema_name" "text", "table_name" "text", "policy_name" "text", "policy_definition" "text", "metadata" "jsonb")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3841,6 +3898,7 @@ $$;
 ALTER FUNCTION "public"."get_rls_policies"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_sequences"() RETURNS TABLE("schema_name" "text", "sequence_name" "text", "metadata" "jsonb")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3864,6 +3922,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_sequences"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_subscription_status"("p_user_id" "uuid") RETURNS TABLE("current_plan" character varying, "status" character varying, "expires_at" timestamp with time zone, "days_remaining" integer, "can_upgrade" boolean, "pending_payment_id" "uuid")
@@ -3900,6 +3959,7 @@ $$;
 ALTER FUNCTION "public"."get_subscription_status"("p_user_id" "uuid") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_triggers"() RETURNS TABLE("schema_name" "text", "table_name" "text", "trigger_name" "text", "trigger_definition" "text", "metadata" "jsonb")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3927,6 +3987,7 @@ $$;
 ALTER FUNCTION "public"."get_triggers"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_user_account_summary"("p_user_id" "uuid") RETURNS TABLE("account_count" integer, "total_balance" numeric, "default_account_id" "uuid", "default_currency" character varying, "subscription_plan" "text", "max_accounts" integer, "can_create_more" boolean)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3951,6 +4012,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_user_account_summary"("p_user_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_user_permissions"("p_user_id" "uuid") RETURNS TABLE("permission_name" "text", "resource" "text", "action" "text")
@@ -3987,6 +4049,7 @@ $$;
 
 
 ALTER FUNCTION "public"."get_user_permissions"("p_user_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."get_user_profile"("p_user_id" "uuid") RETURNS TABLE("id" "uuid", "user_id" "uuid", "email" "text", "full_name" "text", "avatar_url" "text", "currency" character varying, "timezone" "text", "theme" "text", "notifications_enabled" boolean, "ai_insights_enabled" boolean, "monthly_budget_limit" numeric, "email_verified" boolean, "phone_number" "text", "phone_verified" boolean, "two_factor_enabled" boolean, "last_login" timestamp with time zone, "is_active" boolean, "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "role_name" "text", "role_display_name" "text")
@@ -4026,6 +4089,7 @@ $$;
 ALTER FUNCTION "public"."get_user_profile"("p_user_id" "uuid") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."get_user_tables"("p_user_id" "uuid") RETURNS TABLE("table_name" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -4043,6 +4107,7 @@ CREATE OR REPLACE FUNCTION "public"."get_user_tables"("p_user_id" "uuid") RETURN
 
 
 ALTER FUNCTION "public"."get_user_tables"("p_user_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
@@ -4107,6 +4172,7 @@ $$;
 ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."has_permission"("p_user_id" "uuid", "p_resource" "text", "p_action" "text") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -4123,6 +4189,7 @@ $$;
 ALTER FUNCTION "public"."has_permission"("p_user_id" "uuid", "p_resource" "text", "p_action" "text") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."increment_template_usage"("template_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql"
     AS $$
@@ -4136,6 +4203,7 @@ $$;
 
 
 ALTER FUNCTION "public"."increment_template_usage"("template_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."invite_family_member"("p_inviter_id" "uuid", "p_email" "text", "p_role" "public"."family_role_type" DEFAULT 'member'::"public"."family_role_type") RETURNS "text"
@@ -4180,6 +4248,7 @@ $$;
 ALTER FUNCTION "public"."invite_family_member"("p_inviter_id" "uuid", "p_email" "text", "p_role" "public"."family_role_type") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."is_family_primary"("p_user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -4196,6 +4265,7 @@ $$;
 
 
 ALTER FUNCTION "public"."is_family_primary"("p_user_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."mark_emi_payment_paid"("p_schedule_id" "uuid", "p_user_id" "uuid", "p_payment_amount" numeric, "p_payment_date" "date" DEFAULT CURRENT_DATE, "p_payment_method" character varying DEFAULT NULL::character varying, "p_late_fee" numeric DEFAULT 0, "p_notes" "text" DEFAULT NULL::"text") RETURNS "uuid"
@@ -4286,6 +4356,7 @@ $$;
 ALTER FUNCTION "public"."mark_emi_payment_paid"("p_schedule_id" "uuid", "p_user_id" "uuid", "p_payment_amount" numeric, "p_payment_date" "date", "p_payment_method" character varying, "p_late_fee" numeric, "p_notes" "text") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."process_auto_debit_payments"("p_user_id" "uuid", "p_process_date" "date" DEFAULT CURRENT_DATE) RETURNS json
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -4328,6 +4399,7 @@ $$;
 
 
 ALTER FUNCTION "public"."process_auto_debit_payments"("p_user_id" "uuid", "p_process_date" "date") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."process_daily_auto_payments"() RETURNS json
@@ -4451,6 +4523,7 @@ $$;
 ALTER FUNCTION "public"."process_daily_auto_payments"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."process_lending_auto_debit_payments"("p_user_id" "uuid", "p_date" "date" DEFAULT CURRENT_DATE) RETURNS json
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -4500,6 +4573,7 @@ $$;
 ALTER FUNCTION "public"."process_lending_auto_debit_payments"("p_user_id" "uuid", "p_date" "date") OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."reverse_account_balance"("p_account_id" "uuid", "p_amount" numeric, "p_transaction_type" "public"."transaction_type") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -4521,6 +4595,7 @@ $$;
 
 
 ALTER FUNCTION "public"."reverse_account_balance"("p_account_id" "uuid", "p_amount" numeric, "p_transaction_type" "public"."transaction_type") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."revert_coupon_usage"() RETURNS "trigger"
@@ -4547,6 +4622,7 @@ $$;
 ALTER FUNCTION "public"."revert_coupon_usage"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."track_coupon_usage"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -4568,6 +4644,7 @@ $$;
 ALTER FUNCTION "public"."track_coupon_usage"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."trigger_auto_payments_now"() RETURNS json
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -4578,6 +4655,7 @@ $$;
 
 
 ALTER FUNCTION "public"."trigger_auto_payments_now"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."trigger_update_account_balance_on_delete"() RETURNS "trigger"
@@ -4597,6 +4675,7 @@ $$;
 ALTER FUNCTION "public"."trigger_update_account_balance_on_delete"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."trigger_update_account_balance_on_insert"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -4612,6 +4691,7 @@ $$;
 
 
 ALTER FUNCTION "public"."trigger_update_account_balance_on_insert"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."trigger_update_account_balance_on_update"() RETURNS "trigger"
@@ -4638,6 +4718,7 @@ $$;
 
 
 ALTER FUNCTION "public"."trigger_update_account_balance_on_update"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."update_account_balance"() RETURNS "trigger"
@@ -4738,6 +4819,7 @@ $$;
 ALTER FUNCTION "public"."update_account_balance"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."update_account_balance"("p_account_id" "uuid", "p_amount" numeric, "p_transaction_type" "public"."transaction_type") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -4759,6 +4841,7 @@ $$;
 
 
 ALTER FUNCTION "public"."update_account_balance"("p_account_id" "uuid", "p_amount" numeric, "p_transaction_type" "public"."transaction_type") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."update_budget_for_expense"("p_category_id" "uuid", "p_amount" numeric, "p_date" "date", "p_user_id" "uuid") RETURNS boolean
@@ -4801,6 +4884,7 @@ $$;
 
 
 ALTER FUNCTION "public"."update_budget_for_expense"("p_category_id" "uuid", "p_amount" numeric, "p_date" "date", "p_user_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."update_budget_spent"() RETURNS "trigger"
@@ -4863,6 +4947,7 @@ $$;
 ALTER FUNCTION "public"."update_budget_spent"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."update_investment_calculated_fields"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -4889,6 +4974,7 @@ $$;
 
 
 ALTER FUNCTION "public"."update_investment_calculated_fields"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."update_investment_from_transactions"() RETURNS "trigger"
@@ -4941,6 +5027,7 @@ $$;
 ALTER FUNCTION "public"."update_investment_from_transactions"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."update_investment_main_transaction"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -4985,6 +5072,7 @@ $$;
 ALTER FUNCTION "public"."update_investment_main_transaction"() OWNER TO "postgres";
 
 
+
 CREATE OR REPLACE FUNCTION "public"."update_updated_at_column"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -4996,6 +5084,7 @@ $$;
 
 
 ALTER FUNCTION "public"."update_updated_at_column"() OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."upgrade_user_subscription"("p_user_id" "uuid", "p_payment_id" "uuid") RETURNS boolean
@@ -5037,6 +5126,7 @@ $$;
 
 
 ALTER FUNCTION "public"."upgrade_user_subscription"("p_user_id" "uuid", "p_payment_id" "uuid") OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."validate_coupon_usage"("p_user_id" "uuid", "p_coupon_code" character varying, "p_base_amount" numeric DEFAULT 0) RETURNS TABLE("is_valid" boolean, "coupon_id" "uuid", "discount_type" character varying, "discount_value" numeric, "discount_amount" numeric, "message" "text", "description" "text")
@@ -5123,6 +5213,7 @@ $$;
 
 
 ALTER FUNCTION "public"."validate_coupon_usage"("p_user_id" "uuid", "p_coupon_code" character varying, "p_base_amount" numeric) OWNER TO "postgres";
+
 
 
 CREATE OR REPLACE FUNCTION "public"."validate_credit_transaction"() RETURNS "trigger"
@@ -9220,3 +9311,4 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 
 
 RESET ALL;
+
