@@ -36,9 +36,72 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url)
     const status = url.searchParams.get('status') || 'all'
 
-    // Use the simplified admin function to get subscription payments with all related data
-    const { data: paymentsData, error: paymentsError } = await supabase
-      .rpc('admin_get_subscription_payments')
+    // Try the new enhanced function first, fallback to direct query if not available
+    let paymentsData, paymentsError;
+
+    try {
+      // Try enhanced function with parameters
+      const result = await supabase
+        .rpc('admin_get_subscription_payments', {
+          p_admin_user_id: user.id,
+          p_status: status === 'all' ? null : status,
+          p_search: null,
+          p_limit: 100,
+          p_offset: 0
+        });
+
+      paymentsData = result.data;
+      paymentsError = result.error;
+    } catch (enhancedError) {
+      console.log('Enhanced function not available, trying fallback...');
+
+      // Fallback to direct query
+      const { data: directData, error: directError } = await supabase
+        .from('subscription_payments')
+        .select(`
+          *,
+          profiles!subscription_payments_user_id_fkey (
+            full_name,
+            email
+          ),
+          subscription_plans (
+            plan_name,
+            display_name,
+            price_monthly,
+            price_yearly
+          ),
+          payment_methods (
+            method_name,
+            display_name
+          ),
+          coupons (
+            code,
+            type,
+            value
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (directData) {
+        // Transform direct data to match function output
+        paymentsData = directData.map(payment => ({
+          ...payment,
+          user_full_name: payment.profiles?.full_name || '',
+          user_email: payment.profiles?.email || 'unknown@example.com',
+          plan_name: payment.subscription_plans?.plan_name || 'unknown',
+          plan_display_name: payment.subscription_plans?.display_name || 'Unknown Plan',
+          plan_price_monthly: payment.subscription_plans?.price_monthly || 0,
+          plan_price_yearly: payment.subscription_plans?.price_yearly || 0,
+          payment_method_name: payment.payment_methods?.method_name || 'manual',
+          payment_method_display_name: payment.payment_methods?.display_name || 'Manual Payment',
+          coupon_code: payment.coupons?.code,
+          coupon_type: payment.coupons?.type,
+          coupon_value: payment.coupons?.value,
+        }));
+      }
+      paymentsError = directError;
+    }
 
     if (paymentsError) {
       console.error('Error fetching payments:', paymentsError)
@@ -211,18 +274,67 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // If payment is approved, upgrade user subscription
-    if (status === 'approved') {
-      const { error: upgradeError } = await supabase
-        .rpc('upgrade_user_subscription', {
-          p_user_id: updatedPayment.user_id,
-          p_payment_id: payment_id
-        })
+    // If payment is approved, create/upgrade user subscription
+    if (status === 'approved' && updatedPayment) {
+      try {
+        // Try enhanced function first
+        const { error: upgradeError } = await supabase
+          .rpc('upgrade_user_subscription', {
+            p_user_id: updatedPayment.user_id,
+            p_payment_id: payment_id
+          });
 
-      if (upgradeError) {
-        console.error('Error upgrading subscription:', upgradeError)
-        // Note: We still return success for the payment update, but log the upgrade error
-        console.warn('Payment approved but subscription upgrade failed:', upgradeError)
+        if (upgradeError) {
+          console.error('Enhanced upgrade function failed, using fallback...');
+
+          // Fallback: Manual subscription creation
+          const { data: paymentData, error: paymentError } = await supabase
+            .from('subscription_payments')
+            .select(`
+              *,
+              subscription_plans (*)
+            `)
+            .eq('id', payment_id)
+            .single();
+
+          if (!paymentError && paymentData?.plan_id) {
+            const endDate = new Date();
+            if (paymentData.billing_cycle === 'monthly') {
+              endDate.setMonth(endDate.getMonth() + 1);
+            } else {
+              endDate.setFullYear(endDate.getFullYear() + 1);
+            }
+
+            // Create/update user subscription
+            await supabase
+              .from('user_subscriptions')
+              .upsert({
+                user_id: paymentData.user_id,
+                plan_id: paymentData.plan_id,
+                billing_cycle: paymentData.billing_cycle,
+                payment_id: payment_id,
+                status: 'active',
+                end_date: endDate.toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+
+            // Add to subscription history
+            await supabase
+              .from('subscription_history')
+              .insert({
+                user_id: paymentData.user_id,
+                plan_id: paymentData.plan_id,
+                plan_name: paymentData.subscription_plans?.plan_name || 'unknown',
+                action_type: 'subscription_activated',
+                amount_paid: paymentData.final_amount,
+                payment_id: payment_id,
+                effective_date: new Date().toISOString(),
+              });
+          }
+        }
+      } catch (subscriptionError) {
+        console.error('Error creating subscription:', subscriptionError);
+        // Don't fail the payment update, just log the error
       }
     }
 
