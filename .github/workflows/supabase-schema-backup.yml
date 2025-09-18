@@ -77,17 +77,17 @@ jobs:
         # 🎯 Generate fresh, clean schema dumps (no duplicates possible)
         echo "🔄 Generating fresh schema dumps..."
 
-        # Complete schema dump with clean output
-        npx supabase db dump --schema-only -f database/backup/schema/complete_schema.sql
+        # Complete schema dump (structure only, no data)
+        npx supabase db dump -f database/backup/schema/complete_schema.sql
 
         # Individual schema component dumps
-        npx supabase db dump --schema-only -s public -f database/backup/schema/public_schema.sql
-        npx supabase db dump --schema-only -s auth -f database/backup/schema/auth_schema.sql
-        npx supabase db dump --schema-only -s storage -f database/backup/schema/storage_schema.sql
-        npx supabase db dump --schema-only -s extensions -f database/backup/schema/extensions_schema.sql
+        npx supabase db dump -s public -f database/backup/schema/public_schema.sql
+        npx supabase db dump -s auth -f database/backup/schema/auth_schema.sql
+        npx supabase db dump -s storage -f database/backup/schema/storage_schema.sql
+        npx supabase db dump -s extensions -f database/backup/schema/extensions_schema.sql
 
         # Generate a data-only dump for reference (without sensitive data)
-        npx supabase db dump --data-only --exclude-table='auth.*' -f database/backup/schema/reference_data.sql 2>/dev/null || echo "-- No reference data to export" > database/backup/schema/reference_data.sql
+        npx supabase db dump --data-only -x 'auth.*' -f database/backup/schema/reference_data.sql 2>/dev/null || echo "-- No reference data to export" > database/backup/schema/reference_data.sql
 
         echo "✅ Fresh schema dumps generated"
         
