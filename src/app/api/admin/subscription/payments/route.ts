@@ -61,61 +61,98 @@ export async function GET(request: NextRequest) {
     } catch (enhancedError) {
       console.log('Enhanced function not available, trying fallback...', enhancedError);
 
-      // Fallback to direct query - use correct relationship path
+      // Fallback to direct query - fetch without joins to avoid foreign key issues
       const { data: directData, error: directError } = await supabase
         .from('subscription_payments')
-        .select(`
-          *,
-          subscription_plans (
-            plan_name,
-            display_name,
-            price_monthly,
-            price_yearly
-          ),
-          payment_methods (
-            method_name,
-            display_name
-          ),
-          coupons (
-            code,
-            type,
-            value
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (directData) {
-        // Get user data separately since the foreign key goes to auth.users
+        // Get all related data separately to avoid foreign key issues
+
+        // Get user data
         const userIds = [...new Set(directData.map(p => p.user_id))];
         const { data: usersData } = await supabase
           .from('profiles')
           .select('user_id, full_name, email, phone_number')
           .in('user_id', userIds);
 
-        // Create a user lookup map
+        // Get plan data
+        const planIds = [...new Set(directData.map(p => p.plan_id).filter(Boolean))];
+        let plansData: any[] = [];
+        if (planIds.length > 0) {
+          const { data: plans } = await supabase
+            .from('subscription_plans')
+            .select('id, plan_name, display_name, price_monthly, price_yearly')
+            .in('id', planIds);
+          plansData = plans || [];
+        }
+
+        // Get payment method data
+        const methodIds = [...new Set(directData.map(p => p.payment_method_id).filter(Boolean))];
+        let methodsData: any[] = [];
+        if (methodIds.length > 0) {
+          const { data: methods } = await supabase
+            .from('payment_methods')
+            .select('id, method_name, display_name')
+            .in('id', methodIds);
+          methodsData = methods || [];
+        }
+
+        // Get coupon data
+        const couponIds = [...new Set(directData.map(p => p.coupon_id).filter(Boolean))];
+        let couponsData: any[] = [];
+        if (couponIds.length > 0) {
+          const { data: coupons } = await supabase
+            .from('coupons')
+            .select('id, code, type, value')
+            .in('id', couponIds);
+          couponsData = coupons || [];
+        }
+
+        // Create lookup maps
         const userMap = new Map();
         usersData?.forEach(user => {
           userMap.set(user.user_id, user);
         });
 
+        const planMap = new Map();
+        plansData.forEach(plan => {
+          planMap.set(plan.id, plan);
+        });
+
+        const methodMap = new Map();
+        methodsData.forEach(method => {
+          methodMap.set(method.id, method);
+        });
+
+        const couponMap = new Map();
+        couponsData.forEach(coupon => {
+          couponMap.set(coupon.id, coupon);
+        });
+
         // Transform direct data to match function output
         paymentsData = directData.map(payment => {
           const user = userMap.get(payment.user_id) || {};
+          const plan = planMap.get(payment.plan_id) || {};
+          const method = methodMap.get(payment.payment_method_id) || {};
+          const coupon = couponMap.get(payment.coupon_id);
+
           return {
             ...payment,
             user_full_name: user.full_name || '',
             user_email: user.email || 'unknown@example.com',
             user_phone: user.phone_number || payment.sender_number || '',
-            plan_name: payment.subscription_plans?.plan_name || 'unknown',
-            plan_display_name: payment.subscription_plans?.display_name || 'Unknown Plan',
-            plan_price_monthly: payment.subscription_plans?.price_monthly || 0,
-            plan_price_yearly: payment.subscription_plans?.price_yearly || 0,
-            payment_method_name: payment.payment_methods?.method_name || 'manual',
-            payment_method_display_name: payment.payment_methods?.display_name || 'Manual Payment',
-            coupon_code: payment.coupons?.code,
-            coupon_type: payment.coupons?.type,
-            coupon_value: payment.coupons?.value,
+            plan_name: plan.plan_name || 'unknown',
+            plan_display_name: plan.display_name || 'Unknown Plan',
+            plan_price_monthly: plan.price_monthly || 0,
+            plan_price_yearly: plan.price_yearly || 0,
+            payment_method_name: method.method_name || 'manual',
+            payment_method_display_name: method.display_name || 'Manual Payment',
+            coupon_code: coupon?.code,
+            coupon_type: coupon?.type,
+            coupon_value: coupon?.value,
             days_since_submission: payment.submitted_at ?
               Math.floor((new Date().getTime() - new Date(payment.submitted_at).getTime()) / (1000 * 60 * 60 * 24)) : null,
             subscription_status: 'no_subscription' // Default for fallback

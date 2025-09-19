@@ -39,19 +39,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(url.searchParams.get('limit') || '50')
     const offset = parseInt(url.searchParams.get('offset') || '0')
 
-    // Fetch user subscriptions with plan details (user data fetched separately)
+    // Fetch user subscriptions without joins to avoid foreign key issues
     let query = supabase
       .from('user_subscriptions')
-      .select(`
-        *,
-        subscription_plans (
-          plan_name,
-          display_name,
-          price_monthly,
-          price_yearly,
-          features
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -70,7 +61,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user data and payment data separately
+    // Get user data, plan data, and payment data separately
     let filteredSubscriptions = subscriptions || []
     if (filteredSubscriptions.length > 0) {
       // Get user data
@@ -79,6 +70,17 @@ export async function GET(request: NextRequest) {
         .from('profiles')
         .select('user_id, full_name, email, phone_number')
         .in('user_id', userIds);
+
+      // Get plan data
+      const planIds = [...new Set(filteredSubscriptions.map(s => s.plan_id).filter(Boolean))];
+      let plansData: any[] = [];
+      if (planIds.length > 0) {
+        const { data: plans } = await supabase
+          .from('subscription_plans')
+          .select('id, plan_name, display_name, price_monthly, price_yearly, features')
+          .in('id', planIds);
+        plansData = plans || [];
+      }
 
       // Get payment data for subscriptions with payment_id
       const paymentIds = filteredSubscriptions
@@ -99,15 +101,21 @@ export async function GET(request: NextRequest) {
         userMap.set(user.user_id, user);
       });
 
+      const planMap = new Map();
+      plansData.forEach(plan => {
+        planMap.set(plan.id, plan);
+      });
+
       const paymentMap = new Map();
       paymentsData.forEach(payment => {
         paymentMap.set(payment.id, payment);
       });
 
-      // Add user and payment data to subscriptions
+      // Add user, plan, and payment data to subscriptions
       filteredSubscriptions = filteredSubscriptions.map(sub => ({
         ...sub,
         user_data: userMap.get(sub.user_id) || {},
+        plan_data: planMap.get(sub.plan_id) || {},
         payment_data: sub.payment_id ? paymentMap.get(sub.payment_id) : null
       }));
 
@@ -118,7 +126,7 @@ export async function GET(request: NextRequest) {
           sub.user_data?.full_name?.toLowerCase().includes(searchLower) ||
           sub.user_data?.email?.toLowerCase().includes(searchLower) ||
           sub.user_data?.phone_number?.includes(search) ||
-          sub.subscription_plans?.display_name?.toLowerCase().includes(searchLower) ||
+          sub.plan_data?.display_name?.toLowerCase().includes(searchLower) ||
           sub.payment_data?.transaction_id?.toLowerCase().includes(searchLower)
         )
       }
@@ -142,11 +150,11 @@ export async function GET(request: NextRequest) {
         phone_number: subscription.user_data?.phone_number || null
       },
       plan: {
-        name: subscription.subscription_plans?.plan_name || 'unknown',
-        display_name: subscription.subscription_plans?.display_name || 'Unknown Plan',
-        price_monthly: subscription.subscription_plans?.price_monthly || 0,
-        price_yearly: subscription.subscription_plans?.price_yearly || 0,
-        features: subscription.subscription_plans?.features || []
+        name: subscription.plan_data?.plan_name || 'unknown',
+        display_name: subscription.plan_data?.display_name || 'Unknown Plan',
+        price_monthly: subscription.plan_data?.price_monthly || 0,
+        price_yearly: subscription.plan_data?.price_yearly || 0,
+        features: subscription.plan_data?.features || []
       },
       payment: subscription.payment_data ? {
         transaction_id: subscription.payment_data.transaction_id,
