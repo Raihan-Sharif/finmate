@@ -115,7 +115,7 @@ BEGIN
     c.type::text as coupon_type,
     c.value as coupon_value,
     -- Enhanced fields
-    COALESCE(p.phone, sp.sender_number) as user_phone,
+    COALESCE(p.phone_number, sp.sender_number) as user_phone,
     CASE
       WHEN sp.submitted_at IS NOT NULL THEN
         EXTRACT(DAY FROM NOW() - sp.submitted_at)::integer

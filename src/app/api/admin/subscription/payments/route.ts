@@ -52,18 +52,20 @@ export async function GET(request: NextRequest) {
 
       paymentsData = result.data;
       paymentsError = result.error;
-    } catch (enhancedError) {
-      console.log('Enhanced function not available, trying fallback...');
 
-      // Fallback to direct query
+      // If function exists but returns error, log it and use fallback
+      if (paymentsError) {
+        console.log('Enhanced function error, using fallback:', paymentsError.message);
+        throw new Error('Function returned error');
+      }
+    } catch (enhancedError) {
+      console.log('Enhanced function not available, trying fallback...', enhancedError);
+
+      // Fallback to direct query - use correct relationship path
       const { data: directData, error: directError } = await supabase
         .from('subscription_payments')
         .select(`
           *,
-          profiles!subscription_payments_user_id_fkey (
-            full_name,
-            email
-          ),
           subscription_plans (
             plan_name,
             display_name,
@@ -84,21 +86,41 @@ export async function GET(request: NextRequest) {
         .limit(100);
 
       if (directData) {
+        // Get user data separately since the foreign key goes to auth.users
+        const userIds = [...new Set(directData.map(p => p.user_id))];
+        const { data: usersData } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, email, phone_number')
+          .in('user_id', userIds);
+
+        // Create a user lookup map
+        const userMap = new Map();
+        usersData?.forEach(user => {
+          userMap.set(user.user_id, user);
+        });
+
         // Transform direct data to match function output
-        paymentsData = directData.map(payment => ({
-          ...payment,
-          user_full_name: payment.profiles?.full_name || '',
-          user_email: payment.profiles?.email || 'unknown@example.com',
-          plan_name: payment.subscription_plans?.plan_name || 'unknown',
-          plan_display_name: payment.subscription_plans?.display_name || 'Unknown Plan',
-          plan_price_monthly: payment.subscription_plans?.price_monthly || 0,
-          plan_price_yearly: payment.subscription_plans?.price_yearly || 0,
-          payment_method_name: payment.payment_methods?.method_name || 'manual',
-          payment_method_display_name: payment.payment_methods?.display_name || 'Manual Payment',
-          coupon_code: payment.coupons?.code,
-          coupon_type: payment.coupons?.type,
-          coupon_value: payment.coupons?.value,
-        }));
+        paymentsData = directData.map(payment => {
+          const user = userMap.get(payment.user_id) || {};
+          return {
+            ...payment,
+            user_full_name: user.full_name || '',
+            user_email: user.email || 'unknown@example.com',
+            user_phone: user.phone_number || payment.sender_number || '',
+            plan_name: payment.subscription_plans?.plan_name || 'unknown',
+            plan_display_name: payment.subscription_plans?.display_name || 'Unknown Plan',
+            plan_price_monthly: payment.subscription_plans?.price_monthly || 0,
+            plan_price_yearly: payment.subscription_plans?.price_yearly || 0,
+            payment_method_name: payment.payment_methods?.method_name || 'manual',
+            payment_method_display_name: payment.payment_methods?.display_name || 'Manual Payment',
+            coupon_code: payment.coupons?.code,
+            coupon_type: payment.coupons?.type,
+            coupon_value: payment.coupons?.value,
+            days_since_submission: payment.submitted_at ?
+              Math.floor((new Date().getTime() - new Date(payment.submitted_at).getTime()) / (1000 * 60 * 60 * 24)) : null,
+            subscription_status: 'no_subscription' // Default for fallback
+          };
+        });
       }
       paymentsError = directError;
     }

@@ -91,6 +91,39 @@ interface PaymentRecord {
   updated_at: string
 }
 
+interface SubscriptionRecord {
+  id: string
+  user_id: string
+  plan_id: string
+  billing_cycle: 'monthly' | 'yearly'
+  status: 'active' | 'suspended' | 'cancelled' | 'expired'
+  start_date: string
+  end_date: string
+  payment_id?: string
+  created_at: string
+  updated_at: string
+  user: {
+    full_name: string
+    email: string
+    phone_number?: string
+  }
+  plan: {
+    name: string
+    display_name: string
+    price_monthly: number
+    price_yearly: number
+    features: string[]
+  }
+  payment?: {
+    transaction_id: string
+    final_amount: number
+    payment_date: string
+    payment_status: string
+  }
+  days_remaining: number
+  is_expired: boolean
+}
+
 interface SubscriptionStats {
   total_payments: number
   pending_review: number
@@ -108,6 +141,8 @@ export function EnhancedSubscriptionManager() {
   // Data states
   const [payments, setPayments] = useState<PaymentRecord[]>([])
   const [filteredPayments, setFilteredPayments] = useState<PaymentRecord[]>([])
+  const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([])
+  const [filteredSubscriptions, setFilteredSubscriptions] = useState<SubscriptionRecord[]>([])
   const [stats, setStats] = useState<SubscriptionStats | null>(null)
 
   // UI states
@@ -122,10 +157,17 @@ export function EnhancedSubscriptionManager() {
   const [dateFilter, setDateFilter] = useState<string>('all')
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all')
 
+  // Subscription filters
+  const [subscriptionSearchQuery, setSubscriptionSearchQuery] = useState('')
+  const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState<string>('all')
+
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null)
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
+  const [selectedSubscription, setSelectedSubscription] = useState<SubscriptionRecord | null>(null)
   const [adminNotes, setAdminNotes] = useState('')
+  const [extendMonths, setExtendMonths] = useState<number>(1)
 
   useEffect(() => {
     loadData()
@@ -135,10 +177,17 @@ export function EnhancedSubscriptionManager() {
     filterPayments()
   }, [payments, searchQuery, statusFilter, dateFilter, paymentMethodFilter])
 
+  useEffect(() => {
+    filterSubscriptions()
+  }, [subscriptions, subscriptionSearchQuery, subscriptionStatusFilter])
+
   const loadData = async () => {
     try {
       setLoading(true)
-      await fetchPayments()
+      await Promise.all([
+        fetchPayments(),
+        fetchSubscriptions()
+      ])
       calculateStats()
     } catch (error) {
       console.error('Error loading data:', error)
@@ -151,7 +200,10 @@ export function EnhancedSubscriptionManager() {
   const refreshData = async () => {
     try {
       setRefreshing(true)
-      await fetchPayments()
+      await Promise.all([
+        fetchPayments(),
+        fetchSubscriptions()
+      ])
       calculateStats()
       toast.success('Data refreshed successfully')
     } catch (error) {
@@ -178,6 +230,26 @@ export function EnhancedSubscriptionManager() {
     } catch (error) {
       console.error('fetchPayments error:', error)
       throw error
+    }
+  }
+
+  const fetchSubscriptions = async () => {
+    try {
+      const response = await fetch('/api/admin/subscription/subscriptions')
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch subscriptions')
+      }
+
+      setSubscriptions(result.subscriptions || [])
+    } catch (error) {
+      console.error('fetchSubscriptions error:', error)
+      // Don't throw error for subscriptions - it's not critical
+      setSubscriptions([])
     }
   }
 
@@ -283,6 +355,29 @@ export function EnhancedSubscriptionManager() {
     setFilteredPayments(filtered)
   }
 
+  const filterSubscriptions = () => {
+    let filtered = [...subscriptions]
+
+    // Search filter
+    if (subscriptionSearchQuery.trim()) {
+      const query = subscriptionSearchQuery.toLowerCase()
+      filtered = filtered.filter(subscription =>
+        subscription.user.email.toLowerCase().includes(query) ||
+        subscription.user.full_name?.toLowerCase().includes(query) ||
+        subscription.user.phone_number?.includes(query) ||
+        subscription.plan.display_name.toLowerCase().includes(query) ||
+        subscription.payment?.transaction_id?.toLowerCase().includes(query)
+      )
+    }
+
+    // Status filter
+    if (subscriptionStatusFilter !== 'all') {
+      filtered = filtered.filter(subscription => subscription.status === subscriptionStatusFilter)
+    }
+
+    setFilteredSubscriptions(filtered)
+  }
+
   const updatePaymentStatus = async (paymentId: string, status: 'verified' | 'approved' | 'rejected', notes?: string) => {
     try {
       setProcessingId(paymentId)
@@ -321,6 +416,42 @@ export function EnhancedSubscriptionManager() {
     setShowPaymentModal(true)
   }
 
+  const updateSubscriptionStatus = async (subscriptionId: string, action: 'activate' | 'suspend' | 'cancel' | 'extend', extendMonths?: number) => {
+    try {
+      setProcessingId(subscriptionId)
+
+      const response = await fetch('/api/admin/subscription/subscriptions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription_id: subscriptionId,
+          action,
+          extend_months: extendMonths
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to update subscription')
+      }
+
+      toast.success(`Subscription ${action} completed successfully`)
+      await loadData()
+      setShowSubscriptionModal(false)
+    } catch (error: any) {
+      console.error('Error updating subscription:', error)
+      toast.error(error.message || 'Failed to update subscription')
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const openSubscriptionModal = (subscription: SubscriptionRecord) => {
+    setSelectedSubscription(subscription)
+    setShowSubscriptionModal(true)
+  }
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -341,6 +472,21 @@ export function EnhancedSubscriptionManager() {
       case 'approved':
         return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
       case 'rejected':
+        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+      case 'expired':
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+      default:
+        return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+    }
+  }
+
+  const getSubscriptionStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+      case 'suspended':
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+      case 'cancelled':
         return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
       case 'expired':
         return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
@@ -770,22 +916,150 @@ export function EnhancedSubscriptionManager() {
 
         {/* Subscriptions Tab */}
         <TabsContent value="subscriptions" className="space-y-6">
-          <Card className="shadow-lg">
+          <Card className="shadow-lg border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Crown className="h-5 w-5 text-yellow-600" />
-                <span>Active Subscription Management</span>
-              </CardTitle>
-              <CardDescription>
-                Monitor and manage user subscription statuses and billing cycles
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-                <Package className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">Subscription Management</h3>
-                <p>Advanced subscription management features coming soon...</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl flex items-center space-x-2">
+                    <Crown className="h-5 w-5 text-yellow-600" />
+                    <span>Active Subscription Management</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Monitor and manage user subscription statuses and billing cycles
+                  </CardDescription>
+                </div>
+                <div className="flex space-x-2">
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export List
+                  </Button>
+                </div>
               </div>
+
+              {/* Subscription Filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search users, plans, transactions..."
+                    value={subscriptionSearchQuery}
+                    onChange={(e) => setSubscriptionSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                <Select value={subscriptionStatusFilter} onValueChange={setSubscriptionStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="text-sm text-slate-600 dark:text-slate-400 flex items-center">
+                  Total: {filteredSubscriptions.length} subscriptions
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              {filteredSubscriptions.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                  <Package className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">No subscriptions found</h3>
+                  <p>Try adjusting your filters or search criteria</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredSubscriptions.map((subscription, index) => (
+                    <motion.div
+                      key={subscription.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.02 }}
+                      className="group flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer"
+                      onClick={() => openSubscriptionModal(subscription)}
+                    >
+                      <div className="flex items-center space-x-4 flex-1">
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-lg">
+                            {subscription.user?.full_name?.[0] || subscription.user?.email?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                              {subscription.user.full_name || subscription.user.email}
+                            </h4>
+                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                              {subscription.plan.display_name}
+                            </Badge>
+                            <Badge className={cn("text-xs px-2 py-0.5", getSubscriptionStatusColor(subscription.status))}>
+                              {subscription.status}
+                            </Badge>
+                            {subscription.is_expired && (
+                              <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                                Expired
+                              </Badge>
+                            )}
+                          </div>
+
+                          <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="h-3 w-3" />
+                              <span className="capitalize">{subscription.billing_cycle}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <DollarSign className="h-3 w-3" />
+                              <span className="font-medium">
+                                ৳{subscription.billing_cycle === 'monthly'
+                                  ? subscription.plan.price_monthly.toLocaleString()
+                                  : subscription.plan.price_yearly.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Clock className="h-3 w-3" />
+                              <span>
+                                {subscription.days_remaining > 0
+                                  ? `${subscription.days_remaining} days left`
+                                  : 'Expired'
+                                }
+                              </span>
+                            </div>
+                            {subscription.payment && (
+                              <div className="flex items-center space-x-1">
+                                <CreditCard className="h-3 w-3" />
+                                <span className="font-mono text-xs">{subscription.payment.transaction_id}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openSubscriptionModal(subscription)
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        >
+                          <Settings className="h-3 w-3 mr-1" />
+                          <span>Manage</span>
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1063,6 +1337,258 @@ export function EnhancedSubscriptionManager() {
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Subscription Management Modal */}
+      <Dialog open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Crown className="h-5 w-5" />
+              <span>Subscription Management</span>
+            </DialogTitle>
+            <DialogDescription>
+              Manage user subscription status, billing, and access control
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedSubscription && (
+            <div className="space-y-6">
+              {/* Subscription Info */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center space-x-2">
+                      <User className="h-4 w-4" />
+                      <span>Subscriber Information</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Name
+                      </Label>
+                      <p className="text-sm font-medium">
+                        {selectedSubscription.user.full_name || 'Not provided'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Email
+                      </Label>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-mono">{selectedSubscription.user.email}</p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(selectedSubscription.user.email)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    {selectedSubscription.user.phone_number && (
+                      <div>
+                        <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Phone
+                        </Label>
+                        <p className="text-sm">{selectedSubscription.user.phone_number}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center space-x-2">
+                      <Crown className="h-4 w-4" />
+                      <span>Subscription Details</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Plan
+                      </Label>
+                      <p className="text-sm font-medium">{selectedSubscription.plan.display_name}</p>
+                      <p className="text-xs text-slate-500 capitalize">
+                        {selectedSubscription.billing_cycle} billing
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Status
+                      </Label>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Badge className={cn("text-sm px-3 py-1", getSubscriptionStatusColor(selectedSubscription.status))}>
+                          {selectedSubscription.status}
+                        </Badge>
+                        {selectedSubscription.is_expired && (
+                          <Badge variant="destructive" className="text-sm px-3 py-1">
+                            Expired
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Duration
+                      </Label>
+                      <p className="text-sm">
+                        {selectedSubscription.days_remaining > 0
+                          ? `${selectedSubscription.days_remaining} days remaining`
+                          : 'Subscription expired'
+                        }
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {selectedSubscription.end_date ? format(new Date(selectedSubscription.end_date), 'PPP') : 'No end date'}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Payment Information */}
+              {selectedSubscription.payment && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center space-x-2">
+                      <CreditCard className="h-4 w-4" />
+                      <span>Payment Information</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs text-slate-500 dark:text-slate-400">Transaction ID</Label>
+                        <p className="font-mono text-sm bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                          {selectedSubscription.payment.transaction_id}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-500 dark:text-slate-400">Amount Paid</Label>
+                        <p className="text-sm font-medium">৳{selectedSubscription.payment.final_amount.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-500 dark:text-slate-400">Payment Date</Label>
+                        <p className="text-sm">
+                          {format(new Date(selectedSubscription.payment.payment_date), 'MMM dd, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Extend Subscription */}
+              {selectedSubscription.status === 'active' && (
+                <div className="space-y-2">
+                  <Label htmlFor="extend-months" className="text-sm font-medium">
+                    Extend Subscription (Months)
+                  </Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="extend-months"
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={extendMonths}
+                      onChange={(e) => setExtendMonths(parseInt(e.target.value) || 1)}
+                      className="w-24"
+                    />
+                    <span className="text-sm text-slate-500">months</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3 pt-4 border-t">
+                {selectedSubscription.status === 'suspended' && (
+                  <Button
+                    onClick={() => updateSubscriptionStatus(selectedSubscription.id, 'activate')}
+                    disabled={processingId === selectedSubscription.id}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                  >
+                    {processingId === selectedSubscription.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Reactivate
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {selectedSubscription.status === 'active' && (
+                  <>
+                    <Button
+                      onClick={() => updateSubscriptionStatus(selectedSubscription.id, 'extend', extendMonths)}
+                      disabled={processingId === selectedSubscription.id}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                    >
+                      {processingId === selectedSubscription.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Extend {extendMonths} month{extendMonths > 1 ? 's' : ''}
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      onClick={() => updateSubscriptionStatus(selectedSubscription.id, 'suspend')}
+                      disabled={processingId === selectedSubscription.id}
+                      variant="outline"
+                      className="flex-1 shadow-lg"
+                    >
+                      {processingId === selectedSubscription.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="h-4 w-4 mr-2" />
+                          Suspend
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                {selectedSubscription.status !== 'cancelled' && (
+                  <Button
+                    onClick={() => updateSubscriptionStatus(selectedSubscription.id, 'cancel')}
+                    disabled={processingId === selectedSubscription.id}
+                    variant="destructive"
+                    className="flex-1 shadow-lg"
+                  >
+                    {processingId === selectedSubscription.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Cancel
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
