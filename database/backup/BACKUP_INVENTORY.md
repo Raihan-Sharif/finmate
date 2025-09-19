@@ -5,8 +5,8 @@
 ## 📄 Files Generated
 
 ### Schema Files
-- Complete Schema: 9314 lines
-- Public Schema: 8952 lines
+- Complete Schema: 9696 lines
+- Public Schema: 9330 lines
 - Auth Schema: 1075 lines
 
 ### Component Files
@@ -19,7 +19,7 @@
 
 ## 🔍 Verification Checksums
 ```
-Complete Schema: be8fcf8fa9f408340be38fe8f2131438
+Complete Schema: 5b2990df7ec76e431c3b33d70e491eb4
 Functions: d41d8cd98f00b204e9800998ecf8427e
 Policies: c58438697dd4f0c13552f0694fdee33f
 ```
