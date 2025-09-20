@@ -287,7 +287,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Build update object
+    // Build update object according to database schema
     const updateData: any = {
       status: status as any,
       updated_at: new Date().toISOString()

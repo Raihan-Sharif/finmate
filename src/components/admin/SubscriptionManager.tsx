@@ -190,10 +190,25 @@ export function SubscriptionManager() {
 
       const transformedPayments = (result.payments || []).map((payment: any) => ({
         ...payment,
-        plan: payment.plan || { display_name: 'Unknown Plan' },
-        payment_method: payment.payment_method || { display_name: 'Unknown Method' },
-        coupon: payment.coupon || null,
-        profiles: payment.user || { full_name: 'Unknown User', email: 'unknown@example.com' }
+        plan: {
+          name: payment.plan_name || payment.plan?.name || 'unknown',
+          display_name: payment.plan_display_name || payment.plan?.display_name || 'Unknown Plan',
+          price_monthly: payment.plan_price_monthly || payment.plan?.price_monthly || 0,
+          price_yearly: payment.plan_price_yearly || payment.plan?.price_yearly || 0
+        },
+        payment_method: {
+          name: payment.payment_method_name || payment.payment_method?.name || 'manual',
+          display_name: payment.payment_method_display_name || payment.payment_method?.display_name || 'Manual Payment'
+        },
+        coupon: payment.coupon_code ? {
+          code: payment.coupon_code,
+          type: payment.coupon_type || 'percentage',
+          value: payment.coupon_value || 0
+        } : (payment.coupon || null),
+        profiles: {
+          full_name: payment.user_full_name || payment.profiles?.full_name || payment.user?.full_name || 'Unknown User',
+          email: payment.user_email || payment.profiles?.email || payment.user?.email || 'unknown@example.com'
+        }
       }))
 
       setPayments(transformedPayments)
@@ -979,21 +994,96 @@ export function SubscriptionManager() {
 
         {/* Subscriptions Tab */}
         <TabsContent value="subscriptions" className="space-y-6">
-          <Card>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Active Subscriptions</h2>
+              <p className="text-gray-600">Manage user subscriptions and access levels</p>
+            </div>
+          </div>
+
+          <Card className="shadow-lg border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Crown className="h-5 w-5" />
-                <span>Active Subscriptions</span>
+                <span>User Subscriptions</span>
               </CardTitle>
               <CardDescription>
-                Manage user subscriptions and access levels
+                View and manage all active user subscriptions
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Subscription management interface coming soon...</p>
-              </div>
+              {/* Filter approved payments to show active subscriptions */}
+              {payments.filter(p => p.status === 'approved').length === 0 ? (
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                  <Crown className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No active subscriptions found</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {payments
+                    .filter(p => p.status === 'approved')
+                    .sort((a, b) => new Date(b.approved_at!).getTime() - new Date(a.approved_at!).getTime())
+                    .map((subscription, index) => (
+                      <motion.div
+                        key={subscription.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                              {subscription.profiles?.full_name?.[0] || subscription.profiles?.email?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                                {subscription.profiles.full_name || subscription.profiles.email}
+                              </p>
+                              <Badge variant="default" className="text-xs bg-green-600">
+                                <Crown className="h-3 w-3 mr-1" />
+                                {subscription.plan.display_name}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-4 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              <span className="flex items-center space-x-1">
+                                <Calendar className="h-3 w-3" />
+                                <span>{subscription.billing_cycle}</span>
+                              </span>
+                              <span className="flex items-center space-x-1">
+                                <DollarSign className="h-3 w-3" />
+                                <span>৳{subscription.final_amount}</span>
+                              </span>
+                              <span className="flex items-center space-x-1">
+                                <CheckCircle className="h-3 w-3" />
+                                <span>Approved {format(new Date(subscription.approved_at!), 'MMM dd, yyyy')}</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
+                            Active
+                          </Badge>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openPaymentModal(subscription)}
+                            className="flex items-center space-x-1"
+                          >
+                            <Eye className="h-3 w-3" />
+                            <span>View Details</span>
+                          </Button>
+                        </div>
+                      </motion.div>
+                    ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

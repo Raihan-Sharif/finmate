@@ -40,6 +40,8 @@ import { format } from 'date-fns'
 interface PaymentRecord {
   id: string
   user_id: string
+  plan_id: string
+  payment_method_id?: string
   plan: {
     name: string
     display_name: string
@@ -59,6 +61,7 @@ interface PaymentRecord {
   base_amount: number
   discount_amount: number
   final_amount: number
+  coupon_id?: string
   currency: string
   transaction_id: string
   sender_number: string
@@ -74,7 +77,11 @@ interface PaymentRecord {
   profiles: {
     full_name: string
     email: string
+    phone_number?: string
   }
+  user_phone?: string
+  days_since_submission?: number
+  subscription_status?: string
   created_at: string
   updated_at: string
 }
@@ -111,18 +118,30 @@ export function SubscriptionPaymentsAdmin() {
       // Transform the data to match expected format
       const transformedPayments = (result.payments || []).map((payment: any) => ({
         ...payment,
-        plan: payment.plan || {
-          name: 'unknown',
-          display_name: 'Unknown Plan',
-          price_monthly: 0,
-          price_yearly: 0
+        plan: {
+          name: payment.plan_name || payment.plan?.name || 'unknown',
+          display_name: payment.plan_display_name || payment.plan?.display_name || 'Unknown Plan',
+          price_monthly: payment.plan_price_monthly || payment.plan?.price_monthly || 0,
+          price_yearly: payment.plan_price_yearly || payment.plan?.price_yearly || 0
         },
-        payment_method: payment.payment_method || {
-          name: 'manual',
-          display_name: 'Manual Payment'
+        payment_method: {
+          name: payment.payment_method_name || payment.payment_method?.name || 'manual',
+          display_name: payment.payment_method_display_name || payment.payment_method?.display_name || 'Manual Payment'
         },
-        coupon: payment.coupon || null,
-        profiles: payment.profiles || { full_name: 'Unknown User', email: 'unknown@example.com' }
+        coupon: payment.coupon_code ? {
+          code: payment.coupon_code,
+          type: payment.coupon_type || 'percentage',
+          value: payment.coupon_value || 0
+        } : (payment.coupon || null),
+        profiles: {
+          full_name: payment.user_full_name || payment.profiles?.full_name || 'Unknown User',
+          email: payment.user_email || payment.profiles?.email || 'unknown@example.com',
+          phone_number: payment.user_phone || payment.profiles?.phone_number
+        },
+        user_phone: payment.user_phone || payment.sender_number,
+        days_since_submission: payment.days_since_submission || (payment.submitted_at ?
+          Math.floor((new Date().getTime() - new Date(payment.submitted_at).getTime()) / (1000 * 60 * 60 * 24)) : null),
+        subscription_status: payment.subscription_status || 'no_subscription'
       }))
 
       setPayments(transformedPayments)
