@@ -114,6 +114,8 @@ CREATE INDEX "idx_subcategories_sort_order" ON "public"."subcategories" USING "b
 CREATE INDEX "idx_subscription_history_user_id" ON "public"."subscription_history" USING "btree" ("user_id");
 CREATE INDEX "idx_subscription_payments_coupon_id" ON "public"."subscription_payments" USING "btree" ("coupon_id");
 CREATE INDEX "idx_subscription_payments_created_at" ON "public"."subscription_payments" USING "btree" ("created_at");
+CREATE INDEX "idx_subscription_payments_payment_method_id" ON "public"."subscription_payments" USING "btree" ("payment_method_id");
+CREATE INDEX "idx_subscription_payments_plan_id" ON "public"."subscription_payments" USING "btree" ("plan_id");
 CREATE INDEX "idx_subscription_payments_status" ON "public"."subscription_payments" USING "btree" ("status");
 CREATE INDEX "idx_subscription_payments_user_id" ON "public"."subscription_payments" USING "btree" ("user_id");
 CREATE INDEX "idx_transactions_account_id" ON "public"."transactions" USING "btree" ("account_id");
@@ -133,5 +135,9 @@ CREATE INDEX "idx_user_permissions_user_id" ON "public"."user_permissions" USING
 CREATE INDEX "idx_user_sessions_active" ON "public"."user_sessions" USING "btree" ("is_active");
 CREATE INDEX "idx_user_sessions_expires" ON "public"."user_sessions" USING "btree" ("expires_at");
 CREATE INDEX "idx_user_sessions_user_id" ON "public"."user_sessions" USING "btree" ("user_id");
+CREATE INDEX "idx_user_subscriptions_end_date" ON "public"."user_subscriptions" USING "btree" ("end_date");
+CREATE INDEX "idx_user_subscriptions_payment_id" ON "public"."user_subscriptions" USING "btree" ("payment_id");
+CREATE INDEX "idx_user_subscriptions_plan_id" ON "public"."user_subscriptions" USING "btree" ("plan_id");
+CREATE INDEX "idx_user_subscriptions_status" ON "public"."user_subscriptions" USING "btree" ("status");
 CREATE INDEX "idx_user_subscriptions_status_end_date" ON "public"."user_subscriptions" USING "btree" ("status", "end_date");
 CREATE INDEX "idx_user_subscriptions_user_id" ON "public"."user_subscriptions" USING "btree" ("user_id");
