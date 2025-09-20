@@ -18,7 +18,7 @@ CREATE SCHEMA IF NOT EXISTS "public";
 ALTER SCHEMA "public" OWNER TO "pg_database_owner";
 
 
-COMMENT ON SCHEMA "public" IS 'Enhanced subscription system with comprehensive admin management functions - Migration completed successfully';
+COMMENT ON SCHEMA "public" IS 'Foreign key relationships fixed for subscription system - PostgREST joins should now work properly';
 
 
 
@@ -813,8 +813,8 @@ BEGIN
     c.code as coupon_code,
     c.type::text as coupon_type,
     c.value as coupon_value,
-    -- Enhanced fields
-    COALESCE(p.phone, sp.sender_number) as user_phone,
+    -- Enhanced fields - FIXED: Use phone_number instead of phone
+    COALESCE(p.phone_number, sp.sender_number) as user_phone,
     CASE
       WHEN sp.submitted_at IS NOT NULL THEN
         EXTRACT(DAY FROM NOW() - sp.submitted_at)::integer
@@ -850,7 +850,7 @@ $$;
 ALTER FUNCTION "public"."admin_get_subscription_payments"("p_admin_user_id" "uuid", "p_status" "text", "p_search" "text", "p_limit" integer, "p_offset" integer) OWNER TO "postgres";
 
 
-COMMENT ON FUNCTION "public"."admin_get_subscription_payments"("p_admin_user_id" "uuid", "p_status" "text", "p_search" "text", "p_limit" integer, "p_offset" integer) IS 'Enhanced comprehensive function to fetch subscription payments with advanced filtering, search, and detailed user information.';
+COMMENT ON FUNCTION "public"."admin_get_subscription_payments"("p_admin_user_id" "uuid", "p_status" "text", "p_search" "text", "p_limit" integer, "p_offset" integer) IS 'Fixed function to fetch subscription payments with correct phone_number column reference.';
 
 
 
@@ -6610,6 +6610,55 @@ CREATE TABLE IF NOT EXISTS "public"."subscription_plans" (
 ALTER TABLE "public"."subscription_plans" OWNER TO "postgres";
 
 
+CREATE OR REPLACE VIEW "public"."subscription_payments_with_users" AS
+ SELECT "sp"."id",
+    "sp"."user_id",
+    "sp"."plan_id",
+    "sp"."billing_cycle",
+    "sp"."transaction_id",
+    "sp"."sender_number",
+    "sp"."base_amount",
+    "sp"."discount_amount",
+    "sp"."final_amount",
+    "sp"."coupon_id",
+    "sp"."status",
+    "sp"."admin_notes",
+    "sp"."rejection_reason",
+    "sp"."submitted_at",
+    "sp"."verified_at",
+    "sp"."approved_at",
+    "sp"."rejected_at",
+    "sp"."verified_by",
+    "sp"."currency",
+    "sp"."created_at",
+    "sp"."updated_at",
+    "sp"."payment_method_id",
+    "p"."full_name" AS "user_full_name",
+    "p"."email" AS "user_email",
+    "p"."phone_number" AS "user_phone",
+    "spl"."plan_name",
+    "spl"."display_name" AS "plan_display_name",
+    "spl"."price_monthly" AS "plan_price_monthly",
+    "spl"."price_yearly" AS "plan_price_yearly",
+    "pm"."method_name" AS "payment_method_name",
+    "pm"."display_name" AS "payment_method_display_name",
+    "c"."code" AS "coupon_code",
+    "c"."type" AS "coupon_type",
+    "c"."value" AS "coupon_value"
+   FROM (((("public"."subscription_payments" "sp"
+     LEFT JOIN "public"."profiles" "p" ON (("sp"."user_id" = "p"."user_id")))
+     LEFT JOIN "public"."subscription_plans" "spl" ON (("sp"."plan_id" = "spl"."id")))
+     LEFT JOIN "public"."payment_methods" "pm" ON (("sp"."payment_method_id" = "pm"."id")))
+     LEFT JOIN "public"."coupons" "c" ON (("sp"."coupon_id" = "c"."id")));
+
+
+ALTER VIEW "public"."subscription_payments_with_users" OWNER TO "postgres";
+
+
+COMMENT ON VIEW "public"."subscription_payments_with_users" IS 'View combining subscription payments with user and related data for easier querying';
+
+
+
 CREATE TABLE IF NOT EXISTS "public"."transactions" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "user_id" "uuid" NOT NULL,
@@ -6753,6 +6802,40 @@ CREATE TABLE IF NOT EXISTS "public"."user_subscriptions" (
 
 
 ALTER TABLE "public"."user_subscriptions" OWNER TO "postgres";
+
+
+CREATE OR REPLACE VIEW "public"."user_subscriptions_with_details" AS
+ SELECT "us"."id",
+    "us"."user_id",
+    "us"."plan_id",
+    "us"."billing_cycle",
+    "us"."payment_id",
+    "us"."status",
+    "us"."end_date",
+    "us"."created_at",
+    "us"."updated_at",
+    "p"."full_name" AS "user_full_name",
+    "p"."email" AS "user_email",
+    "p"."phone_number" AS "user_phone",
+    "spl"."plan_name",
+    "spl"."display_name" AS "plan_display_name",
+    "spl"."price_monthly" AS "plan_price_monthly",
+    "spl"."price_yearly" AS "plan_price_yearly",
+    "spl"."features" AS "plan_features",
+    "sp"."transaction_id" AS "payment_transaction_id",
+    "sp"."final_amount" AS "payment_amount",
+    "sp"."status" AS "payment_status"
+   FROM ((("public"."user_subscriptions" "us"
+     LEFT JOIN "public"."profiles" "p" ON (("us"."user_id" = "p"."user_id")))
+     LEFT JOIN "public"."subscription_plans" "spl" ON (("us"."plan_id" = "spl"."id")))
+     LEFT JOIN "public"."subscription_payments" "sp" ON (("us"."payment_id" = "sp"."id")));
+
+
+ALTER VIEW "public"."user_subscriptions_with_details" OWNER TO "postgres";
+
+
+COMMENT ON VIEW "public"."user_subscriptions_with_details" IS 'View combining user subscriptions with user, plan, and payment data for easier querying';
+
 
 
 ALTER TABLE ONLY "public"."accounts"
@@ -7514,6 +7597,14 @@ CREATE INDEX "idx_subscription_payments_created_at" ON "public"."subscription_pa
 
 
 
+CREATE INDEX "idx_subscription_payments_payment_method_id" ON "public"."subscription_payments" USING "btree" ("payment_method_id");
+
+
+
+CREATE INDEX "idx_subscription_payments_plan_id" ON "public"."subscription_payments" USING "btree" ("plan_id");
+
+
+
 CREATE INDEX "idx_subscription_payments_status" ON "public"."subscription_payments" USING "btree" ("status");
 
 
@@ -7587,6 +7678,22 @@ CREATE INDEX "idx_user_sessions_expires" ON "public"."user_sessions" USING "btre
 
 
 CREATE INDEX "idx_user_sessions_user_id" ON "public"."user_sessions" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_user_subscriptions_end_date" ON "public"."user_subscriptions" USING "btree" ("end_date");
+
+
+
+CREATE INDEX "idx_user_subscriptions_payment_id" ON "public"."user_subscriptions" USING "btree" ("payment_id");
+
+
+
+CREATE INDEX "idx_user_subscriptions_plan_id" ON "public"."user_subscriptions" USING "btree" ("plan_id");
+
+
+
+CREATE INDEX "idx_user_subscriptions_status" ON "public"."user_subscriptions" USING "btree" ("status");
 
 
 
@@ -8007,6 +8114,11 @@ ALTER TABLE ONLY "public"."subscription_payments"
 
 
 ALTER TABLE ONLY "public"."subscription_payments"
+    ADD CONSTRAINT "subscription_payments_plan_id_fkey" FOREIGN KEY ("plan_id") REFERENCES "public"."subscription_plans"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."subscription_payments"
     ADD CONSTRAINT "subscription_payments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
@@ -8078,6 +8190,11 @@ ALTER TABLE ONLY "public"."user_sessions"
 
 ALTER TABLE ONLY "public"."user_subscriptions"
     ADD CONSTRAINT "user_subscriptions_payment_id_fkey" FOREIGN KEY ("payment_id") REFERENCES "public"."subscription_payments"("id");
+
+
+
+ALTER TABLE ONLY "public"."user_subscriptions"
+    ADD CONSTRAINT "user_subscriptions_plan_id_fkey" FOREIGN KEY ("plan_id") REFERENCES "public"."subscription_plans"("id") ON DELETE RESTRICT;
 
 
 
@@ -9267,6 +9384,12 @@ GRANT ALL ON TABLE "public"."subscription_plans" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."subscription_payments_with_users" TO "anon";
+GRANT ALL ON TABLE "public"."subscription_payments_with_users" TO "authenticated";
+GRANT ALL ON TABLE "public"."subscription_payments_with_users" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."transactions" TO "anon";
 GRANT ALL ON TABLE "public"."transactions" TO "authenticated";
 GRANT ALL ON TABLE "public"."transactions" TO "service_role";
@@ -9294,6 +9417,12 @@ GRANT ALL ON TABLE "public"."user_sessions" TO "service_role";
 GRANT ALL ON TABLE "public"."user_subscriptions" TO "anon";
 GRANT ALL ON TABLE "public"."user_subscriptions" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_subscriptions" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."user_subscriptions_with_details" TO "anon";
+GRANT ALL ON TABLE "public"."user_subscriptions_with_details" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_subscriptions_with_details" TO "service_role";
 
 
 

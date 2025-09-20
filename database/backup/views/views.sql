@@ -29,16 +29,26 @@
      LEFT JOIN "public"."categories" "c" ON (("l"."category_id" = "c"."id")))
      LEFT JOIN "public"."categories" "c" ON (("t"."category_id" = "c"."id")))
      LEFT JOIN "public"."categories" "pc" ON (("s"."category_id" = "pc"."id")));
+     LEFT JOIN "public"."coupons" "c" ON (("sp"."coupon_id" = "c"."id")));
      LEFT JOIN "public"."investment_transactions" "it" ON (("t"."investment_transaction_id" = "it"."id")))
      LEFT JOIN "public"."investments" "i" ON (("t"."investment_id" = "i"."id")))
+     LEFT JOIN "public"."payment_methods" "pm" ON (("sp"."payment_method_id" = "pm"."id")))
+     LEFT JOIN "public"."profiles" "p" ON (("sp"."user_id" = "p"."user_id")))
+     LEFT JOIN "public"."profiles" "p" ON (("us"."user_id" = "p"."user_id")))
      LEFT JOIN "public"."subcategories" "s" ON (("l"."subcategory_id" = "s"."id")))
+     LEFT JOIN "public"."subscription_payments" "sp" ON (("us"."payment_id" = "sp"."id")));
+     LEFT JOIN "public"."subscription_plans" "spl" ON (("sp"."plan_id" = "spl"."id")))
+     LEFT JOIN "public"."subscription_plans" "spl" ON (("us"."plan_id" = "spl"."id")))
     "a"."name" AS "account_name",
     "a"."type" AS "account_type",
     "account_id",
     "auto_debit",
     "avg"("duration_seconds") AS "avg_duration_seconds",
+    "c"."code" AS "coupon_code",
     "c"."icon" AS "category_icon",
     "c"."name" AS "category_name",
+    "c"."type" AS "coupon_type",
+    "c"."value" AS "coupon_value"
     "category_id",
     "completed_at",
     "count"(*) AS "total_runs",
@@ -97,11 +107,45 @@
     "next_due_date",
     "notes",
     "outstanding_amount",
+    "p"."email" AS "user_email",
+    "p"."full_name" AS "user_full_name",
+    "p"."phone_number" AS "user_phone",
     "payment_day",
+    "pm"."display_name" AS "payment_method_display_name",
+    "pm"."method_name" AS "payment_method_name",
     "prepayment_amount",
     "principal_amount",
     "public"."get_effective_category"("l"."category_id", "l"."subcategory_id") AS "effective_category_id"
     "reminder_days",
+    "sp"."admin_notes",
+    "sp"."approved_at",
+    "sp"."base_amount",
+    "sp"."billing_cycle",
+    "sp"."coupon_id",
+    "sp"."created_at",
+    "sp"."currency",
+    "sp"."discount_amount",
+    "sp"."final_amount" AS "payment_amount",
+    "sp"."final_amount",
+    "sp"."payment_method_id",
+    "sp"."plan_id",
+    "sp"."rejected_at",
+    "sp"."rejection_reason",
+    "sp"."sender_number",
+    "sp"."status" AS "payment_status"
+    "sp"."status",
+    "sp"."submitted_at",
+    "sp"."transaction_id" AS "payment_transaction_id",
+    "sp"."transaction_id",
+    "sp"."updated_at",
+    "sp"."user_id",
+    "sp"."verified_at",
+    "sp"."verified_by",
+    "spl"."display_name" AS "plan_display_name",
+    "spl"."features" AS "plan_features",
+    "spl"."plan_name",
+    "spl"."price_monthly" AS "plan_price_monthly",
+    "spl"."price_yearly" AS "plan_price_yearly",
     "start_date",
     "started_at",
     "status",
@@ -129,6 +173,14 @@
     "tenure_months",
     "type",
     "updated_at",
+    "us"."billing_cycle",
+    "us"."created_at",
+    "us"."end_date",
+    "us"."payment_id",
+    "us"."plan_id",
+    "us"."status",
+    "us"."updated_at",
+    "us"."user_id",
     "user_id",
     ("metadata" ->> 'item_condition'::"text") AS "item_condition_text",
     ("metadata" ->> 'item_name'::"text") AS "item_name",
@@ -141,6 +193,8 @@
    FROM "public"."loans" "l"
    FROM ((("public"."lending" "l"
    FROM ((("public"."loans" "l"
+   FROM ((("public"."user_subscriptions" "us"
+   FROM (((("public"."subscription_payments" "sp"
    FROM (((("public"."transactions" "t"
   GROUP BY "job_name"
   ORDER BY "job_name";
@@ -152,10 +206,14 @@
  SELECT "id",
  SELECT "job_name",
  SELECT "l"."id",
+ SELECT "sp"."id",
  SELECT "t"."id",
+ SELECT "us"."id",
 CREATE OR REPLACE VIEW "public"."cron_job_stats" AS
 CREATE OR REPLACE VIEW "public"."lending_with_categories" AS
 CREATE OR REPLACE VIEW "public"."loans_with_categories" AS
 CREATE OR REPLACE VIEW "public"."purchase_emis" AS
 CREATE OR REPLACE VIEW "public"."recent_cron_jobs" AS
+CREATE OR REPLACE VIEW "public"."subscription_payments_with_users" AS
 CREATE OR REPLACE VIEW "public"."unified_transactions" AS
+CREATE OR REPLACE VIEW "public"."user_subscriptions_with_details" AS
