@@ -110,6 +110,12 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching subscription plans:', plansError)
     }
 
+    console.log('Overview data:', {
+      overview,
+      activeCoupons,
+      totalPlans
+    });
+
     return NextResponse.json({
       success: true,
       overview: {

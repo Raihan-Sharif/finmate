@@ -53,6 +53,12 @@ export async function GET(request: NextRequest) {
 
     const { data: subscriptions, error: subscriptionsError } = await query
 
+    console.log('Subscriptions query result:', {
+      dataCount: subscriptions?.length || 0,
+      error: subscriptionsError,
+      hasData: !!subscriptions
+    });
+
     if (subscriptionsError) {
       console.error('Error fetching subscriptions:', subscriptionsError)
       return NextResponse.json(

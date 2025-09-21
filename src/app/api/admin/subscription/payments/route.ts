@@ -36,51 +36,169 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url)
     const status = url.searchParams.get('status') || 'all'
 
-    // Try the new enhanced function first, fallback to direct query if not available
+    // Use direct query approach for better reliability
     let paymentsData, paymentsError;
 
     try {
-      // Try enhanced function with parameters
-      const result = await supabase
-        .rpc('admin_get_subscription_payments', {
-          p_admin_user_id: user.id,
-          p_status: status === 'all' ? null : status,
-          p_search: null,
-          p_limit: 100,
-          p_offset: 0
+      console.log('=== PAYMENTS API DEBUG START ===');
+      console.log('Request params:', { status });
+      console.log('Admin user ID:', user.id);
+
+      // Try the fixed database function first
+      console.log('Attempting to use fixed admin_get_subscription_payments function...');
+
+      try {
+        const functionResult = await supabase
+          .rpc('admin_get_subscription_payments', {
+            p_admin_user_id: user.id,
+            p_status: status === 'all' ? null : status,
+            p_search: null,
+            p_limit: 100,
+            p_offset: 0
+          });
+
+        console.log('Function call result:', {
+          success: !functionResult.error,
+          dataCount: functionResult.data?.length || 0,
+          error: functionResult.error?.message || null,
+          sampleRecord: functionResult.data?.[0] || null
         });
 
-      paymentsData = result.data;
-      paymentsError = result.error;
+        if (!functionResult.error && functionResult.data) {
+          // Function worked! Transform the data
+          const transformedPayments = functionResult.data.map((payment: any) => ({
+            id: payment.id,
+            user_id: payment.user_id,
+            plan_id: payment.plan_id,
+            payment_method_id: payment.payment_method_id,
+            billing_cycle: payment.billing_cycle,
+            transaction_id: payment.transaction_id,
+            sender_number: payment.sender_number,
+            base_amount: payment.base_amount,
+            discount_amount: payment.discount_amount,
+            final_amount: payment.final_amount,
+            coupon_id: payment.coupon_id,
+            status: payment.status,
+            admin_notes: payment.admin_notes,
+            rejection_reason: payment.rejection_reason,
+            submitted_at: payment.submitted_at,
+            verified_at: payment.verified_at,
+            approved_at: payment.approved_at,
+            rejected_at: payment.rejected_at,
+            verified_by: null, // Not in function return
+            currency: payment.currency,
+            created_at: payment.created_at,
+            updated_at: payment.updated_at,
+            // Transformed nested objects for compatibility
+            profiles: {
+              full_name: payment.user_full_name,
+              email: payment.user_email,
+              phone_number: payment.user_phone
+            },
+            plan: {
+              plan_name: payment.plan_name,
+              display_name: payment.plan_display_name,
+              price_monthly: payment.plan_price_monthly,
+              price_yearly: payment.plan_price_yearly
+            },
+            payment_method: {
+              method_name: payment.payment_method_name,
+              display_name: payment.payment_method_display_name
+            },
+            coupon: payment.coupon_code ? {
+              code: payment.coupon_code,
+              type: payment.coupon_type,
+              value: payment.coupon_value
+            } : null,
+            // Additional computed fields
+            user_full_name: payment.user_full_name,
+            user_email: payment.user_email,
+            plan_name: payment.plan_name,
+            plan_display_name: payment.plan_display_name,
+            payment_method_name: payment.payment_method_name,
+            days_since_submission: payment.days_since_submission,
+            subscription_status: payment.subscription_status
+          }));
 
-      // If function exists but returns error, log it and use fallback
-      if (paymentsError) {
-        console.log('Enhanced function error, using fallback:', paymentsError.message);
-        throw new Error('Function returned error');
+          console.log('=== FUNCTION SUCCESS - USING DATABASE FUNCTION ===');
+          console.log('Transformed payments count:', transformedPayments.length);
+          console.log('Sample transformed payment:', transformedPayments[0] || null);
+          console.log('=== PAYMENTS API DEBUG END ===');
+
+          return NextResponse.json({
+            success: true,
+            payments: transformedPayments,
+            total: transformedPayments.length,
+            hasMore: false,
+            source: 'database_function'
+          });
+        }
+      } catch (functionError) {
+        console.error('Database function failed:', functionError);
       }
-    } catch (enhancedError) {
-      console.log('Enhanced function not available, trying fallback...', enhancedError);
 
-      // Fallback to direct query - fetch without joins to avoid foreign key issues
+      console.log('Function failed, falling back to direct query approach...');
+
+      // Direct query - fetch all columns including payment_method_id
       const { data: directData, error: directError } = await supabase
         .from('subscription_payments')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          plan_id,
+          payment_method_id,
+          billing_cycle,
+          transaction_id,
+          sender_number,
+          base_amount,
+          discount_amount,
+          final_amount,
+          coupon_id,
+          status,
+          admin_notes,
+          rejection_reason,
+          submitted_at,
+          verified_at,
+          approved_at,
+          rejected_at,
+          verified_by,
+          currency,
+          created_at,
+          updated_at
+        `)
         .order('created_at', { ascending: false })
         .limit(100);
+
+      console.log('Direct query result:', {
+        dataCount: directData?.length || 0,
+        error: directError,
+        hasData: !!directData,
+        sampleRecord: directData?.[0] || null
+      });
+
+      if (directError) {
+        console.error('Direct query error details:', directError);
+      }
+
+      // Initialize data arrays for fallback approach
+      let usersData: any[] = [];
+      let plansData: any[] = [];
+      let methodsData: any[] = [];
+      let couponsData: any[] = [];
 
       if (directData) {
         // Get all related data separately to avoid foreign key issues
 
         // Get user data
         const userIds = [...new Set(directData.map(p => p.user_id))];
-        const { data: usersData } = await supabase
+        const { data: users } = await supabase
           .from('profiles')
           .select('user_id, full_name, email, phone_number')
           .in('user_id', userIds);
+        usersData = users || [];
 
         // Get plan data
         const planIds = [...new Set(directData.map(p => p.plan_id).filter(Boolean))];
-        let plansData: any[] = [];
         if (planIds.length > 0) {
           const { data: plans } = await supabase
             .from('subscription_plans')
@@ -91,7 +209,6 @@ export async function GET(request: NextRequest) {
 
         // Get payment method data
         const methodIds = [...new Set(directData.map(p => p.payment_method_id).filter(Boolean))];
-        let methodsData: any[] = [];
         if (methodIds.length > 0) {
           const { data: methods } = await supabase
             .from('payment_methods')
@@ -102,7 +219,6 @@ export async function GET(request: NextRequest) {
 
         // Get coupon data
         const couponIds = [...new Set(directData.map(p => p.coupon_id).filter(Boolean))];
-        let couponsData: any[] = [];
         if (couponIds.length > 0) {
           const { data: coupons } = await supabase
             .from('coupons')
@@ -160,6 +276,9 @@ export async function GET(request: NextRequest) {
         });
       }
       paymentsError = directError;
+    } catch (error: any) {
+      console.error('Direct query failed:', error);
+      paymentsError = error;
     }
 
     if (paymentsError) {
@@ -220,11 +339,20 @@ export async function GET(request: NextRequest) {
       }
     }))
 
+    console.log('=== PAYMENTS TRANSFORMATION DEBUG ===');
+    console.log('Final API response:', {
+      success: true,
+      paymentsCount: transformedPayments.length,
+      samplePayment: transformedPayments[0] || null
+    });
+    console.log('=== PAYMENTS API DEBUG END ===');
+
     return NextResponse.json({
       success: true,
       payments: transformedPayments,
       total: transformedPayments.length,
-      hasMore: false
+      hasMore: false,
+      source: 'direct_query_fallback'
     })
 
   } catch (error: any) {
@@ -336,64 +464,87 @@ export async function PATCH(request: NextRequest) {
     // If payment is approved, create/upgrade user subscription
     if (status === 'approved' && updatedPayment) {
       try {
-        // Try enhanced function first
-        const { error: upgradeError } = await supabase
-          .rpc('upgrade_user_subscription', {
-            p_user_id: updatedPayment.user_id,
-            p_payment_id: payment_id
+        console.log('Creating user subscription for approved payment...');
+
+        // Manual subscription creation (more reliable than function call)
+        try {
+        // Get payment and plan data
+        const { data: paymentData, error: paymentError } = await supabase
+          .from('subscription_payments')
+          .select('*')
+          .eq('id', payment_id)
+          .single();
+
+        if (paymentError) {
+          throw new Error(`Failed to fetch payment data: ${paymentError.message}`);
+        }
+
+        if (!paymentData?.plan_id) {
+          throw new Error('Payment data or plan_id is missing');
+        }
+
+        // Get plan data separately
+        const { data: planData, error: planError } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('id', paymentData.plan_id)
+          .single();
+
+        if (planError) {
+          console.error('Could not fetch plan data:', planError);
+        }
+
+        // Calculate end date
+        const endDate = new Date();
+        if (paymentData.billing_cycle === 'monthly') {
+          endDate.setMonth(endDate.getMonth() + 1);
+        } else {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+        }
+
+        // Create/update user subscription
+        const { error: subscriptionError } = await supabase
+          .from('user_subscriptions')
+          .upsert({
+            user_id: paymentData.user_id,
+            plan_id: paymentData.plan_id,
+            billing_cycle: paymentData.billing_cycle,
+            payment_id: payment_id,
+            status: 'active',
+            end_date: endDate.toISOString(),
+            updated_at: new Date().toISOString(),
           });
 
-        if (upgradeError) {
-          console.error('Enhanced upgrade function failed, using fallback...');
-
-          // Fallback: Manual subscription creation
-          const { data: paymentData, error: paymentError } = await supabase
-            .from('subscription_payments')
-            .select(`
-              *,
-              subscription_plans (*)
-            `)
-            .eq('id', payment_id)
-            .single();
-
-          if (!paymentError && paymentData?.plan_id) {
-            const endDate = new Date();
-            if (paymentData.billing_cycle === 'monthly') {
-              endDate.setMonth(endDate.getMonth() + 1);
-            } else {
-              endDate.setFullYear(endDate.getFullYear() + 1);
-            }
-
-            // Create/update user subscription
-            await supabase
-              .from('user_subscriptions')
-              .upsert({
-                user_id: paymentData.user_id,
-                plan_id: paymentData.plan_id,
-                billing_cycle: paymentData.billing_cycle,
-                payment_id: payment_id,
-                status: 'active',
-                end_date: endDate.toISOString(),
-                updated_at: new Date().toISOString(),
-              });
-
-            // Add to subscription history
-            await supabase
-              .from('subscription_history')
-              .insert({
-                user_id: paymentData.user_id,
-                plan_id: paymentData.plan_id,
-                plan_name: paymentData.subscription_plans?.plan_name || 'unknown',
-                action_type: 'subscription_activated',
-                amount_paid: paymentData.final_amount,
-                payment_id: payment_id,
-                effective_date: new Date().toISOString(),
-              });
-          }
+        if (subscriptionError) {
+          throw new Error(`Failed to create subscription: ${subscriptionError.message}`);
         }
-      } catch (subscriptionError) {
-        console.error('Error creating subscription:', subscriptionError);
-        // Don't fail the payment update, just log the error
+
+        // Add to subscription history
+        const { error: historyError } = await supabase
+          .from('subscription_history')
+          .insert({
+            user_id: paymentData.user_id,
+            plan_id: paymentData.plan_id,
+            plan_name: planData?.plan_name || 'unknown',
+            action_type: 'subscription_activated',
+            amount_paid: paymentData.final_amount,
+            payment_id: payment_id,
+            effective_date: new Date().toISOString(),
+          });
+
+        if (historyError) {
+          console.error('Failed to add subscription history:', historyError);
+          // Don't fail the operation for history logging issues
+        }
+
+        console.log('Subscription created successfully for payment:', payment_id);
+
+        } catch (subscriptionError) {
+          console.error('Error creating subscription:', subscriptionError);
+          // Don't fail the payment update, just log the error
+        }
+      } catch (error) {
+        console.error('Error in subscription creation process:', error);
       }
     }
 
