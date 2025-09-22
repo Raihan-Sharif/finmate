@@ -266,7 +266,7 @@ export function SubscriptionManager() {
 
   const fetchCoupons = async () => {
     try {
-      const response = await fetch('/api/admin/coupons')
+      const response = await fetch('/api/admin/subscription/coupons')
       const result = await response.json()
 
       if (!response.ok || !result.success) {
@@ -468,8 +468,8 @@ export function SubscriptionManager() {
   const handleCreateCoupon = async () => {
     try {
       setProcessingId('create-coupon')
-      
-      const response = await fetch('/api/admin/coupons', {
+
+      const response = await fetch('/api/admin/subscription/coupons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(couponFormData)
@@ -495,11 +495,11 @@ export function SubscriptionManager() {
 
   const handleEditCoupon = async () => {
     if (!selectedCoupon) return
-    
+
     try {
       setProcessingId(selectedCoupon.id)
-      
-      const response = await fetch('/api/admin/coupons', {
+
+      const response = await fetch('/api/admin/subscription/coupons', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -533,7 +533,7 @@ export function SubscriptionManager() {
     try {
       setProcessingId(coupon.id)
 
-      const response = await fetch(`/api/admin/coupons?id=${coupon.id}`, {
+      const response = await fetch(`/api/admin/subscription/coupons?id=${coupon.id}`, {
         method: 'DELETE'
       })
 

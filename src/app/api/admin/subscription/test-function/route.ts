@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
         .rpc('admin_get_subscription_payments', {
           p_admin_user_id: user.id,
           p_status: null,
+          p_search: null,
           p_limit: 10,
           p_offset: 0
         })
@@ -34,11 +35,20 @@ export async function GET(request: NextRequest) {
         data: functionResult.data,
         error: functionResult.error,
         dataCount: functionResult.data?.length || 0,
-        sampleRecord: functionResult.data?.[0] || null
+        sampleRecord: functionResult.data?.[0] || null,
+        errorCode: functionResult.error?.code,
+        errorDetails: functionResult.error?.details,
+        errorHint: functionResult.error?.hint,
+        errorMessage: functionResult.error?.message
       })
 
       if (functionResult.error) {
-        console.error('Function error details:', functionResult.error)
+        console.error('Function error details:', {
+          code: functionResult.error.code,
+          message: functionResult.error.message,
+          details: functionResult.error.details,
+          hint: functionResult.error.hint
+        })
       }
 
     } catch (funcError) {
