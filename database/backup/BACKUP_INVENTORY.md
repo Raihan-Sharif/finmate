@@ -19,7 +19,7 @@
 
 ## 🔍 Verification Checksums
 ```
-Complete Schema: d0ab558b5875ea43f9d97ad7d5e72f14
+Complete Schema: cc84d923f96c0e4ef3f53bce7f73137c
 Functions: d41d8cd98f00b204e9800998ecf8427e
 Policies: c58438697dd4f0c13552f0694fdee33f
 ```

@@ -727,9 +727,10 @@ CREATE OR REPLACE FUNCTION "public"."admin_get_subscription_payments"("p_admin_u
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 BEGIN
-  -- Verify admin permissions
+  -- Verify admin permissions using profiles table only (avoid auth.users access issues)
   IF NOT EXISTS (
-    SELECT 1 FROM profiles p
+    SELECT 1
+    FROM profiles p
     JOIN roles r ON p.role_id = r.id
     WHERE p.user_id = p_admin_user_id
     AND r.name IN ('admin', 'super_admin')
@@ -744,50 +745,49 @@ BEGIN
     sp.user_id,
     sp.plan_id,
     sp.payment_method_id,
-    sp.billing_cycle::text,                 -- Cast enum to text
-    sp.transaction_id,                      -- character varying(100)
-    sp.sender_number,                       -- character varying(20)
-    sp.base_amount,                         -- numeric(10,2)
-    sp.discount_amount,                     -- numeric(10,2)
-    sp.final_amount,                        -- numeric(10,2)
+    sp.billing_cycle::text,
+    sp.transaction_id,
+    sp.sender_number,
+    sp.base_amount,
+    sp.discount_amount,
+    sp.final_amount,
     sp.coupon_id,
-    sp.status::text,                        -- Cast enum to text
-    sp.admin_notes,                         -- text
-    sp.rejection_reason,                    -- text
+    sp.status::text,
+    sp.admin_notes,
+    sp.rejection_reason,
     sp.submitted_at,
     sp.verified_at,
     sp.approved_at,
     sp.rejected_at,
     sp.created_at,
     sp.updated_at,
-    sp.currency,                            -- character varying(3)
-    -- Enhanced user data
-    COALESCE(p.full_name, 'Unknown User'::text) as user_full_name,
-    COALESCE(au.email::text, 'unknown@example.com'::text) as user_email,  -- FIX: Cast au.email to text!
-    -- Plan data - EXACT TYPES
-    COALESCE(spl.plan_name, 'unknown'::character varying(50)) as plan_name,          -- character varying(50)
-    COALESCE(spl.display_name, 'Unknown Plan'::character varying(100)) as plan_display_name, -- character varying(100)
-    COALESCE(spl.price_monthly, 0) as plan_price_monthly,      -- numeric(10,2)
-    COALESCE(spl.price_yearly, 0) as plan_price_yearly,        -- numeric(10,2)
-    -- Payment method data - EXACT TYPES
-    COALESCE(pm.method_name, 'manual'::character varying(50)) as payment_method_name,        -- character varying(50)
-    COALESCE(pm.display_name, 'Manual Payment'::character varying(100)) as payment_method_display_name, -- character varying(100)
+    sp.currency,
+    -- Enhanced user data (avoid auth.users to prevent permission issues)
+    COALESCE(p.full_name, 'Unknown User') as user_full_name,
+    COALESCE(p.email, 'unknown@example.com') as user_email,
+    -- Plan data
+    COALESCE(spl.plan_name, 'unknown') as plan_name,
+    COALESCE(spl.display_name, 'Unknown Plan') as plan_display_name,
+    COALESCE(spl.price_monthly, 0) as plan_price_monthly,
+    COALESCE(spl.price_yearly, 0) as plan_price_yearly,
+    -- Payment method data
+    COALESCE(pm.method_name, 'manual') as payment_method_name,
+    COALESCE(pm.display_name, 'Manual Payment') as payment_method_display_name,
     -- Coupon data
     c.code as coupon_code,
     c.type::text as coupon_type,
     c.value as coupon_value,
     -- Enhanced fields
-    COALESCE(p.phone_number, sp.sender_number::text) as user_phone,
+    COALESCE(p.phone_number, sp.sender_number) as user_phone,
     CASE
       WHEN sp.submitted_at IS NOT NULL THEN
         EXTRACT(DAY FROM NOW() - sp.submitted_at)::integer
       ELSE NULL
     END as days_since_submission,
-    COALESCE(us.status, 'no_subscription'::text) as subscription_status
+    COALESCE(us.status, 'no_subscription') as subscription_status
   FROM subscription_payments sp
   -- Core joins
   LEFT JOIN profiles p ON sp.user_id = p.user_id
-  LEFT JOIN auth.users au ON sp.user_id = au.id
   LEFT JOIN subscription_plans spl ON sp.plan_id = spl.id
   LEFT JOIN payment_methods pm ON sp.payment_method_id = pm.id
   LEFT JOIN coupons c ON sp.coupon_id = c.id
@@ -800,8 +800,8 @@ BEGIN
     (p_search IS NULL OR
      sp.transaction_id ILIKE '%' || p_search || '%' OR
      p.full_name ILIKE '%' || p_search || '%' OR
-     au.email::text ILIKE '%' || p_search || '%' OR              -- FIX: Cast au.email to text here too!
-     sp.sender_number::text ILIKE '%' || p_search || '%'
+     p.email ILIKE '%' || p_search || '%' OR
+     sp.sender_number ILIKE '%' || p_search || '%'
     )
   ORDER BY sp.created_at DESC
   LIMIT p_limit
@@ -813,7 +813,7 @@ $$;
 ALTER FUNCTION "public"."admin_get_subscription_payments"("p_admin_user_id" "uuid", "p_status" "text", "p_search" "text", "p_limit" integer, "p_offset" integer) OWNER TO "postgres";
 
 
-COMMENT ON FUNCTION "public"."admin_get_subscription_payments"("p_admin_user_id" "uuid", "p_status" "text", "p_search" "text", "p_limit" integer, "p_offset" integer) IS 'FINAL CORRECTED function - Fixed Column 23 (user_email) type mismatch by casting au.email to text';
+COMMENT ON FUNCTION "public"."admin_get_subscription_payments"("p_admin_user_id" "uuid", "p_status" "text", "p_search" "text", "p_limit" integer, "p_offset" integer) IS 'Fixed admin subscription payments function - Removed auth.users dependency to avoid permission issues';
 
 
 
