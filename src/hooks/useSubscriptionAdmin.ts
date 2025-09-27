@@ -11,9 +11,11 @@ import {
   updatePaymentStatus,
   getSubscriptionAnalytics,
   manageUserSubscription,
+  getUserSubscriptions,
   getSubscriptionPlans,
   getPaymentMethods,
   type SubscriptionPayment,
+  type UserSubscription,
   type SubscriptionAnalytics,
   type PaymentsResponse,
 } from '@/lib/services/subscription-admin';
@@ -166,6 +168,83 @@ export function useSubscriptionAnalytics(enabled: boolean = true) {
 }
 
 // =====================================================
+// 🎯 USER SUBSCRIPTIONS HOOK
+// =====================================================
+
+export interface UseUserSubscriptionsOptions {
+  status?: string;
+  search?: string;
+  limit?: number;
+  enabled?: boolean;
+}
+
+export function useUserSubscriptions(options: UseUserSubscriptionsOptions = {}) {
+  const { user } = useAuth();
+  const [page, setPage] = useState(0);
+  const { status = 'all', search, limit = 20, enabled = true } = options;
+
+  const queryKey = ['user-subscriptions', user?.id, status, search, page, limit];
+
+  const {
+    data,
+    error,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const options: any = {
+        status,
+        limit,
+        offset: page * limit,
+      };
+      if (search) {
+        options.search = search;
+      }
+      return await getUserSubscriptions(user.id, options);
+    },
+    enabled: enabled && !!user?.id,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const nextPage = useCallback(() => {
+    if (data?.hasMore) {
+      setPage(prev => prev + 1);
+    }
+  }, [data?.hasMore]);
+
+  const previousPage = useCallback(() => {
+    setPage(prev => Math.max(0, prev - 1));
+  }, []);
+
+  const resetPage = useCallback(() => {
+    setPage(0);
+  }, []);
+
+  return {
+    subscriptions: data?.subscriptions || [],
+    total: data?.total || 0,
+    hasMore: data?.hasMore || false,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    page,
+    nextPage,
+    previousPage,
+    resetPage,
+    // Helper computed values
+    totalPages: Math.ceil((data?.total || 0) / limit),
+    hasNextPage: data?.hasMore || false,
+    hasPreviousPage: page > 0,
+  };
+}
+
+// =====================================================
 // 🎯 USER SUBSCRIPTION MANAGEMENT HOOK
 // =====================================================
 
@@ -175,30 +254,26 @@ export function useManageUserSubscription() {
 
   return useMutation({
     mutationFn: async ({
-      userId,
+      subscriptionId,
       action,
-      planId,
       extendMonths,
     }: {
-      userId: string;
+      subscriptionId: string;
       action: 'activate' | 'suspend' | 'cancel' | 'extend';
-      planId?: string;
       extendMonths?: number;
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       const options: any = {};
-      if (planId) {
-        options.planId = planId;
-      }
       if (extendMonths) {
         options.extendMonths = extendMonths;
       }
-      return await manageUserSubscription(user.id, userId, action, options);
+      return await manageUserSubscription(user.id, subscriptionId, action, options);
     },
     onSuccess: (result) => {
       if (result.success) {
         // Invalidate relevant queries
+        queryClient.invalidateQueries({ queryKey: ['user-subscriptions'] });
         queryClient.invalidateQueries({ queryKey: ['subscription-payments'] });
         queryClient.invalidateQueries({ queryKey: ['subscription-analytics'] });
 

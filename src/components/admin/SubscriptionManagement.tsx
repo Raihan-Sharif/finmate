@@ -86,6 +86,7 @@ import {
   useUpdatePaymentStatus,
   useSubscriptionAnalytics,
   useManageUserSubscription,
+  useUserSubscriptions,
   useSubscriptionPlans,
   useSubscriptionSearch,
   useBulkPaymentActions,
@@ -96,6 +97,8 @@ import {
   getPaymentStatusOptions,
   calculateDiscountPercentage,
 } from '@/lib/services/subscription-admin';
+import { DataManagementTools } from '@/components/admin/DataManagementTools';
+import { EmptyStateCard } from '@/components/admin/EmptyStateCard';
 
 // =====================================================
 // 🎯 ANALYTICS DASHBOARD COMPONENT
@@ -521,15 +524,22 @@ const PaymentsTable: React.FC = () => {
 
         <CardContent>
           {payments.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600">No Payments Found</h3>
-              <p className="text-gray-500">
-                {searchTerm || filters.status !== 'all'
-                  ? 'Try adjusting your search or filters'
-                  : 'No subscription payments have been submitted yet'}
-              </p>
-            </div>
+            <EmptyStateCard
+              icon={FileText}
+              title="No Payments Found"
+              description={
+                searchTerm || filters.status !== 'all'
+                  ? 'Try adjusting your search or filters to find payments.'
+                  : 'No subscription payments have been submitted yet. Use the Data Tools tab to create sample payment requests for testing.'
+              }
+              {...(!(searchTerm || filters.status !== 'all') && {
+                actionLabel: 'Create Sample Data',
+                onAction: () => {
+                  const dataTab = document.querySelector('[value="data"]') as HTMLElement;
+                  dataTab?.click();
+                }
+              })}
+            />
           ) : (
             <>
               <div className="rounded-md border">
@@ -666,6 +676,468 @@ const PaymentsTable: React.FC = () => {
 };
 
 // =====================================================
+// 🎯 SUBSCRIPTION MANAGEMENT MODAL
+// =====================================================
+
+interface SubscriptionManagementModalProps {
+  subscription: any;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const SubscriptionManagementModal: React.FC<SubscriptionManagementModalProps> = ({
+  subscription,
+  isOpen,
+  onClose,
+}) => {
+  const [selectedAction, setSelectedAction] = useState<'activate' | 'suspend' | 'cancel' | 'extend'>('activate');
+  const [extendMonths, setExtendMonths] = useState<number>(1);
+
+  const manageSubscription = useManageUserSubscription();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const payload: any = {
+        subscriptionId: subscription.id,
+        action: selectedAction,
+      };
+
+      if (selectedAction === 'extend') {
+        payload.extendMonths = extendMonths;
+      }
+
+      await manageSubscription.mutateAsync(payload);
+      onClose();
+    } catch (error) {
+      console.error('Error managing subscription:', error);
+    }
+  };
+
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case 'activate':
+        return 'text-green-600';
+      case 'suspend':
+        return 'text-yellow-600';
+      case 'cancel':
+        return 'text-red-600';
+      case 'extend':
+        return 'text-blue-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit className="h-5 w-5" />
+            Manage Subscription
+          </DialogTitle>
+          <DialogDescription>
+            Update subscription for: {subscription?.user_data?.full_name}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Subscription Details */}
+          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Plan:</span>
+              <span className="font-medium">{subscription?.plan_data?.display_name}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Status:</span>
+              <Badge variant="secondary" className={getStatusColor(subscription?.status)}>
+                {subscription?.status?.charAt(0).toUpperCase() + subscription?.status?.slice(1)}
+              </Badge>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">End Date:</span>
+              <span className="font-medium">
+                {subscription?.end_date ? new Date(subscription.end_date).toLocaleDateString() : 'N/A'}
+              </span>
+            </div>
+            {subscription?.days_remaining !== undefined && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Days Remaining:</span>
+                <span className={`font-medium ${subscription.days_remaining > 7 ? 'text-green-600' : 'text-orange-600'}`}>
+                  {subscription.days_remaining}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Action Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Action</label>
+            <Select value={selectedAction} onValueChange={(value: any) => setSelectedAction(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="activate">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`h-4 w-4 ${getActionColor('activate')}`} />
+                    Activate
+                  </div>
+                </SelectItem>
+                <SelectItem value="suspend">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className={`h-4 w-4 ${getActionColor('suspend')}`} />
+                    Suspend
+                  </div>
+                </SelectItem>
+                <SelectItem value="cancel">
+                  <div className="flex items-center gap-2">
+                    <XCircle className={`h-4 w-4 ${getActionColor('cancel')}`} />
+                    Cancel
+                  </div>
+                </SelectItem>
+                <SelectItem value="extend">
+                  <div className="flex items-center gap-2">
+                    <Calendar className={`h-4 w-4 ${getActionColor('extend')}`} />
+                    Extend
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Extend Months (shown only for extend action) */}
+          {selectedAction === 'extend' && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Extend by Months</label>
+              <Input
+                type="number"
+                min="1"
+                max="24"
+                value={extendMonths}
+                onChange={(e) => setExtendMonths(parseInt(e.target.value) || 1)}
+                placeholder="Number of months"
+              />
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={manageSubscription.isPending}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+            >
+              {manageSubscription.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Processing...
+                </>
+              ) : (
+                `${selectedAction.charAt(0).toUpperCase() + selectedAction.slice(1)} Subscription`
+              )}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// =====================================================
+// 🎯 USERS TABLE COMPONENT
+// =====================================================
+
+const UsersTable: React.FC = () => {
+  const { searchTerm, filters, updateFilter } = useSubscriptionSearch();
+  const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
+  const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
+
+  const {
+    subscriptions,
+    total,
+    isLoading,
+    error,
+    refetch,
+    page,
+    nextPage,
+    previousPage,
+    hasNextPage,
+    hasPreviousPage,
+    totalPages,
+  } = useUserSubscriptions({
+    status: filters.status,
+    search: searchTerm,
+    limit: 20,
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-red-700">Failed to Load Subscriptions</h3>
+            <p className="text-red-600 mb-4">There was an error loading the subscriptions data.</p>
+            <Button onClick={() => refetch()} variant="outline" className="border-red-300">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const handleManageSubscription = (subscription: any) => {
+    setSelectedSubscription(subscription);
+    setIsManagementModalOpen(true);
+  };
+
+  const getSubscriptionStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'expired':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'suspended':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getSubscriptionStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4" />;
+      case 'expired':
+        return <Clock className="h-4 w-4" />;
+      case 'suspended':
+        return <AlertTriangle className="h-4 w-4" />;
+      default:
+        return <AlertCircle className="h-4 w-4" />;
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                User Subscriptions
+              </CardTitle>
+              <CardDescription>
+                Manage user subscriptions and access controls
+                {total > 0 && ` • ${total.toLocaleString()} total subscriptions`}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                className="border-gray-300"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {subscriptions.length === 0 ? (
+            <EmptyStateCard
+              icon={Users}
+              title="No Subscriptions Found"
+              description={
+                searchTerm || filters.status !== 'all'
+                  ? 'Try adjusting your search or filters to find subscriptions.'
+                  : 'No user subscriptions have been created yet. Use the Data Tools tab to create sample data for testing.'
+              }
+              {...(!(searchTerm || filters.status !== 'all') && {
+                actionLabel: 'Go to Data Tools',
+                onAction: () => {
+                  const dataTab = document.querySelector('[value="data"]') as HTMLElement;
+                  dataTab?.click();
+                }
+              })}
+            />
+          ) : (
+            <>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>End Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {subscriptions.map((subscription, index) => (
+                      <motion.tr
+                        key={subscription.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="hover:bg-gray-50"
+                      >
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{subscription.user_data?.full_name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {subscription.user_data?.email}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{subscription.plan_data?.display_name}</div>
+                            <div className="text-sm text-muted-foreground capitalize">
+                              {subscription.billing_cycle || 'N/A'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getSubscriptionStatusColor(subscription.status)} flex items-center gap-1 w-fit`}>
+                            {getSubscriptionStatusIcon(subscription.status)}
+                            {subscription.status?.charAt(0).toUpperCase() + subscription.status?.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {subscription.days_remaining !== undefined && (
+                              <div className={`font-medium ${subscription.days_remaining > 7 ? 'text-green-600' : subscription.days_remaining > 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                                {subscription.days_remaining > 0 ? `${subscription.days_remaining} days left` : 'Expired'}
+                              </div>
+                            )}
+                            {subscription.is_expired && (
+                              <div className="text-xs text-red-500">
+                                Expired
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {subscription.end_date ? new Date(subscription.end_date).toLocaleDateString() : 'N/A'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Started: {new Date(subscription.created_at).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleManageSubscription(subscription)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Manage Subscription
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </motion.tr>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Page {page + 1} of {totalPages}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={previousPage}
+                      disabled={!hasPreviousPage}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={nextPage}
+                      disabled={!hasNextPage}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Subscription Management Modal */}
+      <SubscriptionManagementModal
+        subscription={selectedSubscription}
+        isOpen={isManagementModalOpen}
+        onClose={() => setIsManagementModalOpen(false)}
+      />
+    </>
+  );
+};
+
+// =====================================================
 // 🎯 MAIN SUBSCRIPTION MANAGEMENT COMPONENT
 // =====================================================
 
@@ -725,10 +1197,11 @@ const SubscriptionManagement: React.FC = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="data">Data Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -740,15 +1213,16 @@ const SubscriptionManagement: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600">User Management</h3>
-                <p className="text-gray-500">User subscription management features coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
+          <UsersTable />
+        </TabsContent>
+
+        <TabsContent value="data" className="space-y-6">
+          <DataManagementTools
+            onDataCreated={() => {
+              // Refresh all data when new data is created
+              window.location.reload();
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>
