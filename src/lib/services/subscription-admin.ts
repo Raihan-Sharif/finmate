@@ -958,3 +958,1237 @@ export function calculateDiscountPercentage(baseAmount: number, discountAmount: 
   if (baseAmount === 0) return 0;
   return Math.round((discountAmount / baseAmount) * 100);
 }
+
+// Additional types for CRUD operations
+export interface SubscriptionPlan {
+  id?: string;
+  plan_name: string;
+  display_name: string;
+  description?: string;
+  price_monthly: number;
+  price_yearly: number;
+  features: any[];
+  max_accounts: number;
+  max_family_members: number;
+  allowed_account_types: string[];
+  is_active: boolean;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PaymentMethod {
+  id?: string;
+  method_name: string;
+  display_name: string;
+  description?: string;
+  instructions?: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Coupon {
+  id?: string;
+  code: string;
+  description?: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  scope: 'public' | 'private' | 'user_specific';
+  applicable_plans?: any[]; // jsonb in database
+  minimum_amount?: number;
+  max_discount_amount?: number;
+  max_uses?: number;
+  max_uses_per_user?: number;
+  used_count: number;
+  is_active: boolean;
+  expires_at?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CRUDResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+  id?: string;
+}
+
+// ==========================================
+// SUBSCRIPTION PLANS CRUD OPERATIONS
+// ==========================================
+
+/**
+ * 🎯 Create new subscription plan
+ */
+export async function createSubscriptionPlan(
+  adminUserId: string,
+  planData: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'>
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Validate required fields
+    if (!planData.plan_name || !planData.display_name) {
+      throw new Error('Plan name and display name are required');
+    }
+
+    // Check if plan name already exists
+    const { data: existingPlan } = await supabase
+      .from('subscription_plans')
+      .select('id')
+      .eq('plan_name', planData.plan_name)
+      .single();
+
+    if (existingPlan) {
+      throw new Error('Plan with this name already exists');
+    }
+
+    // Insert new plan
+    const { data: newPlan, error: insertError } = await supabase
+      .from('subscription_plans')
+      .insert({
+        ...planData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error creating subscription plan:', insertError);
+      throw insertError;
+    }
+
+    return {
+      success: true,
+      message: 'Subscription plan created successfully',
+      data: newPlan,
+      id: newPlan.id
+    };
+  } catch (error) {
+    console.error('Error in createSubscriptionPlan:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Update subscription plan
+ */
+export async function updateSubscriptionPlan(
+  adminUserId: string,
+  planId: string,
+  updates: Partial<Omit<SubscriptionPlan, 'id' | 'created_at'>>
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Check if plan exists
+    const { data: existingPlan, error: checkError } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', planId)
+      .single();
+
+    if (checkError || !existingPlan) {
+      throw new Error('Subscription plan not found');
+    }
+
+    // If updating plan_name, check for duplicates
+    if (updates.plan_name && updates.plan_name !== existingPlan.plan_name) {
+      const { data: duplicatePlan } = await supabase
+        .from('subscription_plans')
+        .select('id')
+        .eq('plan_name', updates.plan_name)
+        .neq('id', planId)
+        .single();
+
+      if (duplicatePlan) {
+        throw new Error('Plan with this name already exists');
+      }
+    }
+
+    // Update plan
+    const { data: updatedPlan, error: updateError } = await supabase
+      .from('subscription_plans')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', planId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating subscription plan:', updateError);
+      throw updateError;
+    }
+
+    return {
+      success: true,
+      message: 'Subscription plan updated successfully',
+      data: updatedPlan,
+      id: planId
+    };
+  } catch (error) {
+    console.error('Error in updateSubscriptionPlan:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Delete subscription plan (soft delete by setting is_active to false)
+ */
+export async function deleteSubscriptionPlan(
+  adminUserId: string,
+  planId: string
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Check if plan exists
+    const { data: existingPlan, error: checkError } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', planId)
+      .single();
+
+    if (checkError || !existingPlan) {
+      throw new Error('Subscription plan not found');
+    }
+
+    // Check if there are active subscriptions using this plan
+    const { count: activeSubscriptions } = await supabase
+      .from('user_subscriptions')
+      .select('*', { count: 'exact', head: true })
+      .eq('plan_id', planId)
+      .eq('status', 'active');
+
+    if (activeSubscriptions && activeSubscriptions > 0) {
+      throw new Error('Cannot delete plan with active subscriptions. Please migrate users to another plan first.');
+    }
+
+    // Soft delete by setting is_active to false
+    const { error: deleteError } = await supabase
+      .from('subscription_plans')
+      .update({
+        is_active: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', planId);
+
+    if (deleteError) {
+      console.error('Error deleting subscription plan:', deleteError);
+      throw deleteError;
+    }
+
+    return {
+      success: true,
+      message: 'Subscription plan deleted successfully',
+      id: planId
+    };
+  } catch (error) {
+    console.error('Error in deleteSubscriptionPlan:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Get all subscription plans (including inactive for admin)
+ */
+export async function getAllSubscriptionPlans(
+  adminUserId: string,
+  includeInactive: boolean = true
+): Promise<SubscriptionPlan[]> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    let query = supabase
+      .from('subscription_plans')
+      .select('*')
+      .order('sort_order', { ascending: true });
+
+    if (!includeInactive) {
+      query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching all subscription plans:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getAllSubscriptionPlans:', error);
+    throw error;
+  }
+}
+
+// ==========================================
+// PAYMENT METHODS CRUD OPERATIONS
+// ==========================================
+
+/**
+ * 🎯 Create new payment method
+ */
+export async function createPaymentMethod(
+  adminUserId: string,
+  methodData: Omit<PaymentMethod, 'id' | 'created_at' | 'updated_at'>
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Validate required fields
+    if (!methodData.method_name || !methodData.display_name) {
+      throw new Error('Method name and display name are required');
+    }
+
+    // Check if method name already exists
+    const { data: existingMethod } = await supabase
+      .from('payment_methods')
+      .select('id')
+      .eq('method_name', methodData.method_name)
+      .single();
+
+    if (existingMethod) {
+      throw new Error('Payment method with this name already exists');
+    }
+
+    // Insert new method
+    const { data: newMethod, error: insertError } = await supabase
+      .from('payment_methods')
+      .insert({
+        ...methodData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error creating payment method:', insertError);
+      throw insertError;
+    }
+
+    return {
+      success: true,
+      message: 'Payment method created successfully',
+      data: newMethod,
+      id: newMethod.id
+    };
+  } catch (error) {
+    console.error('Error in createPaymentMethod:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Update payment method
+ */
+export async function updatePaymentMethod(
+  adminUserId: string,
+  methodId: string,
+  updates: Partial<Omit<PaymentMethod, 'id' | 'created_at'>>
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Check if method exists
+    const { data: existingMethod, error: checkError } = await supabase
+      .from('payment_methods')
+      .select('*')
+      .eq('id', methodId)
+      .single();
+
+    if (checkError || !existingMethod) {
+      throw new Error('Payment method not found');
+    }
+
+    // If updating method_name, check for duplicates
+    if (updates.method_name && updates.method_name !== existingMethod.method_name) {
+      const { data: duplicateMethod } = await supabase
+        .from('payment_methods')
+        .select('id')
+        .eq('method_name', updates.method_name)
+        .neq('id', methodId)
+        .single();
+
+      if (duplicateMethod) {
+        throw new Error('Payment method with this name already exists');
+      }
+    }
+
+    // Update method
+    const { data: updatedMethod, error: updateError } = await supabase
+      .from('payment_methods')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', methodId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating payment method:', updateError);
+      throw updateError;
+    }
+
+    return {
+      success: true,
+      message: 'Payment method updated successfully',
+      data: updatedMethod,
+      id: methodId
+    };
+  } catch (error) {
+    console.error('Error in updatePaymentMethod:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Delete payment method (soft delete)
+ */
+export async function deletePaymentMethod(
+  adminUserId: string,
+  methodId: string
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Check if method exists
+    const { data: existingMethod, error: checkError } = await supabase
+      .from('payment_methods')
+      .select('*')
+      .eq('id', methodId)
+      .single();
+
+    if (checkError || !existingMethod) {
+      throw new Error('Payment method not found');
+    }
+
+    // Check if there are payments using this method
+    const { count: paymentCount } = await supabase
+      .from('subscription_payments')
+      .select('*', { count: 'exact', head: true })
+      .eq('payment_method_id', methodId);
+
+    if (paymentCount && paymentCount > 0) {
+      // Soft delete only
+      const { error: deleteError } = await supabase
+        .from('payment_methods')
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', methodId);
+
+      if (deleteError) {
+        console.error('Error soft deleting payment method:', deleteError);
+        throw deleteError;
+      }
+
+      return {
+        success: true,
+        message: 'Payment method deactivated successfully (has existing payment records)',
+        id: methodId
+      };
+    } else {
+      // Hard delete if no payments
+      const { error: deleteError } = await supabase
+        .from('payment_methods')
+        .delete()
+        .eq('id', methodId);
+
+      if (deleteError) {
+        console.error('Error deleting payment method:', deleteError);
+        throw deleteError;
+      }
+
+      return {
+        success: true,
+        message: 'Payment method deleted successfully',
+        id: methodId
+      };
+    }
+  } catch (error) {
+    console.error('Error in deletePaymentMethod:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Get all payment methods (including inactive for admin)
+ */
+export async function getAllPaymentMethods(
+  adminUserId: string,
+  includeInactive: boolean = true
+): Promise<PaymentMethod[]> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    let query = supabase
+      .from('payment_methods')
+      .select('*')
+      .order('sort_order', { ascending: true });
+
+    if (!includeInactive) {
+      query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching all payment methods:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getAllPaymentMethods:', error);
+    throw error;
+  }
+}
+
+// ==========================================
+// COUPONS CRUD OPERATIONS
+// ==========================================
+
+/**
+ * 🎯 Create new coupon
+ */
+export async function createCoupon(
+  adminUserId: string,
+  couponData: Omit<Coupon, 'id' | 'used_count' | 'created_at' | 'updated_at'>
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Validate required fields
+    if (!couponData.code || !couponData.type || couponData.value === undefined) {
+      throw new Error('Code, type, and value are required');
+    }
+
+    // Check if code already exists
+    const { data: existingCoupon } = await supabase
+      .from('coupons')
+      .select('id')
+      .eq('code', couponData.code.toUpperCase())
+      .single();
+
+    if (existingCoupon) {
+      throw new Error('Coupon with this code already exists');
+    }
+
+    // Insert new coupon
+    const { data: newCoupon, error: insertError } = await supabase
+      .from('coupons')
+      .insert({
+        ...couponData,
+        code: couponData.code.toUpperCase(), // Always store codes in uppercase
+        used_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error creating coupon:', insertError);
+      throw insertError;
+    }
+
+    return {
+      success: true,
+      message: 'Coupon created successfully',
+      data: newCoupon,
+      id: newCoupon.id
+    };
+  } catch (error) {
+    console.error('Error in createCoupon:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Update coupon
+ */
+export async function updateCoupon(
+  adminUserId: string,
+  couponId: string,
+  updates: Partial<Omit<Coupon, 'id' | 'used_count' | 'created_at'>>
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Check if coupon exists
+    const { data: existingCoupon, error: checkError } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('id', couponId)
+      .single();
+
+    if (checkError || !existingCoupon) {
+      throw new Error('Coupon not found');
+    }
+
+    // If updating code, check for duplicates and format
+    if (updates.code && updates.code !== existingCoupon.code) {
+      updates.code = updates.code.toUpperCase();
+      const { data: duplicateCoupon } = await supabase
+        .from('coupons')
+        .select('id')
+        .eq('code', updates.code)
+        .neq('id', couponId)
+        .single();
+
+      if (duplicateCoupon) {
+        throw new Error('Coupon with this code already exists');
+      }
+    }
+
+    // No date validation needed since we only have expires_at
+
+    // Update coupon
+    const { data: updatedCoupon, error: updateError } = await supabase
+      .from('coupons')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', couponId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating coupon:', updateError);
+      throw updateError;
+    }
+
+    return {
+      success: true,
+      message: 'Coupon updated successfully',
+      data: updatedCoupon,
+      id: couponId
+    };
+  } catch (error) {
+    console.error('Error in updateCoupon:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Delete coupon (soft delete)
+ */
+export async function deleteCoupon(
+  adminUserId: string,
+  couponId: string
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Check if coupon exists
+    const { data: existingCoupon, error: checkError } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('id', couponId)
+      .single();
+
+    if (checkError || !existingCoupon) {
+      throw new Error('Coupon not found');
+    }
+
+    // Check if coupon has been used
+    if (existingCoupon.used_count > 0) {
+      // Soft delete by setting is_active to false
+      const { error: deleteError } = await supabase
+        .from('coupons')
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', couponId);
+
+      if (deleteError) {
+        console.error('Error soft deleting coupon:', deleteError);
+        throw deleteError;
+      }
+
+      return {
+        success: true,
+        message: 'Coupon deactivated successfully (has usage history)',
+        id: couponId
+      };
+    } else {
+      // Hard delete if never used
+      const { error: deleteError } = await supabase
+        .from('coupons')
+        .delete()
+        .eq('id', couponId);
+
+      if (deleteError) {
+        console.error('Error deleting coupon:', deleteError);
+        throw deleteError;
+      }
+
+      return {
+        success: true,
+        message: 'Coupon deleted successfully',
+        id: couponId
+      };
+    }
+  } catch (error) {
+    console.error('Error in deleteCoupon:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Get all coupons with filtering
+ */
+export async function getAllCoupons(
+  adminUserId: string,
+  options: {
+    includeInactive?: boolean;
+    includeExpired?: boolean;
+    search?: string;
+  } = {}
+): Promise<Coupon[]> {
+  try {
+    const { includeInactive = true, includeExpired = true, search } = options;
+
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    let query = supabase
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!includeInactive) {
+      query = query.eq('is_active', true);
+    }
+
+    if (!includeExpired) {
+      query = query.gte('expires_at', new Date().toISOString());
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching coupons:', error);
+      throw error;
+    }
+
+    let coupons = data || [];
+
+    // Apply search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      coupons = coupons.filter(coupon =>
+        coupon.code.toLowerCase().includes(searchLower) ||
+        coupon.name.toLowerCase().includes(searchLower) ||
+        coupon.description?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return coupons;
+  } catch (error) {
+    console.error('Error in getAllCoupons:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Validate and apply coupon
+ */
+export async function validateCoupon(
+  couponCode: string,
+  planId: string,
+  amount: number
+): Promise<{
+  valid: boolean;
+  coupon?: Coupon;
+  discountAmount?: number;
+  message?: string;
+}> {
+  try {
+    // Get coupon by code
+    const { data: coupon, error: couponError } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', couponCode.toUpperCase())
+      .eq('is_active', true)
+      .single();
+
+    if (couponError || !coupon) {
+      return {
+        valid: false,
+        message: 'Invalid coupon code'
+      };
+    }
+
+    // Check if coupon has expired
+    if (coupon.expires_at) {
+      const now = new Date();
+      const expiresAt = new Date(coupon.expires_at);
+
+      if (now > expiresAt) {
+        return {
+          valid: false,
+          message: 'Coupon has expired'
+        };
+      }
+    }
+
+    // Check usage limit
+    if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+      return {
+        valid: false,
+        message: 'Coupon usage limit reached'
+      };
+    }
+
+    // Check minimum amount
+    if (coupon.minimum_amount && amount < coupon.minimum_amount) {
+      return {
+        valid: false,
+        message: `Minimum amount of ${coupon.minimum_amount} required for this coupon`
+      };
+    }
+
+    // Check plan applicability (if applicable_plans is set)
+    if (coupon.applicable_plans && coupon.applicable_plans.length > 0) {
+      if (!coupon.applicable_plans.includes(planId)) {
+        return {
+          valid: false,
+          message: 'Coupon is not applicable to this plan'
+        };
+      }
+    }
+
+    // Calculate discount
+    let discountAmount = 0;
+    if (coupon.type === 'percentage') {
+      discountAmount = (amount * coupon.value) / 100;
+      if (coupon.max_discount_amount && discountAmount > coupon.max_discount_amount) {
+        discountAmount = coupon.max_discount_amount;
+      }
+    } else {
+      discountAmount = coupon.value;
+    }
+
+    // Ensure discount doesn't exceed the amount
+    discountAmount = Math.min(discountAmount, amount);
+
+    return {
+      valid: true,
+      coupon,
+      discountAmount,
+      message: 'Coupon applied successfully'
+    };
+  } catch (error) {
+    console.error('Error in validateCoupon:', error);
+    return {
+      valid: false,
+      message: 'Error validating coupon'
+    };
+  }
+}
+
+// ==========================================
+// SUBSCRIPTION PAYMENTS ADDITIONAL CRUD OPERATIONS
+// ==========================================
+
+/**
+ * 🎯 Create new subscription payment (for user submissions)
+ */
+export async function createSubscriptionPayment(
+  paymentData: {
+    user_id: string;
+    plan_id: string;
+    billing_cycle: 'monthly' | 'yearly';
+    transaction_id: string;
+    sender_number: string;
+    base_amount: number;
+    discount_amount?: number;
+    final_amount: number;
+    coupon_id?: string;
+    payment_method_id?: string;
+    currency?: string;
+  }
+): Promise<CRUDResponse> {
+  try {
+    // Validate required fields
+    if (!paymentData.user_id || !paymentData.plan_id || !paymentData.transaction_id || !paymentData.sender_number) {
+      throw new Error('User ID, Plan ID, Transaction ID, and Sender Number are required');
+    }
+
+    // Check if transaction ID already exists
+    const { data: existingPayment } = await supabase
+      .from('subscription_payments')
+      .select('id')
+      .eq('transaction_id', paymentData.transaction_id)
+      .single();
+
+    if (existingPayment) {
+      throw new Error('Payment with this transaction ID already exists');
+    }
+
+    // Insert new payment
+    const { data: newPayment, error: insertError } = await supabase
+      .from('subscription_payments')
+      .insert({
+        ...paymentData,
+        discount_amount: paymentData.discount_amount || 0,
+        currency: paymentData.currency || 'BDT',
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error creating subscription payment:', insertError);
+      throw insertError;
+    }
+
+    // If coupon was used, increment usage count
+    if (paymentData.coupon_id) {
+      await supabase
+        .rpc('increment_coupon_usage', { coupon_id: paymentData.coupon_id });
+    }
+
+    return {
+      success: true,
+      message: 'Payment submitted successfully',
+      data: newPayment,
+      id: newPayment.id
+    };
+  } catch (error) {
+    console.error('Error in createSubscriptionPayment:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Get single subscription payment by ID
+ */
+export async function getSubscriptionPaymentById(
+  adminUserId: string,
+  paymentId: string
+): Promise<SubscriptionPayment | null> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Get payment with all related data
+    const { data: payment, error: paymentError } = await supabase
+      .from('subscription_payments')
+      .select('*')
+      .eq('id', paymentId)
+      .single();
+
+    if (paymentError || !payment) {
+      return null;
+    }
+
+    // Get related data
+    const [userRes, planRes, methodRes, couponRes] = await Promise.all([
+      supabase.from('profiles').select('user_id, full_name, email, phone_number').eq('user_id', payment.user_id).single(),
+      payment.plan_id ? supabase.from('subscription_plans').select('*').eq('id', payment.plan_id).single() : { data: null },
+      payment.payment_method_id ? supabase.from('payment_methods').select('*').eq('id', payment.payment_method_id).single() : { data: null },
+      payment.coupon_id ? supabase.from('coupons').select('*').eq('id', payment.coupon_id).single() : { data: null }
+    ]);
+
+    const user = userRes.data || { full_name: '', email: '', phone_number: '' };
+    const plan = planRes.data || { plan_name: '', display_name: '', price_monthly: 0, price_yearly: 0 };
+    const method = methodRes.data || { method_name: '', display_name: '' };
+    const coupon = couponRes.data;
+
+    return {
+      ...payment,
+      user_full_name: user.full_name || 'Unknown User',
+      user_email: user.email || 'unknown@example.com',
+      user_phone: user.phone_number || payment.sender_number || '',
+      plan_name: plan.plan_name || 'unknown',
+      plan_display_name: plan.display_name || 'Unknown Plan',
+      plan_price_monthly: plan.price_monthly || 0,
+      plan_price_yearly: plan.price_yearly || 0,
+      payment_method_name: method.method_name || 'manual',
+      payment_method_display_name: method.display_name || 'Manual Payment',
+      coupon_code: coupon?.code,
+      coupon_type: coupon?.type,
+      coupon_value: coupon?.value,
+      days_since_submission: payment.submitted_at ?
+        Math.floor((new Date().getTime() - new Date(payment.submitted_at).getTime()) / (1000 * 60 * 60 * 24)) : null,
+      subscription_status: 'active' // Default
+    } as SubscriptionPayment;
+  } catch (error) {
+    console.error('Error in getSubscriptionPaymentById:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Update subscription payment details (admin only)
+ */
+export async function updateSubscriptionPayment(
+  adminUserId: string,
+  paymentId: string,
+  updates: Partial<{
+    base_amount: number;
+    discount_amount: number;
+    final_amount: number;
+    admin_notes: string;
+    transaction_id: string;
+    sender_number: string;
+  }>
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Check if payment exists
+    const { data: existingPayment, error: checkError } = await supabase
+      .from('subscription_payments')
+      .select('*')
+      .eq('id', paymentId)
+      .single();
+
+    if (checkError || !existingPayment) {
+      throw new Error('Payment not found');
+    }
+
+    // Don't allow updates to approved payments
+    if (existingPayment.status === 'approved') {
+      throw new Error('Cannot update approved payments');
+    }
+
+    // If updating transaction_id, check for duplicates
+    if (updates.transaction_id && updates.transaction_id !== existingPayment.transaction_id) {
+      const { data: duplicatePayment } = await supabase
+        .from('subscription_payments')
+        .select('id')
+        .eq('transaction_id', updates.transaction_id)
+        .neq('id', paymentId)
+        .single();
+
+      if (duplicatePayment) {
+        throw new Error('Payment with this transaction ID already exists');
+      }
+    }
+
+    // Update payment
+    const { data: updatedPayment, error: updateError } = await supabase
+      .from('subscription_payments')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', paymentId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating subscription payment:', updateError);
+      throw updateError;
+    }
+
+    return {
+      success: true,
+      message: 'Payment updated successfully',
+      data: updatedPayment,
+      id: paymentId
+    };
+  } catch (error) {
+    console.error('Error in updateSubscriptionPayment:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Delete subscription payment (admin only, only for non-approved payments)
+ */
+export async function deleteSubscriptionPayment(
+  adminUserId: string,
+  paymentId: string
+): Promise<CRUDResponse> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Check if payment exists
+    const { data: existingPayment, error: checkError } = await supabase
+      .from('subscription_payments')
+      .select('*')
+      .eq('id', paymentId)
+      .single();
+
+    if (checkError || !existingPayment) {
+      throw new Error('Payment not found');
+    }
+
+    // Don't allow deletion of approved payments
+    if (existingPayment.status === 'approved') {
+      throw new Error('Cannot delete approved payments');
+    }
+
+    // Check if there's an active subscription linked to this payment
+    const { data: linkedSubscription } = await supabase
+      .from('user_subscriptions')
+      .select('id')
+      .eq('payment_id', paymentId)
+      .eq('status', 'active')
+      .single();
+
+    if (linkedSubscription) {
+      throw new Error('Cannot delete payment linked to active subscription');
+    }
+
+    // Delete payment
+    const { error: deleteError } = await supabase
+      .from('subscription_payments')
+      .delete()
+      .eq('id', paymentId);
+
+    if (deleteError) {
+      console.error('Error deleting subscription payment:', deleteError);
+      throw deleteError;
+    }
+
+    // If coupon was used, decrement usage count
+    if (existingPayment.coupon_id) {
+      await supabase
+        .rpc('decrement_coupon_usage', { coupon_id: existingPayment.coupon_id });
+    }
+
+    return {
+      success: true,
+      message: 'Payment deleted successfully',
+      id: paymentId
+    };
+  } catch (error) {
+    console.error('Error in deleteSubscriptionPayment:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🎯 Bulk update payment status
+ */
+export async function bulkUpdatePaymentStatus(
+  adminUserId: string,
+  paymentIds: string[],
+  status: string,
+  options: {
+    adminNotes?: string;
+    rejectionReason?: string;
+  } = {}
+): Promise<{
+  success: boolean;
+  message: string;
+  processed: number;
+  failed: string[];
+}> {
+  try {
+    // Verify admin permissions
+    const { data: profile, error: profileError } = await supabase.rpc('get_user_profile', { p_user_id: adminUserId });
+    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    const { adminNotes, rejectionReason } = options;
+    const failed: string[] = [];
+    let processed = 0;
+
+    // Process each payment
+    for (const paymentId of paymentIds) {
+      try {
+        const updateOptions: any = {};
+        if (adminNotes) {
+          updateOptions.adminNotes = adminNotes;
+        }
+        if (rejectionReason) {
+          updateOptions.rejectionReason = rejectionReason;
+        }
+        await updatePaymentStatus(adminUserId, paymentId, status, updateOptions);
+        processed++;
+      } catch (error) {
+        console.error(`Failed to update payment ${paymentId}:`, error);
+        failed.push(paymentId);
+      }
+    }
+
+    return {
+      success: true,
+      message: `Bulk update completed. ${processed} payments updated, ${failed.length} failed.`,
+      processed,
+      failed
+    };
+  } catch (error) {
+    console.error('Error in bulkUpdatePaymentStatus:', error);
+    throw error;
+  }
+}

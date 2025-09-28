@@ -43,7 +43,8 @@
       "Bash(timeout 120 npm run build)",
       "Bash(psql:*)",
       "Bash(npx supabase:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(timeout 5s npm run dev)"
     ],
     "deny": [],
     "additionalDirectories": [

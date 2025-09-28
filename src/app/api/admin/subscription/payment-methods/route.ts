@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import {
+  getAllPaymentMethods,
+  createPaymentMethod,
+  updatePaymentMethod,
+  deletePaymentMethod
+} from '@/lib/services/subscription-admin';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,30 +19,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check admin permissions
-    const { data: profile, error: profileError } = await supabase
-      .rpc('get_user_profile', { p_user_id: user.id });
+    const url = new URL(request.url);
+    const includeInactive = url.searchParams.get('includeInactive') === 'true';
 
-    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
-      return NextResponse.json(
-        { success: false, message: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
-    // Fetch payment methods
-    const { data: paymentMethods, error } = await supabase
-      .from('payment_methods')
-      .select('*')
-      .order('sort_order', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching payment methods:', error);
-      return NextResponse.json(
-        { success: false, message: 'Failed to fetch payment methods' },
-        { status: 500 }
-      );
-    }
+    // Use our comprehensive service function
+    const paymentMethods = await getAllPaymentMethods(user.id, includeInactive);
 
     return NextResponse.json({
       success: true,
@@ -45,8 +32,17 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('API Error:', error);
+
+    // Handle specific error cases
+    if (error.message === 'Insufficient permissions') {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -64,69 +60,164 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check admin permissions
-    const { data: profile, error: profileError } = await supabase
-      .rpc('get_user_profile', { p_user_id: user.id });
+    const body = await request.json();
 
-    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
+    // Use our comprehensive service function
+    const result = await createPaymentMethod(user.id, body);
+
+    return NextResponse.json({
+      success: result.success,
+      message: result.message,
+      payment_method: result.data
+    });
+
+  } catch (error: any) {
+    console.error('API Error:', error);
+
+    // Handle specific error cases
+    if (error.message === 'Insufficient permissions') {
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { status: 403 }
       );
     }
 
-    const body = await request.json();
-    const {
-      method_name,
-      display_name,
-      description,
-      icon_url,
-      instructions,
-      is_active,
-      sort_order
-    } = body;
-
-    // Validate required fields
-    if (!method_name || !display_name) {
+    if (error.message.includes('already exists')) {
       return NextResponse.json(
-        { success: false, message: 'Missing required fields' },
+        { success: false, message: error.message },
+        { status: 409 }
+      );
+    }
+
+    if (error.message.includes('required')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
         { status: 400 }
       );
     }
 
-    // Insert new payment method
-    const { data: newMethod, error } = await supabase
-      .from('payment_methods')
-      .insert([{
-        method_name,
-        display_name,
-        description,
-        icon_url,
-        instructions,
-        is_active: is_active !== false,
-        sort_order: sort_order || 0
-      }])
-      .select()
-      .single();
+    return NextResponse.json(
+      { success: false, message: error.message || 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
 
-    if (error) {
-      console.error('Error creating payment method:', error);
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json(
-        { success: false, message: 'Failed to create payment method' },
-        { status: 500 }
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
       );
     }
 
+    const url = new URL(request.url);
+    const methodId = url.searchParams.get('id');
+
+    if (!methodId) {
+      return NextResponse.json(
+        { success: false, message: 'Method ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+
+    // Use our comprehensive service function
+    const result = await updatePaymentMethod(user.id, methodId, body);
+
     return NextResponse.json({
-      success: true,
-      message: 'Payment method created successfully',
-      payment_method: newMethod
+      success: result.success,
+      message: result.message,
+      payment_method: result.data
     });
 
   } catch (error: any) {
     console.error('API Error:', error);
+
+    // Handle specific error cases
+    if (error.message === 'Insufficient permissions') {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
+    if (error.message.includes('not found')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 404 }
+      );
+    }
+
+    if (error.message.includes('already exists')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: error.message || 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const url = new URL(request.url);
+    const methodId = url.searchParams.get('id');
+
+    if (!methodId) {
+      return NextResponse.json(
+        { success: false, message: 'Method ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Use our comprehensive service function
+    const result = await deletePaymentMethod(user.id, methodId);
+
+    return NextResponse.json({
+      success: result.success,
+      message: result.message
+    });
+
+  } catch (error: any) {
+    console.error('API Error:', error);
+
+    // Handle specific error cases
+    if (error.message === 'Insufficient permissions') {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
+    if (error.message.includes('not found')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: false, message: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

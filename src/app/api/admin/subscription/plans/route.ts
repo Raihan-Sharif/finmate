@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import {
+  getAllSubscriptionPlans,
+  createSubscriptionPlan,
+  updateSubscriptionPlan,
+  deleteSubscriptionPlan
+} from '@/lib/services/subscription-admin';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,30 +19,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check admin permissions
-    const { data: profile, error: profileError } = await supabase
-      .rpc('get_user_profile', { p_user_id: user.id });
+    const url = new URL(request.url);
+    const includeInactive = url.searchParams.get('includeInactive') === 'true';
 
-    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
-      return NextResponse.json(
-        { success: false, message: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
-    // Fetch subscription plans
-    const { data: plans, error } = await supabase
-      .from('subscription_plans')
-      .select('*')
-      .order('sort_order', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching plans:', error);
-      return NextResponse.json(
-        { success: false, message: 'Failed to fetch plans' },
-        { status: 500 }
-      );
-    }
+    // Use our comprehensive service function
+    const plans = await getAllSubscriptionPlans(user.id, includeInactive);
 
     return NextResponse.json({
       success: true,
@@ -45,8 +32,17 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('API Error:', error);
+
+    // Handle specific error cases
+    if (error.message === 'Insufficient permissions') {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -64,17 +60,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check admin permissions
-    const { data: profile, error: profileError } = await supabase
-      .rpc('get_user_profile', { p_user_id: user.id });
-
-    if (profileError || !profile?.[0]?.role_name || !['admin', 'super_admin'].includes(profile[0].role_name)) {
-      return NextResponse.json(
-        { success: false, message: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
     const body = await request.json();
     const {
       plan_name,
@@ -86,57 +71,185 @@ export async function POST(request: NextRequest) {
       max_accounts,
       max_family_members,
       allowed_account_types,
-      is_popular,
       is_active,
       sort_order
     } = body;
 
-    // Validate required fields
-    if (!plan_name || !display_name || price_monthly == null || price_yearly == null) {
-      return NextResponse.json(
-        { success: false, message: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    // Insert new plan
-    const { data: newPlan, error } = await supabase
-      .from('subscription_plans')
-      .insert([{
-        plan_name,
-        display_name,
-        description,
-        price_monthly,
-        price_yearly,
-        features: features || [],
-        max_accounts: max_accounts || 3,
-        max_family_members: max_family_members || 1,
-        allowed_account_types: allowed_account_types || ['cash', 'bank'],
-        is_popular: is_popular || false,
-        is_active: is_active !== false,
-        sort_order: sort_order || 0
-      }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating plan:', error);
-      return NextResponse.json(
-        { success: false, message: 'Failed to create plan' },
-        { status: 500 }
-      );
-    }
+    // Use our comprehensive service function
+    const result = await createSubscriptionPlan(user.id, {
+      plan_name,
+      display_name,
+      description,
+      price_monthly,
+      price_yearly: price_yearly || 0,
+      features: features || [],
+      max_accounts: max_accounts || 3,
+      max_family_members: max_family_members || 1,
+      allowed_account_types: allowed_account_types || ['cash', 'bank'],
+      is_active: is_active !== false,
+      sort_order: sort_order || 0
+    });
 
     return NextResponse.json({
-      success: true,
-      message: 'Plan created successfully',
-      plan: newPlan
+      success: result.success,
+      message: result.message,
+      plan: result.data
     });
 
   } catch (error: any) {
     console.error('API Error:', error);
+
+    // Handle specific error cases
+    if (error.message === 'Insufficient permissions') {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
+    if (error.message.includes('already exists')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 409 }
+      );
+    }
+
+    if (error.message.includes('required')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: error.message || 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const url = new URL(request.url);
+    const planId = url.searchParams.get('id');
+
+    if (!planId) {
+      return NextResponse.json(
+        { success: false, message: 'Plan ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+
+    // Use our comprehensive service function
+    const result = await updateSubscriptionPlan(user.id, planId, body);
+
+    return NextResponse.json({
+      success: result.success,
+      message: result.message,
+      plan: result.data
+    });
+
+  } catch (error: any) {
+    console.error('API Error:', error);
+
+    // Handle specific error cases
+    if (error.message === 'Insufficient permissions') {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
+    if (error.message.includes('not found')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 404 }
+      );
+    }
+
+    if (error.message.includes('already exists')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 409 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: false, message: error.message || 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const url = new URL(request.url);
+    const planId = url.searchParams.get('id');
+
+    if (!planId) {
+      return NextResponse.json(
+        { success: false, message: 'Plan ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Use our comprehensive service function
+    const result = await deleteSubscriptionPlan(user.id, planId);
+
+    return NextResponse.json({
+      success: result.success,
+      message: result.message
+    });
+
+  } catch (error: any) {
+    console.error('API Error:', error);
+
+    // Handle specific error cases
+    if (error.message === 'Insufficient permissions') {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
+    if (error.message.includes('not found')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 404 }
+      );
+    }
+
+    if (error.message.includes('active subscriptions')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 409 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: false, message: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
