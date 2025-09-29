@@ -2673,6 +2673,23 @@ COMMENT ON FUNCTION "public"."create_purchase_emi"("p_user_id" "uuid", "p_item_n
 
 
 
+CREATE OR REPLACE FUNCTION "public"."decrement_coupon_usage"("coupon_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE coupons
+  SET
+    used_count = GREATEST(used_count - 1, 0),
+    updated_at = NOW()
+  WHERE id = coupon_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."decrement_coupon_usage"("coupon_id" "uuid") OWNER TO "postgres";
+
+
+
 CREATE OR REPLACE FUNCTION "public"."delete_investment_main_transaction"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -4428,6 +4445,23 @@ $$;
 
 
 ALTER FUNCTION "public"."has_permission"("p_user_id" "uuid", "p_resource" "text", "p_action" "text") OWNER TO "postgres";
+
+
+
+CREATE OR REPLACE FUNCTION "public"."increment_coupon_usage"("coupon_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE coupons
+  SET
+    used_count = used_count + 1,
+    updated_at = NOW()
+  WHERE id = coupon_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."increment_coupon_usage"("coupon_id" "uuid") OWNER TO "postgres";
 
 
 
@@ -6671,6 +6705,29 @@ ALTER VIEW "public"."subscription_payments_with_users" OWNER TO "postgres";
 
 COMMENT ON VIEW "public"."subscription_payments_with_users" IS 'View combining subscription payments with user and related data for easier querying';
 
+
+
+CREATE OR REPLACE VIEW "public"."subscription_seed_data_summary" AS
+ SELECT 'Subscription Plans'::"text" AS "table_name",
+    ("count"(*))::"text" AS "record_count",
+    "array_agg"("subscription_plans"."plan_name" ORDER BY "subscription_plans"."sort_order") AS "sample_data"
+   FROM "public"."subscription_plans"
+  WHERE ("subscription_plans"."is_active" = true)
+UNION ALL
+ SELECT 'Payment Methods'::"text" AS "table_name",
+    ("count"(*))::"text" AS "record_count",
+    "array_agg"("payment_methods"."method_name" ORDER BY "payment_methods"."sort_order") AS "sample_data"
+   FROM "public"."payment_methods"
+  WHERE ("payment_methods"."is_active" = true)
+UNION ALL
+ SELECT 'Active Coupons'::"text" AS "table_name",
+    ("count"(*))::"text" AS "record_count",
+    "array_agg"("coupons"."code" ORDER BY "coupons"."created_at") AS "sample_data"
+   FROM "public"."coupons"
+  WHERE (("coupons"."is_active" = true) AND (("coupons"."expires_at" IS NULL) OR ("coupons"."expires_at" > "now"())));
+
+
+ALTER VIEW "public"."subscription_seed_data_summary" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."transactions" (
@@ -8963,6 +9020,12 @@ GRANT ALL ON FUNCTION "public"."create_purchase_emi"("p_user_id" "uuid", "p_item
 
 
 
+GRANT ALL ON FUNCTION "public"."decrement_coupon_usage"("coupon_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."decrement_coupon_usage"("coupon_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."decrement_coupon_usage"("coupon_id" "uuid") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."delete_investment_main_transaction"() TO "anon";
 GRANT ALL ON FUNCTION "public"."delete_investment_main_transaction"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."delete_investment_main_transaction"() TO "service_role";
@@ -9176,6 +9239,12 @@ GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."has_permission"("p_user_id" "uuid", "p_resource" "text", "p_action" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."has_permission"("p_user_id" "uuid", "p_resource" "text", "p_action" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."has_permission"("p_user_id" "uuid", "p_resource" "text", "p_action" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."increment_coupon_usage"("coupon_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."increment_coupon_usage"("coupon_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."increment_coupon_usage"("coupon_id" "uuid") TO "service_role";
 
 
 
@@ -9593,6 +9662,12 @@ GRANT ALL ON TABLE "public"."subscription_plans" TO "service_role";
 GRANT ALL ON TABLE "public"."subscription_payments_with_users" TO "anon";
 GRANT ALL ON TABLE "public"."subscription_payments_with_users" TO "authenticated";
 GRANT ALL ON TABLE "public"."subscription_payments_with_users" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."subscription_seed_data_summary" TO "anon";
+GRANT ALL ON TABLE "public"."subscription_seed_data_summary" TO "authenticated";
+GRANT ALL ON TABLE "public"."subscription_seed_data_summary" TO "service_role";
 
 
 

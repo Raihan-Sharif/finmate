@@ -42,6 +42,9 @@
     "a"."name" AS "account_name",
     "a"."type" AS "account_type",
     "account_id",
+    "array_agg"("coupons"."code" ORDER BY "coupons"."created_at") AS "sample_data"
+    "array_agg"("payment_methods"."method_name" ORDER BY "payment_methods"."sort_order") AS "sample_data"
+    "array_agg"("subscription_plans"."plan_name" ORDER BY "subscription_plans"."sort_order") AS "sample_data"
     "auto_debit",
     "avg"("duration_seconds") AS "avg_duration_seconds",
     "c"."code" AS "coupon_code",
@@ -182,6 +185,7 @@
     "us"."updated_at",
     "us"."user_id",
     "user_id",
+    ("count"(*))::"text" AS "record_count",
     ("metadata" ->> 'item_condition'::"text") AS "item_condition_text",
     ("metadata" ->> 'item_name'::"text") AS "item_name",
     ("metadata" ->> 'purchase_category'::"text") AS "purchase_category_text",
@@ -189,8 +193,11 @@
     (("metadata" ->> 'down_payment'::"text"))::numeric(15,2) AS "down_payment"
     (("metadata" ->> 'purchase_date'::"text"))::"date" AS "purchase_date",
     (("metadata" ->> 'warranty_period'::"text"))::integer AS "warranty_period_months",
+   FROM "public"."coupons"
    FROM "public"."cron_job_logs"
    FROM "public"."loans" "l"
+   FROM "public"."payment_methods"
+   FROM "public"."subscription_plans"
    FROM ((("public"."lending" "l"
    FROM ((("public"."loans" "l"
    FROM ((("public"."user_subscriptions" "us"
@@ -200,20 +207,28 @@
   ORDER BY "job_name";
   ORDER BY "started_at" DESC;
   ORDER BY "t"."date" DESC, "t"."created_at" DESC;
+  WHERE ("payment_methods"."is_active" = true)
   WHERE ("started_at" >= ("now"() - '30 days'::interval))
   WHERE ("started_at" >= ("now"() - '7 days'::interval))
+  WHERE ("subscription_plans"."is_active" = true)
   WHERE ("type" = 'purchase_emi'::"public"."loan_type");
+  WHERE (("coupons"."is_active" = true) AND (("coupons"."expires_at" IS NULL) OR ("coupons"."expires_at" > "now"())));
  SELECT "id",
  SELECT "job_name",
  SELECT "l"."id",
  SELECT "sp"."id",
  SELECT "t"."id",
  SELECT "us"."id",
+ SELECT 'Active Coupons'::"text" AS "table_name",
+ SELECT 'Payment Methods'::"text" AS "table_name",
+ SELECT 'Subscription Plans'::"text" AS "table_name",
 CREATE OR REPLACE VIEW "public"."cron_job_stats" AS
 CREATE OR REPLACE VIEW "public"."lending_with_categories" AS
 CREATE OR REPLACE VIEW "public"."loans_with_categories" AS
 CREATE OR REPLACE VIEW "public"."purchase_emis" AS
 CREATE OR REPLACE VIEW "public"."recent_cron_jobs" AS
 CREATE OR REPLACE VIEW "public"."subscription_payments_with_users" AS
+CREATE OR REPLACE VIEW "public"."subscription_seed_data_summary" AS
 CREATE OR REPLACE VIEW "public"."unified_transactions" AS
 CREATE OR REPLACE VIEW "public"."user_subscriptions_with_details" AS
+UNION ALL
