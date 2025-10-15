@@ -679,7 +679,8 @@ INSERT INTO "auth"."audit_log_entries" ("instance_id", "id", "payload", "created
 	('00000000-0000-0000-0000-000000000000', '718d2ee0-6cab-4d44-96d8-092b782c86b7', '{"action":"token_refreshed","actor_id":"0772beaf-9ccd-48e7-a178-f5312ab5e7e3","actor_name":"Raihan Sharif","actor_username":"raihan.raju@gmail.com","actor_via_sso":false,"log_type":"token"}', '2025-10-08 18:44:44.661914+00', ''),
 	('00000000-0000-0000-0000-000000000000', '866e5492-2e60-4d1d-9e07-864ea81b318d', '{"action":"token_revoked","actor_id":"0772beaf-9ccd-48e7-a178-f5312ab5e7e3","actor_name":"Raihan Sharif","actor_username":"raihan.raju@gmail.com","actor_via_sso":false,"log_type":"token"}', '2025-10-08 18:44:44.694849+00', ''),
 	('00000000-0000-0000-0000-000000000000', 'a57641d2-b397-415c-bd35-3b14e76773bd', '{"action":"token_refreshed","actor_id":"0772beaf-9ccd-48e7-a178-f5312ab5e7e3","actor_name":"Raihan Sharif","actor_username":"raihan.raju@gmail.com","actor_via_sso":false,"log_type":"token"}', '2025-10-09 11:13:10.061886+00', ''),
-	('00000000-0000-0000-0000-000000000000', 'cb3aff1d-0de0-46a8-a255-59cfa479277d', '{"action":"token_revoked","actor_id":"0772beaf-9ccd-48e7-a178-f5312ab5e7e3","actor_name":"Raihan Sharif","actor_username":"raihan.raju@gmail.com","actor_via_sso":false,"log_type":"token"}', '2025-10-09 11:13:10.092022+00', '');
+	('00000000-0000-0000-0000-000000000000', 'cb3aff1d-0de0-46a8-a255-59cfa479277d', '{"action":"token_revoked","actor_id":"0772beaf-9ccd-48e7-a178-f5312ab5e7e3","actor_name":"Raihan Sharif","actor_username":"raihan.raju@gmail.com","actor_via_sso":false,"log_type":"token"}', '2025-10-09 11:13:10.092022+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'a46c5377-3c7c-4734-84af-270c1fbe4ec7', '{"action":"token_refreshed","actor_id":"0772beaf-9ccd-48e7-a178-f5312ab5e7e3","actor_name":"Raihan Sharif","actor_username":"raihan.raju@gmail.com","actor_via_sso":false,"log_type":"token"}', '2025-10-14 11:13:07.554568+00', '');
 
 
 --
@@ -725,16 +726,22 @@ INSERT INTO "auth"."identities" ("provider_id", "user_id", "identity_data", "pro
 
 
 --
+-- Data for Name: oauth_clients; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
+--
+
+
+
+--
 -- Data for Name: sessions; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
 --
 
-INSERT INTO "auth"."sessions" ("id", "user_id", "created_at", "updated_at", "factor_id", "aal", "not_after", "refreshed_at", "user_agent", "ip", "tag") VALUES
-	('cc8e7f37-107d-4f26-9155-55a24aa8686b', '9a52cf96-a1d2-4146-9afe-25b0989f783f', '2025-08-28 20:37:12.684493+00', '2025-08-28 20:37:12.684493+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36', '103.38.55.163', NULL),
-	('b0d43b3b-a860-4435-a9b8-a5b26e514fbe', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-12 06:30:54.930029+00', '2025-09-22 15:53:04.873249+00', NULL, 'aal1', NULL, '2025-09-22 15:53:04.870858', 'Vercel Edge Functions', '13.235.42.157', NULL),
-	('02403f21-e2a3-400a-8137-33c4fd255112', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-11 17:26:31.532786+00', '2025-09-27 16:54:34.7758+00', NULL, 'aal1', NULL, '2025-09-27 16:54:34.775724', 'Next.js Middleware', '103.183.63.62', NULL),
-	('0481707a-70d0-4a50-933c-cee0ab3a787a', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-17 05:39:55.036356+00', '2025-09-28 11:07:14.042711+00', NULL, 'aal1', NULL, '2025-09-28 11:07:14.042636', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0', '103.249.56.102', NULL),
-	('0d774f43-8235-4e63-a558-da711d963935', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-12 15:17:26.235665+00', '2025-10-08 18:44:44.755831+00', NULL, 'aal1', NULL, '2025-10-08 18:44:44.755753', 'Vercel Edge Functions', '3.109.221.142', NULL),
-	('f64a4caf-1201-49dd-88a9-54ad0c7b510b', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-11 09:26:56.071712+00', '2025-10-09 11:13:10.157471+00', NULL, 'aal1', NULL, '2025-10-09 11:13:10.157363', 'Vercel Edge Functions', '65.0.118.65', NULL);
+INSERT INTO "auth"."sessions" ("id", "user_id", "created_at", "updated_at", "factor_id", "aal", "not_after", "refreshed_at", "user_agent", "ip", "tag", "oauth_client_id") VALUES
+	('cc8e7f37-107d-4f26-9155-55a24aa8686b', '9a52cf96-a1d2-4146-9afe-25b0989f783f', '2025-08-28 20:37:12.684493+00', '2025-08-28 20:37:12.684493+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36', '103.38.55.163', NULL, NULL),
+	('b0d43b3b-a860-4435-a9b8-a5b26e514fbe', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-12 06:30:54.930029+00', '2025-09-22 15:53:04.873249+00', NULL, 'aal1', NULL, '2025-09-22 15:53:04.870858', 'Vercel Edge Functions', '13.235.42.157', NULL, NULL),
+	('02403f21-e2a3-400a-8137-33c4fd255112', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-11 17:26:31.532786+00', '2025-09-27 16:54:34.7758+00', NULL, 'aal1', NULL, '2025-09-27 16:54:34.775724', 'Next.js Middleware', '103.183.63.62', NULL, NULL),
+	('0481707a-70d0-4a50-933c-cee0ab3a787a', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-17 05:39:55.036356+00', '2025-09-28 11:07:14.042711+00', NULL, 'aal1', NULL, '2025-09-28 11:07:14.042636', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0', '103.249.56.102', NULL, NULL),
+	('0d774f43-8235-4e63-a558-da711d963935', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-12 15:17:26.235665+00', '2025-10-08 18:44:44.755831+00', NULL, 'aal1', NULL, '2025-10-08 18:44:44.755753', 'Vercel Edge Functions', '3.109.221.142', NULL, NULL),
+	('f64a4caf-1201-49dd-88a9-54ad0c7b510b', '0772beaf-9ccd-48e7-a178-f5312ab5e7e3', '2025-09-11 09:26:56.071712+00', '2025-10-14 11:13:07.586524+00', NULL, 'aal1', NULL, '2025-10-14 11:13:07.586419', 'Vercel Edge Functions', '13.127.110.43', NULL, NULL);
 
 
 --
@@ -763,7 +770,13 @@ INSERT INTO "auth"."mfa_amr_claims" ("session_id", "created_at", "updated_at", "
 
 
 --
--- Data for Name: oauth_clients; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
+-- Data for Name: oauth_authorizations; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
+--
+
+
+
+--
+-- Data for Name: oauth_consents; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
 --
 
 
@@ -1082,6 +1095,7 @@ INSERT INTO "public"."cron_job_logs" ("id", "job_name", "status", "message", "me
 	('5329abe9-3511-439f-9cfe-b2f4d9ea2cda', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-12 12:00:00.170646+00', '2025-10-12 12:00:00.170646+00', 0, '2025-10-12 12:00:00.170646+00'),
 	('139b1b17-6216-4481-88bf-77b73c1a9725', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-13 06:00:00.183181+00', '2025-10-13 06:00:00.183181+00', 0, '2025-10-13 06:00:00.183181+00'),
 	('defe6140-8878-4aa8-b218-5e24305acec3', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-13 18:00:00.185727+00', '2025-10-13 18:00:00.185727+00', 0, '2025-10-13 18:00:00.185727+00'),
+	('044ac31d-a894-42ac-a067-a291724c0e65', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-15 00:00:00.175551+00', '2025-10-15 00:00:00.175551+00', 0, '2025-10-15 00:00:00.175551+00'),
 	('6a13fcbd-776b-4033-acb4-95f70adc39e9', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-09-30 00:00:00.173489+00', '2025-09-30 00:00:00.173489+00', 0, '2025-09-30 00:00:00.173489+00'),
 	('888023df-7c61-4640-9216-71a1fe3ff86e', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-01 12:00:00.17747+00', '2025-10-01 12:00:00.17747+00', 0, '2025-10-01 12:00:00.17747+00'),
 	('9e54d060-1c3e-4fae-907b-7a3c2e023815', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-03 06:00:00.174535+00', '2025-10-03 06:00:00.174535+00', 0, '2025-10-03 06:00:00.174535+00'),
@@ -1099,6 +1113,7 @@ INSERT INTO "public"."cron_job_logs" ("id", "job_name", "status", "message", "me
 	('7d92e5ed-a2c8-46f2-a27e-482063cbbfda', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-12 06:00:00.18456+00', '2025-10-12 06:00:00.18456+00', 0, '2025-10-12 06:00:00.18456+00'),
 	('52e2da7f-3e22-41df-b4b6-a7ccc98459dd', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-12 18:00:00.156018+00', '2025-10-12 18:00:00.156018+00', 0, '2025-10-12 18:00:00.156018+00'),
 	('ca6aaa86-495c-4e2c-9ddd-fa1865c7397c', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-14 00:00:00.143214+00', '2025-10-14 00:00:00.143214+00', 0, '2025-10-14 00:00:00.143214+00'),
+	('f3d4e7d7-1d2c-4d9d-8fb1-a825e9ed921d', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-14 12:00:00.215077+00', '2025-10-14 12:00:00.215077+00', 0, '2025-10-14 12:00:00.215077+00'),
 	('1173acb1-ebb7-40b9-bbcf-ea40ee337b52', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-09-28 12:00:00.197512+00', '2025-09-28 12:00:00.197512+00', 0, '2025-09-28 12:00:00.197512+00'),
 	('4f9d7643-0217-42cd-9c56-865d31a4d6f3', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-09-30 06:00:00.19342+00', '2025-09-30 06:00:00.19342+00', 0, '2025-09-30 06:00:00.19342+00'),
 	('71dc9815-87bd-499a-b6be-0ff8effe4e82', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-01 18:00:00.199212+00', '2025-10-01 18:00:00.199212+00', 0, '2025-10-01 18:00:00.199212+00'),
@@ -1115,6 +1130,8 @@ INSERT INTO "public"."cron_job_logs" ("id", "job_name", "status", "message", "me
 	('f28702a9-58df-4d0d-9273-26fa7743d0f5', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-12 00:00:00.190554+00', '2025-10-12 00:00:00.190554+00', 0, '2025-10-12 00:00:00.190554+00'),
 	('9f586301-ceec-44a2-9655-ad5b0f116d84', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-13 00:00:00.1676+00', '2025-10-13 00:00:00.1676+00', 0, '2025-10-13 00:00:00.1676+00'),
 	('7d541b69-574a-4471-9559-13edc4307bb2', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-13 12:00:00.190441+00', '2025-10-13 12:00:00.190441+00', 0, '2025-10-13 12:00:00.190441+00'),
+	('9a8f77e1-18fa-4673-b1f6-cfcd8fc4ea02', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-14 06:00:00.144028+00', '2025-10-14 06:00:00.144028+00', 0, '2025-10-14 06:00:00.144028+00'),
+	('1834471a-d386-430c-aad7-76c38e7786ef', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 5, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-14 18:00:00.157464+00', '2025-10-14 18:00:00.157464+00', 0, '2025-10-14 18:00:00.157464+00'),
 	('8badf7db-c371-47bb-b7a5-3baa5f7be83d', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-09-28 18:00:00.193041+00', '2025-09-28 18:00:00.193041+00', 0, '2025-09-28 18:00:00.193041+00'),
 	('44f32749-fd4c-4fba-9a2c-ada81f446158', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-10-02 00:00:00.20816+00', '2025-10-02 00:00:00.20816+00', 0, '2025-10-02 00:00:00.20816+00'),
 	('59e045f8-a2b6-4e23-b4a7-7b44b1591a81', 'health_check', 'critical', 'No successful job execution in last 25 hours', '{"issues": ["No successful job execution in last 25 hours"], "overdue_loans": 4, "failed_jobs_24h": 0, "last_successful_run": null}', '2025-09-29 00:00:00.179915+00', '2025-09-29 00:00:00.179915+00', 0, '2025-09-29 00:00:00.179915+00'),

@@ -56,6 +56,26 @@ CREATE TYPE "auth"."factor_type" AS ENUM (
 ALTER TYPE "auth"."factor_type" OWNER TO "supabase_auth_admin";
 
 
+CREATE TYPE "auth"."oauth_authorization_status" AS ENUM (
+    'pending',
+    'approved',
+    'denied',
+    'expired'
+);
+
+
+ALTER TYPE "auth"."oauth_authorization_status" OWNER TO "supabase_auth_admin";
+
+
+CREATE TYPE "auth"."oauth_client_type" AS ENUM (
+    'public',
+    'confidential'
+);
+
+
+ALTER TYPE "auth"."oauth_client_type" OWNER TO "supabase_auth_admin";
+
+
 CREATE TYPE "auth"."oauth_registration_type" AS ENUM (
     'dynamic',
     'manual'
@@ -63,6 +83,14 @@ CREATE TYPE "auth"."oauth_registration_type" AS ENUM (
 
 
 ALTER TYPE "auth"."oauth_registration_type" OWNER TO "supabase_auth_admin";
+
+
+CREATE TYPE "auth"."oauth_response_type" AS ENUM (
+    'code'
+);
+
+
+ALTER TYPE "auth"."oauth_response_type" OWNER TO "supabase_auth_admin";
 
 
 CREATE TYPE "auth"."one_time_token_type" AS ENUM (
@@ -286,10 +314,39 @@ COMMENT ON TABLE "auth"."mfa_factors" IS 'auth: stores metadata about factors';
 
 
 
+CREATE TABLE IF NOT EXISTS "auth"."oauth_authorizations" (
+    "id" "uuid" NOT NULL,
+    "authorization_id" "text" NOT NULL,
+    "client_id" "uuid" NOT NULL,
+    "user_id" "uuid",
+    "redirect_uri" "text" NOT NULL,
+    "scope" "text" NOT NULL,
+    "state" "text",
+    "resource" "text",
+    "code_challenge" "text",
+    "code_challenge_method" "auth"."code_challenge_method",
+    "response_type" "auth"."oauth_response_type" DEFAULT 'code'::"auth"."oauth_response_type" NOT NULL,
+    "status" "auth"."oauth_authorization_status" DEFAULT 'pending'::"auth"."oauth_authorization_status" NOT NULL,
+    "authorization_code" "text",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "expires_at" timestamp with time zone DEFAULT ("now"() + '00:03:00'::interval) NOT NULL,
+    "approved_at" timestamp with time zone,
+    CONSTRAINT "oauth_authorizations_authorization_code_length" CHECK (("char_length"("authorization_code") <= 255)),
+    CONSTRAINT "oauth_authorizations_code_challenge_length" CHECK (("char_length"("code_challenge") <= 128)),
+    CONSTRAINT "oauth_authorizations_expires_at_future" CHECK (("expires_at" > "created_at")),
+    CONSTRAINT "oauth_authorizations_redirect_uri_length" CHECK (("char_length"("redirect_uri") <= 2048)),
+    CONSTRAINT "oauth_authorizations_resource_length" CHECK (("char_length"("resource") <= 2048)),
+    CONSTRAINT "oauth_authorizations_scope_length" CHECK (("char_length"("scope") <= 4096)),
+    CONSTRAINT "oauth_authorizations_state_length" CHECK (("char_length"("state") <= 4096))
+);
+
+
+ALTER TABLE "auth"."oauth_authorizations" OWNER TO "supabase_auth_admin";
+
+
 CREATE TABLE IF NOT EXISTS "auth"."oauth_clients" (
     "id" "uuid" NOT NULL,
-    "client_id" "text" NOT NULL,
-    "client_secret_hash" "text" NOT NULL,
+    "client_secret_hash" "text",
     "registration_type" "auth"."oauth_registration_type" NOT NULL,
     "redirect_uris" "text" NOT NULL,
     "grant_types" "text" NOT NULL,
@@ -299,6 +356,7 @@ CREATE TABLE IF NOT EXISTS "auth"."oauth_clients" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "deleted_at" timestamp with time zone,
+    "client_type" "auth"."oauth_client_type" DEFAULT 'confidential'::"auth"."oauth_client_type" NOT NULL,
     CONSTRAINT "oauth_clients_client_name_length" CHECK (("char_length"("client_name") <= 1024)),
     CONSTRAINT "oauth_clients_client_uri_length" CHECK (("char_length"("client_uri") <= 2048)),
     CONSTRAINT "oauth_clients_logo_uri_length" CHECK (("char_length"("logo_uri") <= 2048))
@@ -306,6 +364,22 @@ CREATE TABLE IF NOT EXISTS "auth"."oauth_clients" (
 
 
 ALTER TABLE "auth"."oauth_clients" OWNER TO "supabase_auth_admin";
+
+
+CREATE TABLE IF NOT EXISTS "auth"."oauth_consents" (
+    "id" "uuid" NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "client_id" "uuid" NOT NULL,
+    "scopes" "text" NOT NULL,
+    "granted_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "revoked_at" timestamp with time zone,
+    CONSTRAINT "oauth_consents_revoked_after_granted" CHECK ((("revoked_at" IS NULL) OR ("revoked_at" >= "granted_at"))),
+    CONSTRAINT "oauth_consents_scopes_length" CHECK (("char_length"("scopes") <= 2048)),
+    CONSTRAINT "oauth_consents_scopes_not_empty" CHECK (("char_length"(TRIM(BOTH FROM "scopes")) > 0))
+);
+
+
+ALTER TABLE "auth"."oauth_consents" OWNER TO "supabase_auth_admin";
 
 
 CREATE TABLE IF NOT EXISTS "auth"."one_time_tokens" (
@@ -424,7 +498,8 @@ CREATE TABLE IF NOT EXISTS "auth"."sessions" (
     "refreshed_at" timestamp without time zone,
     "user_agent" "text",
     "ip" "inet",
-    "tag" "text"
+    "tag" "text",
+    "oauth_client_id" "uuid"
 );
 
 
@@ -582,13 +657,33 @@ ALTER TABLE ONLY "auth"."mfa_factors"
 
 
 
-ALTER TABLE ONLY "auth"."oauth_clients"
-    ADD CONSTRAINT "oauth_clients_client_id_key" UNIQUE ("client_id");
+ALTER TABLE ONLY "auth"."oauth_authorizations"
+    ADD CONSTRAINT "oauth_authorizations_authorization_code_key" UNIQUE ("authorization_code");
+
+
+
+ALTER TABLE ONLY "auth"."oauth_authorizations"
+    ADD CONSTRAINT "oauth_authorizations_authorization_id_key" UNIQUE ("authorization_id");
+
+
+
+ALTER TABLE ONLY "auth"."oauth_authorizations"
+    ADD CONSTRAINT "oauth_authorizations_pkey" PRIMARY KEY ("id");
 
 
 
 ALTER TABLE ONLY "auth"."oauth_clients"
     ADD CONSTRAINT "oauth_clients_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "auth"."oauth_consents"
+    ADD CONSTRAINT "oauth_consents_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "auth"."oauth_consents"
+    ADD CONSTRAINT "oauth_consents_user_client_unique" UNIQUE ("user_id", "client_id");
 
 
 
@@ -708,11 +803,23 @@ CREATE INDEX "mfa_factors_user_id_idx" ON "auth"."mfa_factors" USING "btree" ("u
 
 
 
-CREATE INDEX "oauth_clients_client_id_idx" ON "auth"."oauth_clients" USING "btree" ("client_id");
+CREATE INDEX "oauth_auth_pending_exp_idx" ON "auth"."oauth_authorizations" USING "btree" ("expires_at") WHERE ("status" = 'pending'::"auth"."oauth_authorization_status");
 
 
 
 CREATE INDEX "oauth_clients_deleted_at_idx" ON "auth"."oauth_clients" USING "btree" ("deleted_at");
+
+
+
+CREATE INDEX "oauth_consents_active_client_idx" ON "auth"."oauth_consents" USING "btree" ("client_id") WHERE ("revoked_at" IS NULL);
+
+
+
+CREATE INDEX "oauth_consents_active_user_client_idx" ON "auth"."oauth_consents" USING "btree" ("user_id", "client_id") WHERE ("revoked_at" IS NULL);
+
+
+
+CREATE INDEX "oauth_consents_user_order_idx" ON "auth"."oauth_consents" USING "btree" ("user_id", "granted_at" DESC);
 
 
 
@@ -773,6 +880,10 @@ CREATE INDEX "saml_relay_states_sso_provider_id_idx" ON "auth"."saml_relay_state
 
 
 CREATE INDEX "sessions_not_after_idx" ON "auth"."sessions" USING "btree" ("not_after" DESC);
+
+
+
+CREATE INDEX "sessions_oauth_client_id_idx" ON "auth"."sessions" USING "btree" ("oauth_client_id");
 
 
 
@@ -848,6 +959,26 @@ ALTER TABLE ONLY "auth"."mfa_factors"
 
 
 
+ALTER TABLE ONLY "auth"."oauth_authorizations"
+    ADD CONSTRAINT "oauth_authorizations_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "auth"."oauth_clients"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "auth"."oauth_authorizations"
+    ADD CONSTRAINT "oauth_authorizations_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "auth"."oauth_consents"
+    ADD CONSTRAINT "oauth_consents_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "auth"."oauth_clients"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "auth"."oauth_consents"
+    ADD CONSTRAINT "oauth_consents_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "auth"."one_time_tokens"
     ADD CONSTRAINT "one_time_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -870,6 +1001,11 @@ ALTER TABLE ONLY "auth"."saml_relay_states"
 
 ALTER TABLE ONLY "auth"."saml_relay_states"
     ADD CONSTRAINT "saml_relay_states_sso_provider_id_fkey" FOREIGN KEY ("sso_provider_id") REFERENCES "auth"."sso_providers"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "auth"."sessions"
+    ADD CONSTRAINT "sessions_oauth_client_id_fkey" FOREIGN KEY ("oauth_client_id") REFERENCES "auth"."oauth_clients"("id") ON DELETE CASCADE;
 
 
 
@@ -999,8 +1135,18 @@ GRANT ALL ON TABLE "auth"."mfa_factors" TO "dashboard_user";
 
 
 
+GRANT ALL ON TABLE "auth"."oauth_authorizations" TO "postgres";
+GRANT ALL ON TABLE "auth"."oauth_authorizations" TO "dashboard_user";
+
+
+
 GRANT ALL ON TABLE "auth"."oauth_clients" TO "postgres";
 GRANT ALL ON TABLE "auth"."oauth_clients" TO "dashboard_user";
+
+
+
+GRANT ALL ON TABLE "auth"."oauth_consents" TO "postgres";
+GRANT ALL ON TABLE "auth"."oauth_consents" TO "dashboard_user";
 
 
 

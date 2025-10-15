@@ -7,7 +7,7 @@
 ### Schema Files
 - Complete Schema: 9771 lines
 - Public Schema: 9405 lines
-- Auth Schema: 1075 lines
+- Auth Schema: 1221 lines
 
 ### Component Files
 - Functions: 1 files
