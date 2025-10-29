@@ -339,4 +339,3 @@ GRANT ALL ON FUNCTION "extensions"."set_graphql_placeholder"() TO "postgres" WIT
 
 
 
-RESET ALL;
