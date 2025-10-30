@@ -62,6 +62,70 @@ $$;
 ALTER FUNCTION "storage"."can_insert_object"("bucketid" "text", "name" "text", "owner" "uuid", "metadata" "jsonb") OWNER TO "supabase_storage_admin";
 
 
+CREATE OR REPLACE FUNCTION "storage"."delete_leaf_prefixes"("bucket_ids" "text"[], "names" "text"[]) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+    v_rows_deleted integer;
+BEGIN
+    LOOP
+        WITH candidates AS (
+            SELECT DISTINCT
+                t.bucket_id,
+                unnest(storage.get_prefixes(t.name)) AS name
+            FROM unnest(bucket_ids, names) AS t(bucket_id, name)
+        ),
+        uniq AS (
+             SELECT
+                 bucket_id,
+                 name,
+                 storage.get_level(name) AS level
+             FROM candidates
+             WHERE name <> ''
+             GROUP BY bucket_id, name
+        ),
+        leaf AS (
+             SELECT
+                 p.bucket_id,
+                 p.name,
+                 p.level
+             FROM storage.prefixes AS p
+                  JOIN uniq AS u
+                       ON u.bucket_id = p.bucket_id
+                           AND u.name = p.name
+                           AND u.level = p.level
+             WHERE NOT EXISTS (
+                 SELECT 1
+                 FROM storage.objects AS o
+                 WHERE o.bucket_id = p.bucket_id
+                   AND o.level = p.level + 1
+                   AND o.name COLLATE "C" LIKE p.name || '/%'
+             )
+             AND NOT EXISTS (
+                 SELECT 1
+                 FROM storage.prefixes AS c
+                 WHERE c.bucket_id = p.bucket_id
+                   AND c.level = p.level + 1
+                   AND c.name COLLATE "C" LIKE p.name || '/%'
+             )
+        )
+        DELETE
+        FROM storage.prefixes AS p
+            USING leaf AS l
+        WHERE p.bucket_id = l.bucket_id
+          AND p.name = l.name
+          AND p.level = l.level;
+
+        GET DIAGNOSTICS v_rows_deleted = ROW_COUNT;
+        EXIT WHEN v_rows_deleted = 0;
+    END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION "storage"."delete_leaf_prefixes"("bucket_ids" "text"[], "names" "text"[]) OWNER TO "supabase_storage_admin";
+
+
 CREATE OR REPLACE FUNCTION "storage"."delete_prefix"("_bucket_id" "text", "_name" "text") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -335,6 +399,59 @@ $_$;
 ALTER FUNCTION "storage"."list_objects_with_delimiter"("bucket_id" "text", "prefix_param" "text", "delimiter_param" "text", "max_keys" integer, "start_after" "text", "next_token" "text") OWNER TO "supabase_storage_admin";
 
 
+CREATE OR REPLACE FUNCTION "storage"."lock_top_prefixes"("bucket_ids" "text"[], "names" "text"[]) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+    v_bucket text;
+    v_top text;
+BEGIN
+    FOR v_bucket, v_top IN
+        SELECT DISTINCT t.bucket_id,
+            split_part(t.name, '/', 1) AS top
+        FROM unnest(bucket_ids, names) AS t(bucket_id, name)
+        WHERE t.name <> ''
+        ORDER BY 1, 2
+        LOOP
+            PERFORM pg_advisory_xact_lock(hashtextextended(v_bucket || '/' || v_top, 0));
+        END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION "storage"."lock_top_prefixes"("bucket_ids" "text"[], "names" "text"[]) OWNER TO "supabase_storage_admin";
+
+
+CREATE OR REPLACE FUNCTION "storage"."objects_delete_cleanup"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+    v_bucket_ids text[];
+    v_names      text[];
+BEGIN
+    IF current_setting('storage.gc.prefixes', true) = '1' THEN
+        RETURN NULL;
+    END IF;
+
+    PERFORM set_config('storage.gc.prefixes', '1', true);
+
+    SELECT COALESCE(array_agg(d.bucket_id), '{}'),
+           COALESCE(array_agg(d.name), '{}')
+    INTO v_bucket_ids, v_names
+    FROM deleted AS d
+    WHERE d.name <> '';
+
+    PERFORM storage.lock_top_prefixes(v_bucket_ids, v_names);
+    PERFORM storage.delete_leaf_prefixes(v_bucket_ids, v_names);
+
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION "storage"."objects_delete_cleanup"() OWNER TO "supabase_storage_admin";
+
+
 CREATE OR REPLACE FUNCTION "storage"."objects_insert_prefix_trigger"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -348,6 +465,114 @@ $$;
 
 
 ALTER FUNCTION "storage"."objects_insert_prefix_trigger"() OWNER TO "supabase_storage_admin";
+
+
+CREATE OR REPLACE FUNCTION "storage"."objects_update_cleanup"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+    -- NEW - OLD (destinations to create prefixes for)
+    v_add_bucket_ids text[];
+    v_add_names      text[];
+
+    -- OLD - NEW (sources to prune)
+    v_src_bucket_ids text[];
+    v_src_names      text[];
+BEGIN
+    IF TG_OP <> 'UPDATE' THEN
+        RETURN NULL;
+    END IF;
+
+    -- 1) Compute NEW−OLD (added paths) and OLD−NEW (moved-away paths)
+    WITH added AS (
+        SELECT n.bucket_id, n.name
+        FROM new_rows n
+        WHERE n.name <> '' AND position('/' in n.name) > 0
+        EXCEPT
+        SELECT o.bucket_id, o.name FROM old_rows o WHERE o.name <> ''
+    ),
+    moved AS (
+         SELECT o.bucket_id, o.name
+         FROM old_rows o
+         WHERE o.name <> ''
+         EXCEPT
+         SELECT n.bucket_id, n.name FROM new_rows n WHERE n.name <> ''
+    )
+    SELECT
+        -- arrays for ADDED (dest) in stable order
+        COALESCE( (SELECT array_agg(a.bucket_id ORDER BY a.bucket_id, a.name) FROM added a), '{}' ),
+        COALESCE( (SELECT array_agg(a.name      ORDER BY a.bucket_id, a.name) FROM added a), '{}' ),
+        -- arrays for MOVED (src) in stable order
+        COALESCE( (SELECT array_agg(m.bucket_id ORDER BY m.bucket_id, m.name) FROM moved m), '{}' ),
+        COALESCE( (SELECT array_agg(m.name      ORDER BY m.bucket_id, m.name) FROM moved m), '{}' )
+    INTO v_add_bucket_ids, v_add_names, v_src_bucket_ids, v_src_names;
+
+    -- Nothing to do?
+    IF (array_length(v_add_bucket_ids, 1) IS NULL) AND (array_length(v_src_bucket_ids, 1) IS NULL) THEN
+        RETURN NULL;
+    END IF;
+
+    -- 2) Take per-(bucket, top) locks: ALL prefixes in consistent global order to prevent deadlocks
+    DECLARE
+        v_all_bucket_ids text[];
+        v_all_names text[];
+    BEGIN
+        -- Combine source and destination arrays for consistent lock ordering
+        v_all_bucket_ids := COALESCE(v_src_bucket_ids, '{}') || COALESCE(v_add_bucket_ids, '{}');
+        v_all_names := COALESCE(v_src_names, '{}') || COALESCE(v_add_names, '{}');
+
+        -- Single lock call ensures consistent global ordering across all transactions
+        IF array_length(v_all_bucket_ids, 1) IS NOT NULL THEN
+            PERFORM storage.lock_top_prefixes(v_all_bucket_ids, v_all_names);
+        END IF;
+    END;
+
+    -- 3) Create destination prefixes (NEW−OLD) BEFORE pruning sources
+    IF array_length(v_add_bucket_ids, 1) IS NOT NULL THEN
+        WITH candidates AS (
+            SELECT DISTINCT t.bucket_id, unnest(storage.get_prefixes(t.name)) AS name
+            FROM unnest(v_add_bucket_ids, v_add_names) AS t(bucket_id, name)
+            WHERE name <> ''
+        )
+        INSERT INTO storage.prefixes (bucket_id, name)
+        SELECT c.bucket_id, c.name
+        FROM candidates c
+        ON CONFLICT DO NOTHING;
+    END IF;
+
+    -- 4) Prune source prefixes bottom-up for OLD−NEW
+    IF array_length(v_src_bucket_ids, 1) IS NOT NULL THEN
+        -- re-entrancy guard so DELETE on prefixes won't recurse
+        IF current_setting('storage.gc.prefixes', true) <> '1' THEN
+            PERFORM set_config('storage.gc.prefixes', '1', true);
+        END IF;
+
+        PERFORM storage.delete_leaf_prefixes(v_src_bucket_ids, v_src_names);
+    END IF;
+
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION "storage"."objects_update_cleanup"() OWNER TO "supabase_storage_admin";
+
+
+CREATE OR REPLACE FUNCTION "storage"."objects_update_level_trigger"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    -- Ensure this is an update operation and the name has changed
+    IF TG_OP = 'UPDATE' AND (NEW."name" <> OLD."name" OR NEW."bucket_id" <> OLD."bucket_id") THEN
+        -- Set the new level
+        NEW."level" := "storage"."get_level"(NEW."name");
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "storage"."objects_update_level_trigger"() OWNER TO "supabase_storage_admin";
 
 
 CREATE OR REPLACE FUNCTION "storage"."objects_update_prefix_trigger"() RETURNS "trigger"
@@ -401,6 +626,36 @@ $$;
 
 
 ALTER FUNCTION "storage"."operation"() OWNER TO "supabase_storage_admin";
+
+
+CREATE OR REPLACE FUNCTION "storage"."prefixes_delete_cleanup"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+    v_bucket_ids text[];
+    v_names      text[];
+BEGIN
+    IF current_setting('storage.gc.prefixes', true) = '1' THEN
+        RETURN NULL;
+    END IF;
+
+    PERFORM set_config('storage.gc.prefixes', '1', true);
+
+    SELECT COALESCE(array_agg(d.bucket_id), '{}'),
+           COALESCE(array_agg(d.name), '{}')
+    INTO v_bucket_ids, v_names
+    FROM deleted AS d
+    WHERE d.name <> '';
+
+    PERFORM storage.lock_top_prefixes(v_bucket_ids, v_names);
+    PERFORM storage.delete_leaf_prefixes(v_bucket_ids, v_names);
+
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION "storage"."prefixes_delete_cleanup"() OWNER TO "supabase_storage_admin";
 
 
 CREATE OR REPLACE FUNCTION "storage"."prefixes_insert_trigger"() RETURNS "trigger"
@@ -574,50 +829,99 @@ $_$;
 ALTER FUNCTION "storage"."search_v1_optimised"("prefix" "text", "bucketname" "text", "limits" integer, "levels" integer, "offsets" integer, "search" "text", "sortcolumn" "text", "sortorder" "text") OWNER TO "supabase_storage_admin";
 
 
-CREATE OR REPLACE FUNCTION "storage"."search_v2"("prefix" "text", "bucket_name" "text", "limits" integer DEFAULT 100, "levels" integer DEFAULT 1, "start_after" "text" DEFAULT ''::"text") RETURNS TABLE("key" "text", "name" "text", "id" "uuid", "updated_at" timestamp with time zone, "created_at" timestamp with time zone, "metadata" "jsonb")
+CREATE OR REPLACE FUNCTION "storage"."search_v2"("prefix" "text", "bucket_name" "text", "limits" integer DEFAULT 100, "levels" integer DEFAULT 1, "start_after" "text" DEFAULT ''::"text", "sort_order" "text" DEFAULT 'asc'::"text", "sort_column" "text" DEFAULT 'name'::"text", "sort_column_after" "text" DEFAULT ''::"text") RETURNS TABLE("key" "text", "name" "text", "id" "uuid", "updated_at" timestamp with time zone, "created_at" timestamp with time zone, "last_accessed_at" timestamp with time zone, "metadata" "jsonb")
     LANGUAGE "plpgsql" STABLE
     AS $_$
+DECLARE
+    sort_col text;
+    sort_ord text;
+    cursor_op text;
+    cursor_expr text;
+    sort_expr text;
 BEGIN
-    RETURN query EXECUTE
+    -- Validate sort_order
+    sort_ord := lower(sort_order);
+    IF sort_ord NOT IN ('asc', 'desc') THEN
+        sort_ord := 'asc';
+    END IF;
+
+    -- Determine cursor comparison operator
+    IF sort_ord = 'asc' THEN
+        cursor_op := '>';
+    ELSE
+        cursor_op := '<';
+    END IF;
+    
+    sort_col := lower(sort_column);
+    -- Validate sort column  
+    IF sort_col IN ('updated_at', 'created_at') THEN
+        cursor_expr := format(
+            '($5 = '''' OR ROW(date_trunc(''milliseconds'', %I), name COLLATE "C") %s ROW(COALESCE(NULLIF($6, '''')::timestamptz, ''epoch''::timestamptz), $5))',
+            sort_col, cursor_op
+        );
+        sort_expr := format(
+            'COALESCE(date_trunc(''milliseconds'', %I), ''epoch''::timestamptz) %s, name COLLATE "C" %s',
+            sort_col, sort_ord, sort_ord
+        );
+    ELSE
+        cursor_expr := format('($5 = '''' OR name COLLATE "C" %s $5)', cursor_op);
+        sort_expr := format('name COLLATE "C" %s', sort_ord);
+    END IF;
+
+    RETURN QUERY EXECUTE format(
         $sql$
         SELECT * FROM (
             (
                 SELECT
                     split_part(name, '/', $4) AS key,
-                    name || '/' AS name,
+                    name,
                     NULL::uuid AS id,
-                    NULL::timestamptz AS updated_at,
-                    NULL::timestamptz AS created_at,
+                    updated_at,
+                    created_at,
+                    NULL::timestamptz AS last_accessed_at,
                     NULL::jsonb AS metadata
                 FROM storage.prefixes
-                WHERE name COLLATE "C" LIKE $1 || '%'
-                AND bucket_id = $2
-                AND level = $4
-                AND name COLLATE "C" > $5
-                ORDER BY prefixes.name COLLATE "C" LIMIT $3
+                WHERE name COLLATE "C" LIKE $1 || '%%'
+                    AND bucket_id = $2
+                    AND level = $4
+                    AND %s
+                ORDER BY %s
+                LIMIT $3
             )
             UNION ALL
-            (SELECT split_part(name, '/', $4) AS key,
-                name,
-                id,
-                updated_at,
-                created_at,
-                metadata
-            FROM storage.objects
-            WHERE name COLLATE "C" LIKE $1 || '%'
-                AND bucket_id = $2
-                AND level = $4
-                AND name COLLATE "C" > $5
-            ORDER BY name COLLATE "C" LIMIT $3)
+            (
+                SELECT
+                    split_part(name, '/', $4) AS key,
+                    name,
+                    id,
+                    updated_at,
+                    created_at,
+                    last_accessed_at,
+                    metadata
+                FROM storage.objects
+                WHERE name COLLATE "C" LIKE $1 || '%%'
+                    AND bucket_id = $2
+                    AND level = $4
+                    AND %s
+                ORDER BY %s
+                LIMIT $3
+            )
         ) obj
-        ORDER BY name COLLATE "C" LIMIT $3;
-        $sql$
-        USING prefix, bucket_name, limits, levels, start_after;
+        ORDER BY %s
+        LIMIT $3
+        $sql$,
+        cursor_expr,    -- prefixes WHERE
+        sort_expr,      -- prefixes ORDER BY
+        cursor_expr,    -- objects WHERE
+        sort_expr,      -- objects ORDER BY
+        sort_expr       -- final ORDER BY
+    )
+    USING prefix, bucket_name, limits, levels, start_after, sort_column_after;
 END;
 $_$;
 
 
-ALTER FUNCTION "storage"."search_v2"("prefix" "text", "bucket_name" "text", "limits" integer, "levels" integer, "start_after" "text") OWNER TO "supabase_storage_admin";
+ALTER FUNCTION "storage"."search_v2"("prefix" "text", "bucket_name" "text", "limits" integer, "levels" integer, "start_after" "text", "sort_order" "text", "sort_column" "text", "sort_column_after" "text") OWNER TO "supabase_storage_admin";
 
 
 CREATE OR REPLACE FUNCTION "storage"."update_updated_at_column"() RETURNS "trigger"
