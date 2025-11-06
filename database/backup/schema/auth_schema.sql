@@ -303,7 +303,8 @@ CREATE TABLE IF NOT EXISTS "auth"."mfa_factors" (
     "phone" "text",
     "last_challenged_at" timestamp with time zone,
     "web_authn_credential" "jsonb",
-    "web_authn_aaguid" "uuid"
+    "web_authn_aaguid" "uuid",
+    "last_webauthn_challenge_data" "jsonb"
 );
 
 
@@ -311,6 +312,10 @@ ALTER TABLE "auth"."mfa_factors" OWNER TO "supabase_auth_admin";
 
 
 COMMENT ON TABLE "auth"."mfa_factors" IS 'auth: stores metadata about factors';
+
+
+
+COMMENT ON COLUMN "auth"."mfa_factors"."last_webauthn_challenge_data" IS 'Stores the latest WebAuthn challenge data including attestation/assertion for customer verification';
 
 
 
@@ -499,7 +504,9 @@ CREATE TABLE IF NOT EXISTS "auth"."sessions" (
     "user_agent" "text",
     "ip" "inet",
     "tag" "text",
-    "oauth_client_id" "uuid"
+    "oauth_client_id" "uuid",
+    "refresh_token_hmac_key" "text",
+    "refresh_token_counter" bigint
 );
 
 
@@ -511,6 +518,14 @@ COMMENT ON TABLE "auth"."sessions" IS 'Auth: Stores session data associated to a
 
 
 COMMENT ON COLUMN "auth"."sessions"."not_after" IS 'Auth: Not after is a nullable column that contains a timestamp after which the session should be regarded as expired.';
+
+
+
+COMMENT ON COLUMN "auth"."sessions"."refresh_token_hmac_key" IS 'Holds a HMAC-SHA256 key used to sign refresh tokens for this session.';
+
+
+
+COMMENT ON COLUMN "auth"."sessions"."refresh_token_counter" IS 'Holds the ID (counter) of the last issued refresh token.';
 
 
 
