@@ -20,7 +20,8 @@ ALTER SCHEMA "storage" OWNER TO "supabase_admin";
 
 CREATE TYPE "storage"."buckettype" AS ENUM (
     'STANDARD',
-    'ANALYTICS'
+    'ANALYTICS',
+    'VECTOR'
 );
 
 
@@ -964,15 +965,28 @@ COMMENT ON COLUMN "storage"."buckets"."owner" IS 'Field is deprecated, use owner
 
 
 CREATE TABLE IF NOT EXISTS "storage"."buckets_analytics" (
-    "id" "text" NOT NULL,
+    "name" "text" NOT NULL,
     "type" "storage"."buckettype" DEFAULT 'ANALYTICS'::"storage"."buckettype" NOT NULL,
     "format" "text" DEFAULT 'ICEBERG'::"text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "deleted_at" timestamp with time zone
+);
+
+
+ALTER TABLE "storage"."buckets_analytics" OWNER TO "supabase_storage_admin";
+
+
+CREATE TABLE IF NOT EXISTS "storage"."buckets_vectors" (
+    "id" "text" NOT NULL,
+    "type" "storage"."buckettype" DEFAULT 'VECTOR'::"storage"."buckettype" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
 
-ALTER TABLE "storage"."buckets_analytics" OWNER TO "supabase_storage_admin";
+ALTER TABLE "storage"."buckets_vectors" OWNER TO "supabase_storage_admin";
 
 
 CREATE TABLE IF NOT EXISTS "storage"."migrations" (
@@ -1055,6 +1069,22 @@ CREATE TABLE IF NOT EXISTS "storage"."s3_multipart_uploads_parts" (
 ALTER TABLE "storage"."s3_multipart_uploads_parts" OWNER TO "supabase_storage_admin";
 
 
+CREATE TABLE IF NOT EXISTS "storage"."vector_indexes" (
+    "id" "text" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL COLLATE "pg_catalog"."C",
+    "bucket_id" "text" NOT NULL,
+    "data_type" "text" NOT NULL,
+    "dimension" integer NOT NULL,
+    "distance_metric" "text" NOT NULL,
+    "metadata_configuration" "jsonb",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "storage"."vector_indexes" OWNER TO "supabase_storage_admin";
+
+
 ALTER TABLE ONLY "storage"."buckets_analytics"
     ADD CONSTRAINT "buckets_analytics_pkey" PRIMARY KEY ("id");
 
@@ -1062,6 +1092,11 @@ ALTER TABLE ONLY "storage"."buckets_analytics"
 
 ALTER TABLE ONLY "storage"."buckets"
     ADD CONSTRAINT "buckets_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "storage"."buckets_vectors"
+    ADD CONSTRAINT "buckets_vectors_pkey" PRIMARY KEY ("id");
 
 
 
@@ -1095,11 +1130,20 @@ ALTER TABLE ONLY "storage"."s3_multipart_uploads"
 
 
 
+ALTER TABLE ONLY "storage"."vector_indexes"
+    ADD CONSTRAINT "vector_indexes_pkey" PRIMARY KEY ("id");
+
+
+
 CREATE UNIQUE INDEX "bname" ON "storage"."buckets" USING "btree" ("name");
 
 
 
 CREATE UNIQUE INDEX "bucketid_objname" ON "storage"."objects" USING "btree" ("bucket_id", "name");
+
+
+
+CREATE UNIQUE INDEX "buckets_analytics_unique_name_idx" ON "storage"."buckets_analytics" USING "btree" ("name") WHERE ("deleted_at" IS NULL);
 
 
 
@@ -1128,6 +1172,10 @@ CREATE INDEX "name_prefix_search" ON "storage"."objects" USING "btree" ("name" "
 
 
 CREATE UNIQUE INDEX "objects_bucket_id_level_idx" ON "storage"."objects" USING "btree" ("bucket_id", "level", "name" COLLATE "C");
+
+
+
+CREATE UNIQUE INDEX "vector_indexes_name_bucket_id_idx" ON "storage"."vector_indexes" USING "btree" ("name", "bucket_id");
 
 
 
@@ -1184,10 +1232,18 @@ ALTER TABLE ONLY "storage"."s3_multipart_uploads_parts"
 
 
 
+ALTER TABLE ONLY "storage"."vector_indexes"
+    ADD CONSTRAINT "vector_indexes_bucket_id_fkey" FOREIGN KEY ("bucket_id") REFERENCES "storage"."buckets_vectors"("id");
+
+
+
 ALTER TABLE "storage"."buckets" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "storage"."buckets_analytics" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "storage"."buckets_vectors" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "storage"."migrations" ENABLE ROW LEVEL SECURITY;
@@ -1205,6 +1261,9 @@ ALTER TABLE "storage"."s3_multipart_uploads" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "storage"."s3_multipart_uploads_parts" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "storage"."vector_indexes" ENABLE ROW LEVEL SECURITY;
+
+
 GRANT USAGE ON SCHEMA "storage" TO "postgres" WITH GRANT OPTION;
 GRANT USAGE ON SCHEMA "storage" TO "anon";
 GRANT USAGE ON SCHEMA "storage" TO "authenticated";
@@ -1214,6 +1273,8 @@ GRANT ALL ON SCHEMA "storage" TO "dashboard_user";
 
 
 
+REVOKE ALL ON TABLE "storage"."buckets" FROM "supabase_storage_admin";
+GRANT ALL ON TABLE "storage"."buckets" TO "supabase_storage_admin" WITH GRANT OPTION;
 GRANT ALL ON TABLE "storage"."buckets" TO "anon";
 GRANT ALL ON TABLE "storage"."buckets" TO "authenticated";
 GRANT ALL ON TABLE "storage"."buckets" TO "service_role";
@@ -1227,6 +1288,14 @@ GRANT ALL ON TABLE "storage"."buckets_analytics" TO "anon";
 
 
 
+GRANT SELECT ON TABLE "storage"."buckets_vectors" TO "service_role";
+GRANT SELECT ON TABLE "storage"."buckets_vectors" TO "authenticated";
+GRANT SELECT ON TABLE "storage"."buckets_vectors" TO "anon";
+
+
+
+REVOKE ALL ON TABLE "storage"."objects" FROM "supabase_storage_admin";
+GRANT ALL ON TABLE "storage"."objects" TO "supabase_storage_admin" WITH GRANT OPTION;
 GRANT ALL ON TABLE "storage"."objects" TO "anon";
 GRANT ALL ON TABLE "storage"."objects" TO "authenticated";
 GRANT ALL ON TABLE "storage"."objects" TO "service_role";
@@ -1249,6 +1318,12 @@ GRANT SELECT ON TABLE "storage"."s3_multipart_uploads" TO "anon";
 GRANT ALL ON TABLE "storage"."s3_multipart_uploads_parts" TO "service_role";
 GRANT SELECT ON TABLE "storage"."s3_multipart_uploads_parts" TO "authenticated";
 GRANT SELECT ON TABLE "storage"."s3_multipart_uploads_parts" TO "anon";
+
+
+
+GRANT SELECT ON TABLE "storage"."vector_indexes" TO "service_role";
+GRANT SELECT ON TABLE "storage"."vector_indexes" TO "authenticated";
+GRANT SELECT ON TABLE "storage"."vector_indexes" TO "anon";
 
 
 
